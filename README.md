@@ -1,2 +1,2 @@
 # dreamcatcher
-SOME A CLUE
+SOME CLUE
