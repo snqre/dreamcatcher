@@ -46,5 +46,3 @@ contract DreamcatcherToken is
         super._beforeTokenTransfer(from, to, amount);
     }
 }
-
-contract Governor {}
