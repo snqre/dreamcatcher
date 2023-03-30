@@ -1,0 +1,11 @@
+{
+  "name": "dreamcatcher",
+  "version": "1.0.0",
+  "description": "Remember that our competitors are making 600k as a year as we speak, there's no reason why we can't do better than them!",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC"
+}
