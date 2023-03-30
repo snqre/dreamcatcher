@@ -15,23 +15,33 @@ contract DreamcatcherToken is
     ERC20Permit, 
     ERC20Votes {
         // management and roles
-        address public admin;
-        address public mint;
+        address public governor; // governor contract
         address public team = msg.sender;
 
-        bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
-        
+        // token details
+        string public name ="Dreamcatcher";
+        string public symbol ="Dream";
+        string public initialSupply =100000;
+        string public totalSupply =initialSupply;
+
         constructor()
-            ERC20("Dreamcatcher", "DREAM") 
-            ERC20Permit("Dreamcatcher") {
-                _setupRole(DEFAULT_ADMIN_ROLE, admin);
-                _setupRole(MINTER_ROLE, mint);
-                _mint(team, 100000 * 10 * decimals());
+            ERC20(name, symbol) 
+            ERC20Permit(name) {
+                _mint(governor, initialSupply * 10 ** decimals());
         }
         
-        // minting
-        function mint(address to, uint256 amount) public onlyRole(MINTER_ROLE) {
-            _mint(to, amount);
+        // allow for proposals to raise funds
+        // allow for proposals to do buy backs or burns
+
+
+
+        // voting stuff
+        function _beforeTokenTransfer(address from, address to, uint256 amount) internal override(ERC20, ERC20Votes) {
+            super._beforeTokenTransfer(from, to, amount);
+        }
+
+        function _afterTokenTransfer(address from, address to, uint256 amount) internal override(ERC20, ERC20Votes) {
+            super._afterTokenTransfer(from, to, amount);
         }
 
 }
