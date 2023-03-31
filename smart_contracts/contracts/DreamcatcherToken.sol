@@ -16,7 +16,7 @@ contract DreamcatcherToken is
     ERC20Votes {
         // management and roles
         address public governor; // governor contract
-        address public team = msg.sender;
+        address public team =msg.sender;
 
         // token details
         string public name ="Dreamcatcher";
@@ -33,13 +33,12 @@ contract DreamcatcherToken is
         // allow for proposals to raise funds
         // allow for proposals to do buy backs or burns
 
-
-
-        // voting stuff
+        // do things before the transfer
         function _beforeTokenTransfer(address from, address to, uint256 amount) internal override(ERC20, ERC20Votes) {
             super._beforeTokenTransfer(from, to, amount);
         }
 
+        // do things after
         function _afterTokenTransfer(address from, address to, uint256 amount) internal override(ERC20, ERC20Votes) {
             super._afterTokenTransfer(from, to, amount);
         }
