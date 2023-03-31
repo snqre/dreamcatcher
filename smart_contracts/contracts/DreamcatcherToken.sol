@@ -8,19 +8,21 @@ import "smart_contracts\node_modules\@openzeppelin\contracts\token\ERC20\extensi
 import "smart_contracts\node_modules\@openzeppelin\contracts\access\AccessControl.sol";
 import "smart_contracts\node_modules\@openzeppelin/contracts/token/ERC20/extensions/draft-ERC20Permit.sol";
 import "smart_contracts\node_modules\@openzeppelin/contracts/token/ERC20/extensions/draft-ERC20Votes.sol";
+import "smart_contracts\node_modules\@openzeppelin/contracts/token/ERC20/extensions/ERC20VotesComp.sol";
 contract DreamcatcherToken is 
     ERC20, 
     ERC20Burnable, 
     AccessControl, 
     ERC20Permit, 
-    ERC20Votes {
+    ERC20Votes,
+    ERC20VotesComp {
         // management and roles
         address public governor; // governor contract
         address public team =msg.sender;
 
         // token details
         string public name ="Dreamcatcher";
-        string public symbol ="Dream";
+        string public symbol ="DREAM";
         string public initialSupply =100000;
         string public totalSupply =initialSupply;
 
@@ -30,6 +32,14 @@ contract DreamcatcherToken is
                 _mint(governor, initialSupply * 10 ** decimals());
         }
         
+        function delegate(address delegatee) public {
+            _delegate(msg.sender, delegatee);
+        }
+
+        function delegateBySig(address delegatee, uint256 nonce, uint256 expiry, uint8 v, bytes32 r, bytes32 s) public {
+            _delegateBySig(delegatee, nonce, expiry, v, r, s);
+        }
+
         // allow for proposals to raise funds
         // allow for proposals to do buy backs or burns
 
