@@ -31,14 +31,6 @@ contract DreamcatcherToken is
             ERC20Permit(name) {
                 _mint(governor, initialSupply * 10 ** decimals());
         }
-        
-        function delegate(address delegatee) public {
-            _delegate(msg.sender, delegatee);
-        }
-
-        function delegateBySig(address delegatee, uint256 nonce, uint256 expiry, uint8 v, bytes32 r, bytes32 s) public {
-            _delegateBySig(delegatee, nonce, expiry, v, r, s);
-        }
 
         // allow for proposals to raise funds
         // allow for proposals to do buy backs or burns
