@@ -9,22 +9,22 @@ If the DAO is making money then they can also burn tokens too
 
 // snapshot governance voting compatibility
 // install 0.0.135 vscode solidity extension because latest one doesnt work for imports
-import "smart_contracts\node_modules@openzeppelincontracts\tokenERC20ERC20.sol";
-import "smart_contracts\node_modules\@openzeppelin\contracts\access\Ownable.sol";
+import "smart_contracts/node_modules/@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "smart_contracts/node_modules/@openzeppelin/contracts/access/AccessControl.sol";
 
-contract DreamcatcherToken is ERC20, Ownable {
+contract DreamcatcherToken is ERC20, AccessControl {
     // define the governor address
     // tokens will be trasnfered here first then the governor will have init logic for the team
-    address public addressGovernor;
+    address public addressGovernor = msg.sender;
 
     // token details
     string public stringName = "Dreamcatcher";
     string public stringSymbol = "DREAM";
     uint256 public uint256InitialSupply = 100000;
 
-    constructor() ERC20(stringName, stringSymbol) {
-        transferOwnership(addressGovernor);
-        _mint(addressGovernor, uint256InitialSupply * 10 **decimals());
-    }
+    address public contractAddress = 0x617F2E2fD72FD9D5503197092aC168c91465E7f2;
 
+    constructor() ERC20(stringName, stringSymbol) {
+        _mint(addressGovernor, uint256InitialSupply * 10**decimals());
+    }
 }
