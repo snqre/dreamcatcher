@@ -10,32 +10,21 @@ If the DAO is making money then they can also burn tokens too
 // snapshot governance voting compatibility
 // install 0.0.135 vscode solidity extension because latest one doesnt work for imports
 import "smart_contracts\node_modules@openzeppelincontracts\tokenERC20ERC20.sol";
-import "smart_contracts\node_modules@openzeppelincontracts\tokenERC20extensionsERC20Burnable.sol";
-import "smart_contracts\node_modules@openzeppelincontractsaccessAccessControl.sol";
-import "smart_contracts\node_modules@openzeppelincontracts\tokenERC20extensionsdraft-ERC20Permit.sol";
-import "smart_contracts\node_modules@openzeppelincontracts\tokenERC20extensionsdraft-ERC20Votes.sol";
-//
-import "smart_contracts\node_modules@openzeppelincontracts\tokenERC20extensionsTokenSnapshot.sol";
+import "smart_contracts\node_modules@openzeppelincontractsaccessOwnable.sol";
 
-contract DreamcatcherToken is
-    ERC20,
-    ERC20Burnable,
-    ERC20Snapshot,
-    AccessControl,
-    ERC20Permit,
-    ERC20Votes,
-
-{
+contract DreamcatcherToken is ERC20, Ownable {
     // define the governor address
     // tokens will be trasnfered here first then the governor will have init logic for the team
     address public addressGovernor;
 
     // token details
-    string public stringName ="Dreamcatcher";
-    string public stringSymbol ="DREAM";
-    uint256 public uint256InitialSupply= 100000;
+    string public stringName = "Dreamcatcher";
+    string public stringSymbol = "DREAM";
+    uint256 public uint256InitialSupply = 100000;
 
-    constructor() ERC20(stringName, stringSymbol) ERC20Permit(stringName) {
+    constructor() ERC20(stringName, stringSymbol) {}
+
+    function mint(address to, uint256 amount) external onlyOwner {
         _mint(addressGovernor, uint256InitialSupply * 10**decimals());
     }
 }
