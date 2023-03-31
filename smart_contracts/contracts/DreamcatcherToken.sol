@@ -9,48 +9,33 @@ If the DAO is making money then they can also burn tokens too
 
 // snapshot governance voting compatibility
 // install 0.0.135 vscode solidity extension because latest one doesnt work for imports
-import "smart_contracts\node_modules\@openzeppelin\contracts\token\ERC20\ERC20.sol";
-import "smart_contracts\node_modules\@openzeppelin\contracts\token\ERC20\extensions\ERC20Burnable.sol";
-import "smart_contracts\node_modules\@openzeppelin\contracts\access\AccessControl.sol";
-import "smart_contracts\node_modules\@openzeppelin\contracts\token\ERC20\extensions\draft-ERC20Permit.sol";
-import "smart_contracts\node_modules\@openzeppelin\contracts\token\ERC20\extensions\draft-ERC20Votes.sol";
+import "smart_contracts\node_modules@openzeppelincontracts\tokenERC20ERC20.sol";
+import "smart_contracts\node_modules@openzeppelincontracts\tokenERC20extensionsERC20Burnable.sol";
+import "smart_contracts\node_modules@openzeppelincontractsaccessAccessControl.sol";
+import "smart_contracts\node_modules@openzeppelincontracts\tokenERC20extensionsdraft-ERC20Permit.sol";
+import "smart_contracts\node_modules@openzeppelincontracts\tokenERC20extensionsdraft-ERC20Votes.sol";
 //
-import "smart_contracts\node_modules\@openzeppelin\contracts\token\ERC20\extensions\TokenSnapshot.sol";
+import "smart_contracts\node_modules@openzeppelincontracts\tokenERC20extensionsTokenSnapshot.sol";
 
-contract DreamcatcherToken is 
-    ERC20, 
+contract DreamcatcherToken is
+    ERC20,
     ERC20Burnable,
-    ERC20Snapshot, 
-    AccessControl, 
-    ERC20Permit, 
-    ERC20Votes {
-        // define the governor address
-        address public governor;
-        address public team =msg.sender;
+    ERC20Snapshot,
+    AccessControl,
+    ERC20Permit,
+    ERC20Votes,
 
-        // token details
-        string public name ="Dreamcatcher";
-        string public symbol ="DREAM";
-        string public initialSupply =100000;
-        string public totalSupply =initialSupply;
+{
+    // define the governor address
+    // tokens will be trasnfered here first then the governor will have init logic for the team
+    address public addressGovernor;
 
-        constructor()
-            ERC20(name, symbol)
-            ERC20Permit(name) {
-                _mint(governor, initialSupply * 10 ** decimals());
-        }
+    // token details
+    string public stringName ="Dreamcatcher";
+    string public stringSymbol ="DREAM";
+    uint256 public uint256InitialSupply= 100000;
 
-        // allow for proposals to raise funds
-        // allow for proposals to do buy backs or burns
-
-        // do things before the transfer
-        function _beforeTokenTransfer(address from, address to, uint256 amount) internal override(ERC20, ERC20Votes) {
-            super._beforeTokenTransfer(from, to, amount);
-        }
-
-        // do things after
-        function _afterTokenTransfer(address from, address to, uint256 amount) internal override(ERC20, ERC20Votes) {
-            super._afterTokenTransfer(from, to, amount);
-        }
-
+    constructor() ERC20(stringName, stringSymbol) ERC20Permit(stringName) {
+        _mint(addressGovernor, uint256InitialSupply * 10**decimals());
+    }
 }
