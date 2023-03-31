@@ -22,9 +22,9 @@ contract DreamcatcherToken is ERC20, AccessControl {
     string public stringSymbol = "DREAM";
     uint256 public uint256InitialSupply = 100000;
 
-    address public contractAddress = 0x617F2E2fD72FD9D5503197092aC168c91465E7f2;
-
     constructor() ERC20(stringName, stringSymbol) {
         _mint(addressGovernor, uint256InitialSupply * 10**decimals());
     }
 }
+
+// find a way to test this in vscode
