@@ -12,10 +12,14 @@ If the DAO is making money then they can also burn tokens too
 import "smart_contracts/node_modules/@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "smart_contracts/node_modules/@openzeppelin/contracts/access/AccessControl.sol";
 import "smart_contracts/node_modules/@openzeppelin/contracts/access/Ownable.sol";
-
-contract Dreamcatcher is ERC20, AccessControl {
+import "smart_contracts\node_modules@openzeppelincontracts\tokenERC20extensionsERC20Votes.sol";
+import "smart_contracts\node_modules@openzeppelincontracts\tokenERC20extensionsERC20Snapshot.sol";
+import "smart_contracts\node_modules\@openzeppelin\contracts\token\ERC20\IERC20.sol";
+import "smart_contracts\node_modules\@openzeppelin\contracts\token\ERC20\utils\SafeERC20.sol";
+import "smart_contracts\node_modules\@openzeppelin\contracts\utils\math\SafeMath.sol";
+contract Dreamcatcher is ERC20, ERC20Votes, ERC20Snapshot, AccessControl {
     // DIFFERENT TYPES OF ROLES
-    // only the custodian can mint tokens 
+    // only the custodian can mint tokens
     bytes32 public constant CUSTODIAN = keccak256("CUSTODIAN"); // this is the contract itself responsible for maintaining and assiging roles, the custodian only can mint and control key features
     bytes32 public constant DIRECTOR = keccak256("DIRECTOR"); // ideally head to allow the project to move in a particular direction
     bytes32 public constant BOARD_MEMBER = keccak256("BOARD_MEMBER"); // the board members are elected every x amount of time, these are 6 - 16 people elected and only they can propose actions and stuff that can be voted on
@@ -38,21 +42,66 @@ contract Dreamcatcher is ERC20, AccessControl {
 
         // generate initial supply for the custodian
         mint(uint256InitialSupply);
-
+        snapshot(); // call after minting
     }
 
     function mint_for(address to, uint256 amount) public {
         /* only the custodian can mint tokens for others */
         /* also has decimals automatically calculated */
-        require(hasRole(CUSTODIAN, msg.sender), "Only the Custodian can mint tokens for others:: must go through proposal");
-        _mint(to, amount * 10 **decimals());
+        require(
+            hasRole(CUSTODIAN, msg.sender),
+            "Only the Custodian can mint tokens for others:: must go through proposal"
+        );
+        _mint(to, amount * 10**decimals());
+        snapshot(); // call after minting
     }
 
     function mint(uint256 amount) public {
         /* only the custodian can mint tokens for itself */
         /* also has decimals automatically calculated */
-        require(hasRole(CUSTODIAN, msg.sender), "Only the Custodian can mint tokens for itself:: must go through proposal");
-        _mint(addressCustodian, amount * 10 **decimals());
+        require(
+            hasRole(CUSTODIAN, msg.sender),
+            "Only the Custodian can mint tokens for itself:: must go through proposal"
+        );
+        _mint(addressCustodian, amount * 10**decimals());
     }
+
+    function getLastSnapshotId() public view returns (uint256) {
+        return latestSnapshot();
+    }
+
+    function balanceOfAt(address account, uint256 snapshotId)
+        public
+        view
+        returns (uint256)
+    {
+        return balanceOfAt(account, snapshotId);
+    }
+
+    function totalSupplyAt(uint256 snapshotId) public view returns (uint256) {
+        return totalSupplyAt(snapshotId);
+    }
+}
+
+contract Proposal is Ownable {
+    using SafeERC20 for IERC20;
+    using SafeMath for uint256;
+
+    struct ProposalData {
+        uint256 id;
+        address creator;
+        string title;
+        string description;
+        uint256 startTime;
+        uint256 endTime;
+        uint256 votesFor;
+        uint256 votesAgainst;
+        bool executed;
+    }
+
+    IERC20 public votingToken;
+    uint256 public votingPower;
+    uint256 public proposalCount;
+    mapping(uint256 => ProposalData) public proposals;
 
 }
