@@ -14,9 +14,10 @@ import "smart_contracts/node_modules/@openzeppelin/contracts/access/AccessContro
 import "smart_contracts/node_modules/@openzeppelin/contracts/access/Ownable.sol";
 import "smart_contracts\node_modules@openzeppelincontracts\tokenERC20extensionsERC20Votes.sol";
 import "smart_contracts\node_modules@openzeppelincontracts\tokenERC20extensionsERC20Snapshot.sol";
-import "smart_contracts\node_modules\@openzeppelin\contracts\token\ERC20\IERC20.sol";
-import "smart_contracts\node_modules\@openzeppelin\contracts\token\ERC20\utils\SafeERC20.sol";
-import "smart_contracts\node_modules\@openzeppelin\contracts\utils\math\SafeMath.sol";
+import "smart_contracts\node_modules@openzeppelincontracts\tokenERC20IERC20.sol";
+import "smart_contracts\node_modules@openzeppelincontracts\tokenERC20\utilsSafeERC20.sol";
+import "smart_contracts\node_modules@openzeppelincontracts\utilsmathSafeMath.sol";
+
 contract Dreamcatcher is ERC20, ERC20Votes, ERC20Snapshot, AccessControl {
     // DIFFERENT TYPES OF ROLES
     // only the custodian can mint tokens
@@ -29,6 +30,8 @@ contract Dreamcatcher is ERC20, ERC20Votes, ERC20Snapshot, AccessControl {
     string public stringName = "Dreamcatcher";
     string public stringSymbol = "DREAM";
     uint256 public uint256InitialSupply = 100000;
+
+    /* THIS IS IMPORTANT STUFF THAT CAN BE CHANGED ONLY BY PROPOSAL */
 
     function giveCustodianRole(address _addressCustodian) private {
         /* give honorary custodian role to an impartial party set by code */
@@ -64,6 +67,7 @@ contract Dreamcatcher is ERC20, ERC20Votes, ERC20Snapshot, AccessControl {
             "Only the Custodian can mint tokens for itself:: must go through proposal"
         );
         _mint(addressCustodian, amount * 10**decimals());
+        snapshot();
     }
 
     function getLastSnapshotId() public view returns (uint256) {
@@ -81,27 +85,64 @@ contract Dreamcatcher is ERC20, ERC20Votes, ERC20Snapshot, AccessControl {
     function totalSupplyAt(uint256 snapshotId) public view returns (uint256) {
         return totalSupplyAt(snapshotId);
     }
-}
 
-contract Proposal is Ownable {
-    using SafeERC20 for IERC20;
-    using SafeMath for uint256;
+    // TREASURY STUFF DRAFT
+    function isTokenSupported(
+        address addressToken //checks what types of tokens are valid for the treasury
+    )
+        internal
+        view
+        returns (
+            /* check if we have more than 0 of the token */
+            bool
+        )
+    {
+        // check if the token has a balance greater than zero in the cotnract
+        uint256 uint256Balance = IERC20(addressToken).balanceOf(address(this));
+        if (uint256Balance == 0) {
+            //if we dont have any, we dont support it
+            return false;
+        }
 
-    struct ProposalData {
-        uint256 id;
-        address creator;
-        string title;
-        string description;
-        uint256 startTime;
-        uint256 endTime;
-        uint256 votesFor;
-        uint256 votesAgainst;
-        bool executed;
+        // if the token passed both checks, it is supported
+        return true;
     }
 
-    IERC20 public votingToken;
-    uint256 public votingPower;
-    uint256 public proposalCount;
-    mapping(uint256 => ProposalData) public proposals;
+    function getSupportedTokens(address _addressTokenAddress)
+        external
+        view
+        returns (
+            /* find all non zero balances useful so we can calculate the value of our treasury vs assets*/
+            address[] memory
+        )
+    {
+        IERC20 IERC20Token = IERC20(_addressTokenAddress);
+        uint256 uint256TokenCount = IERC20Token.balanceOf(address(this));
+        address[] memory addressArrSupportedTokens = new address[](
+            uint256TokenCount
+        );
+        uint256 uint256SupportedTokenIndex = 0;
 
+        for (uint256 i = 0; i < uint256TokenCount; i++) {
+            address addressCurrentToken = IERC20Token.tokenOfOwnerByIndex(
+                address(this),
+                i
+            );
+            if (isTokenSupported(addressCurrentToken)) {
+                addressArrSupportedTokens[
+                    uint256SupportedTokenIndex
+                ] = addressCurrentToken;
+                uint256SupportedTokenIndex++;
+            }
+        }
+
+        address[] memory addressArrFinalSupportedTokens = new address[](
+            uint256SupportedTokenIndex
+        );
+        for (uint256 i = 0; i < uint256SupportedTokenIndex; i++) {
+            addressArrFinalSupportedTokens[i] = addressArrSupportedTokens[i];
+        }
+
+        return addressArrFinalSupportedTokens; //return array with all the non zero balance tokens we have in treasury including ours
+    }
 }
