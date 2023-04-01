@@ -15,7 +15,7 @@ import "smart_contracts/node_modules/@openzeppelin/contracts/access/AccessContro
 contract DreamcatcherToken is ERC20, AccessControl {
     // define the governor address
     // tokens will be trasnfered here first then the governor will have init logic for the team
-    address public addressGovernor = msg.sender;
+    address public addressGovernor;
 
     // token details
     string public stringName = "Dreamcatcher";
