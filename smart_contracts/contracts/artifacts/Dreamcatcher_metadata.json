@@ -406,7 +406,7 @@
 				"inputs": [
 					{
 						"internalType": "uint256",
-						"name": "amount",
+						"name": "uint256Amount",
 						"type": "uint256"
 					}
 				],
@@ -419,12 +419,12 @@
 				"inputs": [
 					{
 						"internalType": "address",
-						"name": "to",
+						"name": "addressTo",
 						"type": "address"
 					},
 					{
 						"internalType": "uint256",
-						"name": "amount",
+						"name": "uint256Amount",
 						"type": "uint256"
 					}
 				],
@@ -717,11 +717,11 @@
 	},
 	"sources": {
 		"smart_contracts/contracts/DreamcatcherToken.sol": {
-			"keccak256": "0x696195d9ab7dabfc2c9e0f9a72733a1dbdeb1eefbf3b1797fa3ce02975a457fa",
+			"keccak256": "0xaa6542e547980f02eef71c9f758d58d023d8e5728adb05576154a3a2e3faa92c",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://1f8c8bb01de2622dee67ac033471ac56b666e4270564bee39b003d506c47d230",
-				"dweb:/ipfs/QmQ4gL62QE9rJEjApQpRe6LJMtmEHbrD6Ta9Ff14r1cpRK"
+				"bzz-raw://b8aaf3e85dd392febc2ed47838085e605398178b851b463acf33cc9a009c813b",
+				"dweb:/ipfs/Qmf6x4xjPXPPormjj2Q6cAcMpBZ6bdbiz5uG31Qefit25M"
 			]
 		},
 		"smart_contracts/node_modules/@openzeppelin/contracts/access/AccessControl.sol": {
