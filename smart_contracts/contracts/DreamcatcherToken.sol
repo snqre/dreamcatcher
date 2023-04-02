@@ -22,7 +22,54 @@ import "smart_contracts/node_modules/@openzeppelin/contracts/token/ERC20/extensi
 import "smart_contracts/node_modules/@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "smart_contracts/node_modules/@openzeppelin/contracts/security/PullPayment.sol";
 
-contract Dreamcatcher is ERC20, AccessControl {
+contract Dreamcatcher {
+    // TOKEN DATA
+    struct Token {
+        string name;
+        string symbol;
+        uint256 totalSupply;
+        uint256 initialSupply;
+        // address data
+        mapping(address => uint256) balance; //how much each address has of our token
+        mapping(address => uint256) vested; // how many of the tokens are locked
+        mapping(address => uint256) staked; // how much they are staking
+        mapping(address => uint256) votes; //how many votes do they have typically 1:1 with tokens but might change
+        mapping(address => mapping(address => uint256)) allowance;
+        // state machine
+        bool isPaused;
+        bool isMintable;
+        bool isBurnable;
+        bool isTransferable;
+        bool isRedeemable;
+        // roles
+        mapping(address => bool) isFounder; //cool to know lets people know the founders account so they can see if we are selling
+        mapping(address => bool) isBoardMember;
+        mapping(address => bool) isDirector;
+        mapping(address => bool) isMember;
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+    // CUSTODIAN DATA
+    struct Custodian {
+        string name;
+        address account;
+        // state machine
+        bool is_polling;
+    }
+
+    Custodian custodian = Custodian("", msg.sender);
+
     // DIFFERENT TYPES OF ROLES
     // only the custodian can mint tokens
     bytes32 public constant CUSTODIAN = keccak256("CUSTODIAN"); // this is the contract itself responsible for maintaining and assiging roles, the custodian only can mint and control key features
@@ -34,6 +81,20 @@ contract Dreamcatcher is ERC20, AccessControl {
     string public stringName = "Dreamcatcher";
     string public stringSymbol = "DREAM";
     uint256 public uint256InitialSupply = 100000;
+
+    /*
+        a project has a team behind it
+        payment is split up into period of time to avoid malicious behaviour
+        if the board sees that the team is getting things done they will keep paying
+        else they can stop
+    */
+    struct Project {
+        string name;
+        string description;
+        address funding;
+        uint256 duration;
+        uint256 budget;
+    }
 
     /* THIS IS IMPORTANT STUFF THAT CAN BE CHANGED ONLY BY PROPOSAL */
     function giveCustodianRole(address _addressCustodian) private {
@@ -47,7 +108,7 @@ contract Dreamcatcher is ERC20, AccessControl {
         giveCustodianRole(addressCustodian);
 
         // generate initial supply for the custodian
-        mint(uint256InitialSupply);
+        mint(dreamcatcherToken.initialSupply);
     }
 
     modifier onlyCustodian() {
@@ -57,7 +118,7 @@ contract Dreamcatcher is ERC20, AccessControl {
         );
         _;
     }
-    
+
     // SNAPSHOT
 
     // MINTING
@@ -83,4 +144,46 @@ contract Dreamcatcher is ERC20, AccessControl {
     }
 
     // PAUSING -- the community can vote to emergency pause if neccesary
+
+    // START PROJECT
+    function beginProject() public onlyCustodian {
+        Project project = Project(
+            "Baking Beans",
+            "I want to bake beans",
+            msg.sender,
+            365,
+            2000
+        );
+        project.name;
+        project.description;
+        project.funding;
+
+        // VOTING LOGIC
+
+        // IF VOTE PASS THEN DO
+        // send initial moola to team address
+        // emit message saying this has happened
+    }
+
+    // RAISE FUNDING
+    /*
+    custodian can mint new tokens and these can be used to raise funding at a certain price per eth or crypto
+    as this can devalue other people's holdings this must be voted on
+    to avoid attacks and malicious behaviour people must not be able to just buy 60% of the supply and do this
+    */
+    function raiseCapital(uint256 amount) public onlyCustodian {
+        mint(amount);
+    }
+
+    // BUDGET
+    /* a budget is an amount of money or crypto that will be dedicated to an address or cause 
+        this can be sent on a daily/weekly, or whatever timeframe and does not have to be used up
+        in case of malicious behaviour if the entity is thought as not doing the job payments to the account will stop
+        payments to the account will also stop if the budget is finished and no budget has been allocated
+        unlike the treasury, the budget is set by members and receiving address must also be voted on
+    */
+
+    function budget(uint256 amount, string project) onlyCustodian {
+        // this amount of tokens will
+    }
 }

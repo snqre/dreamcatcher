@@ -730,11 +730,11 @@
 	},
 	"sources": {
 		"smart_contracts/contracts/DreamcatcherToken.sol": {
-			"keccak256": "0x62cbea372ffd1027a437ce097797fe07bb6311e366af59643203a07f989caae7",
+			"keccak256": "0x6f00448f7614c19800166055790769b214a9eb37a246f2850f1daac9c6182b71",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://1d0e6046cd634aa41da0bafd104437c8033127da90c7ecdcf7471122fcfbbf37",
-				"dweb:/ipfs/QmZB4MKfqXKGyLrbeVEKr31JACL8UQ6m9CCxPN5HrHzSQb"
+				"bzz-raw://f3b6db72f06097f7ba8541c7eeaf16b78b3219a5471d8aa59ecc134c350df1c5",
+				"dweb:/ipfs/QmRSXb31fdek3C4t3hrmd7yWh8yQZLvRuxzpJ9hzWLqudV"
 			]
 		},
 		"smart_contracts/node_modules/@openzeppelin/contracts/access/AccessControl.sol": {
