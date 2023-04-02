@@ -17,6 +17,8 @@ import "smart_contracts/node_modules/@openzeppelin/contracts/token/ERC20/extensi
 import "smart_contracts/node_modules/@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "smart_contracts/node_modules/@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "smart_contracts/node_modules/@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "smart_contracts/node_modules/@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
+import "smart_contracts/node_modules/@openzeppelin/contracts/token/ERC20/extensions/ERC20Pausable.sol";
 
 contract Dreamcatcher is ERC20, AccessControl {
     // DIFFERENT TYPES OF ROLES
@@ -55,10 +57,14 @@ contract Dreamcatcher is ERC20, AccessControl {
         _;
     }
 
-    function mint_for(address addressTo, uint256 uint256Amount) public onlyCustodian {
+    // MINTING
+    function mintFor(address addressAccount, uint256 uint256Amount)
+        public
+        onlyCustodian
+    {
         /* only the custodian can mint tokens for others */
         /* also has decimals automatically calculated */
-        _mint(addressTo, uint256Amount * 10**decimals());
+        _mint(addressAccount, uint256Amount * 10**decimals());
     }
 
     function mint(uint256 uint256Amount) public onlyCustodian {
@@ -66,4 +72,12 @@ contract Dreamcatcher is ERC20, AccessControl {
         /* also has decimals automatically calculated */
         _mint(addressCustodian, uint256Amount * 10**decimals());
     }
+
+    // BURNING
+    function burn(uint256 amount) public virtual onlyCustodian {
+        /* only the custodian can burn tokens for itself people can send tokens here if they want to burn them */
+        _burn(addressCustodian, amount);
+    }
+
+    // PAUSING -- the community can vote to emergency pause if neccesary
 }
