@@ -27,6 +27,7 @@ contract Dreamcatcher {
     struct Token {
         string name;
         string symbol;
+        uint8 decimals;
         uint256 totalSupply;
         uint256 initialSupply;
         // address data
@@ -36,17 +37,103 @@ contract Dreamcatcher {
         mapping(address => uint256) votes; //how many votes do they have typically 1:1 with tokens but might change
         mapping(address => mapping(address => uint256)) allowance;
         // state machine
+        bool isPausable;
         bool isPaused;
         bool isMintable;
         bool isBurnable;
         bool isTransferable;
-        bool isRedeemable;
         // roles
-        mapping(address => bool) isFounder; //cool to know lets people know the founders account so they can see if we are selling
+        mapping(address => bool) isCustodian; //incharge of critical things
+        mapping(address => bool) isFounder; //cool to know lets people know the founders account so they can see if we are selling, we want to do things right
         mapping(address => bool) isBoardMember;
         mapping(address => bool) isDirector;
         mapping(address => bool) isMember;
     }
+
+    Token public dreamcatcherToken;
+
+    constructor() {
+        dreamcatcherToken.name = "Dreamcatcher";
+        dreamcatcherToken.symbol = "DREAM";
+        dreamcatcherToken.decimals = 18;
+        dreamcatcherToken.initialSupply = 10000;
+        dreamcatcherToken.totalSupply = dreamcatcherToken.initialSupply;
+        dreamcatcherToken.isPausable = true;
+        dreamcatcherToken.isMintable = true;
+        dreamcatcherToken.isBurnable = true;
+        dreamcatcherToken.isTransferable = true;
+
+        //instructions on deploy
+        //send 20% to team wallet
+        //send x% for private funding
+        //keep x amount on contract as the contract will be the one selling directly
+    }
+
+    modifier onlyCustodian() {//note im not sure if all account roles start with false yet
+        /* check if address is custodian */
+        require(
+            dreamcatcherToken.isCustodian[msg.sender],
+            "Only the Custodian can do this. You must go through a proposal to do this."
+        );
+        _;
+    }
+
+    function name() public view virtual override returns (string memory) {
+        return dreamcatcherToken.name;
+    }
+
+    function symbol() public view virtual override returns (string memory) {
+        return dreamcatcherToken.symbol;
+    }
+
+    function decimals() public view virtual override returns (uint8) {
+        return dreamcatcherToken.decimals;
+    }
+
+    function totalSupply() public view virtual override returns (uint256) {
+        return dreamcatcherToken.totalSupply;
+    }
+
+    function balanceOf(address account)
+        public
+        view
+        virtual
+        override
+        returns (uint256)
+    {
+        /* return how much the address has of our token */
+        return dreamcatcherToken.balance[account];
+    }
+
+    function balanceVested(address account)
+        public
+        view
+        virtual
+        override
+        returns (uint256)
+    {
+        /* return the amount of tokens of the account which are locked */
+        return dreamcatcherToken.vested[account];
+    }
+
+    function balanceStaked(address account) public view virtual override returns (uint256) {
+        /* return the amount of tokens which are staked */
+        return dreamcatcherToken.staked[account];
+    }
+
+    function votes(address account) public view virtual override returns (uint256) {
+        /* return number of votes the person has */
+        return dreamcatcherToken.votes[account];
+    }
+
+    // transfer, transferfrom, approve, allowance
+
+
+
+
+
+
+
 
 
 
@@ -62,7 +149,6 @@ contract Dreamcatcher {
 
     // CUSTODIAN DATA
     struct Custodian {
-        string name;
         address account;
         // state machine
         bool is_polling;
