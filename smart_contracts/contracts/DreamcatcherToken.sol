@@ -50,7 +50,7 @@ contract Dreamcatcher is ERC20, AccessControl {
     modifier onlyCustodian() {
         require(
             hasRole(CUSTODIAN, msg.sender),
-            "Only the Custodian can mint tokens for others:: must go through proposal"
+            "Only the Custodian can do this. You must go through a proposal to do this."
         );
         _;
     }
