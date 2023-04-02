@@ -19,6 +19,8 @@ import "smart_contracts/node_modules/@openzeppelin/contracts/token/ERC20/utils/S
 import "smart_contracts/node_modules/@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "smart_contracts/node_modules/@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 import "smart_contracts/node_modules/@openzeppelin/contracts/token/ERC20/extensions/ERC20Pausable.sol";
+import "smart_contracts/node_modules/@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "smart_contracts/node_modules/@openzeppelin/contracts/security/PullPayment.sol";
 
 contract Dreamcatcher is ERC20, AccessControl {
     // DIFFERENT TYPES OF ROLES
@@ -34,7 +36,6 @@ contract Dreamcatcher is ERC20, AccessControl {
     uint256 public uint256InitialSupply = 100000;
 
     /* THIS IS IMPORTANT STUFF THAT CAN BE CHANGED ONLY BY PROPOSAL */
-
     function giveCustodianRole(address _addressCustodian) private {
         /* give honorary custodian role to an impartial party set by code */
         _setupRole(DEFAULT_ADMIN_ROLE, _addressCustodian);
@@ -56,6 +57,8 @@ contract Dreamcatcher is ERC20, AccessControl {
         );
         _;
     }
+    
+    // SNAPSHOT
 
     // MINTING
     function mintFor(address addressAccount, uint256 uint256Amount)
@@ -75,7 +78,7 @@ contract Dreamcatcher is ERC20, AccessControl {
 
     // BURNING
     function burn(uint256 amount) public virtual onlyCustodian {
-        /* only the custodian can burn tokens for itself people can send tokens here if they want to burn them */
+        /* only the custodian can burn tokens for itself, people can send tokens here if they want to burn them */
         _burn(addressCustodian, amount);
     }
 
