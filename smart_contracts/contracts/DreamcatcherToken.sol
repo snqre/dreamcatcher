@@ -47,23 +47,23 @@ contract Dreamcatcher is ERC20, AccessControl {
         mint(uint256InitialSupply);
     }
 
-    function mint_for(address addressTo, uint256 uint256Amount) public {
-        /* only the custodian can mint tokens for others */
-        /* also has decimals automatically calculated */
+    modifier onlyCustodian() {
         require(
             hasRole(CUSTODIAN, msg.sender),
             "Only the Custodian can mint tokens for others:: must go through proposal"
         );
+        _;
+    }
+
+    function mint_for(address addressTo, uint256 uint256Amount) public onlyCustodian {
+        /* only the custodian can mint tokens for others */
+        /* also has decimals automatically calculated */
         _mint(addressTo, uint256Amount * 10**decimals());
     }
 
-    function mint(uint256 uint256Amount) public {
+    function mint(uint256 uint256Amount) public onlyCustodian {
         /* only the custodian can mint tokens for itself */
         /* also has decimals automatically calculated */
-        require(
-            hasRole(CUSTODIAN, msg.sender),
-            "Only the Custodian can mint tokens for itself:: must go through proposal"
-        );
         _mint(addressCustodian, uint256Amount * 10**decimals());
     }
 }
