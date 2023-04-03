@@ -82,11 +82,11 @@
 	},
 	"sources": {
 		"smart_contracts/contracts/DreamcatcherToken.sol": {
-			"keccak256": "0xfd40f05aaec40119ffb7c9ed52406b92b99439d704947fadb414a303784f546a",
+			"keccak256": "0xe0a980ce371663e0a3ce9bb87363a7a622dce79ce7e0c5c44e397b894a5f5162",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://4441542b652ab7f9841c03dd2e086c534c40ef53c10a9e9a6081ea36979c3fa2",
-				"dweb:/ipfs/QmXx7jiVNicrhmo4K4967pVhJuPSLKAm3eFsZwS8q22ucj"
+				"bzz-raw://c11ab3d0ed58b222321deb3a3a6ffd0297c9081ca1ecbcb945dafbc7df12efb5",
+				"dweb:/ipfs/QmdwsVB8xEXTo2oW9H9xYXjdYyDhEfVSwmyRaqiq8KC179"
 			]
 		}
 	},

@@ -191,103 +191,6 @@
 				"type": "function"
 			},
 			{
-				"inputs": [
-					{
-						"internalType": "uint256",
-						"name": "",
-						"type": "uint256"
-					}
-				],
-				"name": "proposals",
-				"outputs": [
-					{
-						"internalType": "uint256",
-						"name": "id",
-						"type": "uint256"
-					},
-					{
-						"internalType": "string",
-						"name": "caption",
-						"type": "string"
-					},
-					{
-						"internalType": "string",
-						"name": "description",
-						"type": "string"
-					},
-					{
-						"internalType": "uint256",
-						"name": "requestingAmount",
-						"type": "uint256"
-					},
-					{
-						"internalType": "address",
-						"name": "creator",
-						"type": "address"
-					},
-					{
-						"internalType": "uint256",
-						"name": "votingDeadline",
-						"type": "uint256"
-					},
-					{
-						"internalType": "uint256",
-						"name": "votesFor",
-						"type": "uint256"
-					},
-					{
-						"internalType": "uint256",
-						"name": "votesAgainst",
-						"type": "uint256"
-					},
-					{
-						"internalType": "bool",
-						"name": "executed",
-						"type": "bool"
-					},
-					{
-						"internalType": "address payable",
-						"name": "recipient",
-						"type": "address"
-					}
-				],
-				"stateMutability": "view",
-				"type": "function"
-			},
-			{
-				"inputs": [
-					{
-						"internalType": "string",
-						"name": "caption",
-						"type": "string"
-					},
-					{
-						"internalType": "string",
-						"name": "description",
-						"type": "string"
-					},
-					{
-						"internalType": "uint256",
-						"name": "votingDeadline",
-						"type": "uint256"
-					},
-					{
-						"internalType": "uint256",
-						"name": "requestingAmount",
-						"type": "uint256"
-					},
-					{
-						"internalType": "address payable",
-						"name": "recipient",
-						"type": "address"
-					}
-				],
-				"name": "submitProposal",
-				"outputs": [],
-				"stateMutability": "nonpayable",
-				"type": "function"
-			},
-			{
 				"inputs": [],
 				"name": "symbol",
 				"outputs": [
@@ -427,11 +330,11 @@
 	},
 	"sources": {
 		"smart_contracts/contracts/DreamcatcherToken.sol": {
-			"keccak256": "0xfd40f05aaec40119ffb7c9ed52406b92b99439d704947fadb414a303784f546a",
+			"keccak256": "0xe0be33d220be963a0bdd24bd9050720d654598b6e11db9c060d97946ee995093",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://4441542b652ab7f9841c03dd2e086c534c40ef53c10a9e9a6081ea36979c3fa2",
-				"dweb:/ipfs/QmXx7jiVNicrhmo4K4967pVhJuPSLKAm3eFsZwS8q22ucj"
+				"bzz-raw://a6bd435205fcc218c12f65d6a9c56228232f4946a42d09cbe7ff07c1b2f25bb5",
+				"dweb:/ipfs/QmYEuhRC1aAv3bF2NpFRbGy6i7kJ6unVE13Qtfsat2Eeax"
 			]
 		}
 	},

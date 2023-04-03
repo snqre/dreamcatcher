@@ -10,17 +10,13 @@ If the DAO is making money then they can also burn tokens too
 
 // snapshot governance voting compatibility
 // install 0.0.135 vscode solidity extension because latest one doesnt work for imports
-interface IERC20 {
-    function transferFrom(
-        address sender,
-        address recipient,
-        uint256 amount
-    ) external returns (bool);
 
-    function balanceOf(address account) external view returns (uint256);
-}
+/* 
+    transfers
+    mint
 
-contract Dreamcatcher {
+*/
+contract DreamcatcherToken {
     /* =.=.=.=.=.=.=.= TOKEN =.=.=.=.=.=.=.= */
     struct TokenIERC20 {
         string name;
@@ -55,6 +51,7 @@ contract Dreamcatcher {
         // state machine
         TokenToggles toggles;
         TokenAddressStateToggles addressStateToggles;
+        uint256 snapshotCount;
     }
 
     /* =.=.=.=.=.=.=.= CUSTODIAN SYNDICATE =.=.=.=.=.=.=.= */
@@ -97,24 +94,9 @@ contract Dreamcatcher {
         Vault vault;
     }
 
-    /* =.=.=.=.=.=.=.= PROPOSAL OBJ =.=.=.=.=.=.=.= */
-    struct Proposal {
-        uint256 id;
-        string caption;
-        string description;
-        uint256 requestingAmount;
-        address creator;
-        uint256 votingDeadline;
-        uint256 votesFor;
-        uint256 votesAgainst;
-        bool executed;
-        address payable recipient;
-    }
-
     /* =.=.=.=.=.=.=.= INIT =.=.=.=.=.=.=.= */
     Token private dreamcatcherToken;
     Custodian private custodian;
-    mapping(uint256 => Proposal) public proposals;
 
     constructor() {
         /* =.=.=.=.=.=.=.= TOKEN IERC20 =.=.=.=.=.=.=.= */
@@ -163,6 +145,7 @@ contract Dreamcatcher {
         uint256 amount
     );
     event Mint(address indexed account, uint256 amount);
+    event Burn(address indexed account, uint256 amount);
 
     /* =.=.=.=.=.=.=.= VERIFY CUSTODIAN & SYNDICATE =.=.=.=.=.=.=.= */
     modifier onlyCustodian() {
@@ -220,6 +203,13 @@ contract Dreamcatcher {
         dreamcatcherToken.votes[account] += amount;
         dreamcatcherToken.IERC20.totalSupply += amount;
         emit Mint(account, amount);
+    }
+
+    function burn(address account, uint256 amount) public onlyCustodian {
+        dreamcatcherToken.balance[account] -= amount;
+        dreamcatcherToken.votes[account] -= amount;
+        dreamcatcherToken.IERC20.totalSupply -= amount;
+        emit Burn(account, amount);
     }
 
     function allowance(address owner, address spender)
@@ -287,23 +277,12 @@ contract Dreamcatcher {
         }
     }
 
-    /* =.=.=.=.=.=.=.= PROPOSALS =.=.=.=.=.=.=.= */
-    uint256 nProposals;
+    /* check account state toggles */
+    function isCustodian(address account) public view virtual returns (bool) {
+        return dreamcatcherToken.addressStateToggles.isCustodian[account];
+    }
 
-    function submitProposal(
-        string memory caption,
-        string memory description,
-        uint256 votingDeadline,
-        uint256 requestingAmount,
-        address payable recipient
-    ) public onlyCustodian onlySyndicate {
-        Proposal storage newProposal = proposals[nProposals];
-        newProposal.caption = caption;
-        newProposal.description = description;
-        newProposal.creator = msg.sender;
-        newProposal.votingDeadline = votingDeadline;
-        newProposal.requestingAmount = requestingAmount; //sum in DREAM
-        newProposal.recipient = recipient;
-        nProposals++;
+    function isSyndicate(address account) public view virtual returns (bool) {
+        return dreamcatcherToken.addressStateToggles.isSyndicate[account];
     }
 }
