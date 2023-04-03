@@ -128,44 +128,6 @@
 				"type": "function"
 			},
 			{
-				"inputs": [
-					{
-						"internalType": "address",
-						"name": "account",
-						"type": "address"
-					}
-				],
-				"name": "balanceStaked",
-				"outputs": [
-					{
-						"internalType": "uint256",
-						"name": "",
-						"type": "uint256"
-					}
-				],
-				"stateMutability": "view",
-				"type": "function"
-			},
-			{
-				"inputs": [
-					{
-						"internalType": "address",
-						"name": "account",
-						"type": "address"
-					}
-				],
-				"name": "balanceVested",
-				"outputs": [
-					{
-						"internalType": "uint256",
-						"name": "",
-						"type": "uint256"
-					}
-				],
-				"stateMutability": "view",
-				"type": "function"
-			},
-			{
 				"inputs": [],
 				"name": "decimals",
 				"outputs": [
@@ -180,99 +142,15 @@
 			},
 			{
 				"inputs": [],
-				"name": "dreamcatcherToken",
+				"name": "infinite",
 				"outputs": [
 					{
-						"internalType": "string",
-						"name": "name",
-						"type": "string"
-					},
-					{
-						"internalType": "string",
-						"name": "symbol",
-						"type": "string"
-					},
-					{
-						"internalType": "uint8",
-						"name": "decimals",
-						"type": "uint8"
-					},
-					{
 						"internalType": "uint256",
-						"name": "totalSupply",
+						"name": "",
 						"type": "uint256"
-					},
-					{
-						"internalType": "uint256",
-						"name": "initialSupply",
-						"type": "uint256"
-					},
-					{
-						"internalType": "bool",
-						"name": "isPausable",
-						"type": "bool"
-					},
-					{
-						"internalType": "bool",
-						"name": "isPaused",
-						"type": "bool"
-					},
-					{
-						"internalType": "bool",
-						"name": "isMintable",
-						"type": "bool"
-					},
-					{
-						"internalType": "bool",
-						"name": "isBurnable",
-						"type": "bool"
-					},
-					{
-						"internalType": "bool",
-						"name": "isTransferable",
-						"type": "bool"
 					}
 				],
 				"stateMutability": "view",
-				"type": "function"
-			},
-			{
-				"inputs": [
-					{
-						"internalType": "address",
-						"name": "account",
-						"type": "address"
-					}
-				],
-				"name": "grantIsBoardMember",
-				"outputs": [],
-				"stateMutability": "nonpayable",
-				"type": "function"
-			},
-			{
-				"inputs": [
-					{
-						"internalType": "address",
-						"name": "account",
-						"type": "address"
-					}
-				],
-				"name": "grantIsDirector",
-				"outputs": [],
-				"stateMutability": "nonpayable",
-				"type": "function"
-			},
-			{
-				"inputs": [
-					{
-						"internalType": "address",
-						"name": "account",
-						"type": "address"
-					}
-				],
-				"name": "grantIsMember",
-				"outputs": [],
-				"stateMutability": "nonpayable",
 				"type": "function"
 			},
 			{
@@ -289,45 +167,6 @@
 				"type": "function"
 			},
 			{
-				"inputs": [
-					{
-						"internalType": "address",
-						"name": "account",
-						"type": "address"
-					}
-				],
-				"name": "revokeIsBoardMember",
-				"outputs": [],
-				"stateMutability": "nonpayable",
-				"type": "function"
-			},
-			{
-				"inputs": [
-					{
-						"internalType": "address",
-						"name": "account",
-						"type": "address"
-					}
-				],
-				"name": "revokeIsDirector",
-				"outputs": [],
-				"stateMutability": "nonpayable",
-				"type": "function"
-			},
-			{
-				"inputs": [
-					{
-						"internalType": "address",
-						"name": "account",
-						"type": "address"
-					}
-				],
-				"name": "revokeIsMember",
-				"outputs": [],
-				"stateMutability": "nonpayable",
-				"type": "function"
-			},
-			{
 				"inputs": [],
 				"name": "symbol",
 				"outputs": [
@@ -338,6 +177,19 @@
 					}
 				],
 				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "account",
+						"type": "address"
+					}
+				],
+				"name": "toggleIsSyndicate",
+				"outputs": [],
+				"stateMutability": "nonpayable",
 				"type": "function"
 			},
 			{
@@ -407,14 +259,8 @@
 				"type": "function"
 			},
 			{
-				"inputs": [
-					{
-						"internalType": "address",
-						"name": "account",
-						"type": "address"
-					}
-				],
-				"name": "votes",
+				"inputs": [],
+				"name": "zero",
 				"outputs": [
 					{
 						"internalType": "uint256",
@@ -454,11 +300,11 @@
 	},
 	"sources": {
 		"smart_contracts/contracts/DreamcatcherToken.sol": {
-			"keccak256": "0xf46d06fc9a68d93f1ed832911a168dc150c3bbc1910452bd998aa0b4d31423d7",
+			"keccak256": "0x98474b125917b01edfdc9d7e56f7fdd5afcd07b82d91d03c685c5da0aedd14db",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://48626f55caad5f06f5b58e0bb3baab3046609aa33350f855b367d754168d7a85",
-				"dweb:/ipfs/QmSqMsXifqEjVK82tdU5VogHdhBFAz5XYen5ZhFfgDGYmd"
+				"bzz-raw://1b33c634c4f0d8c61676ddce9302b49ba86498a9a88d3fde693f845483f246a1",
+				"dweb:/ipfs/QmQA4UEr5ZgSNnyxkVqiJfZG7WSwEU9v7MGsbPGQ9dzZy8"
 			]
 		},
 		"smart_contracts/node_modules/@openzeppelin/contracts/access/AccessControl.sol": {

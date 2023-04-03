@@ -23,16 +23,34 @@ import "smart_contracts/node_modules/@openzeppelin/contracts/security/Reentrancy
 import "smart_contracts/node_modules/@openzeppelin/contracts/security/PullPayment.sol";
 
 contract Dreamcatcher {
-    uint256 private infinte = type(uint256).max;
-    uint256 private zero = 0;
+    uint256 public infinite = type(uint256).max;
+    uint256 public zero = 0;
 
     // TOKEN DATA
-    struct Token {
+    struct TokenIERC20 {
         string name;
         string symbol;
         uint8 decimals;
         uint256 totalSupply;
         uint256 initialSupply;
+    }
+
+    struct TokenToggles {
+        bool isPausable;
+        bool isPaused;
+        bool isMintable;
+        bool isBurnable;
+        bool isTransferable;
+    }
+
+    struct TokenAddressStateToggles {
+        mapping(address => bool) isCustodian; //incharge of critical things
+        mapping(address => bool) isSyndicate;
+    }
+
+    struct Token {
+        /* ERC20 compliant data */
+        TokenIERC20 IERC20;
         // address data
         mapping(address => uint256) balance; //how much each address has of our token
         mapping(address => uint256) vested; // how many of the tokens are locked
@@ -40,126 +58,91 @@ contract Dreamcatcher {
         mapping(address => uint256) votes; //how many votes do they have typically 1:1 with tokens but might change
         mapping(address => mapping(address => uint256)) allowance;
         // state machine
-        bool isPausable;
-        bool isPaused;
-        bool isMintable;
-        bool isBurnable;
-        bool isTransferable;
-        // roles
-        mapping(address => bool) isCustodian; //incharge of critical things
-        mapping(address => bool) isFounder; //cool to know lets people know the founders account so they can see if we are selling, we want to do things right
-        mapping(address => bool) isBoardMember;
-        mapping(address => bool) isDirector;
-        mapping(address => bool) isMember;
+        TokenToggles toggles;
+        TokenAddressStateToggles addressStateToggles;
+    }
+
+    /* =.=.=.=.=.=.=.= CUSTODIAN SYNDICATE =.=.=.=.=.=.=.= */
+    struct Settings {
+        uint256 n;
+        uint256 nMin;
+        uint256 nMax;
+        uint256 minBalance;
+        uint256 minStaked;
+        uint256 minVotes;
+    }
+
+    struct Syndicate {
+        Settings settings;
+    }
+
+    /* =.=.=.=.=.=.=.= CUSTODIAN TREASURY MANAGEMENT =.=.=.=.=.=.=.= */
+    struct MultiSig {
+        /* number of required signatures to access signatures */
+        uint256 requiredSignatures;
+        /* once signed how long it takes before the funds can be accessed */
+        uint256 delay;
+    }
+
+    struct Vault {
+        /* th*/
+        bool isBuying;
+        bool isSelling;
+        /* unlike others you can redeem ETH for yours share*/
+        uint256 askEth;
+        uint256 bidEth;
+        /* amount being sold or bought */
+        uint256 amount;
     }
 
     struct Custodian {
         address account;
-        /* these can all be changed with a proposal -- future proofing the contract 
-            some of these are redundant but will be accessible through polling in case the community believes we need them
-        */
-        uint256 numberOfBoardMembers;
-        uint256 minNumberOfBoardMembers; //minimum amount of accounts that should be board members
-        uint256 maxNumberOfBoardMembers; //maximum amount of account that can be board members
-        uint256 numberOfDirectors;
-        uint256 minNumberOfDirectors; //minimum amount of accounts that should be directors
-        uint256 maxNumberOfDirectors; //maximum amount of accounts that can be directors
-        uint256 numberOfMembers;
-        uint256 minNumberOfMembers; //minimum amount of accounts that should be members
-        uint256 maxNumberOfMembers; //maximum amount of accounts that can be members **infinte
-        uint256 minBalanceToBeBoardMember; //minimum balance you need to be able to become a board member
-        uint256 maxBalanceToBeBoardMember; //maximum balance you need to be able to become a board member
-        uint256 minVestedToBeBoardMember; //minimum vested balance you need to be able to become a board member
-        uint256 maxVestedToBeBoardMember; //maximum vested balance you need to be able to become a board member
-        uint256 minStakedToBeBoardMember; //minimum staked balance you need to be able to become a board member
-        uint256 maxStakedToBeBoardMember; //maximum staked balance you need to be able to become a board member
-        uint256 minVotesToBeBoardMember; //minimum amount of votes you need to become a board member
-        uint256 maxVotesToBeBoardMember; //maximum amount of votes you need to become a board member
-        uint256 minBalanceToBeDirector;
-        uint256 maxBalanceToBeDirector;
-        uint256 minVestedToBeDirector;
-        uint256 maxVestedToBeDirector;
-        uint256 minStakedToBeDirector;
-        uint256 maxStakedToBeDirector;
-        uint256 minVotesToBeDirector;
-        uint256 maxVotesToBeDirector;
-        uint256 minBalanceToBeMember;
-        uint256 maxBalanceToBeMember;
-        uint256 minVestedToBeMember;
-        uint256 maxVestedToBeMember;
-        uint256 minStakedToBeMember;
-        uint256 maxStakedToBeMember;
-        uint256 minVotesToBeMember;
-        uint256 maxVotesToBeMember;
-        /* proposals */
-        uint256 percentTotalSupplyToPass;
-        /* services */
-        uint256 percentEarningsDistributed; //how much is
-        uint256 percentEarnignsDistributedThroughBurning;
-        bool isPausing;
+        /* a group of people allowed to propose and incharge of the project */
+        Syndicate syndicate;
+        Vault vault;
     }
 
     // -- MAIN
-    Token public dreamcatcherToken;
-    Custodian public custodian; //our custodian is like an accountant, broker, and third party incharge of making sure every change passes through a proposal
+    Token private dreamcatcherToken;
+    Custodian private custodian; //our custodian is like an accountant, broker, and third party incharge of making sure every change passes through a proposal
 
     constructor() {
-        dreamcatcherToken.name = "Dreamcatcher";
-        dreamcatcherToken.symbol = "DREAM";
-        dreamcatcherToken.decimals = 18;
-        dreamcatcherToken.initialSupply = 10000;
-        dreamcatcherToken.totalSupply = dreamcatcherToken.initialSupply;
-        dreamcatcherToken.isPausable = true;
-        dreamcatcherToken.isMintable = true;
-        dreamcatcherToken.isBurnable = true;
-        dreamcatcherToken.isTransferable = true;
+        /* =.=.=.=.=.=.=.= TOKEN IERC20 =.=.=.=.=.=.=.= */
+        dreamcatcherToken.IERC20.name = "Dreamcatcher";
+        dreamcatcherToken.IERC20.symbol = "DREAM";
+        dreamcatcherToken.IERC20.decimals = 18;
+        dreamcatcherToken.IERC20.totalSupply =
+            100000 *
+            10**dreamcatcherToken.IERC20.decimals;
 
-        //by default the launched contract address will be custodian
-        dreamcatcherToken.isCustodian[msg.sender] = true;
+        /* =.=.=.=.=.=.=.= CUSTODIAN =.=.=.=.=.=.=.= */
+        /* set custodian */
+        custodian.account = msg.sender;
+        /* make the contract custodian */
+        dreamcatcherToken.addressStateToggles.isCustodian[
+            custodian.account
+        ] = true;
+        /* default settings for the syndicate */
+        custodian.syndicate.settings.n = 0;
+        custodian.syndicate.settings.nMin = 0;
+        custodian.syndicate.settings.nMax = 0;
+        custodian.syndicate.settings.minBalance =
+            10000 *
+            10**dreamcatcherToken.IERC20.decimals;
+        custodian.syndicate.settings.minStaked =
+            10000 *
+            10**dreamcatcherToken.IERC20.decimals;
+        custodian.syndicate.settings.minVotes =
+            10000 *
+            10**dreamcatcherToken.IERC20.decimals;
 
         //instructions on deploy
         //send 20% to team wallet
         //send x% for private funding
         //keep x amount on contract as the contract will be the one selling directly
-
-        /* CUSTODIAN */
-        custodian.account = msg.sender;
-        custodian.minNumberOfBoardMembers = 6; //only 6 accounts can have board member status at a time
-        custodian.maxNumberOfBoardMembers = 16; //for a maximum of 16
-        custodian.minBalanceToBeBoardMember = 2000;
-        custodian.maxBalanceToBeBoardMember = infinte;
-        custodian.minVestedToBeBoardMember = zero;
-        custodian.maxVestedToBeBoardMember = infinte;
-        custodian.minStakedToBeBoardMember = 2000;
-        custodian.maxStakedToBeBoardMember = infinte;
-        custodian.minVotesToBeBoardMember = 2000;
-        custodian.maxVotesToBeBoardMember = infinte;
-
-        custodian.minNumberOfDirectors = 1;
-        custodian.maxNumberOfDirectors = 1;
-        custodian.minBalanceToBeDirector = 10000;
-        custodian.maxBalanceToBeDirector = infinte;
-        custodian.minVestedToBeDirector = zero;
-        custodian.maxVestedToBeDirector = infinte;
-        custodian.minStakedToBeDirector = 10000;
-        custodian.maxStakedToBeDirector = infinte;
-        custodian.minVotesToBeDirector = 10000;
-        custodian.maxVotesToBeDirector = infinte;
-
-        custodian.minNumberOfMembers = zero;
-        custodian.maxNumberOfMembers = infinte;
-        custodian.minBalanceToBeMember = 1;
-        custodian.maxBalanceToBeMember = infinte;
-        custodian.minVestedToBeMember = zero;
-        custodian.maxVestedToBeMember = infinte;
-        custodian.minStakedToBeMember = zero;
-        custodian.maxStakedToBeMember = infinte;
-        custodian.minVotesToBeMember = 1;
-        custodian.maxVotesToBeMember = infinte;
     }
 
-    // -- FUNCTIONALITY AND FEATURES
-    /* events */
+    /* =.=.=.=.=.=.=.= EVENTS =.=.=.=.=.=.=.= */
     event Transfer(address indexed from, address indexed to, uint256 amount);
     event Approval(
         address indexed owner,
@@ -167,99 +150,45 @@ contract Dreamcatcher {
         uint256 amount
     );
 
+    /* =.=.=.=.=.=.=.= VERIFY CUSTODIAN & SYNDICATE =.=.=.=.=.=.=.= */
     modifier onlyCustodian() {
-        //note im not sure if all account roles start with false yet
-        /* check if address is custodian */
         require(
-            dreamcatcherToken.isCustodian[msg.sender] == true,
-            "Only the Custodian can access this. Use a proposal or vote on it. Elect a board member"
+            dreamcatcherToken.addressStateToggles.isCustodian[msg.sender] ==
+                true,
+            "Must be accessed through a proposal"
         );
         _;
     }
 
-    modifier onlyFounder() {
-        /* check if address is founder */
+    modifier onlySyndicate() {
         require(
-            dreamcatcherToken.isFounder[msg.sender] == true,
-            "Only the Founder can access this. Contact the founder"
+            dreamcatcherToken.addressStateToggles.isSyndicate[msg.sender] ==
+                true,
+            "Only Syndicates can access this function"
         );
         _;
     }
 
-    modifier onlyBoardMember() {
-        //note im not sure if all account roles start with false yet
-        /* check if address is custodian */
-        require(
-            dreamcatcherToken.isBoardMember[msg.sender] == true,
-            "Only a board member can access this. vote for a board member or campaign to become one"
-        );
-        _;
-    }
-
-    modifier onlyDirector() {
-        //note im not sure if all account roles start with false yet
-        /* check if address is custodian */
-        require(
-            dreamcatcherToken.isDirector[msg.sender] == true,
-            "Only the Custodian can access this. Use a proposal or vote on it. Elect a board member"
-        );
-        _;
-    }
-
-    modifier onlyMember() {
-        //note im not sure if all account roles start with false yet
-        /* check if address is custodian */
-        require(
-            dreamcatcherToken.isMember[msg.sender] == true,
-            "You must wait to become a voting member of this community"
-        );
-        _;
-    }
-
+    /* =.=.=.=.=.=.=.= IERC20 =.=.=.=.=.=.=.= */
     function name() public view virtual returns (string memory) {
-        return dreamcatcherToken.name;
+        return dreamcatcherToken.IERC20.name;
     }
 
     function symbol() public view virtual returns (string memory) {
-        return dreamcatcherToken.symbol;
+        return dreamcatcherToken.IERC20.symbol;
     }
 
     function decimals() public view virtual returns (uint8) {
-        return dreamcatcherToken.decimals;
+        return dreamcatcherToken.IERC20.decimals;
     }
 
     function totalSupply() public view virtual returns (uint256) {
-        return dreamcatcherToken.totalSupply;
+        return dreamcatcherToken.IERC20.totalSupply;
     }
 
     function balanceOf(address account) public view virtual returns (uint256) {
         /* return how much the address has of our token */
         return dreamcatcherToken.balance[account];
-    }
-
-    function balanceVested(address account)
-        public
-        view
-        virtual
-        returns (uint256)
-    {
-        /* return the amount of tokens of the account which are locked */
-        return dreamcatcherToken.vested[account];
-    }
-
-    function balanceStaked(address account)
-        public
-        view
-        virtual
-        returns (uint256)
-    {
-        /* return the amount of tokens which are staked */
-        return dreamcatcherToken.staked[account];
-    }
-
-    function votes(address account) public view virtual returns (uint256) {
-        /* return number of votes the person has */
-        return dreamcatcherToken.votes[account];
     }
 
     function allowance(address owner, address spender)
@@ -311,128 +240,16 @@ contract Dreamcatcher {
         return true;
     }
 
-    /*
-        all roles can be granted except custodian and founder
-    */
-
-    function checkOutOfRange(
-        uint256 min,
-        uint256 max,
-        uint256 value
-    ) private returns (bool) {
-        bool isOutOfRange;
-        if (value > max) {
-            isOutOfRange = true;
-        } else if (value < min) {
-            isOutOfRange = true;
-        } else {
-            isOutOfRange = false;
+    /* =.=.=.=.=.=.=.= GRANT & REVOKE SYNDICATE =.=.=.=.=.=.=.= */
+    function toggleIsSyndicate(address account) public onlyCustodian {
+        if (
+            dreamcatcherToken.addressStateToggles.isSyndicate[account] == true
+        ) {
+            dreamcatcherToken.addressStateToggles.isSyndicate[account] = false;
+        } else if (
+            dreamcatcherToken.addressStateToggles.isSyndicate[account] == false
+        ) {
+            dreamcatcherToken.addressStateToggles.isSyndicate[account] = true;
         }
-        return isOutOfRange;
-    }
-
-    function grantIsBoardMember(address account) public onlyCustodian {
-        if (custodian.minNumberOfBoardMembers != infinte) {
-            
-            require(
-                !checkOutOfRange(
-                    custodian.minNumberOfBoardMembers,
-                    custodian.maxNumberOfBoardMembers,
-                    custodian.numberOfBoardMembers + 1
-                ),
-                "New value is out of range."
-            );
-        }
-
-        /* grant board member role */
-        dreamcatcherToken.isBoardMember[account] = true;
-        custodian.numberOfBoardMembers += 1;
-    }
-
-    function revokeIsBoardMember(address account) public onlyCustodian {
-        if (custodian.maxNumberOfBoardMembers != zero) {
-            require(
-                !checkOutOfRange(
-                    custodian.minNumberOfBoardMembers,
-                    custodian.maxNumberOfBoardMembers,
-                    custodian.numberOfBoardMembers - 1
-                ),
-                "New value is out of range."
-            );
-        }
-
-        /* revoke board member role */
-        dreamcatcherToken.isBoardMember[account] = false;
-        custodian.numberOfBoardMembers -= 1;
-    }
-
-    function grantIsDirector(address account) public onlyCustodian {
-        if (custodian.minNumberOfDirectors != infinte) {
-            require(
-                !checkOutOfRange(
-                    custodian.minNumberOfDirectors,
-                    custodian.maxNumberOfDirectors,
-                    custodian.numberOfDirectors + 1
-                ),
-                "New value is out of range."
-            );
-        }
-
-        /* grant director role */
-        dreamcatcherToken.isDirector[account] = true;
-        custodian.numberOfDirectors += 1;
-    }
-
-    function revokeIsDirector(address account) public onlyCustodian {
-        if (custodian.minNumberOfDirectors != zero) {
-            require(
-                !checkOutOfRange(
-                    custodian.minNumberOfDirectors,
-                    custodian.maxNumberOfDirectors,
-                    custodian.numberOfDirectors - 1
-                ),
-                "New value is out of range."
-            );
-        }
-
-        /* revoke director role */
-        dreamcatcherToken.isDirector[account] = false;
-        custodian.numberOfDirectors -= 1;
-    }
-
-    /*
-        membership is important and sets who can take part in voting
-        we don't want people who just bought their tokens 2 days ago to try and vote
-        we want dedicated people to be responsible no moon boiis
-    */
-    function grantIsMember(address account) public onlyCustodian {
-        if (custodian.maxNumberOfMembers != infinte) {
-            require(
-                !checkOutOfRange(
-                    custodian.minNumberOfMembers,
-                    custodian.maxNumberOfMembers,
-                    custodian.numberOfMembers - 1
-                ),
-                "New value is out of range."
-            );
-        }
-
-        /* grant membership */
-        dreamcatcherToken.isMember[account] = true;
-    }
-
-    function revokeIsMember(address account) public onlyCustodian {
-        if (custodian.minNumberOfMembers != zero) {
-            require(
-                !checkOutOfRange(
-                    custodian.minNumberOfMembers,
-                    custodian.maxNumberOfMembers,
-                    custodian.numberOfMembers - 1
-                ),
-                "New value is out of range."
-            );
-        }
-        /* revoke membership */
-        dreamcatcherToken.isMember[account] = false;
     }
 }
