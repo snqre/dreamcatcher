@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.4;
+pragma solidity ^0.8.7;
 /*
 The token max supply is uncapped to allow the governor to raise funds
 However, it will require proposals and heavy voting to be able to do such a thing
@@ -333,6 +333,7 @@ contract Dreamcatcher {
 
     function grantIsBoardMember(address account) public onlyCustodian {
         if (custodian.minNumberOfBoardMembers != infinte) {
+            
             require(
                 !checkOutOfRange(
                     custodian.minNumberOfBoardMembers,
