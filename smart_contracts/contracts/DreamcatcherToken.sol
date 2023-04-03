@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.7;
+
 /*
 The token max supply is uncapped to allow the governor to raise funds
 However, it will require proposals and heavy voting to be able to do such a thing
@@ -9,24 +10,18 @@ If the DAO is making money then they can also burn tokens too
 
 // snapshot governance voting compatibility
 // install 0.0.135 vscode solidity extension because latest one doesnt work for imports
-import "smart_contracts/node_modules/@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "smart_contracts/node_modules/@openzeppelin/contracts/access/AccessControl.sol";
-import "smart_contracts/node_modules/@openzeppelin/contracts/access/Ownable.sol";
-import "smart_contracts/node_modules/@openzeppelin/contracts/token/ERC20/extensions/ERC20Votes.sol";
-import "smart_contracts/node_modules/@openzeppelin/contracts/token/ERC20/extensions/ERC20Snapshot.sol";
-import "smart_contracts/node_modules/@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "smart_contracts/node_modules/@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "smart_contracts/node_modules/@openzeppelin/contracts/utils/math/SafeMath.sol";
-import "smart_contracts/node_modules/@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
-import "smart_contracts/node_modules/@openzeppelin/contracts/token/ERC20/extensions/ERC20Pausable.sol";
-import "smart_contracts/node_modules/@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import "smart_contracts/node_modules/@openzeppelin/contracts/security/PullPayment.sol";
+interface IERC20 {
+    function transferFrom(
+        address sender,
+        address recipient,
+        uint256 amount
+    ) external returns (bool);
+
+    function balanceOf(address account) external view returns (uint256);
+}
 
 contract Dreamcatcher {
-    uint256 public infinite = type(uint256).max;
-    uint256 public zero = 0;
-
-    // TOKEN DATA
+    /* =.=.=.=.=.=.=.= TOKEN =.=.=.=.=.=.=.= */
     struct TokenIERC20 {
         string name;
         string symbol;
@@ -85,7 +80,7 @@ contract Dreamcatcher {
     }
 
     struct Vault {
-        /* th*/
+        /* can people get Eth from the address */
         bool isBuying;
         bool isSelling;
         /* unlike others you can redeem ETH for yours share*/
@@ -102,18 +97,31 @@ contract Dreamcatcher {
         Vault vault;
     }
 
-    // -- MAIN
+    /* =.=.=.=.=.=.=.= PROPOSAL OBJ =.=.=.=.=.=.=.= */
+    struct Proposal {
+        uint256 id;
+        string caption;
+        string description;
+        uint256 requestingAmount;
+        address creator;
+        uint256 votingDeadline;
+        uint256 votesFor;
+        uint256 votesAgainst;
+        bool executed;
+        address payable recipient;
+    }
+
+    /* =.=.=.=.=.=.=.= INIT =.=.=.=.=.=.=.= */
     Token private dreamcatcherToken;
-    Custodian private custodian; //our custodian is like an accountant, broker, and third party incharge of making sure every change passes through a proposal
+    Custodian private custodian;
+    mapping(uint256 => Proposal) public proposals;
 
     constructor() {
         /* =.=.=.=.=.=.=.= TOKEN IERC20 =.=.=.=.=.=.=.= */
         dreamcatcherToken.IERC20.name = "Dreamcatcher";
         dreamcatcherToken.IERC20.symbol = "DREAM";
         dreamcatcherToken.IERC20.decimals = 18;
-        dreamcatcherToken.IERC20.totalSupply =
-            100000 *
-            10**dreamcatcherToken.IERC20.decimals;
+        dreamcatcherToken.IERC20.totalSupply = 0;
 
         /* =.=.=.=.=.=.=.= CUSTODIAN =.=.=.=.=.=.=.= */
         /* set custodian */
@@ -136,7 +144,12 @@ contract Dreamcatcher {
             10000 *
             10**dreamcatcherToken.IERC20.decimals;
 
-        //instructions on deploy
+        /* =.=.=.=.=.=.=.= LAUNCH INSTRUCTIONS =.=.=.=.=.=.=.= */
+        mint(custodian.account, 60000);
+        //mint(0x172952523F64EAAF288DE4cE9e5d1295DCFd3F83, 1000); // -- team member I
+        //mint(0xDbF85074764156004FEb245b65693e59a62262c2, 1000); // -- team member II
+        //mint(0x1de8807f69E357FD91e47B34Dc2a66216a9DC4b4, 1000); // -- team member III
+        // -- team address
         //send 20% to team wallet
         //send x% for private funding
         //keep x amount on contract as the contract will be the one selling directly
@@ -149,6 +162,7 @@ contract Dreamcatcher {
         address indexed spender,
         uint256 amount
     );
+    event Mint(address indexed account, uint256 amount);
 
     /* =.=.=.=.=.=.=.= VERIFY CUSTODIAN & SYNDICATE =.=.=.=.=.=.=.= */
     modifier onlyCustodian() {
@@ -191,6 +205,23 @@ contract Dreamcatcher {
         return dreamcatcherToken.balance[account];
     }
 
+    function votingWeightOf(address account)
+        public
+        view
+        virtual
+        returns (uint256)
+    {
+        /* how much voting power the address holds */
+        return dreamcatcherToken.votes[account];
+    }
+
+    function mint(address account, uint256 amount) public onlyCustodian {
+        dreamcatcherToken.balance[account] += amount;
+        dreamcatcherToken.votes[account] += amount;
+        dreamcatcherToken.IERC20.totalSupply += amount;
+        emit Mint(account, amount);
+    }
+
     function allowance(address owner, address spender)
         public
         view
@@ -199,14 +230,15 @@ contract Dreamcatcher {
         return dreamcatcherToken.allowance[owner][spender];
     }
 
-    // transfer, transferfrom, approve, allowance
     function transfer(address recipient, uint256 amount) public returns (bool) {
         require(
             dreamcatcherToken.balance[msg.sender] >= amount,
             "Insufficient balance"
         );
         dreamcatcherToken.balance[msg.sender] -= amount;
+        dreamcatcherToken.votes[msg.sender] -= amount;
         dreamcatcherToken.balance[recipient] += amount;
+        dreamcatcherToken.votes[recipient] += amount;
         emit Transfer(msg.sender, recipient, amount);
         return true;
     }
@@ -226,7 +258,9 @@ contract Dreamcatcher {
         );
 
         dreamcatcherToken.balance[sender] -= amount;
+        dreamcatcherToken.votes[sender] -= amount;
         dreamcatcherToken.balance[recipient] += amount;
+        dreamcatcherToken.votes[recipient] += amount;
         dreamcatcherToken.allowance[sender][msg.sender] -= amount;
 
         emit Transfer(sender, recipient, amount);
@@ -251,5 +285,25 @@ contract Dreamcatcher {
         ) {
             dreamcatcherToken.addressStateToggles.isSyndicate[account] = true;
         }
+    }
+
+    /* =.=.=.=.=.=.=.= PROPOSALS =.=.=.=.=.=.=.= */
+    uint256 nProposals;
+
+    function submitProposal(
+        string memory caption,
+        string memory description,
+        uint256 votingDeadline,
+        uint256 requestingAmount,
+        address payable recipient
+    ) public onlyCustodian onlySyndicate {
+        Proposal storage newProposal = proposals[nProposals];
+        newProposal.caption = caption;
+        newProposal.description = description;
+        newProposal.creator = msg.sender;
+        newProposal.votingDeadline = votingDeadline;
+        newProposal.requestingAmount = requestingAmount; //sum in DREAM
+        newProposal.recipient = recipient;
+        nProposals++;
     }
 }

@@ -1,0 +1,65 @@
+{
+	"compiler": {
+		"version": "0.8.18+commit.87f61d96"
+	},
+	"language": "Solidity",
+	"output": {
+		"abi": [
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "account",
+						"type": "address"
+					}
+				],
+				"name": "balanceOf",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			}
+		],
+		"devdoc": {
+			"kind": "dev",
+			"methods": {},
+			"version": 1
+		},
+		"userdoc": {
+			"kind": "user",
+			"methods": {},
+			"version": 1
+		}
+	},
+	"settings": {
+		"compilationTarget": {
+			"smart_contracts/contracts/DreamcatcherToken.sol": "ERC20"
+		},
+		"evmVersion": "paris",
+		"libraries": {},
+		"metadata": {
+			"bytecodeHash": "ipfs"
+		},
+		"optimizer": {
+			"enabled": false,
+			"runs": 200
+		},
+		"remappings": []
+	},
+	"sources": {
+		"smart_contracts/contracts/DreamcatcherToken.sol": {
+			"keccak256": "0xc2ebc287b9dc60acafb47616821d6c55bb4ae70c33c5568c71a782ba6149e5e3",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://8fa57ad8b98422a883f92a2754a636189c1fe8fb6bf769215e74e445927d022d",
+				"dweb:/ipfs/QmdpjbgZ2djHs82WWzsRGYNFmLbWqjRZg4EZa34WUcWnLa"
+			]
+		}
+	},
+	"version": 1
+}
