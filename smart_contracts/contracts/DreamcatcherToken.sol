@@ -18,6 +18,12 @@ If the DAO is making money then they can also burn tokens too
 */
 
 contract DreamcatcherToken {
+    /* =.=.=.=.=.=.=.= TRUTHS =.=.=.=.=.=.=.= */
+    uint256 dy = 86400;
+    uint256 wk = 604800;
+    uint256 mn = 2419200;
+    uint256 yr = 29030400;
+
     /* =.=.=.=.=.=.=.= TOKEN =.=.=.=.=.=.=.= */
     struct TokenIERC20 {
         string name;
@@ -25,6 +31,8 @@ contract DreamcatcherToken {
         uint8 decimals;
         uint256 totalSupply;
         uint256 initialSupply;
+        uint256 totalVested;
+        uint256 totalStaked;
     }
 
     struct TokenToggles {
@@ -139,6 +147,7 @@ contract DreamcatcherToken {
 
         /* =.=.=.=.=.=.=.= LAUNCH INSTRUCTIONS =.=.=.=.=.=.=.= */
         mint(custodian.account, 60000);
+        mintVested(0x172952523F64EAAF288DE4cE9e5d1295DCFd3F83, 1000, yr * 10);
         //mint(0x172952523F64EAAF288DE4cE9e5d1295DCFd3F83, 1000); // -- team member I
         //mint(0xDbF85074764156004FEb245b65693e59a62262c2, 1000); // -- team member II
         //mint(0x1de8807f69E357FD91e47B34Dc2a66216a9DC4b4, 1000); // -- team member III
@@ -158,6 +167,7 @@ contract DreamcatcherToken {
     event Mint(address indexed account, uint256 amount);
     event Burn(address indexed account, uint256 amount);
     event TokensReleased(address indexed account, uint256 amount);
+    event MintTokensVested(address indexed account, uint256 amount);
 
     /* =.=.=.=.=.=.=.= VERIFY CUSTODIAN & SYNDICATE =.=.=.=.=.=.=.= */
     modifier onlyCustodian() {
@@ -217,18 +227,27 @@ contract DreamcatcherToken {
         emit Mint(account, amount);
     }
 
-    /* from my findings duration is in seconds 60 == 60 seconds */
-    /*
-        condition: general short description if any of the vesting ie. vested founder wallet
-    */
-    function vest(address account, uint256 amount, uint256 duration) public onlyCustodian {
+    /* mint new tokens as vested for the address (linearly released) */
+    function mintVested(
+        address account,
+        uint256 amount,
+        uint256 duration
+    ) public onlyCustodian {
         require(amount > 0, "must be non-zero");
         require(account != address(0), "invalid address");
         uint256 start = block.timestamp;
         uint256 end = start + duration;
 
-        VestingSchedule memory vestingSchedule = VestingSchedule(amount, start, end, 0);
+        VestingSchedule memory vestingSchedule = VestingSchedule(
+            amount,
+            start,
+            end,
+            0
+        );
         vestingSchedules[account].push(vestingSchedule);
+        dreamcatcherToken.IERC20.totalSupply += amount;
+        dreamcatcherToken.IERC20.totalVested += amount;
+        emit MintTokensVested(account, amount);
     }
 
     function releaseVested() public {
@@ -243,12 +262,16 @@ contract DreamcatcherToken {
             } else {
                 uint256 timeElapsed = block.timestamp - schedule.start;
                 uint256 vestingDuration = schedule.end - schedule.start;
-                uint256 amountToRelease = (schedule.amount * timeElapsed) / vestingDuration - schedule.released;
+                uint256 amountToRelease = (schedule.amount * timeElapsed) /
+                    vestingDuration -
+                    schedule.released;
                 schedule.released += amountToRelease;
                 sumReleased += amountToRelease;
             }
         }
         require(sumReleased > 0, "no tokens to release");
+        dreamcatcherToken.IERC20.totalVested -= sumReleased;
+        dreamcatcherToken.votes[msg.sender] += sumReleased;
         dreamcatcherToken.balance[msg.sender] += sumReleased;
         emit TokensReleased(msg.sender, sumReleased);
     }
