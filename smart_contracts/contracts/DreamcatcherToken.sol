@@ -99,11 +99,14 @@ contract DreamcatcherToken {
     struct VestingSchedule {
         uint256 amount;
         uint256 start;
-        uint256 duration;
-        uint256 claimed;
+        uint256 end;
+        uint256 released;
+        string condition;
     }
 
-    mapping(address => VestingSchedule[]) public vestingSchedules;
+    /* used to assign an id for each vesting schedule  */
+    uint256 iSchedules = 0;
+    VestingSchedule[] public schedules;
 
     /* =.=.=.=.=.=.=.= INIT =.=.=.=.=.=.=.= */
     Token private dreamcatcherToken;
@@ -216,12 +219,26 @@ contract DreamcatcherToken {
         emit Mint(account, amount);
     }
 
-    function mintVested(
-        address account,
-        uint256 amount,
-        uint256 start,
-        uint256 duration
-    ) public onlyCustodian {}
+    /* from my findings duration is in seconds 60 == 60 seconds */
+    /*
+        condition: general short description if any of the vesting ie. vested founder wallet
+    */
+    function vest(address account, uint256 amount, uint256 duration, string condition) public onlyCustodian {
+        require(amount > 0, "Amount must be non zero");
+        uint256 start = block.timestamp;
+        uint256 end = start + duration;
+
+        /* release everything as soon as the time is up */
+        VestingSchedule vestingSchedule;
+        vestingSchedule.amount = amount;
+        vestingSchedule.start = start;
+        vestingSchedule.end = end;
+        vestingSchedule.condition = condition;
+        vestingSchedule.released = 0;
+
+        schedules[iSchedules] = vestingSchedule;
+        iSchedules++;
+    }
 
     function burn(address account, uint256 amount) public onlyCustodian {
         dreamcatcherToken.balance[account] -= amount;
