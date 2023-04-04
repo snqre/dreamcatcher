@@ -336,6 +336,7 @@ contract DreamcatcherToken {
     }
 
     /* =.=.=.=.=.=.=.= GRANT & REVOKE SYNDICATE =.=.=.=.=.=.=.= */
+    /* --add check for max and min */
     function toggleIsSyndicate(address account) public onlyCustodian {
         if (
             dreamcatcherToken.addressStateToggles.isSyndicate[account] == true
@@ -349,11 +350,11 @@ contract DreamcatcherToken {
     }
 
     /* check account state toggles */
-    function isCustodian(address account) public view virtual returns (bool) {
+    function isCustodian(address account) public view returns (bool) {
         return dreamcatcherToken.addressStateToggles.isCustodian[account];
     }
 
-    function isSyndicate(address account) public view virtual returns (bool) {
+    function isSyndicate(address account) public view returns (bool) {
         return dreamcatcherToken.addressStateToggles.isSyndicate[account];
     }
 }
