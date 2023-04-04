@@ -101,12 +101,9 @@ contract DreamcatcherToken {
         uint256 start;
         uint256 end;
         uint256 released;
-        string condition;
     }
 
-    /* used to assign an id for each vesting schedule  */
-    uint256 iSchedules = 0;
-    VestingSchedule[] public schedules;
+    mapping(address => VestingSchedule[]) private vestingSchedules;
 
     /* =.=.=.=.=.=.=.= INIT =.=.=.=.=.=.=.= */
     Token private dreamcatcherToken;
@@ -160,6 +157,7 @@ contract DreamcatcherToken {
     );
     event Mint(address indexed account, uint256 amount);
     event Burn(address indexed account, uint256 amount);
+    event TokensReleased(address indexed account, uint256 amount);
 
     /* =.=.=.=.=.=.=.= VERIFY CUSTODIAN & SYNDICATE =.=.=.=.=.=.=.= */
     modifier onlyCustodian() {
@@ -223,21 +221,36 @@ contract DreamcatcherToken {
     /*
         condition: general short description if any of the vesting ie. vested founder wallet
     */
-    function vest(address account, uint256 amount, uint256 duration, string condition) public onlyCustodian {
-        require(amount > 0, "Amount must be non zero");
+    function vest(address account, uint256 amount, uint256 duration) public onlyCustodian {
+        require(amount > 0, "must be non-zero");
+        require(account != address(0), "invalid address");
         uint256 start = block.timestamp;
         uint256 end = start + duration;
 
-        /* release everything as soon as the time is up */
-        VestingSchedule vestingSchedule;
-        vestingSchedule.amount = amount;
-        vestingSchedule.start = start;
-        vestingSchedule.end = end;
-        vestingSchedule.condition = condition;
-        vestingSchedule.released = 0;
+        VestingSchedule memory vestingSchedule = VestingSchedule(amount, start, end, 0);
+        vestingSchedules[account].push(vestingSchedule);
+    }
 
-        schedules[iSchedules] = vestingSchedule;
-        iSchedules++;
+    function releaseVested() public {
+        VestingSchedule[] storage schedules = vestingSchedules[msg.sender];
+        uint256 sumReleased = 0;
+        for (uint256 i = 0; i < schedules.length; i++) {
+            VestingSchedule storage schedule = schedules[i];
+            if (block.timestamp >= schedule.end) {
+                uint256 amountToRelease = schedule.amount - schedule.released;
+                schedule.released = schedule.amount;
+                sumReleased += amountToRelease;
+            } else {
+                uint256 timeElapsed = block.timestamp - schedule.start;
+                uint256 vestingDuration = schedule.end - schedule.start;
+                uint256 amountToRelease = (schedule.amount * timeElapsed) / vestingDuration - schedule.released;
+                schedule.released += amountToRelease;
+                sumReleased += amountToRelease;
+            }
+        }
+        require(sumReleased > 0, "no tokens to release");
+        dreamcatcherToken.balance[msg.sender] += sumReleased;
+        emit TokensReleased(msg.sender, sumReleased);
     }
 
     function burn(address account, uint256 amount) public onlyCustodian {
