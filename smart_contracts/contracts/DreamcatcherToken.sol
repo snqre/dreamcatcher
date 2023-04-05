@@ -96,6 +96,26 @@ contract DreamcatcherToken {
         uint256 amount;
     }
 
+    struct ProposalsAgreement {
+        /* minimum required amounts of votes to pass a proposal */
+        uint256 minQuorum;
+        
+    }
+
+    struct AgreementOnToken {
+        bool isPausable;
+        bool isPaused;
+        bool isMintable;
+        bool isBurnable;
+        bool isTransferable;
+    }
+
+    /* aggreements are policies or settings the community can vote to change */
+    struct Aggreements {
+        AgreementOnToken agreementOnToken;
+        uint256 maxMintablePerProposal; // 1% of total
+    }
+
     struct Custodian {
         address account;
         /* a group of people allowed to propose and incharge of the project */
@@ -205,6 +225,14 @@ contract DreamcatcherToken {
         return dreamcatcherToken.IERC20.totalSupply;
     }
 
+    function totalVested() public view virtual returns (uint256) {
+        return dreamcatcherToken.IERC20.totalVested;
+    }
+
+    function totalStaked() public view virtual returns (uint256) {
+        return dreamcatcherToken.IERC20.totalStaked;
+    }
+
     function balanceOf(address account) public view virtual returns (uint256) {
         /* return how much the address has of our token */
         return dreamcatcherToken.balance[account];
@@ -221,6 +249,7 @@ contract DreamcatcherToken {
     }
 
     function mint(address account, uint256 amount) public onlyCustodian {
+        require(amount > 0, "cannot be less than zero");
         dreamcatcherToken.balance[account] += amount;
         dreamcatcherToken.votes[account] += amount;
         dreamcatcherToken.IERC20.totalSupply += amount;
