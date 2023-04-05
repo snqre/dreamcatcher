@@ -293,7 +293,18 @@ contract DreamcatcherToken {
         return dreamcatcherToken.balance[account];
     }
 
-    function votingWeightOf(address account)
+    function vestedOf(address account) public view virtual returns (uint256) {
+        /* amount vested for account */
+        return dreamcatcherToken.vested[account];
+    }
+
+    function stakedOf(address account) public view virtual returns (uint256) {
+        /* amount of tokens staked */
+        return dreamcatcherToken.staked[account];
+    }
+
+
+    function votesOf(address account)
         public
         view
         virtual
