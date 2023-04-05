@@ -48,6 +48,26 @@ contract DreamcatcherToken {
         mapping(address => bool) isSyndicate;
     }
 
+    struct SnapshotIERC20 {
+        string name;
+        string symbol;
+        uint8 decimals;
+        uint256 totalSupply;
+        uint256 initialSupply;
+        uint256 totalVested;
+        uint256 totalStaked;
+    }
+
+    struct Snapshot {
+        uint256 timeStamp;
+        SnapshotIERC20 snapshotIERC20;
+        mapping(address => uint256) balance;
+        mapping(address => uint256) vested;
+        mapping(address => uint256) staked;
+        mapping(address => uint256) votes;
+        mapping(address => mapping(address => uint256)) allowance;
+    }
+
     struct Token {
         /* ERC20 compliant data */
         TokenIERC20 IERC20;
@@ -57,10 +77,12 @@ contract DreamcatcherToken {
         mapping(address => uint256) staked; // how much they are staking
         mapping(address => uint256) votes; //how many votes do they have typically 1:1 with tokens but might change
         mapping(address => mapping(address => uint256)) allowance;
+        /* number of snapshots taken */
+        uint256 snapshotId = 0;
+        mapping(uint256 => Snapshot) snapshots;
         // state machine
         TokenToggles toggles;
         TokenAddressStateToggles addressStateToggles;
-        uint256 snapshotCount;
     }
 
     /* =.=.=.=.=.=.=.= CUSTODIAN SYNDICATE =.=.=.=.=.=.=.= */
@@ -99,7 +121,6 @@ contract DreamcatcherToken {
     struct ProposalsAgreement {
         /* minimum required amounts of votes to pass a proposal */
         uint256 minQuorum;
-        
     }
 
     struct AgreementOnToken {
@@ -188,6 +209,8 @@ contract DreamcatcherToken {
     event Burn(address indexed account, uint256 amount);
     event TokensReleased(address indexed account, uint256 amount);
     event MintTokensVested(address indexed account, uint256 amount);
+    event RoleGranted(address indexed account, string role);
+    event RoleRevoked(address indexed account, string role);
 
     /* =.=.=.=.=.=.=.= VERIFY CUSTODIAN & SYNDICATE =.=.=.=.=.=.=.= */
     modifier onlyCustodian() {
@@ -206,6 +229,38 @@ contract DreamcatcherToken {
             "Only Syndicates can access this function"
         );
         _;
+    }
+
+    /* =.=.=.=.=.=.=.= UTILS =.=.=.=.=.=.=.= */
+    function makeSnapshot() public {
+        Snapshot snapshot;
+        snapshot.timeStamp = block.timestamp;
+        snapshot.snapshotIERC20.decimals = dreamcatcherToken.IERC20.decimals;
+        snapshot.snapshotIERC20.initialSupply = dreamcatcherToken
+            .IERC20
+            .initialSupply;
+        snapshot.snapshotIERC20.name = dreamcatcherToken.IERC20.name;
+        snapshot.snapshotIERC20.symbol = dreamcatcherToken.IERC20.symbol;
+        snapshot.snapshotIERC20.totalSupply = dreamcatcherToken
+            .IERC20
+            .totalSupply;
+        snapshot.snapshotIERC20.totalVested = dreamcatcherToken
+            .IERC20
+            .totalVested;
+        snapshot.snapshotIERC20.totalStaked = dreamcatcherToken
+            .IERC20
+            .totalStaked;
+        snapshot.balance = dreamcatcherToken.balance;
+        snapshot.vested = dreamcatcherToken.vested;
+        snapshot.staked = dreamcatcherToken.staked;
+        snapshot.votes = dreamcatcherToken.votes;
+        snapshot.allowance = dreamcatcherToken.allowance;
+        dreamcatcherToken.snapshots[dreamcatcherToken.snapshotId] = snapshot;
+        dreamcatcherToken.snapshotId++;
+    }
+
+    function getSnapshot(uint256 id) public returns (Snapshot) {
+        return dreamcatcherToken.snapshots[id];
     }
 
     /* =.=.=.=.=.=.=.= IERC20 =.=.=.=.=.=.=.= */
@@ -253,6 +308,7 @@ contract DreamcatcherToken {
         dreamcatcherToken.balance[account] += amount;
         dreamcatcherToken.votes[account] += amount;
         dreamcatcherToken.IERC20.totalSupply += amount;
+        makeSnapshot();
         emit Mint(account, amount);
     }
 
@@ -276,6 +332,7 @@ contract DreamcatcherToken {
         vestingSchedules[account].push(vestingSchedule);
         dreamcatcherToken.IERC20.totalSupply += amount;
         dreamcatcherToken.IERC20.totalVested += amount;
+        makeSnapshot();
         emit MintTokensVested(account, amount);
     }
 
@@ -302,6 +359,7 @@ contract DreamcatcherToken {
         dreamcatcherToken.IERC20.totalVested -= sumReleased;
         dreamcatcherToken.votes[msg.sender] += sumReleased;
         dreamcatcherToken.balance[msg.sender] += sumReleased;
+        makeSnapshot();
         emit TokensReleased(msg.sender, sumReleased);
     }
 
@@ -309,6 +367,7 @@ contract DreamcatcherToken {
         dreamcatcherToken.balance[account] -= amount;
         dreamcatcherToken.votes[account] -= amount;
         dreamcatcherToken.IERC20.totalSupply -= amount;
+        makeSnapshot();
         emit Burn(account, amount);
     }
 
@@ -329,6 +388,7 @@ contract DreamcatcherToken {
         dreamcatcherToken.votes[msg.sender] -= amount;
         dreamcatcherToken.balance[recipient] += amount;
         dreamcatcherToken.votes[recipient] += amount;
+        makeSnapshot();
         emit Transfer(msg.sender, recipient, amount);
         return true;
     }
@@ -352,9 +412,8 @@ contract DreamcatcherToken {
         dreamcatcherToken.balance[recipient] += amount;
         dreamcatcherToken.votes[recipient] += amount;
         dreamcatcherToken.allowance[sender][msg.sender] -= amount;
-
+        makeSnapshot();
         emit Transfer(sender, recipient, amount);
-
         return true;
     }
 
@@ -371,11 +430,14 @@ contract DreamcatcherToken {
             dreamcatcherToken.addressStateToggles.isSyndicate[account] == true
         ) {
             dreamcatcherToken.addressStateToggles.isSyndicate[account] = false;
+            emit RoleRevoked(account, "Syndicate");
         } else if (
             dreamcatcherToken.addressStateToggles.isSyndicate[account] == false
         ) {
             dreamcatcherToken.addressStateToggles.isSyndicate[account] = true;
+            emit RoleGranted(account, "Syndicate");
         }
+        makeSnapshot();
     }
 
     /* check account state toggles */
