@@ -4,16 +4,11 @@ import "smart_contracts/libraries/Vesting.sol";
 import "smart_contracts/libraries/Meta.sol";
 
 contract BaseERC20 {
-    bool private isMintable;
-    bool private isBurnable;
-    Meta.Properties private properties;
-    Meta.Database private database;
-    mapping(address => uint256) private balance;
-    mapping(address => uint256) private vested;
-    mapping(address => uint256) private staked;
-    mapping(address => uint256) private vote;
-    mapping(address => mapping(address => uint256)) private allowed;
-    mapping(address => bool) private isFoundingTeam;
+    bool internal isMintable;
+    bool internal isBurnable;
+    Meta.Properties internal properties;
+    Meta.Database internal database;
+    mapping(address => bool) internal isFoundingTeam;
     event TokensReleased(address indexed account, uint256 amount);
     event Mint(address indexed account, uint256 amount);
     event Burn(address indexed account, uint256 amount);
@@ -138,7 +133,7 @@ contract BaseERC20 {
         return true;
     }
 
-    function _burn(address account, uint256 amount) private returns (bool) {
+    function _burn(address account, uint256 amount) internal returns (bool) {
         require(isBurnable == true, "Burning disabled");
         require(balance[account] >= amount, "Insufficient balance");
         database.balance[account] -= amount;
@@ -148,7 +143,7 @@ contract BaseERC20 {
         return true;
     }
 
-    function _mint(address account, uint256 amount) private returns (bool) {
+    function _mint(address account, uint256 amount) internal returns (bool) {
         require(amount > 0, "Zero and negative values not supported");
         require(isMintable == true, "Minting disabled");
         require(
@@ -163,13 +158,13 @@ contract BaseERC20 {
         return true;
     }
 
-    mapping(address => Vesting.VestingSchedule[]) private schedule;
+    mapping(address => Vesting.VestingSchedule[]) internal schedule;
 
     function _mintWithVesting(
         address account,
         uint256 amount,
         uint256 duration
-    ) private returns (bool) {
+    ) internal returns (bool) {
         require(amount > 0, "Zero and negative values not supported");
         require(isMintable == true, "Minting disabled");
         require(
