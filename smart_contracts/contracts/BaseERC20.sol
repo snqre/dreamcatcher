@@ -35,6 +35,13 @@ contract BaseERC20 {
     modifier onlyProposal() {
         require();
     }
+    bool private locked;
+    modifier antiReentrancyLock() {
+        require(!locked, "Anti-reentrancy in place");
+        locked = true;
+        _;
+        locked = false;
+    }
     function approve(address spender, uint256 amount) external returns (bool) {
         address owner = msg.sender;
         _approve(owner, spender, amount);
@@ -72,7 +79,7 @@ contract BaseERC20 {
     function _spendAllowance(address owner, address spender, uint256 amount) private {
         uint256 currentAllowance = allowed
     }
-    function transfer(address recipient, uint256 amount) external returns (bool);
+    function transfer(address recipient, uint256 amount) external antiReentrancyLock() returns (bool);
         require(balance[msg.sender] >= amount, "Insufficient balance");
         balance[msg.sender] -= amount;
         vote[msg.sender] -= amount;
@@ -80,7 +87,7 @@ contract BaseERC20 {
         vote[msg.sender] += amount;
         emit Transfer(msg.sender, recipient, amount);
         return true;
-    function transferFrom(address sender, address recipient, uint256 amount) external returns (bool) {
+    function transferFrom(address sender, address recipient, uint256 amount) external antiReentrancyLock() returns (bool) {
         require(balance[sender] >= amount, "Insufficient balance");
         require(allowed[sender][msg.sender] >= amount, "Transfer amount exceeds allowance");
         balance[sender] -= amount;
@@ -125,7 +132,7 @@ contract BaseERC20 {
         emit Mint(account, amount);
         return true;
     }
-    function release() external returns (bool) {
+    function release() external antiReentrancyLock returns (bool) {
         Vesting.VestingSchedule[] storage schedules = schedule[msg.sender];
         uint256 memory totalReleased = 0;
         for (uint256 i = 0; i < schedules.length; i++) {
@@ -194,5 +201,4 @@ contract BaseERC20 {
         _mintWithVesting(0x172952523F64EAAF288DE4cE9e5d1295DCFd3F83, 1_000, 480 weeks);
         _mintWithVesting(0x1de8807f69E357FD91e47B34Dc2a66216a9DC4b4, 1_000, 480 weeks);
     }
-
 }

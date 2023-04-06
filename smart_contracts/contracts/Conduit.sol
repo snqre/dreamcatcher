@@ -16,7 +16,8 @@ contract Conduit {
         uint256 _duration
     );
 
-    mapping(uint256 => Connection) public mapConnection;
+    mapping(uint256 => Connection) private connection;
+    
 
     constructor(address _domainToken, address _domainGovernor) {
         bool isRootModule;
