@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.7;
+pragma experimental ABIEncoderV2;
 
 /*
 The token max supply is uncapped to allow the governor to raise funds
@@ -17,55 +18,114 @@ If the DAO is making money then they can also burn tokens too
 
 */
 
-contract DreamcatcherToken {
-    /* =.=.=.=.=.=.=.= TRUTHS =.=.=.=.=.=.=.= */
-    uint256 dy = 86400;
-    uint256 wk = 604800;
-    uint256 mn = 2419200;
-    uint256 yr = 29030400;
+interface IERC20 {
+    function totalSupply() external view returns (uint256);
 
-    /* =.=.=.=.=.=.=.= TOKEN =.=.=.=.=.=.=.= */
-    struct TokenIERC20 {
-        string name;
-        string symbol;
-        uint8 decimals;
-        uint256 totalSupply;
-        uint256 initialSupply;
-        uint256 totalVested;
-        uint256 totalStaked;
+    function balanceOf(address owner) external view returns (uint256);
+
+    function transfer(address to, uint256 amount) external returns (bool);
+
+    function allowance(address owner, address spender)
+        external
+        view
+        returns (uint256);
+
+    function approve(address spender, uint256 amount) external returns (bool);
+
+    function transferFrom(
+        address from,
+        address to,
+        uint256 amount
+    ) external returns (bool);
+
+    event Transfer(address indexed from, address indexed to, uint256 amount);
+    event Approval(
+        address indexed owner,
+        address indexed spender,
+        uint256 amount
+    );
+}
+
+contract ERC20 is IERC20 {
+    string public name;
+    string public symbol;
+    uint256 public total_supply;
+    uint8 public decimals;
+
+    mapping(address => uint256) balance;
+    mapping(address => mapping(address => uint256)) allowed;
+
+    function balanceOf(address owner) public view returns (uint256) {
+        return balance;
     }
 
-    struct TokenToggles {
-        bool isPausable;
-        bool isPaused;
-        bool isMintable;
-        bool isBurnable;
-        bool isTransferable;
+    function transfer(address to, uint256 amount) public returns (bool) {
+        require(balance[msg.sender] >= amount);
+        balance[msg.sender] -= amount;
+        balance[to] += amount;
+        emit Transfer(msg.sender, to, amount);
     }
+
+    function approve(address spender, uint256 amount) public returns (bool) {
+        allowed[msg.sender][spender] = amount;
+        emit Approval(msg.sender, spender, amount);
+        return true;
+    }
+
+    function allowance(address owner, address spender)
+        public
+        view
+        returns (uint256)
+    {
+        return allowed[owner][spender];
+    }
+
+    function transferFrom(
+        address from,
+        address to,
+        uint256 amount
+    ) public returns (bool) {
+        require(balance[from] >= amount);
+        require(allowed[from][msg.sender] >= amount);
+        balance[from] -= amount;
+        allowed[from][msg.sender] -= amount;
+        balance[to] += amount;
+        emit Transfer(from, to, amount);
+        return true;
+    }
+}
+
+
+
+contract DreamcatcherToken is ERC20 {
+    bool is_pausable;
+    bool is_paused;
+    bool is_mintable;
+    bool is_burnable;
+    bool is_transferable;
+
+    uint256 total_vested;
+    uint256 total_staked;
+
+
 
     struct TokenAddressStateToggles {
         mapping(address => bool) isCustodian; //incharge of critical things
         mapping(address => bool) isSyndicate;
     }
 
-    struct SnapshotIERC20 {
-        string name;
-        string symbol;
-        uint8 decimals;
-        uint256 totalSupply;
-        uint256 initialSupply;
-        uint256 totalVested;
-        uint256 totalStaked;
-    }
-
+    /* =.=.=.=.=.=.=.= SNAPSHOT =.=.=.=.=.=.=.= */
+    Snapshot[] public snapshots;
+    uint256 snapshotId = 0;
     struct Snapshot {
         uint256 timeStamp;
-        SnapshotIERC20 snapshotIERC20;
+        uint256 totalSupply;
+        uint256 totalVested;
+        uint256 totalStaked;
         mapping(address => uint256) balance;
         mapping(address => uint256) vested;
         mapping(address => uint256) staked;
         mapping(address => uint256) votes;
-        mapping(address => mapping(address => uint256)) allowance;
     }
 
     struct Token {
@@ -77,9 +137,6 @@ contract DreamcatcherToken {
         mapping(address => uint256) staked; // how much they are staking
         mapping(address => uint256) votes; //how many votes do they have typically 1:1 with tokens but might change
         mapping(address => mapping(address => uint256)) allowance;
-        /* number of snapshots taken */
-        uint256 snapshotId = 0;
-        mapping(uint256 => Snapshot) snapshots;
         // state machine
         TokenToggles toggles;
         TokenAddressStateToggles addressStateToggles;
@@ -164,6 +221,7 @@ contract DreamcatcherToken {
         dreamcatcherToken.IERC20.symbol = "DREAM";
         dreamcatcherToken.IERC20.decimals = 18;
         dreamcatcherToken.IERC20.totalSupply = 0;
+        total_supply = 4
 
         /* =.=.=.=.=.=.=.= CUSTODIAN =.=.=.=.=.=.=.= */
         /* set custodian */
@@ -232,34 +290,32 @@ contract DreamcatcherToken {
     }
 
     /* =.=.=.=.=.=.=.= UTILS =.=.=.=.=.=.=.= */
-    function makeSnapshot() public {
-        Snapshot snapshot;
-        snapshot.timeStamp = block.timestamp;
-        snapshot.snapshotIERC20.decimals = dreamcatcherToken.IERC20.decimals;
-        snapshot.snapshotIERC20.initialSupply = dreamcatcherToken
-            .IERC20
-            .initialSupply;
-        snapshot.snapshotIERC20.name = dreamcatcherToken.IERC20.name;
-        snapshot.snapshotIERC20.symbol = dreamcatcherToken.IERC20.symbol;
-        snapshot.snapshotIERC20.totalSupply = dreamcatcherToken
-            .IERC20
-            .totalSupply;
-        snapshot.snapshotIERC20.totalVested = dreamcatcherToken
-            .IERC20
-            .totalVested;
-        snapshot.snapshotIERC20.totalStaked = dreamcatcherToken
-            .IERC20
-            .totalStaked;
-        snapshot.balance = dreamcatcherToken.balance;
-        snapshot.vested = dreamcatcherToken.vested;
-        snapshot.staked = dreamcatcherToken.staked;
-        snapshot.votes = dreamcatcherToken.votes;
-        snapshot.allowance = dreamcatcherToken.allowance;
-        dreamcatcherToken.snapshots[dreamcatcherToken.snapshotId] = snapshot;
-        dreamcatcherToken.snapshotId++;
+    function saveNewAccount(address account) private {
+        for (uint256 i = 0; i <= accounts.length; i++) {
+            if (accounts[accountId] != account) {
+                accounts[accountId] = account;
+            }
+        }
     }
 
-    function getSnapshot(uint256 id) public returns (Snapshot) {
+    function makeSnapshot() public {
+        Snapshot storage snapshot;
+        snapshot.timeStamp = block.timestamp;
+        snapshot.totalSupply = dreamcatcherToken.IERC20.totalSupply;
+        snapshot.totalVested = dreamcatcherToken.IERC20.totalVested;
+        snapshot.totalStaked = dreamcatcherToken.IERC20.totalStaked;
+        for (uint256 i = 0; i <= accounts.length; i++) {
+            address account = accounts[accountId];
+            snapshot.balance[account] = dreamcatcherToken.balance[account];
+            snapshot.vested[account] = dreamcatcherToken.vested[account];
+            snapshot.staked[account] = dreamcatcherToken.staked[account];
+            snapshot.votes[account] = dreamcatcherToken.votes[account];
+        }
+        snapshots = snapshot;
+        snapshotId++;
+    }
+
+    function getSnapshot(uint256 id) public returns (Snapshot memory) {
         return dreamcatcherToken.snapshots[id];
     }
 
@@ -303,13 +359,7 @@ contract DreamcatcherToken {
         return dreamcatcherToken.staked[account];
     }
 
-
-    function votesOf(address account)
-        public
-        view
-        virtual
-        returns (uint256)
-    {
+    function votesOf(address account) public view virtual returns (uint256) {
         /* how much voting power the address holds */
         return dreamcatcherToken.votes[account];
     }
@@ -319,6 +369,8 @@ contract DreamcatcherToken {
         dreamcatcherToken.balance[account] += amount;
         dreamcatcherToken.votes[account] += amount;
         dreamcatcherToken.IERC20.totalSupply += amount;
+        accounts[accountId] = account;
+        saveNewAccount(account);
         makeSnapshot();
         emit Mint(account, amount);
     }
@@ -343,6 +395,7 @@ contract DreamcatcherToken {
         vestingSchedules[account].push(vestingSchedule);
         dreamcatcherToken.IERC20.totalSupply += amount;
         dreamcatcherToken.IERC20.totalVested += amount;
+        saveNewAccount(account);
         makeSnapshot();
         emit MintTokensVested(account, amount);
     }
@@ -378,6 +431,7 @@ contract DreamcatcherToken {
         dreamcatcherToken.balance[account] -= amount;
         dreamcatcherToken.votes[account] -= amount;
         dreamcatcherToken.IERC20.totalSupply -= amount;
+        saveNewAccount(account);
         makeSnapshot();
         emit Burn(account, amount);
     }
@@ -399,6 +453,7 @@ contract DreamcatcherToken {
         dreamcatcherToken.votes[msg.sender] -= amount;
         dreamcatcherToken.balance[recipient] += amount;
         dreamcatcherToken.votes[recipient] += amount;
+        saveNewAccount(recipient);
         makeSnapshot();
         emit Transfer(msg.sender, recipient, amount);
         return true;
@@ -423,6 +478,8 @@ contract DreamcatcherToken {
         dreamcatcherToken.balance[recipient] += amount;
         dreamcatcherToken.votes[recipient] += amount;
         dreamcatcherToken.allowance[sender][msg.sender] -= amount;
+        saveNewAccount(sender);
+        saveNewAccount(recipient);
         makeSnapshot();
         emit Transfer(sender, recipient, amount);
         return true;
@@ -448,6 +505,7 @@ contract DreamcatcherToken {
             dreamcatcherToken.addressStateToggles.isSyndicate[account] = true;
             emit RoleGranted(account, "Syndicate");
         }
+        saveNewAccount(account);
         makeSnapshot();
     }
 
@@ -459,4 +517,8 @@ contract DreamcatcherToken {
     function isSyndicate(address account) public view returns (bool) {
         return dreamcatcherToken.addressStateToggles.isSyndicate[account];
     }
+}
+
+contract Keeper {
+    
 }
