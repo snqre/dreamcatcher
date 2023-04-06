@@ -505,7 +505,7 @@ contract DreamcatcherToken is ERC20 {
 /* connect all smart contracts together */
 contract DreamcatcherConduit {
     /* connections */
-    address native_token_domain;
+    address native_token_domain = DreamcatcherToken;
 
     mapping(address => bool) is_native_token;
     mapping(address => bool) is_syndicate;
