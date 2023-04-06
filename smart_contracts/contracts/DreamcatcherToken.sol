@@ -152,8 +152,7 @@ contract DreamcatcherToken
     event RoleGranted(address indexed account, string role);
     event RoleRevoked(address indexed account, string role);
     /* basic funcs */
-    function balanceOf(address domain) public view returns (uint256)
-    {
+    function balanceOf(address domain) public view returns (uint256) {
         return balance [domain];
     }
     function transfer(address recipient, uint256 amount) public view returns (bool)
