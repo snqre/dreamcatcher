@@ -20,10 +20,10 @@ library Terminal {
 
     function connectTo(
         bool _isRootModule,
-        string _moduleType,
+        string memory _moduleType,
         address _domain
-    ) internal returns (Connection) {
-        Connection connection;
+    ) internal returns (Connection memory) {
+        Connection memory connection;
         connection.isRootModule = _isRootModule;
         connection.moduleType = _moduleType;
         connection.domain = _domain;
@@ -32,11 +32,11 @@ library Terminal {
 
     function connectToTimed(
         bool _isRootModule,
-        string _moduleType,
+        string memory _moduleType,
         address _domain,
         uint256 _duration
-    ) internal returns (TimedConnection) {
-        TimedConnection connection;
+    ) internal returns (TimedConnection memory) {
+        TimedConnection memory connection;
         connection.isRootModule = _isRootModule;
         connection.moduleType = _moduleType;
         connection.domain = _domain;

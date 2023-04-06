@@ -75,7 +75,7 @@ Community Building
 -- Fostering communication and engaement among members
 */
 import "smart_contracts/contracts/Conduit.sol";
-import "smart_contracts/contracts/BaseERC20.sol"
+import "smart_contracts/contracts/BaseERC20.sol";
 
 contract Dreamcatcher is BaseERC20, Conduit {
     

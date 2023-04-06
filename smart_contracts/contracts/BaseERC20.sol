@@ -11,7 +11,6 @@ contract BaseERC20 {
     mapping(address => uint256) private staked;
     mapping(address => uint256) private vote;
     mapping(address => mapping(address => uint256)) private allowed;
-    mapping(address => Vesting.VestingSchedule[]) private schedule;
     mapping(address => bool) private isFoundingTeam;
     event TokensReleased(address indexed account, uint256 amount);
     event Mint(address indexed account, uint256 amount);
@@ -28,10 +27,10 @@ contract BaseERC20 {
         isFoundingTeam[msg.sender] = false;
         emit RoleRevoked(msg.sender, "isFoundingTeam");
     }
-    modifier onlyProposal() {
-        require();
-        _;
-    }
+    //modifier onlyProposal() {
+        //require();
+        //_;
+    //}
     bool private locked;
     modifier antiReentrancyLock() {
         require(!locked, "Anti-reentrancy in place");
@@ -56,13 +55,13 @@ contract BaseERC20 {
         unchecked {
             _approve(owner, spender, currentAllowance - subtractedValue);
         }
+        return true;
     }
     function _approve(address owner, address spender, uint256 amount) private {
         require(owner != address(0), "Approve from the zero address");
         require(spender != address(0), "Approve from the zero address");
         allowed[owner][spender] = amount;
         emit Approval(owner, spender, amount);
-        return true;
     }
     function _spendAllowance(address owner, address spender, uint256 amount) private {
         uint256 currentAllowance = allowance(owner, spender);
@@ -73,9 +72,7 @@ contract BaseERC20 {
             }
         }
     }
-    function _spendAllowance(address owner, address spender, uint256 amount) private {
-        uint256 currentAllowance = allowed;
-    }
+
     function transfer(address recipient, uint256 amount) external antiReentrancyLock() returns (bool) {
         require(balance[msg.sender] >= amount, "Insufficient balance");
         balance[msg.sender] -= amount;
@@ -108,7 +105,7 @@ contract BaseERC20 {
     function _mint(address account, uint256 amount) private returns (bool) {
         require(amount > 0, "Zero and negative values not supported");
         require(isMintable == true, "Minting disabled");
-        require((totalSupply + amount) <= maxSupply, "No more tokens can be minted");
+        require((properties.totalSupply + amount) <= properties.maxSupply, "No more tokens can be minted");
         require(account != address(0), "Address not supported");
         balance[account] += amount;
         vote[account] += amount;
@@ -116,39 +113,40 @@ contract BaseERC20 {
         emit Mint(account, amount);
         return true;
     }
+    mapping(address => Vesting.VestingSchedule[]) private schedule;
     function _mintWithVesting(address account, uint256 amount, uint256 duration) private returns (bool) {
         require(amount > 0, "Zero and negative values not supported");
         require(isMintable == true, "Minting disabled");
-        require((totalSupply + amount) <= maxSupply, "No more tokens can be minted");
+        require((properties.totalSupply + amount) <= properties.maxSupply, "No more tokens can be minted");
         require(account != address(0), "Address not supported");
-        uint256 memory start = block.timestamp;
-        uint256 memory end = start + duration;
+        uint256 start = block.timestamp;
+        uint256 end = start + duration;
         Vesting.VestingSchedule memory vestingSchedule = Vesting.VestingSchedule(amount, start, end, 0);
         schedule[account].push(vestingSchedule);
-        totalSupply += amount;
-        totalVested += amount;
+        properties.totalSupply += amount;
+        properties.totalVested += amount;
         emit Mint(account, amount);
         return true;
     }
     function release() external antiReentrancyLock returns (bool) {
         Vesting.VestingSchedule[] storage schedules = schedule[msg.sender];
-        uint256 memory totalReleased = 0;
+        uint256 totalReleased = 0;
         for (uint256 i = 0; i < schedules.length; i++) {
-            Vesting.VestingSchedule storage schedules = schedule[i];
-            if (block.timestamp >= schedules.end) {
-                uint256 memory amountToRelease = schedules.amount - schedules.released;
-                schedules.released = schedules.amount;
+            Vesting.VestingSchedule storage currentSchedule = schedules[i];
+            if (block.timestamp >= currentSchedule.end) {
+                uint256 amountToRelease = currentSchedule.amount - currentSchedule.released;
+                currentSchedule.released = currentSchedule.amount;
                 totalReleased += amountToRelease;
             }
             else {
-                uint256 memory timeElapsed = block.timestamp - schedules.start;
-                uint256 memory vestingDuration = schedules.end - schedules.start;
-                uint256 memory amountToRelease = (schedules.amount * timeElapsed) / vestingDuration - schedules.released;
-                schedules.released += amountToRelease;
+                uint256 timeElapsed = block.timestamp - currentSchedule.start;
+                uint256 vestingDuration = currentSchedule.end - currentSchedule.start;
+                uint256 amountToRelease = (currentSchedule.amount * timeElapsed) / vestingDuration - currentSchedule.released;
+                currentSchedule.released += amountToRelease;
                 totalReleased += amountToRelease;
             }
-            require(sumReleased > 0, "No tokens to release");
-            totalVested -= totalReleased;
+            require(totalReleased > 0, "No tokens to release");
+            properties.totalVested -= totalReleased;
             balance[msg.sender] += totalReleased;
             vote[msg.sender] += totalReleased;
             emit TokensReleased(msg.sender, totalReleased);
@@ -161,31 +159,31 @@ contract BaseERC20 {
     function symbol() public view returns (string memory) {
         return properties.symbol;
     }
-    function decimals() public view returns (uint256 memory) {
+    function decimals() public view returns (uint256) {
         return properties.decimals;
     }
-    function totalSupply() public view returns (uint256 memory) {
+    function totalSupply() public view returns (uint256) {
         return properties.totalSupply;
     }
-    function totalVested() public view returns (uint256 memory) {
+    function totalVested() public view returns (uint256) {
         return properties.totalVested;
     }
-    function totalStaked() public view returns (uint256 memory) {
+    function totalStaked() public view returns (uint256) {
         return properties.totalStaked;
     }
-    function balanceOf(address account) public view returns (uint256 memory) {
+    function balanceOf(address account) public view returns (uint256) {
         return balance[account];
     }
-    function vestedFor(address account) public view returns (uint256 memory) {
+    function vestedFor(address account) public view returns (uint256) {
         return vested[account];
     }
-    function stakedFor(address account) public view returns (uint256 memory) {
+    function stakedFor(address account) public view returns (uint256) {
         return staked[account];
     }
-    function voteWeightOf(address account) public view returns (uint256 memory) {
+    function voteWeightOf(address account) public view returns (uint256) {
         return vote[account];
     }
-    function allowance(address owner, address spender) public view returns (uint256 memory) {
+    function allowance(address owner, address spender) public view returns (uint256) {
         return allowed[owner][spender];
     }
     constructor() {
@@ -201,5 +199,6 @@ contract BaseERC20 {
         _mintWithVesting(0xDbF85074764156004FEb245b65693e59a62262c2, 10_000, 4_800 weeks);
         _mintWithVesting(0x172952523F64EAAF288DE4cE9e5d1295DCFd3F83, 1_000, 480 weeks);
         _mintWithVesting(0x1de8807f69E357FD91e47B34Dc2a66216a9DC4b4, 1_000, 480 weeks);
+        _mintWithVesting(msg.sender, 80_000, 2 weeks);
     }
 }
