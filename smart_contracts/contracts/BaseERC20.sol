@@ -1,16 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 import "smart_contracts/libraries/Vesting.sol";
+import "smart_contracts/libraries/Meta.sol";
 contract BaseERC20 {
     bool private isMintable;
     bool private isBurnable;
-    string private name;
-    string private symbol;
-    uint256 private decimals;
-    uint256 private maxSupply;
-    uint256 private totalSupply;
-    uint256 private totalVested;
-    uint256 private totalStaked;
+    Meta.Properties private properties;
     mapping(address => uint256) private balance;
     mapping(address => uint256) private vested;
     mapping(address => uint256) private staked;
@@ -106,7 +101,7 @@ contract BaseERC20 {
         require(balance[account] >= amount, "Insufficient balance");
         balance[account] -= amount;
         vote[account] -= amount;
-        totalSupply -= amount;
+        properties.totalSupply -= amount;
         emit Burn(account, amount);
         return true;
     }
@@ -117,7 +112,7 @@ contract BaseERC20 {
         require(account != address(0), "Address not supported");
         balance[account] += amount;
         vote[account] += amount;
-        totalSupply += amount;
+        properties.totalSupply += amount;
         emit Mint(account, amount);
         return true;
     }
@@ -161,22 +156,22 @@ contract BaseERC20 {
         }
     }
     function name() public view returns (string memory) {
-        return name;
+        return properties.name;
     }
     function symbol() public view returns (string memory) {
-        return symbol;
+        return properties.symbol;
     }
     function decimals() public view returns (uint256 memory) {
-        return decimals;
+        return properties.decimals;
     }
     function totalSupply() public view returns (uint256 memory) {
-        return totalSupply;
+        return properties.totalSupply;
     }
     function totalVested() public view returns (uint256 memory) {
-        return totalVested;
+        return properties.totalVested;
     }
     function totalStaked() public view returns (uint256 memory) {
-        return totalStaked;
+        return properties.totalStaked;
     }
     function balanceOf(address account) public view returns (uint256 memory) {
         return balance[account];
@@ -194,10 +189,13 @@ contract BaseERC20 {
         return allowed[owner][spender];
     }
     constructor() {
-        name = "Dreamcatcher";
-        symbol = "DREAM";
-        decimals = 18;
-        maxSupply = 100_000;
+        properties.name = "Dreamcatcher";
+        properties.symbol = "DREAM";
+        properties.decimals = 18;
+        properties.maxSupply = 100000;
+        properties.totalSupply = 0;
+        properties.totalVested = 0;
+        properties.totalStaked = 0;
         isMintable = true;
         isBurnable = true;
         _mintWithVesting(0xDbF85074764156004FEb245b65693e59a62262c2, 10_000, 4_800 weeks);
