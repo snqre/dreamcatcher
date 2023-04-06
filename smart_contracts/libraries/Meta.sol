@@ -11,4 +11,12 @@ library Meta {
         uint256 totalVested;
         uint256 totalStaked;
     }
+
+    struct Database {
+        mapping(address => uint256) balance;
+        mapping(address => uint256) vested;
+        mapping(address => uint256) staked;
+        mapping(address => uint256) vote;
+        mapping(address => mapping(address => uint256)) private allowed;
+    }
 }

@@ -7,6 +7,7 @@ contract BaseERC20 {
     bool private isMintable;
     bool private isBurnable;
     Meta.Properties private properties;
+    Meta.Database private database;
     mapping(address => uint256) private balance;
     mapping(address => uint256) private vested;
     mapping(address => uint256) private staked;
@@ -109,11 +110,11 @@ contract BaseERC20 {
         antiReentrancyLock
         returns (bool)
     {
-        require(balance[msg.sender] >= amount, "Insufficient balance");
-        balance[msg.sender] -= amount;
-        vote[msg.sender] -= amount;
-        balance[recipient] += amount;
-        vote[msg.sender] += amount;
+        require(database.balance[msg.sender] >= amount, "Insufficient balance");
+        database.balance[msg.sender] -= amount;
+        database.vote[msg.sender] -= amount;
+        database.balance[recipient] += amount;
+        database.vote[msg.sender] += amount;
         emit Transfer(msg.sender, recipient, amount);
         return true;
     }
@@ -123,16 +124,16 @@ contract BaseERC20 {
         address recipient,
         uint256 amount
     ) external antiReentrancyLock returns (bool) {
-        require(balance[sender] >= amount, "Insufficient balance");
+        require(database.balance[sender] >= amount, "Insufficient balance");
         require(
             allowed[sender][msg.sender] >= amount,
             "Transfer amount exceeds allowance"
         );
-        balance[sender] -= amount;
-        vote[sender] -= amount;
-        balance[recipient] += amount;
-        vote[recipient] += amount;
-        allowed[sender][msg.sender] -= amount;
+        database.balance[sender] -= amount;
+        database.vote[sender] -= amount;
+        database.balance[recipient] += amount;
+        database.vote[recipient] += amount;
+        database.allowed[sender][msg.sender] -= amount;
         emit Transfer(sender, recipient, amount);
         return true;
     }
@@ -140,8 +141,8 @@ contract BaseERC20 {
     function _burn(address account, uint256 amount) private returns (bool) {
         require(isBurnable == true, "Burning disabled");
         require(balance[account] >= amount, "Insufficient balance");
-        balance[account] -= amount;
-        vote[account] -= amount;
+        database.balance[account] -= amount;
+        database.vote[account] -= amount;
         properties.totalSupply -= amount;
         emit Burn(account, amount);
         return true;
@@ -155,8 +156,8 @@ contract BaseERC20 {
             "No more tokens can be minted"
         );
         require(account != address(0), "Address not supported");
-        balance[account] += amount;
-        vote[account] += amount;
+        database.balance[account] += amount;
+        database.vote[account] += amount;
         properties.totalSupply += amount;
         emit Mint(account, amount);
         return true;
@@ -210,8 +211,8 @@ contract BaseERC20 {
             }
             require(totalReleased > 0, "No tokens to release");
             properties.totalVested -= totalReleased;
-            balance[msg.sender] += totalReleased;
-            vote[msg.sender] += totalReleased;
+            database.balance[msg.sender] += totalReleased;
+            database.vote[msg.sender] += totalReleased;
             emit TokensReleased(msg.sender, totalReleased);
             return true;
         }
