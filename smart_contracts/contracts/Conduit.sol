@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "smart_contractslibrariesTerminal.sol";
+import "smart_contracts/libraries/Terminal.sol";
 
 contract Conduit {
     event NewConnection(
@@ -16,7 +16,7 @@ contract Conduit {
         uint256 _duration
     );
 
-    mapping(uint256 => Connection) private connection;
+    mapping(uint256 => Terminal.Connection) private connection;
 
     constructor(address _domainToken, address _domainGovernor) {
         bool isRootModule;
