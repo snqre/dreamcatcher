@@ -332,21 +332,17 @@ contract Conduit {
         bool isRoot
     ) private {
         uint256 i = iConnection;
-        connections[i] = LibConnection.Connection(
-            id = i,
-            role = role,
-            domain = domain,
-            startOn = block.timestamp,
-            endOn = startOn + duration,
-            isRoot = isRoot
-        );
-        emit NewConnection(
-            id = connectionId,
-            role = role,
-            domain = domain,
-            duration = duration,
-            isRoot = isRoot
-        );
+        LibConnection.Connection memory connection;
+        connection.id = i;
+        connection.role = role;
+        connection.domain = domain;
+        connection.duration = duration;
+        connection.startOn = block.timestamp;
+        connection.endOn = connection.startOn + duration;
+        connection.isRoot = isRoot;
+        connections[i] = connection;
+
+        emit NewConnection(iConnection, role, domain, duration, isRoot);
         iConnection++;
     }
 
