@@ -17,6 +17,6 @@ library Meta {
         mapping(address => uint256) vested;
         mapping(address => uint256) staked;
         mapping(address => uint256) vote;
-        mapping(address => mapping(address => uint256)) private allowed;
+        mapping(address => mapping(address => uint256)) allowed;
     }
 }
