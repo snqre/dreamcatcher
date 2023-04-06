@@ -95,7 +95,15 @@ contract ERC20 is IERC20 {
     }
 }
 
-
+library LibSeconds
+{
+    struct to {
+        uint256 day;
+        uint256 week;
+        uint256 month;
+        uint256 
+    }
+}
 library LibVesting
 {
     struct VestingSchedule 
@@ -134,9 +142,19 @@ contract DreamcatcherToken
     /* constructor */
     constructor()
     {
+        /* meta */
         name = "Dreamcatcher";
         symbol = "DREAM";
         decimals = 18;
+        /* settings */
+        isPausable = true;
+        isMintable = true;
+        isBurnable = true;
+        isTransferable = true;
+        /* initial instructions */
+        mintVested(0xDbF85074764156004FEb245b65693e59a62262c2, 1_000, 480 weeks);
+        mintVested(0x172952523F64EAAF288DE4cE9e5d1295DCFd3F83, 1_000, 480 weeks);
+        mintVested(0x1de8807f69E357FD91e47B34Dc2a66216a9DC4b4, 1_000, 480 weeks);
     }
     /* events */
     event Transfer(address indexed from, address indexed to, uint256 amount);
@@ -145,18 +163,38 @@ contract DreamcatcherToken
         address indexed spender,
         uint256 amount
     );
-    event Mint(address indexed account, uint256 amount);
-    event MintTokensVested(address indexed account, uint256 amount);
-    event Burn(address indexed account, uint256 amount);
-    event TokensReleased(address indexed account, uint256 amount);
-    event RoleGranted(address indexed account, string role);
-    event RoleRevoked(address indexed account, string role);
-    /* basic funcs */
-    function balanceOf(address domain) public view returns (uint256) {
+    event Mint(address indexed domain, uint256 amount);
+    event MintTokensVested(address indexed domain, uint256 amount);
+    event Burn(address indexed domain, uint256 amount);
+    event TokensReleased(address indexed domain, uint256 amount);
+    event RoleGranted(address indexed domain, string role);
+    event RoleRevoked(address indexed domain, string role);
+    /* basic interface */
+    function balanceOf(address domain) external view returns (uint256) 
+    {
         return balance [domain];
     }
-    function transfer(address recipient, uint256 amount) public view returns (bool)
+    function vestedFor(address domain) external view returns (uint256)
     {
+        return vested [domain];
+    }
+    function stakedFor(address domain) external view returns (uint256)
+    {
+        return staked [domain];
+    }
+    function votingWeightOf(address domain) external view returns (uint256)
+    {
+        return votingWeight [domain];
+    }
+    function allowance(address owner, address spender) external view returns (uint256)
+    {
+        return allowed[owner][spender];
+    }
+    /* basic funcs */
+    function transfer(address recipient, uint256 amount) public returns (bool)
+    {
+        require(isPaused == false);
+        require(isTransferable == true);
         require(balance[msg.sender] >= amount);
         balance[msg.sender] -= amount;
         balance[recipient] += amount;
@@ -164,8 +202,49 @@ contract DreamcatcherToken
         votingWeight[recipient] += amount;
         emit Transfer(msg.sender, recipient, amount);
     }
+    function transferfrom(address sender, address recipient, uint256 amount) public returns (bool)
+    {
+        require
+        (
+            balance[sender] >= amount,
+            "Insufficient balance"
+        );
+        require
+        (
+            allowed[sender][msg.sender] >= amount,
+            "Transfer amount exceeds allowance"
+        );
+        balance[sender] -= amount;
+        votingWeight[sender] -= amount;
+        balance[recipient] += amount;
+        votingWeight[recipient] += amount;
+        allowed[sender][msg.sender] -= amount;
+        emit Transfer(sender, recipient, amount);
+        return true;
+    }
+    function burn(address domain, uint256 amount) public 
+    {
+        require(isPaused == false);
+        require(isBurnable == true);
+        balance[domain] -= amount;
+        votingWeight[domain] -= amount;
+        totalSupply -= amount;
+        emit Burn(domain, amount);
+    }
+    function mint(address domain, uint256 amount) public 
+    {
+        require(isMintable == true, "minting is disabled");
+        require(isPaused == false, "this contract is currently paused");
+        require(amount > 0, "cannot be less than zero");
+        balance[domain] += amount;
+        votingWeight[domain] += amount;
+        totalSupply += amount;
+        emit Mint(domain, amount);
+    }
     function mintVested(address domain, uint256 amount, uint256 duration) private 
     {
+        require(isPaused == false);
+        require(isMintable == true);
         require(amount > 0, "");
         require(domain != address(0), "");
         uint256 start = block.timestamp;
@@ -179,7 +258,7 @@ contract DreamcatcherToken
         vestingSchedules[domain].push(vestingSchedule);
         totalSupply += amount;
         totalVested += amount;
-        emit MintTokensVested(account, amount);
+        emit MintTokensVested(domain, amount);
     }
     function releaseVested() private
     {
@@ -207,363 +286,74 @@ contract DreamcatcherToken
         balance[msg.sender] += sumReleased;
         emit TokensReleased(msg.sender, sumReleased);
     }
-
-
-
-
-    /* =.=.=.=.=.=.=.= CUSTODIAN SYNDICATE =.=.=.=.=.=.=.= */
-    struct Settings {
-        uint256 n;
-        uint256 nMin;
-        uint256 nMax;
-        uint256 minBalance;
-        uint256 minStaked;
-        uint256 minVotes;
-    }
-
-    struct Syndicate {
-        Settings settings;
-    }
-
-    /* =.=.=.=.=.=.=.= CUSTODIAN TREASURY MANAGEMENT =.=.=.=.=.=.=.= */
-    struct MultiSig {
-        /* number of required signatures to access signatures */
-        uint256 requiredSignatures;
-        /* once signed how long it takes before the funds can be accessed */
-        uint256 delay;
-    }
-
-    struct Vault {
-        /* can people get Eth from the address */
-        bool isBuying;
-        bool isSelling;
-        /* unlike others you can redeem ETH for yours share*/
-        uint256 askEth;
-        uint256 bidEth;
-        /* amount being sold or bought */
-        uint256 amount;
-    }
-
-    struct ProposalsAgreement {
-        /* minimum required amounts of votes to pass a proposal */
-        uint256 minQuorum;
-    }
-
-    struct AgreementOnToken {
-        bool isPausable;
-        bool isPaused;
-        bool isMintable;
-        bool isBurnable;
-        bool isTransferable;
-    }
-
-    /* aggreements are policies or settings the community can vote to change */
-    struct Aggreements {
-        AgreementOnToken agreementOnToken;
-        uint256 maxMintablePerProposal; // 1% of total
-    }
-
-    struct Custodian {
-        address account;
-        /* a group of people allowed to propose and incharge of the project */
-        Syndicate syndicate;
-        Vault vault;
-    }
-
-    /* =.=.=.=.=.=.=.= VESTING =.=.=.=.=.=.=.= */
-    struct VestingSchedule {
-        uint256 amount;
-        uint256 start;
-        uint256 end;
-        uint256 released;
-    }
-
-    mapping(address => VestingSchedule[]) private vestingSchedules;
-
-    /* =.=.=.=.=.=.=.= INIT =.=.=.=.=.=.=.= */
-    Token private dreamcatcherToken;
-    Custodian private custodian;
-
-    constructor() {
-        /* =.=.=.=.=.=.=.= TOKEN IERC20 =.=.=.=.=.=.=.= */
-        dreamcatcherToken.IERC20.name = "Dreamcatcher";
-        dreamcatcherToken.IERC20.symbol = "DREAM";
-        dreamcatcherToken.IERC20.decimals = 18;
-        dreamcatcherToken.IERC20.totalSupply = 0;
-        total_supply = 4
-
-        /* =.=.=.=.=.=.=.= CUSTODIAN =.=.=.=.=.=.=.= */
-        /* set custodian */
-
-        /* =.=.=.=.=.=.=.= LAUNCH INSTRUCTIONS =.=.=.=.=.=.=.= */
-        mint(custodian.account, 60000);
-        mintVested(0x172952523F64EAAF288DE4cE9e5d1295DCFd3F83, 1000, yr * 10);
-        //mint(0x172952523F64EAAF288DE4cE9e5d1295DCFd3F83, 1000); // -- team member I
-        //mint(0xDbF85074764156004FEb245b65693e59a62262c2, 1000); // -- team member II
-        //mint(0x1de8807f69E357FD91e47B34Dc2a66216a9DC4b4, 1000); // -- team member III
-        // -- team address
-        //send 20% to team wallet
-        //send x% for private funding
-        //keep x amount on contract as the contract will be the one selling directly
-    }
-
-    /* =.=.=.=.=.=.=.= EVENTS =.=.=.=.=.=.=.= */
-    event Transfer(address indexed from, address indexed to, uint256 amount);
-    event Approval(
-        address indexed owner,
-        address indexed spender,
-        uint256 amount
-    );
-    event Mint(address indexed account, uint256 amount);
-    event Burn(address indexed account, uint256 amount);
-    event TokensReleased(address indexed account, uint256 amount);
-    event MintTokensVested(address indexed account, uint256 amount);
-    event RoleGranted(address indexed account, string role);
-    event RoleRevoked(address indexed account, string role);
-
-    /* =.=.=.=.=.=.=.= VERIFY CUSTODIAN & SYNDICATE =.=.=.=.=.=.=.= */
-    modifier onlyCustodian() {
-        require(
-            dreamcatcherToken.addressStateToggles.isCustodian[msg.sender] ==
-                true,
-            "Must be accessed through a proposal"
-        );
-        _;
-    }
-
-    modifier onlySyndicate() {
-        require(
-            dreamcatcherToken.addressStateToggles.isSyndicate[msg.sender] ==
-                true,
-            "Only Syndicates can access this function"
-        );
-        _;
-    }
-
-    /* =.=.=.=.=.=.=.= UTILS =.=.=.=.=.=.=.= */
-    function saveNewAccount(address account) private {
-        for (uint256 i = 0; i <= accounts.length; i++) {
-            if (accounts[accountId] != account) {
-                accounts[accountId] = account;
-            }
-        }
-    }
-
-    function makeSnapshot() public {
-        Snapshot storage snapshot;
-        snapshot.timeStamp = block.timestamp;
-        snapshot.totalSupply = dreamcatcherToken.IERC20.totalSupply;
-        snapshot.totalVested = dreamcatcherToken.IERC20.totalVested;
-        snapshot.totalStaked = dreamcatcherToken.IERC20.totalStaked;
-        for (uint256 i = 0; i <= accounts.length; i++) {
-            address account = accounts[accountId];
-            snapshot.balance[account] = dreamcatcherToken.balance[account];
-            snapshot.vested[account] = dreamcatcherToken.vested[account];
-            snapshot.staked[account] = dreamcatcherToken.staked[account];
-            snapshot.votes[account] = dreamcatcherToken.votes[account];
-        }
-        snapshots = snapshot;
-        snapshotId++;
-    }
-
-    function getSnapshot(uint256 id) public returns (Snapshot memory) {
-        return dreamcatcherToken.snapshots[id];
-    }
-
-    function totalVested() public view virtual returns (uint256) {
-        return dreamcatcherToken.IERC20.totalVested;
-    }
-
-    function totalStaked() public view virtual returns (uint256) {
-        return dreamcatcherToken.IERC20.totalStaked;
-    }
-
-    function balanceOf(address account) public view virtual returns (uint256) {
-        /* return how much the address has of our token */
-        return dreamcatcherToken.balance[account];
-    }
-
-    function vestedOf(address account) public view virtual returns (uint256) {
-        /* amount vested for account */
-        return dreamcatcherToken.vested[account];
-    }
-
-    function stakedOf(address account) public view virtual returns (uint256) {
-        /* amount of tokens staked */
-        return dreamcatcherToken.staked[account];
-    }
-
-    function votesOf(address account) public view virtual returns (uint256) {
-        /* how much voting power the address holds */
-        return dreamcatcherToken.votes[account];
-    }
-
-    function mint(address account, uint256 amount) public onlyCustodian {
-        require(amount > 0, "cannot be less than zero");
-        dreamcatcherToken.balance[account] += amount;
-        dreamcatcherToken.votes[account] += amount;
-        dreamcatcherToken.IERC20.totalSupply += amount;
-        accounts[accountId] = account;
-        saveNewAccount(account);
-        makeSnapshot();
-        emit Mint(account, amount);
-    }
-
-    /* mint new tokens as vested for the address (linearly released) */
-    function mintVested(
-        address account,
-        uint256 amount,
-        uint256 duration
-    ) public onlyCustodian {
-        require(amount > 0, "must be non-zero");
-        require(account != address(0), "invalid address");
-        uint256 start = block.timestamp;
-        uint256 end = start + duration;
-
-        VestingSchedule memory vestingSchedule = VestingSchedule(
-            amount,
-            start,
-            end,
-            0
-        );
-        vestingSchedules[account].push(vestingSchedule);
-        dreamcatcherToken.IERC20.totalSupply += amount;
-        dreamcatcherToken.IERC20.totalVested += amount;
-        saveNewAccount(account);
-        makeSnapshot();
-        emit MintTokensVested(account, amount);
-    }
-
-    function releaseVested() public {
-        VestingSchedule[] storage schedules = vestingSchedules[msg.sender];
-        uint256 sumReleased = 0;
-        for (uint256 i = 0; i < schedules.length; i++) {
-            VestingSchedule storage schedule = schedules[i];
-            if (block.timestamp >= schedule.end) {
-                uint256 amountToRelease = schedule.amount - schedule.released;
-                schedule.released = schedule.amount;
-                sumReleased += amountToRelease;
-            } else {
-                uint256 timeElapsed = block.timestamp - schedule.start;
-                uint256 vestingDuration = schedule.end - schedule.start;
-                uint256 amountToRelease = (schedule.amount * timeElapsed) /
-                    vestingDuration -
-                    schedule.released;
-                schedule.released += amountToRelease;
-                sumReleased += amountToRelease;
-            }
-        }
-        require(sumReleased > 0, "no tokens to release");
-        dreamcatcherToken.IERC20.totalVested -= sumReleased;
-        dreamcatcherToken.votes[msg.sender] += sumReleased;
-        dreamcatcherToken.balance[msg.sender] += sumReleased;
-        makeSnapshot();
-        emit TokensReleased(msg.sender, sumReleased);
-    }
-
-    function burn(address account, uint256 amount) public onlyCustodian {
-        dreamcatcherToken.balance[account] -= amount;
-        dreamcatcherToken.votes[account] -= amount;
-        dreamcatcherToken.IERC20.totalSupply -= amount;
-        saveNewAccount(account);
-        makeSnapshot();
-        emit Burn(account, amount);
-    }
-
-    function allowance(address owner, address spender)
-        public
-        view
-        returns (uint256)
+}
+library LibConnection 
+{
+    struct Connection 
     {
-        return dreamcatcherToken.allowance[owner][spender];
+        string role;
+        address domain;
+        uint256 startOn;
+        uint256 endOn;
+        /* is the smartContract a core module of Dreamcatcher */
+        bool isRoot;
     }
-
-    function transfer(address recipient, uint256 amount) public returns (bool) {
-        require(
-            dreamcatcherToken.balance[msg.sender] >= amount,
-            "Insufficient balance"
-        );
-        dreamcatcherToken.balance[msg.sender] -= amount;
-        dreamcatcherToken.votes[msg.sender] -= amount;
-        dreamcatcherToken.balance[recipient] += amount;
-        dreamcatcherToken.votes[recipient] += amount;
-        saveNewAccount(recipient);
-        makeSnapshot();
-        emit Transfer(msg.sender, recipient, amount);
-        return true;
-    }
-
-    function transferfrom(
-        address sender,
-        address recipient,
-        uint256 amount
-    ) public returns (bool) {
-        require(
-            dreamcatcherToken.balance[sender] >= amount,
-            "Insufficient balance"
-        );
-        require(
-            dreamcatcherToken.allowance[sender][msg.sender] >= amount,
-            "Transfer amount exceeds allowance"
-        );
-
-        dreamcatcherToken.balance[sender] -= amount;
-        dreamcatcherToken.votes[sender] -= amount;
-        dreamcatcherToken.balance[recipient] += amount;
-        dreamcatcherToken.votes[recipient] += amount;
-        dreamcatcherToken.allowance[sender][msg.sender] -= amount;
-        saveNewAccount(sender);
-        saveNewAccount(recipient);
-        makeSnapshot();
-        emit Transfer(sender, recipient, amount);
-        return true;
-    }
-
-    function approve(address spender, uint256 amount) public returns (bool) {
-        dreamcatcherToken.allowance[msg.sender][spender] = amount;
-        emit Approval(msg.sender, spender, amount);
-        return true;
-    }
-
-    /* =.=.=.=.=.=.=.= GRANT & REVOKE SYNDICATE =.=.=.=.=.=.=.= */
-    /* --add check for max and min */
-    function toggleIsSyndicate(address account) public onlyCustodian {
-        if (
-            dreamcatcherToken.addressStateToggles.isSyndicate[account] == true
-        ) {
-            dreamcatcherToken.addressStateToggles.isSyndicate[account] = false;
-            emit RoleRevoked(account, "Syndicate");
-        } else if (
-            dreamcatcherToken.addressStateToggles.isSyndicate[account] == false
-        ) {
-            dreamcatcherToken.addressStateToggles.isSyndicate[account] = true;
-            emit RoleGranted(account, "Syndicate");
-        }
-        saveNewAccount(account);
-        makeSnapshot();
-    }
-
 }
-
 /* connect all smart contracts together */
-contract Conduit {
-    address mapping(address => bool) isNativeToken;
-    function isNativeToken(address domain) public returns (bool) {
-        return isNativeToken [domain];
+contract Conduit 
+{
+    event NewConnection(string id, address domain, uint256 duration, bool isRoot);
+    event ConnectionExpired(string id, uint256 expiration);
+    event ConnectionVerified(string id, address domain, uint256 duration)
+    /* access the address of a moduleContract with the name -- allows them */
+    mapping (string=>address) connections;
+    function newConnection(string id, string role="default", address domain, uint256 duration=-1, bool isRoot=false) private
+    {
+        connections [id] = LibConnection.Connection
+        (
+            if (role != "default")
+            {
+                role = role;
+            }
+            domain = domain;
+            startOn = block.timestamp;
+            if (timeout >= 0) && (isRoot == false)
+            {
+                endOn = startOn + duration;
+            }
+            isRoot = isRoot;
+        );
+        NewConnection(id=id, domain=domain, duration=duration, isRoot=isRoot);
     }
-    address mapping(address => bool) isGovernor;
-    function isGovernor(address domain) public returns (bool) {
-        return isGovernor [domain];
+    function delConnection(string id) private
+    {
+        delete connections[id];
+    }
+    /* recommend utilising this with timeout contracts */
+    function verifyConnection(string id) private returns (LibConnection.Connection)
+    {
+        if (block.timestamp >= connections[id].endOn) || (connections[id].isRoot!=false)
+        {
+            uint256 secondsLeft = connections[id].endOn - block.timestamp;
+            emit ConnectionVerified(id=id, domain=domain, duration=secondsLeft);
+            return connections[id];
+        }
+        else
+        {      
+            emit ConnectionExpired(id=id, expiration=connections[id].endOn);
+        }
     }
 
 }
+contract DreamcatcherConduit is Conduit
+{
+    
 
-contract DreamcatcherConduit {
-    address mapping(address => bool) addressIsNativeToken;
-    address mapping(address => bool) addressIsSyndicate;
-    address mapping(address => bool) addressIsGovernor;
+    address mapping(address=>bool) addressIsNativeToken;
+    address mapping(address=>bool) addressIsSyndicate;
+    address mapping(address=>bool) addressIsGovernor;
     constructor (address token, address vault) {
-        initialization();
+        
     }
 
     event LabelGranted(address indexed domain, string label);
