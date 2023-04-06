@@ -319,23 +319,6 @@ contract DreamcatcherToken is ERC20 {
         return dreamcatcherToken.snapshots[id];
     }
 
-    /* =.=.=.=.=.=.=.= IERC20 =.=.=.=.=.=.=.= */
-    function name() public view virtual returns (string memory) {
-        return dreamcatcherToken.IERC20.name;
-    }
-
-    function symbol() public view virtual returns (string memory) {
-        return dreamcatcherToken.IERC20.symbol;
-    }
-
-    function decimals() public view virtual returns (uint8) {
-        return dreamcatcherToken.IERC20.decimals;
-    }
-
-    function totalSupply() public view virtual returns (uint256) {
-        return dreamcatcherToken.IERC20.totalSupply;
-    }
-
     function totalVested() public view virtual returns (uint256) {
         return dreamcatcherToken.IERC20.totalVested;
     }
@@ -519,6 +502,31 @@ contract DreamcatcherToken is ERC20 {
     }
 }
 
-contract Keeper {
+/* connect all smart contracts together */
+contract DreamcatcherConduit {
+    /* connections */
+    address native_token_domain;
+
+    mapping(address => bool) is_native_token;
+    mapping(address => bool) is_syndicate;
+    mapping(address => bool) is_conduit;
+
+    constructor (address _native_token_domain) {
+        /* connections */
+        native_token_domain = _native_token_domain;
+
+        /* assign tags */
+        is_native_token[native_token_domain] = true;
+        is_conduit[msg.sender] = true;
+    }
+
+    modifier only_native_token() {
+        require(is_native_token[msg.sender] == true, "domain is not of native token"); _; }
+
+    modifier only_syndicate() {
+        require(is_syndicate[msg.sender] == true, "domain is not a syndicate"); _; }
+
+    modifier only_conduit() {
+        require(is_conduit[msg.sender] == true, "domain is not a conduit"); _; }
     
 }
