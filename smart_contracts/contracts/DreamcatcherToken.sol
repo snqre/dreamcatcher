@@ -1,21 +1,77 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 pragma experimental ABIEncoderV2;
-
 /*
-The token max supply is uncapped to allow the governor to raise funds
-However, it will require proposals and heavy voting to be able to do such a thing
-As holders would not be incetizied to do so, unless the proposal was good
-If the DAO is making money then they can also burn tokens too
-*/
+Purpose & Goals 
+-- Purpose and goals of the DAO
+---- Decentralized governance of the decentralized services we will offer
+---- Decentralized finance will allow us to get better deals when trying to deal with offers
+---- Giving young entrepreneurs a chance to find funding for their projects
+---- Research and development and attracting talent
 
-// snapshot governance voting compatibility
-// install 0.0.135 vscode solidity extension because latest one doesnt work for imports
+-- What is the DAO going to do?
+---- Vote on proposals to improve the built system
+---- Vote on using excess trasury capital to re invest in projects
+---- Decentralized fund management
+---- Decentralized application managment
 
-/* 
-    transfers
-    mint
+-- What problems will it solve?
+---- Centralized control
+---- Lack of transparency
+---- Cost and efficiency
+---- Trust
+---- Accessibility
 
+-- What benefits will it provide to its members?
+---- Transparency
+---- Voting rights
+---- Equity
+---- Flexibility
+---- Opportunities to participate
+---- Cheaper fees for our products and negotiating cheaper pricing for projects we invest in
+---- Member's only resources
+
+Membership
+-- Membership structure
+---- Token-based membership
+
+-- Will membership be open to anyone?
+---- As long as you have more than 0 tokens you are a member
+---- To become a syndicate you must have at least 1% of the total supply staked they are proposal creators, arbitrators, curators, and are the core team
+
+-- Will there be any criteria for joining the DAO?
+---- Token ownership
+
+-- Will there be any criteria for becoming a Syndicate?
+---- Token ownership
+---- elected by the community
+
+Governance
+-- How will decisions be made?
+---- Quadratic voting
+---- Delegated voting
+
+-- Will there be voting?
+---- Yes
+
+-- How will voting power be distributed among members?
+---- Quadratic voting
+---- ie. one has 10,000 the first token is worth 1:1
+---- the second is worth 1:0.99
+---- math still in works
+
+Smart Contract Development
+-- Voting
+-- Proposal submission
+-- Fund managemeng
+
+Deployment
+-- Where are you initially deploying this to?
+
+Community Building
+-- Promoting
+-- Recruiting members
+-- Fostering communication and engaement among members
 */
 
 interface IERC20 {
@@ -295,15 +351,23 @@ contract DreamcatcherToken {
     }
 }
 
-library LibConnection {
+library LibTerminalUpgrade {
+    /* 
+    This library is built to allow the conduint contract to connect to important smart contracts
+    The reason i'm doing this is to make the contracts interchangable reducing the chance of a single point of failure
+    Our members will be able to vote to allow a connection to a new smart contract
+    The conduit will expect a certain interface from each key components
+    This way people can read the code behind the smart contract that is trying to be connected
+    There will be offchain team dedicated to "deciding" what goes where
+    As such our members will be key to decentralizing, no single point of failure, no offchain trust 
+    */
     struct Connection {
-        uint256 id;
-        string role;
+        //moduleTypes: <token> <governor> <treasuryDAO> <timeLock>
+        string moduleType;
+        bool isRootModule;//is this an important smart contract module
         address domain;
-        uint256 startOn;
-        uint256 endOn;
-        /* is the smartContract a core module of Dreamcatcher */
-        bool isRoot;
+        uint256 startOn;//start of the connection or date it was implemented
+        uint256 endOn;//how long until the connection must be renewed this is only for non important modules
     }
 }
 
