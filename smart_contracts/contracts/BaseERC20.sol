@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
-import "smart_contracts/libraries/Vesting.sol"
+import "smart_contracts/libraries/Vesting.sol";
 contract BaseERC20 {
     bool private isMintable;
     bool private isBurnable;
@@ -27,6 +27,7 @@ contract BaseERC20 {
     event Approval(address indexed owner, address indexed spender, uint256 amount);
     modifier onlyFoundingTeam() {//only for the first timeframe after deployment to make sure we can fix any likely problems will revoke before funding rounds
         require(isFoundingTeam[msg.sender]);
+        _;
     }
     function revokeIsFoundingTeam() external onlyFoundingTeam {
         isFoundingTeam[msg.sender] = false;
@@ -34,6 +35,7 @@ contract BaseERC20 {
     }
     modifier onlyProposal() {
         require();
+        _;
     }
     bool private locked;
     modifier antiReentrancyLock() {
@@ -77,9 +79,9 @@ contract BaseERC20 {
         }
     }
     function _spendAllowance(address owner, address spender, uint256 amount) private {
-        uint256 currentAllowance = allowed
+        uint256 currentAllowance = allowed;
     }
-    function transfer(address recipient, uint256 amount) external antiReentrancyLock() returns (bool);
+    function transfer(address recipient, uint256 amount) external antiReentrancyLock() returns (bool) {
         require(balance[msg.sender] >= amount, "Insufficient balance");
         balance[msg.sender] -= amount;
         vote[msg.sender] -= amount;
@@ -87,6 +89,7 @@ contract BaseERC20 {
         vote[msg.sender] += amount;
         emit Transfer(msg.sender, recipient, amount);
         return true;
+    }
     function transferFrom(address sender, address recipient, uint256 amount) external antiReentrancyLock() returns (bool) {
         require(balance[sender] >= amount, "Insufficient balance");
         require(allowed[sender][msg.sender] >= amount, "Transfer amount exceeds allowance");
@@ -175,19 +178,19 @@ contract BaseERC20 {
     function totalStaked() public view returns (uint256 memory) {
         return totalStaked;
     }
-    function balanceOf(address account) public view returns (uint256) {
+    function balanceOf(address account) public view returns (uint256 memory) {
         return balance[account];
     }
-    function vestedFor(address account) public view returns (uint256) {
+    function vestedFor(address account) public view returns (uint256 memory) {
         return vested[account];
     }
-    function stakedFor(address account) public view returns (uint256) {
-        return staked[account]'
+    function stakedFor(address account) public view returns (uint256 memory) {
+        return staked[account];
     }
-    function voteWeightOf(address account) public view returns (uint256) {
+    function voteWeightOf(address account) public view returns (uint256 memory) {
         return vote[account];
     }
-    function allowance(address owner, address spender) public view returns (uint256) {
+    function allowance(address owner, address spender) public view returns (uint256 memory) {
         return allowed[owner][spender];
     }
     constructor() {
