@@ -17,7 +17,6 @@ contract Conduit {
     );
 
     mapping(uint256 => Connection) private connection;
-    
 
     constructor(address _domainToken, address _domainGovernor) {
         bool isRootModule;
@@ -36,5 +35,4 @@ contract Conduit {
 
         /* add other rool modules required to operate ... */
     }
-
 }

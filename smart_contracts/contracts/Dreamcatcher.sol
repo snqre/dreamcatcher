@@ -77,6 +77,4 @@ Community Building
 import "smart_contracts/contracts/Conduit.sol";
 import "smart_contracts/contracts/BaseERC20.sol";
 
-contract Dreamcatcher is BaseERC20, Conduit {
-    
-}
+contract Dreamcatcher is BaseERC20, Conduit {}
