@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 pragma experimental ABIEncoderV2;
+
 /*
 Purpose & Goals 
 -- Purpose and goals of the DAO
@@ -73,6 +74,7 @@ Community Building
 -- Recruiting members
 -- Fostering communication and engaement among members
 */
+import "smart_contracts\contracts\Conduit.sol";
 
 interface IERC20 {
     function totalSupply() external view returns (uint256);
@@ -80,6 +82,18 @@ interface IERC20 {
     function balanceOf(address owner) external view returns (uint256);
 
     function transfer(address to, uint256 amount) external returns (bool);
+
+    function vestedFor(address domain) external view returns (uint256) {
+        return vested[domain];
+    }
+
+    function stakedFor(address domain) external view returns (uint256) {
+        return staked[domain];
+    }
+
+    function votingWeightOf(address domain) external view returns (uint256) {
+        return votingWeight[domain];
+    }
 
     function allowance(address owner, address spender)
         external
@@ -102,55 +116,6 @@ interface IERC20 {
     );
 }
 
-contract ERC20 is IERC20 {
-    string public name;
-    string public symbol;
-    uint256 public total_supply;
-    uint8 public decimals;
-
-    mapping(address => uint256) balance;
-    mapping(address => mapping(address => uint256)) allowed;
-
-    function balanceOf(address owner) public view returns (uint256) {
-        return balance;
-    }
-
-    function transfer(address to, uint256 amount) public returns (bool) {
-        require(balance[msg.sender] >= amount);
-        balance[msg.sender] -= amount;
-        balance[to] += amount;
-        emit Transfer(msg.sender, to, amount);
-    }
-
-    function approve(address spender, uint256 amount) public returns (bool) {
-        allowed[msg.sender][spender] = amount;
-        emit Approval(msg.sender, spender, amount);
-        return true;
-    }
-
-    function allowance(address owner, address spender)
-        public
-        view
-        returns (uint256)
-    {
-        return allowed[owner][spender];
-    }
-
-    function transferFrom(
-        address from,
-        address to,
-        uint256 amount
-    ) public returns (bool) {
-        require(balance[from] >= amount);
-        require(allowed[from][msg.sender] >= amount);
-        balance[from] -= amount;
-        allowed[from][msg.sender] -= amount;
-        balance[to] += amount;
-        emit Transfer(from, to, amount);
-        return true;
-    }
-}
-
 library LibVesting {
     struct VestingSchedule {
         uint256 amount;
@@ -161,7 +126,7 @@ library LibVesting {
 }
 
 /* tally balance, vested, staked, weight */
-contract DreamcatcherToken {
+contract Dreamcatcher {
     /* settings */
     bool isPausable;
     bool isPaused;
@@ -171,7 +136,7 @@ contract DreamcatcherToken {
     /* meta */
     string name;
     string symbol;
-    uint8 decimals;
+    uint256 decimals;
     /* state */
     uint256 totalSupply;
     uint256 totalVested;
@@ -184,7 +149,6 @@ contract DreamcatcherToken {
     mapping(address => mapping(address => uint256)) allowed;
     /* vesting */
     mapping(address => LibVesting.VestingSchedule[]) private vestingSchedules;
-
     /* constructor */
     constructor() {
         /* meta */
@@ -228,7 +192,55 @@ contract DreamcatcherToken {
     event RoleGranted(address indexed domain, string role);
     event RoleRevoked(address indexed domain, string role);
 
-    /* basic interface */
+    modifier onlyConduit() {
+        require(msg.sender == otherContract, "only our conduit can access this function");
+        _;
+    }
+
+    function isPausable() external view returns (bool) {
+        return isPausable;
+    }
+
+    function isPaused() external view returns (bool) {
+        return isPaused;
+    }
+
+    function isMintable() external view returns (bool) {
+        return isMintable;
+    }
+
+    function isBurnable() external view returns (bool) {
+        return isBurnable;
+    }
+
+    function isTransferable() external view returns (bool) {
+        return isTransferable;
+    }
+
+    function name() external view returns (string) {
+        return name;
+    }
+
+    function symbol() external view returns (string) {
+        return symbol;
+    }
+
+    function decimals() external view returns (uint256) {
+        return decimals;
+    }
+
+    function totalSupply() external view returns (uint256) {
+        return totalSupply;
+    }
+
+    function totalVested() external view returns (uint256) {
+        return totalVested;
+    }
+
+    function totalStaked() external view returns (uint256) {
+        return totalStaked;
+    }
+
     function balanceOf(address domain) external view returns (uint256) {
         return balance[domain];
     }
@@ -293,7 +305,7 @@ contract DreamcatcherToken {
         emit Burn(domain, amount);
     }
 
-    function mint(address domain, uint256 amount) public {
+    function mint(address domain, uint256 amount) internal {
         require(isMintable == true, "minting is disabled");
         require(isPaused == false, "this contract is currently paused");
         require(amount > 0, "cannot be less than zero");
@@ -307,7 +319,7 @@ contract DreamcatcherToken {
         address domain,
         uint256 amount,
         uint256 duration
-    ) private {
+    ) internal {
         require(isPaused == false);
         require(isMintable == true);
         require(amount > 0, "");
@@ -364,10 +376,10 @@ library LibTerminalUpgrade {
     struct Connection {
         //moduleTypes: <token> <governor> <treasuryDAO> <timeLock>
         string moduleType;
-        bool isRootModule;//is this an important smart contract module
+        bool isRootModule; //is this an important smart contract module
         address domain;
-        uint256 startOn;//start of the connection or date it was implemented
-        uint256 endOn;//how long until the connection must be renewed this is only for non important modules
+        uint256 startOn; //start of the connection or date it was implemented
+        uint256 endOn; //how long until the connection must be renewed this is only for non important modules
     }
 }
 
