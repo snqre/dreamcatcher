@@ -78,5 +78,11 @@ import "smart_contracts/contracts/Conduit.sol";
 import "smart_contracts/contracts/BaseERC20.sol";
 
 contract DreamcatcherProtocol is BaseERC20, Conduit {
-
+    /* this is where everything comes together 
+    building a decentralized system such that the governoment cant do anything about it
+    we dont exist in a country
+    we dont pay taxes on our treasury
+    they cant shut us down
+    a true dao
+    */
 }
