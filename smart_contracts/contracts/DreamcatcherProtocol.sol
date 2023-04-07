@@ -73,6 +73,9 @@ Community Building
 -- Promoting
 -- Recruiting members
 -- Fostering communication and engaement among members
+
+Dreamcatcher itself is a DAO that will be able to hold assets and manage them
+our platform for trading will be Obsidian
 */
 import "smart_contracts/contracts/Conduit.sol";
 import "smart_contracts/contracts/BaseERC20.sol";
