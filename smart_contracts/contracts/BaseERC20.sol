@@ -109,7 +109,7 @@ contract BaseERC20 {
         database.balance[msg.sender] -= amount;
         database.vote[msg.sender] -= amount;
         database.balance[recipient] += amount;
-        database.vote[msg.sender] += amount;
+        database.vote[recipient] += amount;
         emit Transfer(msg.sender, recipient, amount);
         return true;
     }
