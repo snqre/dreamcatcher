@@ -1,0 +1,1 @@
+/* this will be our index fund which is probably the hardest part especially one upping the competition */

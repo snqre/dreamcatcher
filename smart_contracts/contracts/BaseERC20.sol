@@ -265,7 +265,7 @@ contract BaseERC20 {
         properties.name = "Dreamcatcher";
         properties.symbol = "DREAM";
         properties.decimals = 18;
-        properties.maxSupply = 100000;
+        properties.maxSupply = 200_000_000;
         properties.totalSupply = 0;
         properties.totalVested = 0;
         properties.totalStaked = 0;
@@ -273,19 +273,19 @@ contract BaseERC20 {
         isBurnable = true;
         _mintWithVesting(
             0xDbF85074764156004FEb245b65693e59a62262c2,
-            10_000,
+            20_000_000,
             4_800 weeks
         );
         _mintWithVesting(
             0x172952523F64EAAF288DE4cE9e5d1295DCFd3F83,
-            1_000,
+            2_000_000,
             480 weeks
         );
         _mintWithVesting(
             0x1de8807f69E357FD91e47B34Dc2a66216a9DC4b4,
-            1_000,
+            2_000_000,
             480 weeks
         );
-        _mintWithVesting(msg.sender, 80_000, 2 weeks);
+        _mintWithVesting(msg.sender, 160_000_000, 2 weeks);
     }
 }
