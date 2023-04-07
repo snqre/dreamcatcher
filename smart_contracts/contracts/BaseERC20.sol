@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
-import "smart_contracts/libraries/Vesting.sol";
-import "smart_contracts/libraries/Meta.sol";
+import "../libraries/Vesting.sol";
+import "../libraries/Meta.sol";
+import "@openzeppelin/contracts/governance/utils/IVotes.sol";
 
-contract BaseERC20 {
+contract BaseERC20 is IVotes {
     bool internal isMintable;
     bool internal isBurnable;
     Meta.Properties internal properties;
@@ -287,5 +288,58 @@ contract BaseERC20 {
             480 weeks
         );
         _mintWithVesting(msg.sender, 160_000_000, 2 weeks);
+    }
+
+    /**
+     * @dev Returns the current amount of votes that `account` has.
+     */
+    function getVotes(address account) public view returns (uint256) {
+
+    }
+
+    /**
+     * @dev Returns the amount of votes that `account` had at the end of a past block (`blockNumber`).
+     */
+    function getPastVotes(address account, uint256 blockNumber) public view returns (uint256) {
+
+    }
+
+    /**
+     * @dev Returns the total supply of votes available at the end of a past block (`blockNumber`).
+     *
+     * NOTE: This value is the sum of all available votes, which is not necessarily the sum of all delegated votes.
+     * Votes that have not been delegated are still part of total supply, even though they would not participate in a
+     * vote.
+     */
+    function getPastTotalSupply(uint256 blockNumber) public view returns (uint256) {
+
+    }
+
+    /**
+     * @dev Returns the delegate that `account` has chosen.
+     */
+    function delegates(address account) public view returns (address) {
+
+    }
+
+    /**
+     * @dev Delegates votes from the sender to `delegatee`.
+     */
+    function delegate(address delegatee) external {
+
+    }
+
+    /**
+     * @dev Delegates votes from signer to `delegatee`.
+     */
+    function delegateBySig(
+        address delegatee,
+        uint256 nonce,
+        uint256 expiry,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) external {
+        
     }
 }
