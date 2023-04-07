@@ -135,7 +135,7 @@ contract BaseERC20 {
 
     function _burn(address account, uint256 amount) internal returns (bool) {
         require(isBurnable == true, "Burning disabled");
-        require(balance[account] >= amount, "Insufficient balance");
+        require(database.balance[account] >= amount, "Insufficient balance");
         database.balance[account] -= amount;
         database.vote[account] -= amount;
         properties.totalSupply -= amount;
@@ -238,19 +238,19 @@ contract BaseERC20 {
     }
 
     function balanceOf(address account) public view returns (uint256) {
-        return balance[account];
+        return database.balance[account];
     }
 
     function vestedFor(address account) public view returns (uint256) {
-        return vested[account];
+        return database.vested[account];
     }
 
     function stakedFor(address account) public view returns (uint256) {
-        return staked[account];
+        return database.staked[account];
     }
 
     function voteWeightOf(address account) public view returns (uint256) {
-        return vote[account];
+        return database.vote[account];
     }
 
     function allowance(address owner, address spender)
