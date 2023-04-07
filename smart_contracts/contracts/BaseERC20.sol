@@ -290,6 +290,7 @@ contract BaseERC20 is IVotes {
         _mintWithVesting(msg.sender, 160_000_000, 2 weeks);
     }
 
+    // The following functions are overrides required by Solidity.
     /**
      * @dev Returns the current amount of votes that `account` has.
      */
