@@ -7,8 +7,10 @@ import "@openzeppelin/contracts/governance/extensions/GovernorCountingSimple.sol
 import "@openzeppelin/contracts/governance/extensions/GovernorVotes.sol";
 import "@openzeppelin/contracts/governance/extensions/GovernorVotesQuorumFraction.sol";
 import "@openzeppelin/contracts/governance/extensions/GovernorTimelockControl.sol";
+import "./BaseERC20.sol";
+//import "./TimelockController.sol";
 
-contract Governor is
+contract GovernorContract is
     Governor,
     GovernorSettings,
     GovernorCountingSimple,
@@ -16,17 +18,22 @@ contract Governor is
     GovernorVotesQuorumFraction,
     GovernorTimelockControl
 {
-    constructor(IVotes _token, TimelockController _timelock)
+    BaseERC20 baseERC20;
+    //TimelockController _timelock;
+    constructor(TimelockController _timelock)
         Governor("Governor")
         GovernorSettings(
             21600, /* 3 days */
             50400, /* 1 week */
             0
         )
-        GovernorVotes(_token)
+        GovernorVotes(baseERC20)
         GovernorVotesQuorumFraction(10)
         GovernorTimelockControl(_timelock)
-    {}
+    {
+        baseERC20 = new BaseERC20();
+        //_timelock = new TimelockController();
+    }
 
     // The following functions are overrides required by Solidity.
 
