@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 import "../libraries/Vesting.sol";
-import "../libraries/Meta.sol";
+import "smart_contracts/libraries/Meta.sol";
 import "@openzeppelin/contracts/governance/utils/IVotes.sol";
 
 contract BaseERC20 is IVotes {
@@ -262,6 +262,7 @@ contract BaseERC20 is IVotes {
         return database.allowed[owner][spender];
     }
 
+    
     constructor() {
         properties.name = "Dreamcatcher";
         properties.symbol = "DREAM";
@@ -290,11 +291,9 @@ contract BaseERC20 is IVotes {
         _mintWithVesting(msg.sender, 160_000_000, 2 weeks);
     }
 
-    // The following functions are overrides required by Solidity.
-    /**
-     * @dev Returns the current amount of votes that `account` has.
-     */
-    function getVotes(address account) public view returns (uint256) {}
+    function getVotes(address account) public view returns (uint256) {
+
+    }
 
     /**
      * @dev Returns the amount of votes that `account` had at the end of a past block (`blockNumber`).
