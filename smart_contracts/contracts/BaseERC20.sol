@@ -82,7 +82,7 @@ contract BaseERC20 {
     ) private {
         require(owner != address(0), "Approve from the zero address");
         require(spender != address(0), "Approve from the zero address");
-        allowed[owner][spender] = amount;
+        database.allowed[owner][spender] = amount;
         emit Approval(owner, spender, amount);
     }
 
@@ -121,7 +121,7 @@ contract BaseERC20 {
     ) external antiReentrancyLock returns (bool) {
         require(database.balance[sender] >= amount, "Insufficient balance");
         require(
-            allowed[sender][msg.sender] >= amount,
+            database.allowed[sender][msg.sender] >= amount,
             "Transfer amount exceeds allowance"
         );
         database.balance[sender] -= amount;
@@ -258,7 +258,7 @@ contract BaseERC20 {
         view
         returns (uint256)
     {
-        return allowed[owner][spender];
+        return database.allowed[owner][spender];
     }
 
     constructor() {
