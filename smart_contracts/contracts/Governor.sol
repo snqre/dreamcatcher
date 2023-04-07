@@ -19,8 +19,8 @@ contract GovernorContract is
     GovernorTimelockControl
 {
     BaseERC20 baseERC20;
-    //TimelockController _timelock;
-    constructor(TimelockController _timelock)
+    TimelockController _timelock;
+    constructor()
         Governor("Governor")
         GovernorSettings(
             21600, /* 3 days */
@@ -32,7 +32,13 @@ contract GovernorContract is
         GovernorTimelockControl(_timelock)
     {
         baseERC20 = new BaseERC20();
-        //_timelock = new TimelockController();
+        //we have to change the parametrs late, this is just quickly wrote for testing:
+        address[] memory arrayOfAddresses = new address[](1);
+        arrayOfAddresses[0] = 0x1de8807f69E357FD91e47B34Dc2a66216a9DC4b4;
+        //address[] memory arrayOfAddresses;
+        //arrayOfAddresses Addreses = new address[](1);
+        //arrayOfAddresses.push(0x1de8807f69E357FD91e47B34Dc2a66216a9DC4b4);
+        _timelock = new TimelockController(5, arrayOfAddresses, arrayOfAddresses, 0x1de8807f69E357FD91e47B34Dc2a66216a9DC4b4);
     }
 
     // The following functions are overrides required by Solidity.
@@ -126,5 +132,13 @@ contract GovernorContract is
         returns (bool)
     {
         return super.supportsInterface(interfaceId);
+    }
+
+    function sellVotingTokens() public {
+
+    }
+    
+    function buyVotingTokens() public {
+
     }
 }
