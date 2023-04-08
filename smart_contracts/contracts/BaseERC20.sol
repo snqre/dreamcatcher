@@ -1,5 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
+
+/* base ERC20 no vote */
+
 import "../libraries/Vesting.sol";
 import "smart_contracts/libraries/Meta.sol";
 import "@openzeppelin/contracts/governance/utils/IVotes.sol";
@@ -22,23 +25,6 @@ contract BaseERC20 is IVotes, Authenticator {
         uint256 amount
     );
     
-
-    function revokeIsFoundingTeam() external onlyFoundingTeam {
-        isFoundingTeam[msg.sender] = false;
-        emit RoleRevoked(msg.sender, "isFoundingTeam");
-    }
-
-    //modifier onlyProposal() {
-    //require();
-    //_;
-    //}
-    bool private locked;
-    modifier antiReentrancyLock() {
-        require(!locked, "Anti-reentrancy in place");
-        locked = true;
-        _;
-        locked = false;
-    }
 
     function approve(address spender, uint256 amount) external returns (bool) {
         address owner = msg.sender;
