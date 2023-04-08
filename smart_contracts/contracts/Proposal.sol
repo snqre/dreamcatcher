@@ -1,23 +1,32 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 import "smart_contracts/contracts/Authenticator.sol";
+
 // messy still in the words
 contract Proposal is Authenticator {
-    struct ProposalData {
-        string name;
+    struct Prop {
+        string caption;
         string description;
         uint256 voteCount;
         bool isActive;
     }
 
-    mapping(uint256 => ProposalData) public Proposals;
+    mapping(uint256 => Prop) public proposals;
 
     uint256 public proposalCount;
 
-    event ProposalCreated(string name, string description, uint256 proposalId);
+    event ProposalSubmitted(
+        string name,
+        string description,
+        uint256 proposalId
+    );
     event VoteCast(address voter, uint256 proposalId);
 
-    function createProposal(string memory _name, string memory _description) external onlySyndicate onlyCustodian {
+    function submitProposal(string memory _name, string memory _description)
+        public
+        onlySyndicates
+        onlyCustodians
+    {
         proposalCount++;
         proposals[proposalCount] = ProposalData({
             description: _description,
@@ -25,6 +34,14 @@ contract Proposal is Authenticator {
             isActive: true
         });
 
-        emit ProposalCreated(_name, _description, proposalCount);
+        emit ProposalSubmitted(_name, _description, proposalCount);
     }
+
+    function vote() internal virtual reentrancyLock onlyMembers(msg.sender) {
+        // vote
+        address account = msg.sender;
+        uint256 balance;
+    }
+
+    function execute() internal {}
 }
