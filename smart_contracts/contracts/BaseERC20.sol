@@ -5,9 +5,9 @@ pragma solidity ^0.8.0;
 
 import "../libraries/Vesting.sol";
 import "smart_contracts/libraries/Meta.sol";
-import "@openzeppelin/contracts/governance/utils/IVotes.sol";
 import "smart_contracts/contracts/Authenticator.sol";
-contract BaseERC20 is IVotes, Authenticator {
+
+contract BaseERC20 is Authenticator {
     bool internal isMintable;
     bool internal isBurnable;
     Meta.Properties internal properties;
@@ -24,16 +24,22 @@ contract BaseERC20 is IVotes, Authenticator {
         address indexed spender,
         uint256 amount
     );
-    
 
-    function approve(address spender, uint256 amount) external returns (bool) {
+    function approve(address spender, uint256 amount)
+        public
+        virtual
+        reentrancyLock
+        returns (bool)
+    {
         address owner = msg.sender;
         _approve(owner, spender, amount);
         return true;
     }
 
     function increaseAllowance(address spender, uint256 addedValue)
-        external
+        public
+        virtual
+        reentrancyLock
         returns (bool)
     {
         address owner = msg.sender;
@@ -42,8 +48,9 @@ contract BaseERC20 is IVotes, Authenticator {
     }
 
     function decreaseAllowance(address spender, uint256 subtractedValue)
-        external
+        public
         virtual
+        reentrancyLock
         returns (bool)
     {
         address owner = msg.sender;
@@ -62,7 +69,7 @@ contract BaseERC20 is IVotes, Authenticator {
         address owner,
         address spender,
         uint256 amount
-    ) private {
+    ) internal virtual reentrancyLock {
         require(owner != address(0), "Approve from the zero address");
         require(spender != address(0), "Approve from the zero address");
         database.allowed[owner][spender] = amount;
@@ -73,7 +80,7 @@ contract BaseERC20 is IVotes, Authenticator {
         address owner,
         address spender,
         uint256 amount
-    ) private {
+    ) internal virtual reentrancyLock {
         uint256 currentAllowance = allowance(owner, spender);
         if (currentAllowance != type(uint256).max) {
             require(currentAllowance >= amount, "Insufficient allowance");
@@ -83,50 +90,60 @@ contract BaseERC20 is IVotes, Authenticator {
         }
     }
 
-    function transfer(address recipient, uint256 amount)
-        external
+    function transfer(address _recipient, uint256 _amount)
+        public
+        virtual
+        reentrancyLock
         antiReentrancyLock
         returns (bool)
     {
-        require(database.balance[msg.sender] >= amount, "Insufficient balance");
-        database.balance[msg.sender] -= amount;
-        database.vote[msg.sender] -= amount;
-        database.balance[recipient] += amount;
-        database.vote[recipient] += amount;
-        emit Transfer(msg.sender, recipient, amount);
+        require(
+            database.balance[msg.sender] >= _amount,
+            "Insufficient balance"
+        );
+        database.balance[msg.sender] -= _amount;
+        database.balance[_recipient] += _amount;
+        emit Transfer(msg.sender, _recipient, _amount);
         return true;
     }
 
     function transferFrom(
-        address sender,
-        address recipient,
-        uint256 amount
-    ) external antiReentrancyLock returns (bool) {
-        require(database.balance[sender] >= amount, "Insufficient balance");
+        address _sender,
+        address _recipient,
+        uint256 _amount
+    ) public virtual reentrancyLock returns (bool) {
+        require(database.balance[_sender] >= _amount, "Insufficient balance");
         require(
-            database.allowed[sender][msg.sender] >= amount,
+            database.allowed[_sender][msg.sender] >= _amount,
             "Transfer amount exceeds allowance"
         );
-        database.balance[sender] -= amount;
-        database.vote[sender] -= amount;
-        database.balance[recipient] += amount;
-        database.vote[recipient] += amount;
-        database.allowed[sender][msg.sender] -= amount;
-        emit Transfer(sender, recipient, amount);
+        database.balance[_sender] -= _amount;
+        database.balance[_recipient] += _amount;
+        database.allowed[_sender][msg.sender] -= _amount;
+        emit Transfer(_sender, _recipient, _amount);
         return true;
     }
 
-    function _burn(address account, uint256 amount) internal returns (bool) {
+    function burn(address account, uint256 amount)
+        internal
+        virtual
+        reentrancyLock
+        returns (bool)
+    {
         require(isBurnable == true, "Burning disabled");
         require(database.balance[account] >= amount, "Insufficient balance");
         database.balance[account] -= amount;
-        database.vote[account] -= amount;
         properties.totalSupply -= amount;
         emit Burn(account, amount);
         return true;
     }
 
-    function _mint(address account, uint256 amount) internal returns (bool) {
+    function mint(address account, uint256 amount)
+        internal
+        virtual
+        reentrancyLock
+        returns (bool)
+    {
         require(amount > 0, "Zero and negative values not supported");
         require(isMintable == true, "Minting disabled");
         require(
@@ -135,7 +152,6 @@ contract BaseERC20 is IVotes, Authenticator {
         );
         require(account != address(0), "Address not supported");
         database.balance[account] += amount;
-        database.vote[account] += amount;
         properties.totalSupply += amount;
         emit Mint(account, amount);
         return true;
@@ -143,11 +159,11 @@ contract BaseERC20 is IVotes, Authenticator {
 
     mapping(address => Vesting.VestingSchedule[]) internal schedule;
 
-    function _mintWithVesting(
+    function mintWithVesting(
         address account,
         uint256 amount,
         uint256 duration
-    ) internal returns (bool) {
+    ) internal virtual reentrancyLock returns (bool) {
         require(amount > 0, "Zero and negative values not supported");
         require(isMintable == true, "Minting disabled");
         require(
@@ -166,7 +182,7 @@ contract BaseERC20 is IVotes, Authenticator {
         return true;
     }
 
-    function release() external antiReentrancyLock returns (bool) {
+    function release() public virtual reentrancyLock returns (bool) {
         Vesting.VestingSchedule[] storage schedules = schedule[msg.sender];
         uint256 totalReleased = 0;
         for (uint256 i = 0; i < schedules.length; i++) {
@@ -190,7 +206,6 @@ contract BaseERC20 is IVotes, Authenticator {
             require(totalReleased > 0, "No tokens to release");
             properties.totalVested -= totalReleased;
             database.balance[msg.sender] += totalReleased;
-            database.vote[msg.sender] += totalReleased;
             emit TokensReleased(msg.sender, totalReleased);
             return true;
         }
@@ -244,61 +259,11 @@ contract BaseERC20 is IVotes, Authenticator {
         return database.allowed[owner][spender];
     }
 
-    constructor() {
-        properties.name = "Dreamcatcher";
-        properties.symbol = "DREAM";
-        properties.decimals = 18;
-        properties.maxSupply = 200_000_000 * 10**properties.decimals;
+    constructor(string _name, string _symbol, uint256 _decimals, uint256 _maxSupply) {
         properties.totalSupply = 0;
         properties.totalVested = 0;
         properties.totalStaked = 0;
         isMintable = true;
         isBurnable = true;
     }
-
-    function getVotes(address account) public view returns (uint256) {}
-
-    /**
-     * @dev Returns the amount of votes that `account` had at the end of a past block (`blockNumber`).
-     */
-    function getPastVotes(address account, uint256 blockNumber)
-        public
-        view
-        returns (uint256)
-    {}
-
-    /**
-     * @dev Returns the total supply of votes available at the end of a past block (`blockNumber`).
-     *
-     * NOTE: This value is the sum of all available votes, which is not necessarily the sum of all delegated votes.
-     * Votes that have not been delegated are still part of total supply, even though they would not participate in a
-     * vote.
-     */
-    function getPastTotalSupply(uint256 blockNumber)
-        public
-        view
-        returns (uint256)
-    {}
-
-    /**
-     * @dev Returns the delegate that `account` has chosen.
-     */
-    function delegates(address account) public view returns (address) {}
-
-    /**
-     * @dev Delegates votes from the sender to `delegatee`.
-     */
-    function delegate(address delegatee) external {}
-
-    /**
-     * @dev Delegates votes from signer to `delegatee`.
-     */
-    function delegateBySig(
-        address delegatee,
-        uint256 nonce,
-        uint256 expiry,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
-    ) external {}
 }

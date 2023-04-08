@@ -86,7 +86,7 @@ contract Authenticator {
         return true;
     }
 
-    // member
+    // members
     modifier onlyMembers(address _accountToCheck) {
         require(isMember[_accountToCheck]);
         _;
