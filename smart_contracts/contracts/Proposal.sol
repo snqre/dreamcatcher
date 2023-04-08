@@ -15,14 +15,10 @@ contract Proposal is Authenticator {
 
     uint256 public proposalCount;
 
-    event ProposalSubmitted(
-        string name,
-        string description,
-        uint256 proposalId
-    );
+    event ProposalSubmitted(string name, string description);
     event VoteCast(address voter, uint256 proposalId);
 
-    function submitProposal(string memory _name, string memory _description)
+    function submit(string memory _name, string memory _description)
         public
         onlySyndicates
         onlyCustodians
