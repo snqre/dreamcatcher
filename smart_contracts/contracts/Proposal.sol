@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 import "smart_contracts/contracts/Authenticator.sol";
 
-// messy still in the words
+// messy still in the works **
 contract Proposal is Authenticator {
     struct Prop {
         string caption;
