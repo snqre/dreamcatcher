@@ -259,7 +259,12 @@ contract BaseERC20 is Authenticator {
         return database.allowed[owner][spender];
     }
 
-    constructor(string _name, string _symbol, uint256 _decimals, uint256 _maxSupply) {
+    constructor(
+        string _name,
+        string _symbol,
+        uint256 _decimals,
+        uint256 _maxSupply
+    ) {
         properties.totalSupply = 0;
         properties.totalVested = 0;
         properties.totalStaked = 0;
