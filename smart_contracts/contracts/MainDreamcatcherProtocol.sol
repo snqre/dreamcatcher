@@ -78,9 +78,9 @@ Dreamcatcher itself is a DAO that will be able to hold assets and manage them
 our platform for trading will be Obsidian
 */
 import "smart_contracts/contracts/Conduit.sol";
-import "smart_contracts/contracts/BaseERC20.sol";
+import "smart_contracts/contracts/ERC20.sol";
 
-contract DreamcatcherProtocol is BaseERC20, Conduit {
+contract DreamcatcherProtocol is ERC20, Conduit {
     /* this is where everything comes together 
     building a decentralized system such that the governoment cant do anything about it
     we dont exist in a country
