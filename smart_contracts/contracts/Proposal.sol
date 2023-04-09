@@ -5,14 +5,39 @@ import "smart_contracts/libraries/Math.sol";
 import "smart_contracts/libraries/Meta.sol";
 // messy still in the works **
 contract Proposal is Authenticator {
+    mapping(string => uint256) settingsProposal;
+    function setVar(string memory _var, uint256 _newValue) internal {
+        settingsProposal[_var] = _newValue;
+    }
+
+    function initProposalModule() {
+        /*
+        minQuorum %
+        maxQuorum %
+        minFundingPerProposal eth
+        maxFundingPerProposal eth
+        minSkewToExecute % above 50%
+         */
+        setVar("minQuorum", 5);
+        setVar("maxQuorum", 100);
+        setVar("minFundingPerProposal", 0);
+        setVar("maxFundingPerProposal", 1);
+        setVar("minSkewToExecute", 60);
+    }
+    
     struct Prop {
         uint256 id;
         string caption;
         string description;
         address creator;
+        string callFunction;
+        uint256 uint256NewValue;
+        string stringNewValue;
+        bool boolNewValue;
+        uint256 fundingRequested;
         address payable funding;
-        uint256 voteSkew;// for votes are positive, against votes are negative :: 0 means tie
-        uint256 quorum;// % of total supply supply that is voting for this
+        uint256 voteSkew;
+        uint256 quorum;
         bool isActive;
         bool executed;
     }

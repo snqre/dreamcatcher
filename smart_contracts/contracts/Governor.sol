@@ -10,12 +10,13 @@ import "smart_contracts/contracts/Token.sol";
 //import "@openzeppelin/contracts/governance/extensions/GovernorTimelockControl.sol";
 import "./BaseERC20.sol";
 import "smart_contracts/contracts/Vault.sol";
-
+import "smart_contracts/libraries/Settings.sol";
 //import "./TimelockController.sol";
 
 
 contract Governor is Token, Vault {
     
+
     BaseERC20 baseERC20;
     TimelockController _timelock;
 
