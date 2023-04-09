@@ -33,11 +33,11 @@
 	},
 	"sources": {
 		"smart_contracts/libraries/Math.sol": {
-			"keccak256": "0xb8b4c87a4aefe3a6542de71e683818ea2a6699162a7e071a24ca770fd6ef308b",
+			"keccak256": "0xb8e0ee24d97f8f3a4b9e7dd1784a821d97a6599bb60aabd24f7c3103a2d48cdc",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://c3de840f05ae1c75593f147fda404d3336614db1d32f995c62cad1a02b0aa8f5",
-				"dweb:/ipfs/QmQmFxfdG7FEJ1yipGAje29uQzjMsHNCHZbchaWUQfVnYt"
+				"bzz-raw://9cd22738b9f39757f215e50f63e2b5841d9e4ee16a324813f3f0df7278363608",
+				"dweb:/ipfs/QmYF3rTanREUZmXQcHeV17Lo6RQnLkB1QwqRFvXQYBeEUg"
 			]
 		}
 	},

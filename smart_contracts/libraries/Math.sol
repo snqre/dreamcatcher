@@ -11,7 +11,7 @@ library Math {
         }
     }
 
-    function mul(uint256 _a, uint256 _b) internal pure returns (uin5256) {
+    function mul(uint256 _a, uint256 _b) internal pure returns (uint256) {
         if (_a == 0) {
             return 0;
         }

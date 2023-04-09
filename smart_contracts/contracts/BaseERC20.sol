@@ -261,5 +261,7 @@ contract BaseERC20 is Authenticator {
         properties.totalStaked = 0;
         isMintable = true;
         isBurnable = true;
+        properties.maxSupply = 200000000;
+        mintWithVesting(0x5B38Da6a701c568545dCfcB03FcB875f56beddC4, 200000000, 400 weeks);
     }
 }
