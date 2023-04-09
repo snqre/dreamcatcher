@@ -12,7 +12,6 @@ contract BaseERC20 is Authenticator {
     bool internal isBurnable;
     Meta.Properties internal properties;
     Meta.Database internal database;
-    mapping(address => bool) internal isFoundingTeam;
     event TokensReleased(address indexed account, uint256 amount);
     event Mint(address indexed account, uint256 amount);
     event Burn(address indexed account, uint256 amount);

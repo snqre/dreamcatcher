@@ -16,14 +16,15 @@ contract Proposal is Authenticator {
         bool executed;
     }
 
-    mapping(uint256 => Prop) public proposals;
+    mapping(uint256 => Prop) internal proposals;
     Meta.Quorum internal quorum;
 
     event ProposalSubmitted(string _caption, string _description, address _creator, address _projectAccount);
     event VoteCast(address voter, uint256 proposalId);
 
     function submit(string memory _caption, string memory _description, address payable _funding)
-        public
+        // this will be overriden with the governor
+        internal virtual
         onlySyndicates(msg.sender)
         onlyCustodians(msg.sender)
         returns (bool)

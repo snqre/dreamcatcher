@@ -1,6 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+/*
+conduit is the way to interact with tokens just by needing the token contract
+assuming all ERC20 have the same interface it should work
+when the contract tries to use the function there is error handling so itll just not do it
+with this we can access any tokens we have within the contract
+ */
+
 import "smart_contracts/libraries/Terminal.sol";
 import "smart_contracts/libraries/Math.sol";
 
@@ -26,13 +33,27 @@ interface IERC20 {
 }
 
 contract Conduit {
+
     function Itransfer(
         address _token,
         address _recipient,
         uint256 _amount
     ) internal {
-        IERC20.token = IERC20(_token);
-        return token.transfer(_recipient, _amount);
+        require(_token != address(0), "Invalid token address");
+        require(_recipient != address(0), "Invalid recipient address");
+        require(_amount > 0, "Invalid transfer amount");
+
+        IERC20.tokenContract = IERC20(_token);
+        // error handling so if there is no matching interface we dont blow up the whole contract
+        try tokenContract.transfer(_recipient, _amount) {
+            // success
+        } catch Error(string memory _errorMessage) {
+            // revert with a custom error message
+            revert(_errorMessage);
+        } catch {
+            // revert with a generic error message
+            revert("transfer() failed");
+        }
     }
 
     function ItransferFrom(
@@ -41,8 +62,21 @@ contract Conduit {
         address _recipient,
         uint256 _amount
     ) internal {
+        require(_token != address(0), "Invalid token address");
+        require(_sender != address(0), "Invalid sender address");
+        require(_recipient != address(0), "Invalid recipient address");
+        require(_amount > 0, "Invalid transfer amount");
         IERC20.token = IERC20(_token);
-        token.transferFrom(_sender, _recipient, _amount);
+        // error handling so if there is no matching interface we dont blow up the whole contract
+        try token.transferFrom(_sender, _recipient, _amount) {
+            // success
+        } catch Error(string memory _errorMessage) {
+            // revert with a custom error message
+            revert(_errorMessage);
+        } catch {
+            // revert with a generic error message
+            revert("transferFrom() failed");
+        }
     }
 
     function IApprove(
@@ -51,12 +85,31 @@ contract Conduit {
         address _amount
     ) internal {
         IERC20.token = IERC20(_token);
-        return token.approve(_spender, _amount);
+        // error handling so if there is no matching interface we dont blow up the whole contract
+        try token.approve(_spender, _amount) {
+            // success
+        } catch Error(string memory _errorMessage) {
+            // revert with a custom error message
+            revert(_errorMessage);
+        } catch {
+            // revert with a generic error message
+            revert("approve() failed");
+        }
     }
 
     function IBalanceOf(address _token, address _account) internal {
         IERC20.token = IERC20(_token);
-        return token.balanceOf(_account);
+        // error handling so if there is no matching interface we dont blow up the whole contract
+        try token.balanceOf(_account) {
+            // success
+            return token.balanceOf(_account);
+        } catch Error(string memory _errorMessage) {
+            // revert with a custom error message
+            revert(_errorMessage);
+        } catch {
+            // revert with a generic error message
+            revert("balanceOf() failed");
+        }
     }
 
     function IAllowance(
@@ -65,6 +118,16 @@ contract Conduit {
         address _spender
     ) internal {
         IERC20.token = IERC20(_token);
-        return token.allowance(_owner, _spender);
+        // error handling so if there is no matching interface we dont blow up the whole contract
+        try token.allowance(_owner, _spender) {
+            // success
+            return token.allowance(_owner, _spender);
+        } catch Error(string memory _errorMessage) {
+            // revert with a custom error message
+            revert(_errorMessage);
+        } catch {
+            // revert with a generic error message
+            revert("allowance() failed");
+        }
     }
 }
