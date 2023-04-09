@@ -4,23 +4,25 @@ import "@openzeppelin/contracts/governance/utils/IVotes.sol";
 import "smart_contracts/contracts/BaseERC20.sol";
 import "smart_contracts/contracts/Proposal.sol";
 import "smart_contracts/libraries/Meta.sol";
+
 // voting mechanism here
 contract ERC20 is BaseERC20, Proposal {
     Meta.Settings internal settings;
 
-    function checkRole(address _account)
-        internal
-        virtual
-        returns (bool)
-    {
+    function checkRole(address _account) internal virtual returns (bool) {
         uint256 balance = database.balance[_account];
         uint256 staked = database.staked[_account];
         if (
             balance >= settings.minBalanceForMembership &&
-            staked >= settings.minStakeForMembership && isMember[_account] != true
+            staked >= settings.minStakeForMembership &&
+            isMember[_account] != true
         ) {
             giveMembership(_account);
-        } else if (balance < settings.minBalanceForMembership && staked < settings.minStakeForMembership && isMember[_account] != false) {
+        } else if (
+            balance < settings.minBalanceForMembership &&
+            staked < settings.minStakeForMembership &&
+            isMember[_account] != false
+        ) {
             takeMembership(_account);
         }
         if (
@@ -28,7 +30,11 @@ contract ERC20 is BaseERC20, Proposal {
             staked >= settings.minStakeForSyndicate
         ) {
             // if you meet the requirements you have to be elected to be a syndicate
-        } else if(balance < settings.minBalanceForSyndicate && staked < settings.minStakeForSyndicate && isSyndicate[_account] != false) {
+        } else if (
+            balance < settings.minBalanceForSyndicate &&
+            staked < settings.minStakeForSyndicate &&
+            isSyndicate[_account] != false
+        ) {
             // if you unstake or leave your role as a syndicate will be terminated on the transaction.
             takeSyndicate(_account);
         }
@@ -97,7 +103,7 @@ contract ERC20 is BaseERC20, Proposal {
         return result;
     }
 
-    function release() public virtual override returns (bool) {
+    function release() public override returns (bool) {
         uint256 balanceBefore;
         uint256 balanceAfter;
         bool result;
@@ -112,6 +118,10 @@ contract ERC20 is BaseERC20, Proposal {
         return result;
     }
 
+    function getVotes(address _account) public view returns (uint256) {
+        return database.vote[_account];
+    }
+
     constructor(
         string memory _name,
         string memory _symbol,
@@ -122,9 +132,6 @@ contract ERC20 is BaseERC20, Proposal {
         properties.symbol = _symbol;
         properties.decimals = _decimals;
         properties.maxSupply = _maxSupply * 10**_decimals;
-
-        // testing
-        mintWithVesting(msg.sender, 200000000, 48 weeks);
     }
 
     // votes?

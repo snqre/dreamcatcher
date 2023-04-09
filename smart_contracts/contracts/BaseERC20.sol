@@ -3,13 +3,17 @@ pragma solidity ^0.8.0;
 
 /* base ERC20 no vote */
 
-import "../libraries/Vesting.sol";
+import "smart_contracts/libraries/Vesting.sol";
 import "smart_contracts/libraries/Meta.sol";
 import "smart_contracts/contracts/Authenticator.sol";
+import "smart_contracts/libraries/Math.sol";
 
 contract BaseERC20 is Authenticator {
     bool internal isMintable;
     bool internal isBurnable;
+    bool internal isPausable;
+    bool internal isPaused;
+    
     Meta.Properties internal properties;
     Meta.Database internal database;
     event TokensReleased(address indexed account, uint256 amount);
@@ -24,8 +28,6 @@ contract BaseERC20 is Authenticator {
 
     function approve(address spender, uint256 amount)
         public
-        virtual
-        reentrancyLock
         returns (bool)
     {
         address owner = msg.sender;
@@ -35,19 +37,17 @@ contract BaseERC20 is Authenticator {
 
     function increaseAllowance(address spender, uint256 addedValue)
         public
-        virtual
-        reentrancyLock
         returns (bool)
     {
         address owner = msg.sender;
-        _approve(owner, spender, allowance(owner, spender) + addedValue);
+        uint256 a = allowance(owner, spender);
+        uint256 b = addedValue;
+        _approve(owner, spender, Math.add(a, b));
         return true;
     }
 
     function decreaseAllowance(address spender, uint256 subtractedValue)
         public
-        virtual
-        reentrancyLock
         returns (bool)
     {
         address owner = msg.sender;
@@ -57,7 +57,7 @@ contract BaseERC20 is Authenticator {
             "Decreased allowance below zero"
         );
         unchecked {
-            _approve(owner, spender, currentAllowance - subtractedValue);
+            _approve(owner, spender, Math.sub(currentAllowance, subtractedValue));
         }
         return true;
     }
@@ -66,7 +66,7 @@ contract BaseERC20 is Authenticator {
         address owner,
         address spender,
         uint256 amount
-    ) internal virtual reentrancyLock {
+    ) internal {
         require(owner != address(0), "Approve from the zero address");
         require(spender != address(0), "Approve from the zero address");
         database.allowed[owner][spender] = amount;
@@ -77,7 +77,7 @@ contract BaseERC20 is Authenticator {
         address owner,
         address spender,
         uint256 amount
-    ) internal virtual reentrancyLock {
+    ) internal {
         uint256 currentAllowance = allowance(owner, spender);
         if (currentAllowance != type(uint256).max) {
             require(currentAllowance >= amount, "Insufficient allowance");
@@ -88,9 +88,8 @@ contract BaseERC20 is Authenticator {
     }
 
     function transfer(address _recipient, uint256 _amount)
-        public
+        internal
         virtual
-        reentrancyLock
         returns (bool)
     {
         require(
@@ -107,7 +106,7 @@ contract BaseERC20 is Authenticator {
         address _sender,
         address _recipient,
         uint256 _amount
-    ) public virtual reentrancyLock returns (bool) {
+    ) internal returns (bool) {
         require(database.balance[_sender] >= _amount, "Insufficient balance");
         require(
             database.allowed[_sender][msg.sender] >= _amount,
@@ -158,7 +157,7 @@ contract BaseERC20 is Authenticator {
         address account,
         uint256 amount,
         uint256 duration
-    ) internal virtual returns (bool) {
+    ) internal virtual isCustodian(msg.sender) returns (bool) {
         require(amount > 0, "Zero and negative values not supported");
         require(isMintable == true, "Minting disabled");
         require(
@@ -178,7 +177,7 @@ contract BaseERC20 is Authenticator {
         return true;
     }
 
-    function release() public virtual returns (bool) {
+    function release() internal virtual returns (bool) {
         Vesting.VestingSchedule[] storage schedules = schedule[msg.sender];
         uint256 totalReleased = 0;
         for (uint256 i = 0; i < schedules.length; i++) {
@@ -262,7 +261,5 @@ contract BaseERC20 is Authenticator {
         properties.totalStaked = 0;
         isMintable = true;
         isBurnable = true;
-        properties.maxSupply = 200000000;
-        mintWithVesting(0x5B38Da6a701c568545dCfcB03FcB875f56beddC4, 200000000, 400 weeks);
     }
 }

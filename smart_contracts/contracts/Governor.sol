@@ -9,18 +9,25 @@ import "@openzeppelin/contracts/governance/extensions/GovernorVotes.sol";
 import "@openzeppelin/contracts/governance/extensions/GovernorVotesQuorumFraction.sol";
 import "@openzeppelin/contracts/governance/extensions/GovernorTimelockControl.sol";
 import "./BaseERC20.sol";
+import "smart_contracts/contracts/Token.sol";
+
 //import "./TimelockController.sol";
 
-contract GovernorContract is
+
+contract Governor is
     Governor,
     GovernorSettings,
     GovernorCountingSimple,
     GovernorVotes,
     GovernorVotesQuorumFraction,
-    GovernorTimelockControl
+    GovernorTimelockControl,
+    Token,
+    Vault
 {
+    
     BaseERC20 baseERC20;
     TimelockController _timelock;
+
     constructor()
         Governor("Governor")
         GovernorSettings(

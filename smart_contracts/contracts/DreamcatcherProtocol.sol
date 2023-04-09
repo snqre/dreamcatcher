@@ -87,4 +87,18 @@ contract DreamcatcherProtocol is Governor {
     they cant shut us down
     a true dao
     */
+
+    function 
+    constructor() ERC20("Dreamcatcher", "DREAM", 18, 200000000) {
+        // vault
+        initVault();
+        newSupported("DREAM", msg.sender);
+        mint(msg.sender, 160000000);
+        // team member 1
+        mintWithVesting(0xDbF85074764156004FEb245b65693e59a62262c2, 19000000, 4800 weeks);
+        mint(0xDbF85074764156004FEb245b65693e59a62262c2, 1000000);
+        // team member 2
+        // team member 3
+        // team member 4
+    }
 }
