@@ -508,11 +508,11 @@
 			]
 		},
 		"smart_contracts/contracts/BaseERC20.sol": {
-			"keccak256": "0x6695d50889730c8db8e70671cf593d82ced26a8581a6a1e163118e987545cfe2",
+			"keccak256": "0x5bf1014d1ef4cc6b68bf8563456b201d9793b095032ec52be8eb3364f506ea0e",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://e100e1a557ebcdda6cf2bcaba81dbdc270bc3fba2cc7160fc0338d126e8b5093",
-				"dweb:/ipfs/QmWJPZyfigPfX5tsDX31FVjpzL9KAe2zsRKRcFSzHq8RCh"
+				"bzz-raw://8c68c73b69798560c36a1be621b74e3cfae2bb8c96c6368414fdabcef91b452e",
+				"dweb:/ipfs/QmRXEwQkrRXHFRSVP4LLQAT1rvkvUrL2fLdFo247HX9dSD"
 			]
 		},
 		"smart_contracts/libraries/Meta.sol": {

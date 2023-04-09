@@ -500,65 +500,6 @@
 				"type": "function"
 			},
 			{
-				"inputs": [
-					{
-						"internalType": "uint256",
-						"name": "",
-						"type": "uint256"
-					}
-				],
-				"name": "proposals",
-				"outputs": [
-					{
-						"internalType": "uint256",
-						"name": "id",
-						"type": "uint256"
-					},
-					{
-						"internalType": "string",
-						"name": "caption",
-						"type": "string"
-					},
-					{
-						"internalType": "string",
-						"name": "description",
-						"type": "string"
-					},
-					{
-						"internalType": "address",
-						"name": "creator",
-						"type": "address"
-					},
-					{
-						"internalType": "address payable",
-						"name": "funding",
-						"type": "address"
-					},
-					{
-						"internalType": "uint256",
-						"name": "voteSkew",
-						"type": "uint256"
-					},
-					{
-						"internalType": "uint256",
-						"name": "quorum",
-						"type": "uint256"
-					},
-					{
-						"internalType": "bool",
-						"name": "isActive",
-						"type": "bool"
-					},
-					{
-						"internalType": "bool",
-						"name": "executed",
-						"type": "bool"
-					}
-				],
-				"stateMutability": "view",
-				"type": "function"
-			},
-			{
 				"inputs": [],
 				"name": "release",
 				"outputs": [
@@ -588,35 +529,6 @@
 					}
 				],
 				"stateMutability": "view",
-				"type": "function"
-			},
-			{
-				"inputs": [
-					{
-						"internalType": "string",
-						"name": "_caption",
-						"type": "string"
-					},
-					{
-						"internalType": "string",
-						"name": "_description",
-						"type": "string"
-					},
-					{
-						"internalType": "address payable",
-						"name": "_funding",
-						"type": "address"
-					}
-				],
-				"name": "submit",
-				"outputs": [
-					{
-						"internalType": "bool",
-						"name": "",
-						"type": "bool"
-					}
-				],
-				"stateMutability": "nonpayable",
 				"type": "function"
 			},
 			{
@@ -823,43 +735,43 @@
 			]
 		},
 		"smart_contracts/contracts/BaseERC20.sol": {
-			"keccak256": "0xa6a67e9c32f373afd966e827f181f3db12579aab273f363aa655ef0fc545dfbb",
+			"keccak256": "0x6695d50889730c8db8e70671cf593d82ced26a8581a6a1e163118e987545cfe2",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://16cf9369604a28033bf74cda53bcba5b21b9e245f78c3574d75c6d5ce7f950ce",
-				"dweb:/ipfs/QmUf6MTXGYyDao1c5nGM8uHGDow8ipXX6D5AJDeUkoei2P"
+				"bzz-raw://e100e1a557ebcdda6cf2bcaba81dbdc270bc3fba2cc7160fc0338d126e8b5093",
+				"dweb:/ipfs/QmWJPZyfigPfX5tsDX31FVjpzL9KAe2zsRKRcFSzHq8RCh"
 			]
 		},
 		"smart_contracts/contracts/ERC20.sol": {
-			"keccak256": "0x42f562b8e1fc69af825118588c7ed7496c0813538a585c13459916a647af1a39",
+			"keccak256": "0xd28f1f994f4d7bf3c851205debbd9d5de80b16ee5a56d864251ddb3b2bb01609",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://a7e1e3fc44deed7469610f9470086a1f2121dffb7e9b8e00d136b5a5ff6810e6",
-				"dweb:/ipfs/QmcibcHg8nBwxSwMxXTKs8QE4aXw7S9DsgmLEtf5dfGpNd"
+				"bzz-raw://32d8414f781ef1ef2b47465dc3406faaefdba0d811ec152ef6c88fa6228da74e",
+				"dweb:/ipfs/QmSeXeb3H1qwFJ7UDbiCxDonuTLnwKJ6KTDe54S1FYeVjh"
 			]
 		},
 		"smart_contracts/contracts/Proposal.sol": {
-			"keccak256": "0x0175ea7babe84636cac325ff6a600818db8286ba1ce1af15d46b3ddd8338b5e3",
+			"keccak256": "0xdd1cd6f43f39f9a2ebeb34db6484629a9f1ae436ea1eb34366451c6803523652",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://ec93d4cad043dd232e772158eabfe4ab8f66497999d9a06452ccd20812f2c18f",
-				"dweb:/ipfs/QmRBFe3tm73MP6LFspTF4P8mwPEwPithAmuSCTkrMwiyjH"
+				"bzz-raw://c3451c0a720d9ef9b3eff3d2d65b0a5bfb257291c989b5ded747e1a92103a0a5",
+				"dweb:/ipfs/Qme2xszcW6YM7WQs5G9MKdjBEMSNbKjMiZudAUTzd9CcSJ"
 			]
 		},
 		"smart_contracts/libraries/Math.sol": {
-			"keccak256": "0xb8b4c87a4aefe3a6542de71e683818ea2a6699162a7e071a24ca770fd6ef308b",
+			"keccak256": "0xb8e0ee24d97f8f3a4b9e7dd1784a821d97a6599bb60aabd24f7c3103a2d48cdc",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://c3de840f05ae1c75593f147fda404d3336614db1d32f995c62cad1a02b0aa8f5",
-				"dweb:/ipfs/QmQmFxfdG7FEJ1yipGAje29uQzjMsHNCHZbchaWUQfVnYt"
+				"bzz-raw://9cd22738b9f39757f215e50f63e2b5841d9e4ee16a324813f3f0df7278363608",
+				"dweb:/ipfs/QmYF3rTanREUZmXQcHeV17Lo6RQnLkB1QwqRFvXQYBeEUg"
 			]
 		},
 		"smart_contracts/libraries/Meta.sol": {
-			"keccak256": "0x7dd2273452a497855eac1db187b7559141c3218a8ff590c4f68412df5c57a751",
+			"keccak256": "0xa0d40f73584c0d65b3a682da5138c29914e4c273806b64b0e5f5f092fa2e6c17",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://a700aebd08c8189f205211c7d474de4a0afdb4f8d3e08ae258e19058931b51d5",
-				"dweb:/ipfs/QmU9ijoBqnes7CVNnTUKPkMkWjUm3kLboyLw2SnhNvKtQP"
+				"bzz-raw://a935add18b5bf87fae9b507a6535ad8ea6c9eab1cc25f81a45cbd002d0d76899",
+				"dweb:/ipfs/QmYJ9U9rXT9gcYPpADWgo9DY5BxU1ahdKrmnfGKyq8FG2p"
 			]
 		},
 		"smart_contracts/libraries/Vesting.sol": {

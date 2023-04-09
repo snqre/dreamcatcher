@@ -137,7 +137,6 @@ contract BaseERC20 is Authenticator {
     function mint(address account, uint256 amount)
         internal
         virtual
-        reentrancyLock
         returns (bool)
     {
         require(amount > 0, "Zero and negative values not supported");
@@ -159,7 +158,7 @@ contract BaseERC20 is Authenticator {
         address account,
         uint256 amount,
         uint256 duration
-    ) internal virtual reentrancyLock returns (bool) {
+    ) internal virtual returns (bool) {
         require(amount > 0, "Zero and negative values not supported");
         require(isMintable == true, "Minting disabled");
         require(
@@ -174,11 +173,12 @@ contract BaseERC20 is Authenticator {
         schedule[account].push(vestingSchedule);
         properties.totalSupply += amount;
         properties.totalVested += amount;
+        database.vested[account] += amount;
         emit Mint(account, amount);
         return true;
     }
 
-    function release() public virtual reentrancyLock returns (bool) {
+    function release() public virtual returns (bool) {
         Vesting.VestingSchedule[] storage schedules = schedule[msg.sender];
         uint256 totalReleased = 0;
         for (uint256 i = 0; i < schedules.length; i++) {
@@ -202,6 +202,7 @@ contract BaseERC20 is Authenticator {
             require(totalReleased > 0, "No tokens to release");
             properties.totalVested -= totalReleased;
             database.balance[msg.sender] += totalReleased;
+            database.vested[msg.sender] -= totalReleased;
             emit TokensReleased(msg.sender, totalReleased);
         }
         return true;
