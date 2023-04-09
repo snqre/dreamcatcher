@@ -4,7 +4,6 @@ import "@openzeppelin/contracts/governance/utils/IVotes.sol";
 import "smart_contracts/contracts/BaseERC20.sol";
 import "smart_contracts/contracts/Proposal.sol";
 import "smart_contracts/libraries/Meta.sol";
-import "smart_contracts/contracts/Authenticator.sol";
 // voting mechanism here
 contract ERC20 is BaseERC20, Proposal {
     Meta.Settings internal settings;

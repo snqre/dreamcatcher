@@ -32,5 +32,6 @@ library Meta {
         uint256 minStakeForMembership;
         uint256 minBalanceForSyndicate;
         uint256 minStakeForSyndicate;
+        
     }
 }

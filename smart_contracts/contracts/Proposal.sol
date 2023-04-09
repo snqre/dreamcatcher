@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 import "smart_contracts/contracts/Authenticator.sol";
-import "smart_contracts/libraries/Meta.sol";
 import "smart_contracts/libraries/Math.sol";
 // messy still in the works **
 contract Proposal is Authenticator {
