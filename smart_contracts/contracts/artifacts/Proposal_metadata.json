@@ -1,0 +1,246 @@
+{
+	"compiler": {
+		"version": "0.8.18+commit.87f61d96"
+	},
+	"language": "Solidity",
+	"output": {
+		"abi": [
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": false,
+						"internalType": "string",
+						"name": "_caption",
+						"type": "string"
+					},
+					{
+						"indexed": false,
+						"internalType": "string",
+						"name": "_description",
+						"type": "string"
+					},
+					{
+						"indexed": false,
+						"internalType": "address",
+						"name": "_creator",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "address",
+						"name": "_projectAccount",
+						"type": "address"
+					}
+				],
+				"name": "ProposalSubmitted",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "_account",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "string",
+						"name": "_role",
+						"type": "string"
+					}
+				],
+				"name": "RoleGranted",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "_account",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "string",
+						"name": "_role",
+						"type": "string"
+					}
+				],
+				"name": "RoleRevoked",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": false,
+						"internalType": "address",
+						"name": "voter",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "proposalId",
+						"type": "uint256"
+					}
+				],
+				"name": "VoteCast",
+				"type": "event"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"name": "proposals",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "id",
+						"type": "uint256"
+					},
+					{
+						"internalType": "string",
+						"name": "caption",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "description",
+						"type": "string"
+					},
+					{
+						"internalType": "address",
+						"name": "creator",
+						"type": "address"
+					},
+					{
+						"internalType": "address payable",
+						"name": "funding",
+						"type": "address"
+					},
+					{
+						"internalType": "uint256",
+						"name": "voteSkew",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "quorum",
+						"type": "uint256"
+					},
+					{
+						"internalType": "bool",
+						"name": "isActive",
+						"type": "bool"
+					},
+					{
+						"internalType": "bool",
+						"name": "executed",
+						"type": "bool"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "string",
+						"name": "_caption",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "_description",
+						"type": "string"
+					},
+					{
+						"internalType": "address payable",
+						"name": "_funding",
+						"type": "address"
+					}
+				],
+				"name": "submit",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "",
+						"type": "bool"
+					}
+				],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			}
+		],
+		"devdoc": {
+			"kind": "dev",
+			"methods": {},
+			"version": 1
+		},
+		"userdoc": {
+			"kind": "user",
+			"methods": {},
+			"version": 1
+		}
+	},
+	"settings": {
+		"compilationTarget": {
+			"smart_contracts/contracts/Proposal.sol": "Proposal"
+		},
+		"evmVersion": "paris",
+		"libraries": {},
+		"metadata": {
+			"bytecodeHash": "ipfs"
+		},
+		"optimizer": {
+			"enabled": false,
+			"runs": 200
+		},
+		"remappings": []
+	},
+	"sources": {
+		"smart_contracts/contracts/Authenticator.sol": {
+			"keccak256": "0x6fb4de2dff65b408c955de9d883d2ea484b2ae6366ca29bb325a7557167b175f",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://c402e1f4bc7582060cc333d92df6987ac4d9b2aa5bcb18ecd09586c3e8180257",
+				"dweb:/ipfs/QmfVrhXKrxHYCgSyMSx5KQAuc6WgUt8DVuhM34SeR9RcbG"
+			]
+		},
+		"smart_contracts/contracts/Proposal.sol": {
+			"keccak256": "0x0175ea7babe84636cac325ff6a600818db8286ba1ce1af15d46b3ddd8338b5e3",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://ec93d4cad043dd232e772158eabfe4ab8f66497999d9a06452ccd20812f2c18f",
+				"dweb:/ipfs/QmRBFe3tm73MP6LFspTF4P8mwPEwPithAmuSCTkrMwiyjH"
+			]
+		},
+		"smart_contracts/libraries/Math.sol": {
+			"keccak256": "0xb8b4c87a4aefe3a6542de71e683818ea2a6699162a7e071a24ca770fd6ef308b",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://c3de840f05ae1c75593f147fda404d3336614db1d32f995c62cad1a02b0aa8f5",
+				"dweb:/ipfs/QmQmFxfdG7FEJ1yipGAje29uQzjMsHNCHZbchaWUQfVnYt"
+			]
+		},
+		"smart_contracts/libraries/Meta.sol": {
+			"keccak256": "0x7dd2273452a497855eac1db187b7559141c3218a8ff590c4f68412df5c57a751",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://a700aebd08c8189f205211c7d474de4a0afdb4f8d3e08ae258e19058931b51d5",
+				"dweb:/ipfs/QmU9ijoBqnes7CVNnTUKPkMkWjUm3kLboyLw2SnhNvKtQP"
+			]
+		}
+	},
+	"version": 1
+}

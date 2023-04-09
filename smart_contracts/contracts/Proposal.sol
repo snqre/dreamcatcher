@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 import "smart_contracts/contracts/Authenticator.sol";
-import "smart_contracts/libraries/Meta.sol"
+import "smart_contracts/libraries/Meta.sol";
+import "smart_contracts/libraries/Math.sol";
 // messy still in the works **
 contract Proposal is Authenticator {
     struct Prop {
@@ -9,7 +10,7 @@ contract Proposal is Authenticator {
         string caption;
         string description;
         address creator;
-        address payable projectAccount;
+        address payable funding;
         uint256 voteSkew;// for votes are positive, against votes are negative :: 0 means tie
         uint256 quorum;// % of total supply supply that is voting for this
         bool isActive;
@@ -22,32 +23,41 @@ contract Proposal is Authenticator {
     event ProposalSubmitted(string _caption, string _description, address _creator, address _projectAccount);
     event VoteCast(address voter, uint256 proposalId);
 
-    function submit(string memory _caption, string memory _description, address payable _projectAccount)
+    function submit(string memory _caption, string memory _description, address payable _funding)
         public
-        onlySyndicates
-        onlyCustodians
+        onlySyndicates(msg.sender)
+        onlyCustodians(msg.sender)
         returns (bool)
     {
+        string memory caption = _caption;
+        string memory description = _description;
+        address creator = msg.sender;
+        address funding = _funding;
         quorum.proposalCount++;
         proposals[quorum.proposalCount] = Prop ({
-            id: quorum.proposalCount;
-            caption: _caption;
-            description: _description;
-            creator: msg.sender;
-            projectAccount: _projectAccount;
-            isActive: true;
-        })
+            id: quorum.proposalCount,
+            caption: _caption,
+            description: _description,
+            creator: msg.sender,
+            funding: _funding,
+            isActive: true,
+            executed: false,
+            quorum: 0,
+            voteSkew: 0
 
-        emit ProposalSubmitted(_caption, _description, _creator, _projectAccount);
+        });
+        emit ProposalSubmitted(caption, description, creator, funding);
         return true;
     }
 
-    function vote(uint256 _id, string memory _side, uint256 _amount, address _account, uint256 _balance, uint256 _votes) internal virtual reentrancyLock onlyMembers(msg.sender) {
+    function vote(uint256 _id, uint256 _amount, address _account, uint256 _balance, uint256 _votes) internal virtual reentrancyLock onlyMembers(msg.sender) {
         require(_balance >= _amount, "Insufficient balance");
-        if (_side == "For") {
+        require(_amount > 0, "Non zero vote not supported");
+        uint256 amount = _amount;
+        if (Math.checkSkew(amount) == true) {
             proposals[_id].voteSkew += amount;
         }
-        else if (_side == "Against") {
+        else if (Math.checkSkew(amount) == false) {
             proposals[_id].voteSkew -= amount;
         }
     }

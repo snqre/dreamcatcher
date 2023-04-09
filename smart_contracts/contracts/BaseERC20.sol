@@ -17,8 +17,6 @@ contract BaseERC20 is Authenticator {
     event Mint(address indexed account, uint256 amount);
     event Burn(address indexed account, uint256 amount);
     event Transfer(address indexed from, address indexed to, uint256 amount);
-    event RoleGranted(address indexed account, string role);
-    event RoleRevoked(address indexed account, string role);
     event Approval(
         address indexed owner,
         address indexed spender,
@@ -94,7 +92,6 @@ contract BaseERC20 is Authenticator {
         public
         virtual
         reentrancyLock
-        antiReentrancyLock
         returns (bool)
     {
         require(
@@ -207,8 +204,8 @@ contract BaseERC20 is Authenticator {
             properties.totalVested -= totalReleased;
             database.balance[msg.sender] += totalReleased;
             emit TokensReleased(msg.sender, totalReleased);
-            return true;
         }
+        return true;
     }
 
     function name() public view returns (string memory) {
@@ -259,12 +256,7 @@ contract BaseERC20 is Authenticator {
         return database.allowed[owner][spender];
     }
 
-    constructor(
-        string _name,
-        string _symbol,
-        uint256 _decimals,
-        uint256 _maxSupply
-    ) {
+    constructor() {
         properties.totalSupply = 0;
         properties.totalVested = 0;
         properties.totalStaked = 0;

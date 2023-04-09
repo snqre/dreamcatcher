@@ -34,7 +34,7 @@ contract Authenticator {
             "Address is already a syndicate"
         );
         isSyndicate[_account] = true;
-        RoleGranted(_account, "Syndicate");
+        emit RoleGranted(_account, "Syndicate");
         return true;
     }
 
@@ -48,7 +48,7 @@ contract Authenticator {
             "Address is already not a syndicate"
         );
         isSyndicate[_account] = false;
-        RoleRevoked(_account, "Syndicate");
+        emit RoleRevoked(_account, "Syndicate");
         return true;
     }
 
@@ -68,7 +68,7 @@ contract Authenticator {
             "Address is already a custodian"
         );
         isCustodian[_account] = true;
-        RoleGranted(_account, "Custodian");
+        emit RoleGranted(_account, "Custodian");
         return true;
     }
 
@@ -82,7 +82,7 @@ contract Authenticator {
             "Address is already not a custodian"
         );
         isCustodian[_account] = false;
-        RoleRevoked(_account, "Custodian");
+        emit RoleRevoked(_account, "Custodian");
         return true;
     }
 
@@ -99,7 +99,7 @@ contract Authenticator {
     {
         require(isMember[_account] != true, "Address is already a member");
         isMember[_account] = true;
-        RoleGranted(_account, "Member");
+        emit RoleGranted(_account, "Member");
         return true;
     }
 
@@ -110,7 +110,7 @@ contract Authenticator {
     {
         require(isMember[_account] != false, "Address is already not a member");
         isMember[_account] = false;
-        RoleRevoked(_account, "Member");
+        emit RoleRevoked(_account, "Member");
         return true;
     }
 }
