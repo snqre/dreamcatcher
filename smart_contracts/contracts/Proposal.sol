@@ -42,14 +42,14 @@ contract Proposal is Authenticator {
         return true;
     }
 
-    function vote(uint256 _id, uint256 amount, string memory _side) internal virtual reentrancyLock onlyMembers(msg.sender) {
-        require(condition);
+    function vote(uint256 _id, string memory _side, uint256 _amount, address _account, uint256 _balance, uint256 _votes) internal virtual reentrancyLock onlyMembers(msg.sender) {
+        require(_balance >= _amount, "Insufficient balance");
         if (_side == "For") {
-
             proposals[_id].voteSkew += amount;
         }
-        address account = msg.sender;
-        uint256 balance;
+        else if (_side == "Against") {
+            proposals[_id].voteSkew -= amount;
+        }
     }
 
     function execute() internal {}

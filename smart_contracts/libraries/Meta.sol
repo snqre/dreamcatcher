@@ -18,10 +18,19 @@ library Meta {
         mapping(address => uint256) staked;
         mapping(address => uint256) vote;
         mapping(address => mapping(address => uint256)) allowed;
+        // votes can be delegated to other accounts
+        mapping(address => mapping(address => uint256)) delegatedVote;
     }
 
     struct Quorum {
         uint256 proposalCount;
         uint256 requiredQuorum;
+    }
+
+    struct Settings {
+        uint256 minBalanceForMembership;
+        uint256 minStakeForMembership;
+        uint256 minBalanceForSyndicate;
+        uint256 minStakeForSyndicate;
     }
 }
