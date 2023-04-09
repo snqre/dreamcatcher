@@ -2,28 +2,19 @@
 pragma solidity ^0.8.9;
 import "smart_contracts/contracts/Conduit.sol";
 import "smart_contracts/contracts/Token.sol";
-import "@openzeppelin/contracts/governance/Governor.sol";
-import "@openzeppelin/contracts/governance/extensions/GovernorSettings.sol";
-import "@openzeppelin/contracts/governance/extensions/GovernorCountingSimple.sol";
-import "@openzeppelin/contracts/governance/extensions/GovernorVotes.sol";
-import "@openzeppelin/contracts/governance/extensions/GovernorVotesQuorumFraction.sol";
-import "@openzeppelin/contracts/governance/extensions/GovernorTimelockControl.sol";
+//import "@openzeppelin/contracts/governance/Governor.sol";
+//import "@openzeppelin/contracts/governance/extensions/GovernorSettings.sol";
+//import "@openzeppelin/contracts/governance/extensions/GovernorCountingSimple.sol";
+//import "@openzeppelin/contracts/governance/extensions/GovernorVotes.sol";
+//import "@openzeppelin/contracts/governance/extensions/GovernorVotesQuorumFraction.sol";
+//import "@openzeppelin/contracts/governance/extensions/GovernorTimelockControl.sol";
 import "./BaseERC20.sol";
-import "smart_contracts/contracts/Token.sol";
+import "smart_contracts/contracts/Vault.sol";
 
 //import "./TimelockController.sol";
 
 
-contract Governor is
-    Governor,
-    GovernorSettings,
-    GovernorCountingSimple,
-    GovernorVotes,
-    GovernorVotesQuorumFraction,
-    GovernorTimelockControl,
-    Token,
-    Vault
-{
+contract Governor is Token, Vault {
     
     BaseERC20 baseERC20;
     TimelockController _timelock;

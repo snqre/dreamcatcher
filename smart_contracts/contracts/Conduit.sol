@@ -43,7 +43,7 @@ contract Conduit {
         require(_recipient != address(0), "Invalid recipient address");
         require(_amount > 0, "Invalid transfer amount");
 
-        IERC20.tokenContract = IERC20(_token);
+        IERC20 tokenContract = IERC20(_token);
         // error handling so if there is no matching interface we dont blow up the whole contract
         try tokenContract.transfer(_recipient, _amount) {
             // success
@@ -66,9 +66,9 @@ contract Conduit {
         require(_sender != address(0), "Invalid sender address");
         require(_recipient != address(0), "Invalid recipient address");
         require(_amount > 0, "Invalid transfer amount");
-        IERC20.token = IERC20(_token);
+        IERC20 tokenContract = IERC20(_token);
         // error handling so if there is no matching interface we dont blow up the whole contract
-        try token.transferFrom(_sender, _recipient, _amount) {
+        try tokenContract.transferFrom(_sender, _recipient, _amount) {
             // success
         } catch Error(string memory _errorMessage) {
             // revert with a custom error message
@@ -82,11 +82,11 @@ contract Conduit {
     function IApprove(
         address _token,
         address _spender,
-        address _amount
+        uint256 _amount
     ) internal {
-        IERC20.token = IERC20(_token);
+        IERC20 tokenContract = IERC20(_token);
         // error handling so if there is no matching interface we dont blow up the whole contract
-        try token.approve(_spender, _amount) {
+        try tokenContract.approve(_spender, _amount) {
             // success
         } catch Error(string memory _errorMessage) {
             // revert with a custom error message
@@ -97,12 +97,12 @@ contract Conduit {
         }
     }
 
-    function IBalanceOf(address _token, address _account) internal {
-        IERC20.token = IERC20(_token);
+    function IBalanceOf(address _token, address _account) internal returns (uint256) {
+        IERC20 tokenContract = IERC20(_token);
         // error handling so if there is no matching interface we dont blow up the whole contract
-        try token.balanceOf(_account) {
+        try tokenContract.balanceOf(_account) {
             // success
-            return token.balanceOf(_account);
+            return tokenContract.balanceOf(_account);
         } catch Error(string memory _errorMessage) {
             // revert with a custom error message
             revert(_errorMessage);
@@ -116,12 +116,12 @@ contract Conduit {
         address _token,
         address _owner,
         address _spender
-    ) internal {
-        IERC20.token = IERC20(_token);
+    ) internal returns (uint256) {
+        IERC20 tokenContract = IERC20(_token);
         // error handling so if there is no matching interface we dont blow up the whole contract
-        try token.allowance(_owner, _spender) {
+        try tokenContract.allowance(_owner, _spender) {
             // success
-            return token.allowance(_owner, _spender);
+            return tokenContract.allowance(_owner, _spender);
         } catch Error(string memory _errorMessage) {
             // revert with a custom error message
             revert(_errorMessage);

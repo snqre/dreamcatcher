@@ -1,0 +1,61 @@
+{
+	"compiler": {
+		"version": "0.8.18+commit.87f61d96"
+	},
+	"language": "Solidity",
+	"output": {
+		"abi": [],
+		"devdoc": {
+			"kind": "dev",
+			"methods": {},
+			"version": 1
+		},
+		"userdoc": {
+			"kind": "user",
+			"methods": {},
+			"version": 1
+		}
+	},
+	"settings": {
+		"compilationTarget": {
+			"smart_contracts/contracts/Conduit.sol": "Conduit"
+		},
+		"evmVersion": "paris",
+		"libraries": {},
+		"metadata": {
+			"bytecodeHash": "ipfs"
+		},
+		"optimizer": {
+			"enabled": false,
+			"runs": 200
+		},
+		"remappings": []
+	},
+	"sources": {
+		"smart_contracts/contracts/Conduit.sol": {
+			"keccak256": "0x595facce18d620c03a81a73a7f7ac2e3bb28c6b70ee7735ad11d8e22f050cd0a",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://57d42e6b0955c3891e8b303c2e68369bad4409e5dc8bf18512bb30e2ccd5cfc9",
+				"dweb:/ipfs/QmarhMKe866Mev57wcv2QJ8BPaaKYDUMLpo8VSk2SiA6Bo"
+			]
+		},
+		"smart_contracts/libraries/Math.sol": {
+			"keccak256": "0xb8e0ee24d97f8f3a4b9e7dd1784a821d97a6599bb60aabd24f7c3103a2d48cdc",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://9cd22738b9f39757f215e50f63e2b5841d9e4ee16a324813f3f0df7278363608",
+				"dweb:/ipfs/QmYF3rTanREUZmXQcHeV17Lo6RQnLkB1QwqRFvXQYBeEUg"
+			]
+		},
+		"smart_contracts/libraries/Terminal.sol": {
+			"keccak256": "0x755bcb651152c67a02a01c8c5e89811092d2150abce2c679ad86353a3cbf5a95",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://cee6e16d243ac85514cf99efac8b717a0028765b102cdebd69c54d95efbe8bd6",
+				"dweb:/ipfs/QmVcd7zhS5ybYxAvfAXY4MmrAZS9iERYTjMnHzCnCkZYa3"
+			]
+		}
+	},
+	"version": 1
+}
