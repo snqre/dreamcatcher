@@ -19,4 +19,9 @@ library Meta {
         mapping(address => uint256) vote;
         mapping(address => mapping(address => uint256)) allowed;
     }
+
+    struct Quorum {
+        uint256 proposalCount;
+        uint256 requiredQuorum;
+    }
 }
