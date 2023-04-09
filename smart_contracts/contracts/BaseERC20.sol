@@ -12,8 +12,8 @@ contract BaseERC20 is Authenticator {
     bool internal isMintable;
     bool internal isBurnable;
     bool internal isPausable;
+    bool internal isTransferable;
     bool internal isPaused;
-    
     Meta.Properties internal properties;
     Meta.Database internal database;
     event TokensReleased(address indexed account, uint256 amount);
@@ -25,9 +25,34 @@ contract BaseERC20 is Authenticator {
         address indexed spender,
         uint256 amount
     );
+    /*
+    =.=.=.=.=.=.=.=.=.=.=.= MODS
+     */
+    modifier checkPaused() {
+        require(isPaused != true, "The token is paused");
+        _;
+    }
 
+    modifier checkMintable() {
+        require(isMintable != false, "Not mintable");
+        _;
+    }
+
+    modifier checkBurnable() {
+        require(isBurnable != false, "Not burnable");
+        _;
+    }
+
+    modifier checkTransferable() {
+        require(isTransferable != false, "Not transferable");
+        _;
+    }
+    /*
+    =.=.=.=.=.=.=.=.=.=.=.= BASIC FUNC
+     */
     function approve(address spender, uint256 amount)
         public
+        checkPaused
         returns (bool)
     {
         address owner = msg.sender;
@@ -37,6 +62,7 @@ contract BaseERC20 is Authenticator {
 
     function increaseAllowance(address spender, uint256 addedValue)
         public
+        checkPaused
         returns (bool)
     {
         address owner = msg.sender;
@@ -48,6 +74,7 @@ contract BaseERC20 is Authenticator {
 
     function decreaseAllowance(address spender, uint256 subtractedValue)
         public
+        checkPaused
         returns (bool)
     {
         address owner = msg.sender;
@@ -57,7 +84,11 @@ contract BaseERC20 is Authenticator {
             "Decreased allowance below zero"
         );
         unchecked {
-            _approve(owner, spender, Math.sub(currentAllowance, subtractedValue));
+            _approve(
+                owner,
+                spender,
+                Math.sub(currentAllowance, subtractedValue)
+            );
         }
         return true;
     }
@@ -66,7 +97,7 @@ contract BaseERC20 is Authenticator {
         address owner,
         address spender,
         uint256 amount
-    ) internal {
+    ) internal checkPaused {
         require(owner != address(0), "Approve from the zero address");
         require(spender != address(0), "Approve from the zero address");
         database.allowed[owner][spender] = amount;
@@ -77,7 +108,7 @@ contract BaseERC20 is Authenticator {
         address owner,
         address spender,
         uint256 amount
-    ) internal {
+    ) internal checkPaused {
         uint256 currentAllowance = allowance(owner, spender);
         if (currentAllowance != type(uint256).max) {
             require(currentAllowance >= amount, "Insufficient allowance");
@@ -90,6 +121,8 @@ contract BaseERC20 is Authenticator {
     function transfer(address _recipient, uint256 _amount)
         internal
         virtual
+        checkTransferable
+        checkPaused
         returns (bool)
     {
         require(
@@ -106,7 +139,7 @@ contract BaseERC20 is Authenticator {
         address _sender,
         address _recipient,
         uint256 _amount
-    ) internal returns (bool) {
+    ) internal checkPaused checkTransferable returns (bool) {
         require(database.balance[_sender] >= _amount, "Insufficient balance");
         require(
             database.allowed[_sender][msg.sender] >= _amount,
@@ -122,10 +155,10 @@ contract BaseERC20 is Authenticator {
     function burn(address account, uint256 amount)
         internal
         virtual
-        reentrancyLock
+        checkBurnable
+        checkPaused
         returns (bool)
     {
-        require(isBurnable == true, "Burning disabled");
         require(database.balance[account] >= amount, "Insufficient balance");
         database.balance[account] -= amount;
         properties.totalSupply -= amount;
@@ -136,10 +169,11 @@ contract BaseERC20 is Authenticator {
     function mint(address account, uint256 amount)
         internal
         virtual
+        checkMintable
+        checkPaused
         returns (bool)
     {
         require(amount > 0, "Zero and negative values not supported");
-        require(isMintable == true, "Minting disabled");
         require(
             (properties.totalSupply + amount) <= properties.maxSupply,
             "No more tokens can be minted"
@@ -157,7 +191,14 @@ contract BaseERC20 is Authenticator {
         address account,
         uint256 amount,
         uint256 duration
-    ) internal virtual isCustodian(msg.sender) returns (bool) {
+    )
+        internal
+        virtual
+        checkMintable
+        checkPaused
+        isCustodian(msg.sender)
+        returns (bool)
+    {
         require(amount > 0, "Zero and negative values not supported");
         require(isMintable == true, "Minting disabled");
         require(
@@ -261,5 +302,7 @@ contract BaseERC20 is Authenticator {
         properties.totalStaked = 0;
         isMintable = true;
         isBurnable = true;
+        isTransferable = true;
+        isPaused = false;
     }
 }
