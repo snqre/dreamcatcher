@@ -72,11 +72,11 @@
 	},
 	"sources": {
 		"smart_contracts/contracts/Authenticator.sol": {
-			"keccak256": "0x6fb4de2dff65b408c955de9d883d2ea484b2ae6366ca29bb325a7557167b175f",
+			"keccak256": "0x48f75529fa4d7a129a4ad14308fced134916b676f93ffb6d953dc28c522bd312",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://c402e1f4bc7582060cc333d92df6987ac4d9b2aa5bcb18ecd09586c3e8180257",
-				"dweb:/ipfs/QmfVrhXKrxHYCgSyMSx5KQAuc6WgUt8DVuhM34SeR9RcbG"
+				"bzz-raw://1795793675b90509252951e1a25ce4c958c8d5d76385e310a5e649dc028cf6ce",
+				"dweb:/ipfs/QmPjdLpZgERMWhzpSGHPQy4k2FqARo6VJkuC7A9Dx3hp1j"
 			]
 		}
 	},

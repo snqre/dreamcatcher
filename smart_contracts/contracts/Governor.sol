@@ -16,8 +16,6 @@ import "smart_contracts/libraries/Settings.sol";
 
 contract Governor is Token, Vault {
     
-
-    BaseERC20 baseERC20;
     TimelockController _timelock;
 
     constructor()

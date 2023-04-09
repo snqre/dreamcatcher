@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 import "smart_contracts/contracts/Authenticator.sol";
 import "smart_contracts/libraries/Math.sol";
 import "smart_contracts/libraries/Meta.sol";
+import "smart_contracts/contracts/TimeLock.sol";
 // messy still in the works **
 contract Proposal is Authenticator {
     mapping(string => uint256) settingsProposal;
@@ -10,7 +11,7 @@ contract Proposal is Authenticator {
         settingsProposal[_var] = _newValue;
     }
 
-    function initProposalModule() {
+    function initProposalModule() internal {
         /*
         minQuorum %
         maxQuorum %

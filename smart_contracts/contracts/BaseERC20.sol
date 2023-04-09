@@ -196,7 +196,7 @@ contract BaseERC20 is Authenticator {
         virtual
         checkMintable
         checkPaused
-        isCustodian(msg.sender)
+        onlyCustodians(msg.sender)
         returns (bool)
     {
         require(amount > 0, "Zero and negative values not supported");

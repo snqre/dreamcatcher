@@ -162,11 +162,11 @@
 			]
 		},
 		"smart_contracts/libraries/Math.sol": {
-			"keccak256": "0xb8e0ee24d97f8f3a4b9e7dd1784a821d97a6599bb60aabd24f7c3103a2d48cdc",
+			"keccak256": "0xa5569d6bfc253be02181f5431379170dc613da3fe71858e1d78fd1a98f363b6e",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://9cd22738b9f39757f215e50f63e2b5841d9e4ee16a324813f3f0df7278363608",
-				"dweb:/ipfs/QmYF3rTanREUZmXQcHeV17Lo6RQnLkB1QwqRFvXQYBeEUg"
+				"bzz-raw://58de13bfab99701ce8f238148f82adb79609ef3f0fdb6e0063f751eb3053e44f",
+				"dweb:/ipfs/QmTHVsgHikdvRTf9o9mwjtjkaEKAtje12DWBdS4cqjEWZL"
 			]
 		},
 		"smart_contracts/libraries/Terminal.sol": {
