@@ -7,45 +7,11 @@ import "smart_contracts/libraries/Meta.sol";
 
 // voting mechanism here
 contract ERC20 is BaseERC20, Proposal {
-    Meta.Settings internal settings;
-
-    function checkRole(address _account) internal virtual returns (bool) {
-        uint256 balance = database.balance[_account];
-        uint256 staked = database.staked[_account];
-        if (
-            balance >= settings.minBalanceForMembership &&
-            staked >= settings.minStakeForMembership &&
-            isMember[_account] != true
-        ) {
-            giveMembership(_account);
-        } else if (
-            balance < settings.minBalanceForMembership &&
-            staked < settings.minStakeForMembership &&
-            isMember[_account] != false
-        ) {
-            takeMembership(_account);
-        }
-        if (
-            balance >= settings.minBalanceForSyndicate &&
-            staked >= settings.minStakeForSyndicate
-        ) {
-            // if you meet the requirements you have to be elected to be a syndicate
-        } else if (
-            balance < settings.minBalanceForSyndicate &&
-            staked < settings.minStakeForSyndicate &&
-            isSyndicate[_account] != false
-        ) {
-            // if you unstake or leave your role as a syndicate will be terminated on the transaction.
-            takeSyndicate(_account);
-        }
-        return true;
-    }
 
     function transfer(address _recipient, uint256 _amount)
         public
         virtual
         override
-        reentrancyLock
         returns (bool)
     {
         bool result;
@@ -54,8 +20,6 @@ contract ERC20 is BaseERC20, Proposal {
         database.vote[msg.sender] -= _amount;
         database.vote[_recipient] += _amount;
         // check and validate roles and more
-        checkRole(_recipient);
-        checkRole(msg.sender);
         return result;
     }
 
@@ -69,8 +33,6 @@ contract ERC20 is BaseERC20, Proposal {
         require(result != false);
         database.vote[_sender] -= _amount;
         database.vote[_recipient] += _amount;
-        checkRole(_sender);
-        checkRole(_recipient);
         return result;
     }
 
@@ -85,7 +47,6 @@ contract ERC20 is BaseERC20, Proposal {
         result = super.burn(_account, _amount);
         require(result != false);
         database.vote[_account] -= _amount;
-        checkRole(_account);
         return result;
     }
 
@@ -99,7 +60,6 @@ contract ERC20 is BaseERC20, Proposal {
         result = super.mint(_account, _amount);
         require(result != false);
         database.vote[_account] += _amount;
-        checkRole(_account);
         return result;
     }
 
@@ -114,7 +74,6 @@ contract ERC20 is BaseERC20, Proposal {
         // correct the votes value
         // i know we can do it inside the inherited function but this keeps the code cleaner
         database.vote[msg.sender] += (balanceAfter - balanceBefore);
-        checkRole(msg.sender);
         return result;
     }
 

@@ -79,43 +79,7 @@ our platform for trading will be Obsidian
  */
 import "smart_contracts/contracts/Governor.sol";
 
-contract DreamcatcherProtocolProxy is Governor {
-    address public implementation;
-
-    constructor(address _implementation) {
-        implementation = _implementation;
-    }
-
-    function upgrade(address _newImplementation) public onlyAdmins(msg.sender) {
-        implementation = _newImplementation;
-    }
-
-    fallback() external {
-        address _impl = implementation;
-        assembly {
-            let ptr := mload(0x40)
-            calldatacopy(ptr, 0, calldatasize())
-            let result := delegatecall(gas(), _impl, ptr, calldatasize(), 0, 0)
-            returndatacopy(ptr, 0, returndatasize())
-            switch result
-            case 0 {revert(ptr, returndatasize())}
-            default {return (ptr, returndatasize())}
-        }
-    }
-}
-
-
-
-
-contract DreamcatcherProtocol is DreamcatcherProtocolProxy {
-    /* this is where everything comes together 
-    building a decentralized system such that the governoment cant do anything about it
-    we dont exist in a country
-    we dont pay taxes on our treasury
-    they cant shut us down
-    a true dao
-    */
-
+contract DreamcatcherProtocol is Governor {
     constructor() ERC20("Dreamcatcher", "DREAM", 18, 200000000) {
         // vault
         initVault();

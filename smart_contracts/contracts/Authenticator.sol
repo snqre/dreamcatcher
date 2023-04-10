@@ -12,10 +12,8 @@ contract Authenticator {
     event RoleGranted(address indexed _account, string _role);
     event RoleRevoked(address indexed _account, string _role);
 
-    mapping(address => bool) private isAdmin;
-    mapping(address => bool) private isSyndicate;
-    mapping(address => bool) private isCustodian;
-    mapping(address => bool) private isMember;
+    mapping(address => bool) private isAdmin; //
+    mapping(address => bool) private isSyndicate; //
 
     bool private locked;
     modifier reentrancyLock() {
@@ -68,52 +66,6 @@ contract Authenticator {
         );
         isSyndicate[_account] = false;
         emit RoleRevoked(_account, "Syndicate");
-        return true;
-    }
-
-    modifier onlyCustodians(address _accountToCheck) {
-        require(isCustodian[_accountToCheck]);
-        _;
-    }
-
-    // custodians
-    function giveCustodian(address _account) internal returns (bool) {
-        require(
-            isCustodian[_account] != true,
-            "Address is already a custodian"
-        );
-        isCustodian[_account] = true;
-        emit RoleGranted(_account, "Custodian");
-        return true;
-    }
-
-    function takeCustodian(address _account) internal returns (bool) {
-        require(
-            isCustodian[_account] != false,
-            "Address is already not a custodian"
-        );
-        isCustodian[_account] = false;
-        emit RoleRevoked(_account, "Custodian");
-        return true;
-    }
-
-    // members
-    modifier onlyMembers(address _accountToCheck) {
-        require(isMember[_accountToCheck]);
-        _;
-    }
-
-    function giveMembership(address _account) internal returns (bool) {
-        require(isMember[_account] != true, "Address is already a member");
-        isMember[_account] = true;
-        emit RoleGranted(_account, "Member");
-        return true;
-    }
-
-    function takeMembership(address _account) internal returns (bool) {
-        require(isMember[_account] != false, "Address is already not a member");
-        isMember[_account] = false;
-        emit RoleRevoked(_account, "Member");
         return true;
     }
 }

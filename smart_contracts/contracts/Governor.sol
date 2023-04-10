@@ -11,11 +11,10 @@ import "smart_contracts/contracts/Token.sol";
 import "./BaseERC20.sol";
 import "smart_contracts/contracts/Vault.sol";
 import "smart_contracts/libraries/Settings.sol";
+
 //import "./TimelockController.sol";
 
-
 contract Governor is Token, Vault {
-    
     TimelockController _timelock;
 
     constructor()
@@ -36,7 +35,12 @@ contract Governor is Token, Vault {
         //address[] memory arrayOfAddresses;
         //arrayOfAddresses Addreses = new address[](1);
         //arrayOfAddresses.push(0x1de8807f69E357FD91e47B34Dc2a66216a9DC4b4);
-        _timelock = new TimelockController(5, arrayOfAddresses, arrayOfAddresses, 0x1de8807f69E357FD91e47B34Dc2a66216a9DC4b4);
+        _timelock = new TimelockController(
+            5,
+            arrayOfAddresses,
+            arrayOfAddresses,
+            0x1de8807f69E357FD91e47B34Dc2a66216a9DC4b4
+        );
     }
 
     // The following functions are overrides required by Solidity.
@@ -132,11 +136,7 @@ contract Governor is Token, Vault {
         return super.supportsInterface(interfaceId);
     }
 
-    function sellVotingTokens() public {
+    function sellVotingTokens() public {}
 
-    }
-    
-    function buyVotingTokens() public {
-
-    }
+    function buyVotingTokens() public {}
 }

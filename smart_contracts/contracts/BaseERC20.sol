@@ -47,9 +47,11 @@ contract BaseERC20 is Authenticator {
         require(isTransferable != false, "Not transferable");
         _;
     }
+
     /*
     =.=.=.=.=.=.=.=.=.=.=.= BASIC FUNC
      */
+
     function approve(address spender, uint256 amount)
         public
         checkPaused
