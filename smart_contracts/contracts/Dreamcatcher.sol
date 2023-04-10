@@ -77,6 +77,12 @@ Community Building
 Dreamcatcher itself is a DAO that will be able to hold assets and manage them
 our platform for trading will be Obsidian
  */
+
+/*
+    utility token
+    governance token
+    our base currency for our ecosystem
+ */
 import "smart_contracts/contracts/Governor.sol";
 
 contract Dreamcatcher is Governor {

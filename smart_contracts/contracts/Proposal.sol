@@ -80,9 +80,9 @@ contract Proposal is Authenticator {
         uint256 _fundingRequested,
         uint256 _voteSkew,
         uint256 _quorum,
-        uint256 _uniqueVotes;
-        uint256 _totalVotes;
-        uint256 _totalGlobalVotes;
+        uint256 _uniqueVotes,
+        uint256 _totalVotes,
+        uint256 _totalGlobalVotes,
         bool _isActive,
         bool executed
     );

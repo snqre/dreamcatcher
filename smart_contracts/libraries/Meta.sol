@@ -2,10 +2,6 @@
 pragma solidity ^0.8.0;
 
 library Meta {
-    uint256 minBalanceForMembership;
-    uint256 minStakeForMembership;
-    uint256 minBalanceForSyndicate;
-    uint256 minStakeForSyndicate;
     struct Properties {
         string name;
         string symbol;

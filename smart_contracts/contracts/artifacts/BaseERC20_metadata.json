@@ -297,19 +297,6 @@
 				"type": "function"
 			},
 			{
-				"inputs": [],
-				"name": "release",
-				"outputs": [
-					{
-						"internalType": "bool",
-						"name": "",
-						"type": "bool"
-					}
-				],
-				"stateMutability": "nonpayable",
-				"type": "function"
-			},
-			{
 				"inputs": [
 					{
 						"internalType": "address",
@@ -384,59 +371,6 @@
 				"inputs": [
 					{
 						"internalType": "address",
-						"name": "_recipient",
-						"type": "address"
-					},
-					{
-						"internalType": "uint256",
-						"name": "_amount",
-						"type": "uint256"
-					}
-				],
-				"name": "transfer",
-				"outputs": [
-					{
-						"internalType": "bool",
-						"name": "",
-						"type": "bool"
-					}
-				],
-				"stateMutability": "nonpayable",
-				"type": "function"
-			},
-			{
-				"inputs": [
-					{
-						"internalType": "address",
-						"name": "_sender",
-						"type": "address"
-					},
-					{
-						"internalType": "address",
-						"name": "_recipient",
-						"type": "address"
-					},
-					{
-						"internalType": "uint256",
-						"name": "_amount",
-						"type": "uint256"
-					}
-				],
-				"name": "transferFrom",
-				"outputs": [
-					{
-						"internalType": "bool",
-						"name": "",
-						"type": "bool"
-					}
-				],
-				"stateMutability": "nonpayable",
-				"type": "function"
-			},
-			{
-				"inputs": [
-					{
-						"internalType": "address",
 						"name": "account",
 						"type": "address"
 					}
@@ -500,19 +434,27 @@
 	},
 	"sources": {
 		"smart_contracts/contracts/Authenticator.sol": {
-			"keccak256": "0x6fb4de2dff65b408c955de9d883d2ea484b2ae6366ca29bb325a7557167b175f",
+			"keccak256": "0x48f75529fa4d7a129a4ad14308fced134916b676f93ffb6d953dc28c522bd312",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://c402e1f4bc7582060cc333d92df6987ac4d9b2aa5bcb18ecd09586c3e8180257",
-				"dweb:/ipfs/QmfVrhXKrxHYCgSyMSx5KQAuc6WgUt8DVuhM34SeR9RcbG"
+				"bzz-raw://1795793675b90509252951e1a25ce4c958c8d5d76385e310a5e649dc028cf6ce",
+				"dweb:/ipfs/QmPjdLpZgERMWhzpSGHPQy4k2FqARo6VJkuC7A9Dx3hp1j"
 			]
 		},
 		"smart_contracts/contracts/BaseERC20.sol": {
-			"keccak256": "0x5bf1014d1ef4cc6b68bf8563456b201d9793b095032ec52be8eb3364f506ea0e",
+			"keccak256": "0xac80060cb093b526a57fadb77f7c2f004041f10cc8d4c1992e499140fcdf55a2",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://8c68c73b69798560c36a1be621b74e3cfae2bb8c96c6368414fdabcef91b452e",
-				"dweb:/ipfs/QmRXEwQkrRXHFRSVP4LLQAT1rvkvUrL2fLdFo247HX9dSD"
+				"bzz-raw://0a3817f84893f6dd791e2c116e77ec930a8c2723621f58a7cc43f1a0cb1c453f",
+				"dweb:/ipfs/QmfKPhD8bz4JdNYFjD3c3Twv1wZH5Lduc5Lub9zr6gCMAP"
+			]
+		},
+		"smart_contracts/libraries/Math.sol": {
+			"keccak256": "0xa5569d6bfc253be02181f5431379170dc613da3fe71858e1d78fd1a98f363b6e",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://58de13bfab99701ce8f238148f82adb79609ef3f0fdb6e0063f751eb3053e44f",
+				"dweb:/ipfs/QmTHVsgHikdvRTf9o9mwjtjkaEKAtje12DWBdS4cqjEWZL"
 			]
 		},
 		"smart_contracts/libraries/Meta.sol": {

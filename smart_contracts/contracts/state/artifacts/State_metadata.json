@@ -18,7 +18,7 @@
 	},
 	"settings": {
 		"compilationTarget": {
-			"smart_contracts/libraries/Meta.sol": "Meta"
+			"smart_contracts/contracts/state/State.sol": "State"
 		},
 		"evmVersion": "paris",
 		"libraries": {},
@@ -32,12 +32,11 @@
 		"remappings": []
 	},
 	"sources": {
-		"smart_contracts/libraries/Meta.sol": {
-			"keccak256": "0xa0f668b4b4ecae3b19ead17a7cd5a6ebe937c34493f95bd7daf1dfd18ddd66dc",
-			"license": "MIT",
+		"smart_contracts/contracts/state/State.sol": {
+			"keccak256": "0x2a72201a01b51299794ebd6237c386932e62f1e62117ce791cdc6d6a380d771a",
 			"urls": [
-				"bzz-raw://c85ebac8ab0d3d583f97e321765342f33f2761846a879d1989328de15f619d4a",
-				"dweb:/ipfs/Qmbb7dtJXectdgZ7puHpbRHjm6HenNR5Buhhwno5EGVJ8Z"
+				"bzz-raw://f2eb1c7726883e272250e406042dcce6b0ee167d124349fdbadd6d8d41d83c79",
+				"dweb:/ipfs/QmRQViNSLbQt1SHNifUrdyYdU9yRo2TyVgnHbXcdnZ9SRN"
 			]
 		}
 	},

@@ -1,5 +1,5 @@
 {
-	"id": "62d76060eb27320e4f9d7891f681aabb",
+	"id": "0ab1ff0741c581e536dca281dd02ff42",
 	"_format": "hh-sol-build-info-1",
 	"solcVersion": "0.8.18",
 	"solcLongVersion": "0.8.18+commit.87f61d96",
@@ -7,7 +7,7 @@
 		"language": "Solidity",
 		"sources": {
 			"smart_contracts/libraries/Meta.sol": {
-				"content": "// SPDX-License-Identifier: MIT\npragma solidity ^0.8.0;\n\nlibrary Meta {\n    struct Properties {\n        string name;\n        string symbol;\n        uint256 decimals;\n        uint256 maxSupply;\n        uint256 totalSupply;\n        uint256 totalVested;\n        uint256 totalStaked;\n    }\n\n    struct Database {\n        mapping(address => uint256) balance;\n        mapping(address => uint256) vested;\n        mapping(address => uint256) staked;\n        mapping(address => uint256) vote;\n        mapping(address => mapping(address => uint256)) allowed;\n        // votes can be delegated to other accounts\n        mapping(address => mapping(address => uint256)) delegatedVote;\n    }\n\n    struct Quorum {\n        uint256 proposalCount;\n        uint256 requiredQuorum;\n    }\n\n    struct Settings {\n        uint256 minBalanceForMembership;\n        uint256 minStakeForMembership;\n        uint256 minBalanceForSyndicate;\n        uint256 minStakeForSyndicate;\n        \n    }\n}\n"
+				"content": "// SPDX-License-Identifier: MIT\npragma solidity ^0.8.0;\n\nlibrary Meta {\n    struct Properties {\n        string name;\n        string symbol;\n        uint256 decimals;\n        uint256 maxSupply;\n        uint256 totalSupply;\n        uint256 totalVested;\n        uint256 totalStaked;\n    }\n\n    struct Database {\n        mapping(address => uint256) balance;\n        mapping(address => uint256) vested;\n        mapping(address => uint256) staked;\n        mapping(address => uint256) vote;\n        mapping(address => mapping(address => uint256)) allowed;\n        // votes can be delegated to other accounts\n        mapping(address => mapping(address => uint256)) delegatedVote;\n    }\n\n    struct Quorum {\n        uint256 proposalCount;\n        uint256 requiredQuorum;\n    }\n}\n"
 			}
 		},
 		"settings": {
@@ -48,23 +48,23 @@
 						"version": 1
 					},
 					"evm": {
-						"assembly": "    /* \"smart_contracts/libraries/Meta.sol\":57:965  library Meta {... */\n  dataSize(sub_0)\n  dataOffset(sub_0)\n  0x0b\n  dup3\n  dup3\n  dup3\n  codecopy\n  dup1\n  mload\n  0x00\n  byte\n  0x73\n  eq\n  tag_1\n  jumpi\n  mstore(0x00, 0x4e487b7100000000000000000000000000000000000000000000000000000000)\n  mstore(0x04, 0x00)\n  revert(0x00, 0x24)\ntag_1:\n  mstore(0x00, address)\n  0x73\n  dup2\n  mstore8\n  dup3\n  dup2\n  return\nstop\n\nsub_0: assembly {\n        /* \"smart_contracts/libraries/Meta.sol\":57:965  library Meta {... */\n      eq(address, deployTimeAddress())\n      mstore(0x40, 0x80)\n      0x00\n      dup1\n      revert\n\n    auxdata: 0xa26469706673582212206c8fb02bff4b48f210fb58da68feeb7613e32dd97204cdc687ea979efbff2c7f64736f6c63430008120033\n}\n",
+						"assembly": "    /* \"smart_contracts/libraries/Meta.sol\":57:769  library Meta {... */\n  dataSize(sub_0)\n  dataOffset(sub_0)\n  0x0b\n  dup3\n  dup3\n  dup3\n  codecopy\n  dup1\n  mload\n  0x00\n  byte\n  0x73\n  eq\n  tag_1\n  jumpi\n  mstore(0x00, 0x4e487b7100000000000000000000000000000000000000000000000000000000)\n  mstore(0x04, 0x00)\n  revert(0x00, 0x24)\ntag_1:\n  mstore(0x00, address)\n  0x73\n  dup2\n  mstore8\n  dup3\n  dup2\n  return\nstop\n\nsub_0: assembly {\n        /* \"smart_contracts/libraries/Meta.sol\":57:769  library Meta {... */\n      eq(address, deployTimeAddress())\n      mstore(0x40, 0x80)\n      0x00\n      dup1\n      revert\n\n    auxdata: 0xa2646970667358221220096d852486e9324299aaeb0b6f6c0ce22f893b1b8b5ccc5d0577d4bb7f92d20064736f6c63430008120033\n}\n",
 						"bytecode": {
 							"functionDebugData": {},
 							"generatedSources": [],
 							"linkReferences": {},
-							"object": "60566050600b82828239805160001a6073146043577f4e487b7100000000000000000000000000000000000000000000000000000000600052600060045260246000fd5b30600052607381538281f3fe73000000000000000000000000000000000000000030146080604052600080fdfea26469706673582212206c8fb02bff4b48f210fb58da68feeb7613e32dd97204cdc687ea979efbff2c7f64736f6c63430008120033",
-							"opcodes": "PUSH1 0x56 PUSH1 0x50 PUSH1 0xB DUP3 DUP3 DUP3 CODECOPY DUP1 MLOAD PUSH1 0x0 BYTE PUSH1 0x73 EQ PUSH1 0x43 JUMPI PUSH32 0x4E487B7100000000000000000000000000000000000000000000000000000000 PUSH1 0x0 MSTORE PUSH1 0x0 PUSH1 0x4 MSTORE PUSH1 0x24 PUSH1 0x0 REVERT JUMPDEST ADDRESS PUSH1 0x0 MSTORE PUSH1 0x73 DUP2 MSTORE8 DUP3 DUP2 RETURN INVALID PUSH20 0x0 ADDRESS EQ PUSH1 0x80 PUSH1 0x40 MSTORE PUSH1 0x0 DUP1 REVERT INVALID LOG2 PUSH5 0x6970667358 0x22 SLT KECCAK256 PUSH13 0x8FB02BFF4B48F210FB58DA68FE 0xEB PUSH23 0x13E32DD97204CDC687EA979EFBFF2C7F64736F6C634300 ADDMOD SLT STOP CALLER ",
-							"sourceMap": "57:908:0:-:0;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;"
+							"object": "60566050600b82828239805160001a6073146043577f4e487b7100000000000000000000000000000000000000000000000000000000600052600060045260246000fd5b30600052607381538281f3fe73000000000000000000000000000000000000000030146080604052600080fdfea2646970667358221220096d852486e9324299aaeb0b6f6c0ce22f893b1b8b5ccc5d0577d4bb7f92d20064736f6c63430008120033",
+							"opcodes": "PUSH1 0x56 PUSH1 0x50 PUSH1 0xB DUP3 DUP3 DUP3 CODECOPY DUP1 MLOAD PUSH1 0x0 BYTE PUSH1 0x73 EQ PUSH1 0x43 JUMPI PUSH32 0x4E487B7100000000000000000000000000000000000000000000000000000000 PUSH1 0x0 MSTORE PUSH1 0x0 PUSH1 0x4 MSTORE PUSH1 0x24 PUSH1 0x0 REVERT JUMPDEST ADDRESS PUSH1 0x0 MSTORE PUSH1 0x73 DUP2 MSTORE8 DUP3 DUP2 RETURN INVALID PUSH20 0x0 ADDRESS EQ PUSH1 0x80 PUSH1 0x40 MSTORE PUSH1 0x0 DUP1 REVERT INVALID LOG2 PUSH5 0x6970667358 0x22 SLT KECCAK256 MULMOD PUSH14 0x852486E9324299AAEB0B6F6C0CE2 0x2F DUP10 EXTCODESIZE SHL DUP12 0x5C 0xCC 0x5D SDIV PUSH24 0xD4BB7F92D20064736F6C6343000812003300000000000000 ",
+							"sourceMap": "57:712:0:-:0;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;"
 						},
 						"deployedBytecode": {
 							"functionDebugData": {},
 							"generatedSources": [],
 							"immutableReferences": {},
 							"linkReferences": {},
-							"object": "73000000000000000000000000000000000000000030146080604052600080fdfea26469706673582212206c8fb02bff4b48f210fb58da68feeb7613e32dd97204cdc687ea979efbff2c7f64736f6c63430008120033",
-							"opcodes": "PUSH20 0x0 ADDRESS EQ PUSH1 0x80 PUSH1 0x40 MSTORE PUSH1 0x0 DUP1 REVERT INVALID LOG2 PUSH5 0x6970667358 0x22 SLT KECCAK256 PUSH13 0x8FB02BFF4B48F210FB58DA68FE 0xEB PUSH23 0x13E32DD97204CDC687EA979EFBFF2C7F64736F6C634300 ADDMOD SLT STOP CALLER ",
-							"sourceMap": "57:908:0:-:0;;;;;;;;"
+							"object": "73000000000000000000000000000000000000000030146080604052600080fdfea2646970667358221220096d852486e9324299aaeb0b6f6c0ce22f893b1b8b5ccc5d0577d4bb7f92d20064736f6c63430008120033",
+							"opcodes": "PUSH20 0x0 ADDRESS EQ PUSH1 0x80 PUSH1 0x40 MSTORE PUSH1 0x0 DUP1 REVERT INVALID LOG2 PUSH5 0x6970667358 0x22 SLT KECCAK256 MULMOD PUSH14 0x852486E9324299AAEB0B6F6C0CE2 0x2F DUP10 EXTCODESIZE SHL DUP12 0x5C 0xCC 0x5D SDIV PUSH24 0xD4BB7F92D20064736F6C6343000812003300000000000000 ",
+							"sourceMap": "57:712:0:-:0;;;;;;;;"
 						},
 						"gasEstimates": {
 							"creation": {
@@ -77,288 +77,288 @@
 							".code": [
 								{
 									"begin": 57,
-									"end": 965,
+									"end": 769,
 									"name": "PUSH #[$]",
 									"source": 0,
 									"value": "0000000000000000000000000000000000000000000000000000000000000000"
 								},
 								{
 									"begin": 57,
-									"end": 965,
+									"end": 769,
 									"name": "PUSH [$]",
 									"source": 0,
 									"value": "0000000000000000000000000000000000000000000000000000000000000000"
 								},
 								{
 									"begin": 57,
-									"end": 965,
+									"end": 769,
 									"name": "PUSH",
 									"source": 0,
 									"value": "B"
 								},
 								{
 									"begin": 57,
-									"end": 965,
+									"end": 769,
 									"name": "DUP3",
 									"source": 0
 								},
 								{
 									"begin": 57,
-									"end": 965,
+									"end": 769,
 									"name": "DUP3",
 									"source": 0
 								},
 								{
 									"begin": 57,
-									"end": 965,
+									"end": 769,
 									"name": "DUP3",
 									"source": 0
 								},
 								{
 									"begin": 57,
-									"end": 965,
+									"end": 769,
 									"name": "CODECOPY",
 									"source": 0
 								},
 								{
 									"begin": 57,
-									"end": 965,
+									"end": 769,
 									"name": "DUP1",
 									"source": 0
 								},
 								{
 									"begin": 57,
-									"end": 965,
+									"end": 769,
 									"name": "MLOAD",
 									"source": 0
 								},
 								{
 									"begin": 57,
-									"end": 965,
+									"end": 769,
 									"name": "PUSH",
 									"source": 0,
 									"value": "0"
 								},
 								{
 									"begin": 57,
-									"end": 965,
+									"end": 769,
 									"name": "BYTE",
 									"source": 0
 								},
 								{
 									"begin": 57,
-									"end": 965,
+									"end": 769,
 									"name": "PUSH",
 									"source": 0,
 									"value": "73"
 								},
 								{
 									"begin": 57,
-									"end": 965,
+									"end": 769,
 									"name": "EQ",
 									"source": 0
 								},
 								{
 									"begin": 57,
-									"end": 965,
+									"end": 769,
 									"name": "PUSH [tag]",
 									"source": 0,
 									"value": "1"
 								},
 								{
 									"begin": 57,
-									"end": 965,
+									"end": 769,
 									"name": "JUMPI",
 									"source": 0
 								},
 								{
 									"begin": 57,
-									"end": 965,
+									"end": 769,
 									"name": "PUSH",
 									"source": 0,
 									"value": "4E487B7100000000000000000000000000000000000000000000000000000000"
 								},
 								{
 									"begin": 57,
-									"end": 965,
+									"end": 769,
 									"name": "PUSH",
 									"source": 0,
 									"value": "0"
 								},
 								{
 									"begin": 57,
-									"end": 965,
+									"end": 769,
 									"name": "MSTORE",
 									"source": 0
 								},
 								{
 									"begin": 57,
-									"end": 965,
+									"end": 769,
 									"name": "PUSH",
 									"source": 0,
 									"value": "0"
 								},
 								{
 									"begin": 57,
-									"end": 965,
+									"end": 769,
 									"name": "PUSH",
 									"source": 0,
 									"value": "4"
 								},
 								{
 									"begin": 57,
-									"end": 965,
+									"end": 769,
 									"name": "MSTORE",
 									"source": 0
 								},
 								{
 									"begin": 57,
-									"end": 965,
+									"end": 769,
 									"name": "PUSH",
 									"source": 0,
 									"value": "24"
 								},
 								{
 									"begin": 57,
-									"end": 965,
+									"end": 769,
 									"name": "PUSH",
 									"source": 0,
 									"value": "0"
 								},
 								{
 									"begin": 57,
-									"end": 965,
+									"end": 769,
 									"name": "REVERT",
 									"source": 0
 								},
 								{
 									"begin": 57,
-									"end": 965,
+									"end": 769,
 									"name": "tag",
 									"source": 0,
 									"value": "1"
 								},
 								{
 									"begin": 57,
-									"end": 965,
+									"end": 769,
 									"name": "JUMPDEST",
 									"source": 0
 								},
 								{
 									"begin": 57,
-									"end": 965,
+									"end": 769,
 									"name": "ADDRESS",
 									"source": 0
 								},
 								{
 									"begin": 57,
-									"end": 965,
+									"end": 769,
 									"name": "PUSH",
 									"source": 0,
 									"value": "0"
 								},
 								{
 									"begin": 57,
-									"end": 965,
+									"end": 769,
 									"name": "MSTORE",
 									"source": 0
 								},
 								{
 									"begin": 57,
-									"end": 965,
+									"end": 769,
 									"name": "PUSH",
 									"source": 0,
 									"value": "73"
 								},
 								{
 									"begin": 57,
-									"end": 965,
+									"end": 769,
 									"name": "DUP2",
 									"source": 0
 								},
 								{
 									"begin": 57,
-									"end": 965,
+									"end": 769,
 									"name": "MSTORE8",
 									"source": 0
 								},
 								{
 									"begin": 57,
-									"end": 965,
+									"end": 769,
 									"name": "DUP3",
 									"source": 0
 								},
 								{
 									"begin": 57,
-									"end": 965,
+									"end": 769,
 									"name": "DUP2",
 									"source": 0
 								},
 								{
 									"begin": 57,
-									"end": 965,
+									"end": 769,
 									"name": "RETURN",
 									"source": 0
 								}
 							],
 							".data": {
 								"0": {
-									".auxdata": "a26469706673582212206c8fb02bff4b48f210fb58da68feeb7613e32dd97204cdc687ea979efbff2c7f64736f6c63430008120033",
+									".auxdata": "a2646970667358221220096d852486e9324299aaeb0b6f6c0ce22f893b1b8b5ccc5d0577d4bb7f92d20064736f6c63430008120033",
 									".code": [
 										{
 											"begin": 57,
-											"end": 965,
+											"end": 769,
 											"name": "PUSHDEPLOYADDRESS",
 											"source": 0
 										},
 										{
 											"begin": 57,
-											"end": 965,
+											"end": 769,
 											"name": "ADDRESS",
 											"source": 0
 										},
 										{
 											"begin": 57,
-											"end": 965,
+											"end": 769,
 											"name": "EQ",
 											"source": 0
 										},
 										{
 											"begin": 57,
-											"end": 965,
+											"end": 769,
 											"name": "PUSH",
 											"source": 0,
 											"value": "80"
 										},
 										{
 											"begin": 57,
-											"end": 965,
+											"end": 769,
 											"name": "PUSH",
 											"source": 0,
 											"value": "40"
 										},
 										{
 											"begin": 57,
-											"end": 965,
+											"end": 769,
 											"name": "MSTORE",
 											"source": 0
 										},
 										{
 											"begin": 57,
-											"end": 965,
+											"end": 769,
 											"name": "PUSH",
 											"source": 0,
 											"value": "0"
 										},
 										{
 											"begin": 57,
-											"end": 965,
+											"end": 769,
 											"name": "DUP1",
 											"source": 0
 										},
 										{
 											"begin": 57,
-											"end": 965,
+											"end": 769,
 											"name": "REVERT",
 											"source": 0
 										}
@@ -372,7 +372,7 @@
 						},
 						"methodIdentifiers": {}
 					},
-					"metadata": "{\"compiler\":{\"version\":\"0.8.18+commit.87f61d96\"},\"language\":\"Solidity\",\"output\":{\"abi\":[],\"devdoc\":{\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"smart_contracts/libraries/Meta.sol\":\"Meta\"},\"evmVersion\":\"paris\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":false,\"runs\":200},\"remappings\":[]},\"sources\":{\"smart_contracts/libraries/Meta.sol\":{\"keccak256\":\"0xa0d40f73584c0d65b3a682da5138c29914e4c273806b64b0e5f5f092fa2e6c17\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://a935add18b5bf87fae9b507a6535ad8ea6c9eab1cc25f81a45cbd002d0d76899\",\"dweb:/ipfs/QmYJ9U9rXT9gcYPpADWgo9DY5BxU1ahdKrmnfGKyq8FG2p\"]}},\"version\":1}",
+					"metadata": "{\"compiler\":{\"version\":\"0.8.18+commit.87f61d96\"},\"language\":\"Solidity\",\"output\":{\"abi\":[],\"devdoc\":{\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"smart_contracts/libraries/Meta.sol\":\"Meta\"},\"evmVersion\":\"paris\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":false,\"runs\":200},\"remappings\":[]},\"sources\":{\"smart_contracts/libraries/Meta.sol\":{\"keccak256\":\"0xa0f668b4b4ecae3b19ead17a7cd5a6ebe937c34493f95bd7daf1dfd18ddd66dc\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://c85ebac8ab0d3d583f97e321765342f33f2761846a879d1989328de15f619d4a\",\"dweb:/ipfs/Qmbb7dtJXectdgZ7puHpbRHjm6HenNR5Buhhwno5EGVJ8Z\"]}},\"version\":1}",
 					"storageLayout": {
 						"storage": [],
 						"types": null
@@ -391,10 +391,10 @@
 					"absolutePath": "smart_contracts/libraries/Meta.sol",
 					"exportedSymbols": {
 						"Meta": [
-							60
+							51
 						]
 					},
-					"id": 61,
+					"id": 52,
 					"license": "MIT",
 					"nodeType": "SourceUnit",
 					"nodes": [
@@ -416,9 +416,9 @@
 							"contractDependencies": [],
 							"contractKind": "library",
 							"fullyImplemented": true,
-							"id": 60,
+							"id": 51,
 							"linearizedBaseContracts": [
-								60
+								51
 							],
 							"name": "Meta",
 							"nameLocation": "65:4:0",
@@ -621,7 +621,7 @@
 									"name": "Properties",
 									"nameLocation": "83:10:0",
 									"nodeType": "StructDefinition",
-									"scope": 60,
+									"scope": 51,
 									"src": "76:209:0",
 									"visibility": "public"
 								},
@@ -979,7 +979,7 @@
 									"name": "Database",
 									"nameLocation": "298:8:0",
 									"nodeType": "StructDefinition",
-									"scope": 60,
+									"scope": 51,
 									"src": "291:386:0",
 									"visibility": "public"
 								},
@@ -1045,137 +1045,17 @@
 									"name": "Quorum",
 									"nameLocation": "690:6:0",
 									"nodeType": "StructDefinition",
-									"scope": 60,
+									"scope": 51,
 									"src": "683:84:0",
-									"visibility": "public"
-								},
-								{
-									"canonicalName": "Meta.Settings",
-									"id": 59,
-									"members": [
-										{
-											"constant": false,
-											"id": 52,
-											"mutability": "mutable",
-											"name": "minBalanceForMembership",
-											"nameLocation": "807:23:0",
-											"nodeType": "VariableDeclaration",
-											"scope": 59,
-											"src": "799:31:0",
-											"stateVariable": false,
-											"storageLocation": "default",
-											"typeDescriptions": {
-												"typeIdentifier": "t_uint256",
-												"typeString": "uint256"
-											},
-											"typeName": {
-												"id": 51,
-												"name": "uint256",
-												"nodeType": "ElementaryTypeName",
-												"src": "799:7:0",
-												"typeDescriptions": {
-													"typeIdentifier": "t_uint256",
-													"typeString": "uint256"
-												}
-											},
-											"visibility": "internal"
-										},
-										{
-											"constant": false,
-											"id": 54,
-											"mutability": "mutable",
-											"name": "minStakeForMembership",
-											"nameLocation": "848:21:0",
-											"nodeType": "VariableDeclaration",
-											"scope": 59,
-											"src": "840:29:0",
-											"stateVariable": false,
-											"storageLocation": "default",
-											"typeDescriptions": {
-												"typeIdentifier": "t_uint256",
-												"typeString": "uint256"
-											},
-											"typeName": {
-												"id": 53,
-												"name": "uint256",
-												"nodeType": "ElementaryTypeName",
-												"src": "840:7:0",
-												"typeDescriptions": {
-													"typeIdentifier": "t_uint256",
-													"typeString": "uint256"
-												}
-											},
-											"visibility": "internal"
-										},
-										{
-											"constant": false,
-											"id": 56,
-											"mutability": "mutable",
-											"name": "minBalanceForSyndicate",
-											"nameLocation": "887:22:0",
-											"nodeType": "VariableDeclaration",
-											"scope": 59,
-											"src": "879:30:0",
-											"stateVariable": false,
-											"storageLocation": "default",
-											"typeDescriptions": {
-												"typeIdentifier": "t_uint256",
-												"typeString": "uint256"
-											},
-											"typeName": {
-												"id": 55,
-												"name": "uint256",
-												"nodeType": "ElementaryTypeName",
-												"src": "879:7:0",
-												"typeDescriptions": {
-													"typeIdentifier": "t_uint256",
-													"typeString": "uint256"
-												}
-											},
-											"visibility": "internal"
-										},
-										{
-											"constant": false,
-											"id": 58,
-											"mutability": "mutable",
-											"name": "minStakeForSyndicate",
-											"nameLocation": "927:20:0",
-											"nodeType": "VariableDeclaration",
-											"scope": 59,
-											"src": "919:28:0",
-											"stateVariable": false,
-											"storageLocation": "default",
-											"typeDescriptions": {
-												"typeIdentifier": "t_uint256",
-												"typeString": "uint256"
-											},
-											"typeName": {
-												"id": 57,
-												"name": "uint256",
-												"nodeType": "ElementaryTypeName",
-												"src": "919:7:0",
-												"typeDescriptions": {
-													"typeIdentifier": "t_uint256",
-													"typeString": "uint256"
-												}
-											},
-											"visibility": "internal"
-										}
-									],
-									"name": "Settings",
-									"nameLocation": "780:8:0",
-									"nodeType": "StructDefinition",
-									"scope": 60,
-									"src": "773:190:0",
 									"visibility": "public"
 								}
 							],
-							"scope": 61,
-							"src": "57:908:0",
+							"scope": 52,
+							"src": "57:712:0",
 							"usedErrors": []
 						}
 					],
-					"src": "32:934:0"
+					"src": "32:738:0"
 				},
 				"id": 0
 			}
