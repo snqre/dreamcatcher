@@ -109,10 +109,6 @@ contract Dreamcatcher is Governor {
         );
     }
 
-    function submitVote() external override onlyAdmins onlySyndicates onlyCustodians {
-        super.submitVote()
-    }
-
     constructor() ERC20("Dreamcatcher", "DREAM", 18, 200000000) {
         // vault
         initVault();

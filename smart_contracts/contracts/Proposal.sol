@@ -66,6 +66,7 @@ contract Proposal is Authenticator {
         uint256 totalGlobalVotes;       // total amount of possible votes in existence
         bool isActive;                  // is the proposal currently active
         bool executed;                  // has it been executed (passed)?
+        mapping(address => bool) hasVoted;
     }
 
     mapping(string => Prop) internal proposals;
@@ -149,10 +150,13 @@ contract Proposal is Authenticator {
         return true;
     }
 
-    function submitVote(string memory _caption, string memory _side, uint256 _amount, uint256 _totalAccountVotes, bool _hasVoted, uint256 _totalGlobalVotes) internal virtual {
+    /*
+    basic inccorect implementation needs fixing
+     */
+    function submitVote(string memory _caption, string memory _side, uint256 _amount, uint256 _totalAccountVotes, uint256 _totalGlobalVotes) internal virtual {
         require(_totalAccountVotes >= _amount, "Insufficient votes");
         require(_amount > 0, "Zero votes not supported");
-        require(_hasVoted == false, "Your vote has already been registered");
+        require(proposals[_caption].hasVoted[msg.sender] == false);
         if (_side == "for") {
             proposals[_caption].voteSkew += _amount;
 
@@ -170,23 +174,7 @@ contract Proposal is Authenticator {
         uint256 c = Math.div(a, b);
         uin256 d = Math.mul(c, 100);
         proposals[_caption].quorum = d;
-    }
-
-    function vote(
-        uint256 _id,
-        uint256 _amount,
-        address _account,
-        uint256 _balance,
-        uint256 _votes
-    ) internal virtual reentrancyLock onlyMembers(msg.sender) {
-        require(_balance >= _amount, "Insufficient balance");
-        require(_amount > 0, "Non zero vote not supported");
-        uint256 amount = _amount;
-        if (Math.checkSkew(amount) == true) {
-            proposals[_id].voteSkew += amount;
-        } else if (Math.checkSkew(amount) == false) {
-            proposals[_id].voteSkew -= amount;
-        }
+        
     }
 
     function veto() external onlyAdmins {
