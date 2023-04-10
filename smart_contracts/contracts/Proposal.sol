@@ -69,8 +69,11 @@ contract Proposal is Authenticator {
     );
     event VoteCast(address voter, uint256 proposalId);
 
-    bool isACriticalProposal;
+    function submitCriticalProposal() {
+        // 
+    }
 
+    bool isACriticalProposal;
     function submitProposal(
         string memory _caption,
         string memory _description,
@@ -131,6 +134,11 @@ contract Proposal is Authenticator {
         } else if (Math.checkSkew(amount) == false) {
             proposals[_id].voteSkew -= amount;
         }
+    }
+
+    function veto() external onlyAdmins {
+        // cannot execute but can deny 
+        // only for the starting process to make sure no one blows up the project
     }
 
     function execute() internal {
