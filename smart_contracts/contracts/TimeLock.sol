@@ -25,7 +25,6 @@ contract TimeLock {
         lock.start = block.timestamp;
         lock.end = lock.start + _duration;
         lock.locked = true;
-        
     }
 
     function unlockTimeLock(string memory _caption) internal {

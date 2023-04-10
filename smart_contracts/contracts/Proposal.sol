@@ -7,116 +7,169 @@ import "smart_contracts/contracts/TimeLock.sol";
 
 // messy still in the works **
 contract Proposal is Authenticator {
-    mapping(string => uint256) settingsProposal;
-
-    function setVar(string memory _var, uint256 _newValue) internal {
-        settingsProposal[_var] = _newValue;
+    uint256 minDuration;
+    uint256 maxDuration;
+    uint256 minFunding;
+    uint256 maxFunding;
+    mapping (address => bool) isBlackListed;
+    mapping (address => bool) isWhiteListed;
+    function updateProposalLaws(_minDuration, _maxDuration, _minFunding, _maxFunding) internal virtual {
+        minDuration = _minDuration;
+        maxDuration = _maxDuration;
+        minFunding = _minFunding;
+        maxFunding = _maxFunding;
     }
 
-    function initProposalModule() internal {
-        /*
-        minQuorum %
-        maxQuorum %
-        minFundingPerProposal eth
-        maxFundingPerProposal eth
-        minSkewToExecute % above 50%
-         */
-        setVar("minQuorum", 5);
-        setVar("maxQuorum", 100);
-        setVar("minFundingPerProposal", 0);
-        setVar("maxFundingPerProposal", 1);
-        setVar("minSkewToExecute", 60);
+    event WhiteListGranted(address payable indexed _account);
+    event WhiteListRevoked(address payable indexed _account);
+    event BlackListGranted(address payable indexed _account);
+    event BlackListRevoked(address payable indexed _account);
+
+    function grantWhiteList(address payable _account) internal virtual {
+        require(isBlackListed[_account] == false, "The address is black listed please revoke that status first");
+        require(isWhiteListed[_account] == false, "The address is already white listed");
+        isWhiteListed[_account] = true;
+        emit WhiteListGranted(_account);
     }
 
-    // hacks, bugs, existential threats, its a short notice but thats what syndicates are for, in critical the only accesible actions are Pausing the token contract
-    uint256 minCriticalProposalVotingPeriod = 1 days;
-    uint256 maxCriticalProposalVotingPeriod = 7 days;
-    uint256 minQuorumForCriticalProposal = 0.25;
-    uint256 skewToPassCriticalProposal = 0.60;
-    // your standard planning, marketing, business venture
-    uint256 minBaseProposalVotingPeriod = 1 weeks;
-    uint256 maxBaseProposalVotingPeriod = 2 weeks;
-    uint256 minQuorumForBaseProposal = 0.50;
-    uint256 skewToPassBaseProposal = 0.60;
-    // this is for upgrading the code itself, we give as much time to members to understand whats going on
-    uint256 minHighStakeProposalVotingPeriod = 4 weeks;
-    uint256 maxHighStakeProposalVotingPeriod = 1 years;
-    uint256 minQuorumForHighStakeProposal = 0.95;
-    uint256 skewToPassHighStakeProposal = 0.95;
+    function revokeWhiteList(address payable _account) internal virtual {
+        require(isWhiteListed[_account] == true, "The address is not white listed");
+        isWhiteListed[_account] = false;
+        emit WhiteListRevoked(_account);
+    }
+
+    function grantBlackList(address payable _account) internal virtual {
+        require(isWhiteListed[_account] == false, "The address is white listed please revoke that status first");
+        require(isBlackListed[_account] == false, "The address is already black listed");
+        isBlackListed[_account] = true;
+        emit BlackListGranted(_account);
+    }
+    
+    function revokeBlackList(address payable _account) internal virtual {
+        require(isBlackListed[_account] == true, "The address is not black listed");
+        isBlackListed[_account] = false;
+        emit BlackListRevoked(_account);
+    }
 
     struct Prop {
-        uint256 id;
-        string caption;
-        string description;
-        address creator;
-        uint256 duration;
-        uint256 fundingRequested;
-        address payable funding;
-        uint256 voteSkew;
-        uint256 quorum;
-        bool isActive;
-        bool executed;
+        uint256 id;                     // id is caption
+        string caption;                 // id and title
+        string description;             // description of the propsoal
+        address creator;                // address who proposed
+        uint256 duration;               // amount of time for the vote
+        uint256 fundingRequested;       // amount of eth requested to execute this plan
+        address payable funding;        // account payable for the proposal
+        uint256 voteSkew;               // negative means against, positive means for
+        uint256 quorum;                 // % total amount for proposa vs. total possible
+        uint256 uniqueVotes;            // unique addresses who voted for this proposal
+        uint256 totalVotes;             // total amount of votes for this proposal
+        uint256 totalGlobalVotes;       // total amount of possible votes in existence
+        bool isActive;                  // is the proposal currently active
+        bool executed;                  // has it been executed (passed)?
     }
 
-    mapping(uint256 => Prop) internal proposals;
-    Meta.Quorum internal quorum;
+    mapping(string => Prop) internal proposals;
 
     event ProposalSubmitted(
         string _caption,
         string _description,
         address _creator,
-        address _projectAccount
+        uint256 _duration,
+        address _funding,
+        uint256 _fundingRequested,
+        uint256 _voteSkew,
+        uint256 _quorum,
+        uint256 _uniqueVotes;
+        uint256 _totalVotes;
+        uint256 _totalGlobalVotes;
+        bool _isActive,
+        bool executed
     );
-    event VoteCast(address voter, uint256 proposalId);
 
-    function submitCriticalProposal() {
-        // 
-    }
-
-    bool isACriticalProposal;
+    /*
+    submit a proposal internal virtual is meant to be overriden
+    not public function
+     */
     function submitProposal(
         string memory _caption,
         string memory _description,
+        uint256 _duration,
         address payable _funding,
-        bool _isACriticalProposal
+        uint256 _fundingRequested,
+        uint256 _voteSkew,
+        uint256 _quorum,
+        uint256 _uniqueVotes,
+        uint256 _totalVotes,
+        uint256 _totalGlobalVotes,
+        bool _isActive,
+        bool _executed
     )
         internal
         virtual
         // this will be overriden with the governor
-        onlySyndicates(msg.sender)
-        onlyCustodians(msg.sender)
         returns (bool)
     {
-        string memory caption = _caption;
-        string memory description = _description;
-        uint256 duration;
-        if (isACriticalProposal == true) {
-            // ie. need to pause/ or there's been a hack whatever existential threat level
-            duration = 0.5 days;
-        } else if (isACriticalProposal == false) {
-            // standard 4 weeks to vote, 4 weeks to pass proposal
-            duration = 4 weeks;
-        }
+        // check if there is a proposal already named with that
+        require(proposals[_caption] == null, "There is already a proposal with that caption");
+        require(_duration < minDuration, "Duration is less that the minimum allowed duration");
+        require(_duration > maxDuration, "Duration is more that the maximum allowed duration");
+        require(isBlackListed[_funding] == false, "The funding address is black listed");
+        require(_fundingRequested > minFunding, "The amount requested is lower than the allowed minimum");
+        require(_fundingRequested < maxFunding, "The amount requested is greater than the allowed maximum");
 
-        address creator = msg.sender;
-        address funding = _funding;
-        quorum.proposalCount++;
-        proposals[quorum.proposalCount] = Prop({
-            id: quorum.proposalCount,
-            caption: _caption,
-            description: _description,
-            creator: msg.sender,
-            funding: _funding,
-            isActive: true,
-            executed: false,
-            quorum: 0,
-            voteSkew: 0
-        });
-
-        // set time lock for the duration of the proposal
-        newTimeLock(_caption, 2 weeks);
-        emit ProposalSubmitted(caption, description, creator, funding);
+        // built the proposal
+        Prop proposal;
+        proposal.id = _caption;
+        proposal.caption = _caption;
+        proposal.description = _description;
+        proposal.creator = msg.sender;
+        proposal.duration = _duration;
+        proposal.funding = _funding;
+        proposal.fundingRequested = _fundingRequested;
+        proposal.voteSkew = 0;
+        proposal.quorum = 0;
+        proposal.totalVotes = 0;
+        proposal.totalGlobalVotes = ;
+        proposal.isActive = true;
+        proposal.executed = false;
+        // save the proposal
+        proposals[proposal.id] = proposal;
+        // trigger event
+        ProposalSubmitted(
+            _caption,
+            _description,
+            msg.sender,
+            _duration,
+            _funding,
+            _fundingRequest,
+            proposal.voteSkew,
+            proposal.isActive,
+            proposal.executed
+        );
         return true;
+    }
+
+    function submitVote(string memory _caption, string memory _side, uint256 _amount, uint256 _totalAccountVotes, bool _hasVoted, uint256 _totalGlobalVotes) internal virtual {
+        require(_totalAccountVotes >= _amount, "Insufficient votes");
+        require(_amount > 0, "Zero votes not supported");
+        require(_hasVoted == false, "Your vote has already been registered");
+        if (_side == "for") {
+            proposals[_caption].voteSkew += _amount;
+
+        } else if (_side == "against") {
+            proposals[_caption].voteSkew -= _amount;
+        }
+        else {
+            // invalid input
+        }
+        proposals[_caption].uniqueVotes ++;
+        proposals[_caption].totalVotes += _amount;
+        proposals[_caption].totalGlobalVotes = _totalGlobalVotes;
+        uint256 a = proposals[_caption].totalVotes;
+        uint256 b = proposals[_caption].totalGlobalVotes;
+        uint256 c = Math.div(a, b);
+        uin256 d = Math.mul(c, 100);
+        proposals[_caption].quorum = d;
     }
 
     function vote(
@@ -137,7 +190,7 @@ contract Proposal is Authenticator {
     }
 
     function veto() external onlyAdmins {
-        // cannot execute but can deny 
+        // cannot execute but can deny
         // only for the starting process to make sure no one blows up the project
     }
 
