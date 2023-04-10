@@ -1,20 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
+import "smart_contracts/contracts/state/State.sol";
 
-contract Authenticator {
-    /*
-    admin: 
-    syndicate: 
-    custodian:
-    member:
-     */
-
-    event RoleGranted(address indexed _account, string _role);
-    event RoleRevoked(address indexed _account, string _role);
-
-    mapping(address => bool) private isAdmin; //
-    mapping(address => bool) private isSyndicate; //
-
+contract Authenticator is State {
     bool private locked;
     modifier reentrancyLock() {
         require(!locked, "Anti-Reentrancy Lock");
@@ -24,48 +12,36 @@ contract Authenticator {
     }
 
     // admins
-    modifier onlyAdmins(address _accountToCheck) {
-        require(isAdmin[_accountToCheck]);
+    modifier onlyAdmin(address account) {
+        require(isAdmin[account], "onlyAdmin");
         _;
     }
 
-    function giveAdmin(address _account) internal returns (bool) {
-        require(isAdmin[_account] != true, "Address is already an admin");
-        isAdmin[_account] = true;
-        emit RoleGranted(_account, "Admin");
-        return true;
+    function toggleAdmin(address account) internal returns (bool) {
+        if (isAdmin[account] == false) {
+            isAdmin[account] = true;
+        } else if (State.isAdmin[account] == true) {
+            isAdmin[account] = false;
+        }
     }
 
-    function takeAdmin(address _account) internal returns (bool) {
-        require(isAdmin[_account] != false, "Address is already not an admin");
-        isAdmin[_account] = false;
-        emit RoleRevoked(_account, "Admin");
-        return true;
-    }
-
-    modifier onlySyndicates(address _accountToCheck) {
-        require(isSyndicate[_accountToCheck]);
+    modifier checkIsTransferable() {
+        require(isTransferable == true);
         _;
     }
 
-    // syndicates
-    function giveSyndicate(address _account) internal returns (bool) {
-        require(
-            isSyndicate[_account] != true,
-            "Address is already a syndicate"
-        );
-        isSyndicate[_account] = true;
-        emit RoleGranted(_account, "Syndicate");
-        return true;
+    modifier checkIsPaused() {
+        require(isPaused == false);
+        _;
     }
 
-    function takeSyndicate(address _account) internal returns (bool) {
-        require(
-            isSyndicate[_account] != false,
-            "Address is already not a syndicate"
-        );
-        isSyndicate[_account] = false;
-        emit RoleRevoked(_account, "Syndicate");
-        return true;
+    modifier checkIsMintable() {
+        require(isMintable == true);
+        _;
+    }
+
+    modifier checkIsBurnable() {
+        require(isBurnable == true);
+        _;
     }
 }

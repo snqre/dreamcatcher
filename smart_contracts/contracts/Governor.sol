@@ -15,7 +15,37 @@ import "smart_contracts/libraries/Settings.sol";
 //import "./TimelockController.sol";
 
 contract Governor is Token, Vault {
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     TimelockController _timelock;
+
+
 
     constructor()
         Governor("Governor")

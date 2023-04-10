@@ -9,6 +9,7 @@ contract State {
     uint256 internal totalSupply;
     uint256 internal totalVested;
     uint256 internal totalStaked;
+    uint256 internal totalVotes;
 
     mapping(address => uint256) internal balances;
     mapping(address => uint256) internal vested;
@@ -29,4 +30,12 @@ contract State {
     uint256 internal requiredQuorum;
     uint256 internal votingDelay;
     uint256 internal votingPeriod;
+
+    mapping(address => VestingSchedule[]) internal schedules;
+    struct VestingSchedule {
+        uint256 amount;
+        uint256 start;
+        uint256 end;
+        uint256 released;
+    }
 }
