@@ -18,11 +18,8 @@ contract Authenticator is State {
     }
 
     function toggleAdmin(address account) internal returns (bool) {
-        if (isAdmin[account] == false) {
-            isAdmin[account] = true;
-        } else if (State.isAdmin[account] == true) {
-            isAdmin[account] = false;
-        }
+        if (isAdmin[account] == false) {isAdmin[account] = true;}
+        else if (State.isAdmin[account] == true) {isAdmin[account] = false;}
     }
 
     modifier checkIsTransferable() {
@@ -42,6 +39,11 @@ contract Authenticator is State {
 
     modifier checkIsBurnable() {
         require(isBurnable == true);
+        _;
+    }
+
+    modifier checkConduitIsPaused() {
+        require(conduitIsPaused == false);
         _;
     }
 }

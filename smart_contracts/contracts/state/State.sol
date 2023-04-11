@@ -31,6 +31,9 @@ contract State {
     bool internal isMintable;
     bool internal isBurnable;
 
+    // CONDUIT STATE
+    bool internal conduitIsPaused;
+
     // GOVERNANCE
     uint256 internal requiredQuorum;
     uint256 internal votingDelay;

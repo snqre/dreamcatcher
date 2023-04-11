@@ -8,126 +8,76 @@ when the contract tries to use the function there is error handling so itll just
 with this we can access any tokens we have within the contract
  */
 
-import "smart_contracts/libraries/Terminal.sol";
+import "smart_contracts/contracts/Token.sol";
 import "smart_contracts/libraries/Math.sol";
 
+
 interface IERC20 {
-    function balanceOf(address _account) external view returns (uint256);
+    // OPTIONAL
+    function name() public view returns (string);
+    function symbol() public view returns (string);
+    function decimals() public view returns (uint8);
+    
+    // STANDARD
+    function totalSupply() public view returns (uint256);
+    function balanceOf(address _owner) public view returns (uint256 balance);
+    function transfer(address _to, uint256 _value) public returns (bool success);
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
+    function approve(address _spender, uint256 _value) public returns (bool success);
+    function allowance(address _owner, address _spender) public view returns (uint256 remaining);
 
-    function transfer(address _recipient, uint256 _amount)
-        external
-        returns (bool);
-
-    function allowance(address _owner, address _spender)
-        external
-        view
-        returns (uint256);
-
-    function approve(address _spender, uint256 _amount) external returns (bool);
-
-    function transferFrom(
-        address _sender,
-        address _recipient,
-        uint256 _amount
-    ) external returns (bool);
+    // EVENTS
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 }
 
-contract Conduit {
+contract Conduit is Token {
+    event Itransfer(address indexed token, address indexed recipient, uint256 amount);
+    event ItransferFrom(address indexed token, address indexed sender, address indexed recipient, uint256 amount);
+    event IApprove(address indexed token, address indexed spender, uint256 amount);
+    event IBalanceOf(address indexed token, address indexed account);
+    event IAllowance(address indexed token, address indexed owner, address indexed spender);
 
-    function Itransfer(
-        address _token,
-        address _recipient,
-        uint256 _amount
-    ) internal {
-        require(_token != address(0), "Invalid token address");
-        require(_recipient != address(0), "Invalid recipient address");
-        require(_amount > 0, "Invalid transfer amount");
-
-        IERC20 tokenContract = IERC20(_token);
-        // error handling so if there is no matching interface we dont blow up the whole contract
-        try tokenContract.transfer(_recipient, _amount) {
-            // success
-        } catch Error(string memory _errorMessage) {
-            // revert with a custom error message
-            revert(_errorMessage);
-        } catch {
-            // revert with a generic error message
-            revert("transfer() failed");
-        }
+    function Itransfer(address token, address recipient, uint256 amount) public checkConduitIsPaused onlyAdmin {
+        require(token != address(0), "zero address");
+        require(recipient != address(0), "zero address");
+        require(amount > 0, "transfer amount is equal or less than zero");
+        IERC20 token = IERC20(token);
+        try token.transfer(recipient, amount) {emit Itransfer(token, recipient, amount);}
+        catch Error(string memory message) {revert(message);}
+        catch {revert();}
     }
 
-    function ItransferFrom(
-        address _token,
-        address _sender,
-        address _recipient,
-        uint256 _amount
-    ) internal {
-        require(_token != address(0), "Invalid token address");
-        require(_sender != address(0), "Invalid sender address");
-        require(_recipient != address(0), "Invalid recipient address");
-        require(_amount > 0, "Invalid transfer amount");
-        IERC20 tokenContract = IERC20(_token);
-        // error handling so if there is no matching interface we dont blow up the whole contract
-        try tokenContract.transferFrom(_sender, _recipient, _amount) {
-            // success
-        } catch Error(string memory _errorMessage) {
-            // revert with a custom error message
-            revert(_errorMessage);
-        } catch {
-            // revert with a generic error message
-            revert("transferFrom() failed");
-        }
+    function ItransferFrom(address token, address sender, address recipient, uint256 amount) public checkConduitIsPaused onlyAdmin {
+        require(token != address(0), "zero address");
+        require(sender != address(0), "zero address");
+        require(recipient != address(0), "zero address");
+        require(amount > 0, "transfer amount is equal or less than zero");
+        IERC20 token = IERC20(token);
+        try token.transferFrom(sender, recipient, amount) {emit ItransferFrom(token, sender, recipient, amount);}
+        catch Error(string memory message) {revert(message);}
+        catch {revert();}
     }
 
-    function IApprove(
-        address _token,
-        address _spender,
-        uint256 _amount
-    ) internal {
-        IERC20 tokenContract = IERC20(_token);
-        // error handling so if there is no matching interface we dont blow up the whole contract
-        try tokenContract.approve(_spender, _amount) {
-            // success
-        } catch Error(string memory _errorMessage) {
-            // revert with a custom error message
-            revert(_errorMessage);
-        } catch {
-            // revert with a generic error message
-            revert("approve() failed");
-        }
+    function IApprove(address token, address spender, uint256 amount) public checkConduitIsPaused onlyAdmin {
+        IERC20 token = IERC20(token);
+        try token.approve(spender, amount) {emit IApprove(token, spender, amount);}
+        catch Error(string memory message) {revert(message);}
+        catch {revert();}
     }
 
-    function IBalanceOf(address _token, address _account) internal returns (uint256) {
-        IERC20 tokenContract = IERC20(_token);
-        // error handling so if there is no matching interface we dont blow up the whole contract
-        try tokenContract.balanceOf(_account) {
-            // success
-            return tokenContract.balanceOf(_account);
-        } catch Error(string memory _errorMessage) {
-            // revert with a custom error message
-            revert(_errorMessage);
-        } catch {
-            // revert with a generic error message
-            revert("balanceOf() failed");
-        }
+    function IBalanceOf(address token, address account) public checkConduitIsPaused returns (uint256) {
+        IERC20 token = IERC20(token);
+        try token.balanceOf(account) {return token.balanceOf(account); emit IBalanceOf(token, account);}
+        catch Error(string memory message) {revert(message);}
+        catch {revert();}
     }
 
-    function IAllowance(
-        address _token,
-        address _owner,
-        address _spender
-    ) internal returns (uint256) {
-        IERC20 tokenContract = IERC20(_token);
-        // error handling so if there is no matching interface we dont blow up the whole contract
-        try tokenContract.allowance(_owner, _spender) {
-            // success
-            return tokenContract.allowance(_owner, _spender);
-        } catch Error(string memory _errorMessage) {
-            // revert with a custom error message
-            revert(_errorMessage);
-        } catch {
-            // revert with a generic error message
-            revert("allowance() failed");
-        }
+    function IAllowance(address token, address owner, address spender) public checkConduitIsPaused onlyAdmin returns (uint256) {
+        IERC20 token = IERC20(token);
+        try token.allowance(owner, spender) {return token.allowance(owner, spender); emit IAllowance(token, owner, spender);}
+        catch Error(string memory message) {revert(message);}
+        catch {revert();}
     }
+
 }
