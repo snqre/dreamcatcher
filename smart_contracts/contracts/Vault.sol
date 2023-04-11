@@ -37,12 +37,34 @@ contract Vault is Conduit {
         emit SupportedTokenContractDeleted(symbol);
     }
 
-    function depositNativeToken() public {
-        // give us native token -> give you votes
+    function depositNativeToken(uint256 amount) public checkVaultIsPaused checkIsPaused checkIsTransferable {
+        // tokens -> votes
+        require(amount <= balances[msg.sender], "insufficient balance");
+
+        
+
+
+        balances[msg.sender] -= amount;
+        staked[msg.sender] += amount;
+        votes[msg.sender] += amount;
+        emit Staked(msg.sender, amount);
     }
 
-    function withdrawNativeToken() public {
-        // votes -> native token
+    function withdrawNativeToken(uint256 amount) public checkVaultIsPaused checkIsPaused checkIsTransferable {
+        // votes -> tokens
+        require(amount <= staked[msg.sender]);
+        balances[msg.sender] += amount;
+        staked[msg.sender] -= amount;
+        votes[msg.sender] -= amount;
+        emit Unstaked(msg.sender, amount);
+    }
+
+    function depositNativeTokenForPeriodOfTime(uint256 amount, uint256 duration) public checkVaultIsPaused checkIsPaused checkIsTransferable {
+        // tokens will be locked for this period of time
+    }
+
+    function extendNativeTokenDepositPeriod(uint256 extensionDuration) public checkVaultIsPaused checkIsPaused checkIsTransferable {
+        // extend the time to lock your tokens for
     }
 
 }

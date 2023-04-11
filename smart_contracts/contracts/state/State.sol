@@ -52,4 +52,12 @@ contract State {
 
     // VAULT
     mapping(string => address) internal tokens;
+    mapping(address => Deposit[]) internal deposits;
+    struct Deposit {
+        address depositor;
+        uint256 amount;
+        uint256 timestamp;
+        uint256 release;
+    }
+
 }
