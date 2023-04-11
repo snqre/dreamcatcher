@@ -1,17 +1,18 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-/* base ERC20 no vote */
 import "smart_contracts/contracts/Authenticator.sol";
 import "smart_contracts/libraries/Math.sol";
 
 contract Token is Authenticator {
     event VestedTokensReleased(address indexed account, uint256 amount);
     event Mint(address indexed account, uint256 amount);
+    event MintWithVesting();
     event Burn(address indexed account, uint256 amount);
     event Transfer(address indexed from, address indexed to, uint256 amount);
     event Approval(address indexed owner, address indexed spender, uint256 amount);
-
+    event AllowanceIncreased();
+    event AllowanceDecreased();
     function approve(address spender, uint256 amount) public checkIsPaused {
         require(msg.sender != address(0), "approve from the zero address");
         require(spender != address(0), "approve from the zero address");
@@ -25,6 +26,7 @@ contract Token is Authenticator {
         uint256 x = allowance(msg.sender, spender);
         uint256 y = addedValue;
         allowed[msg.sender][spender] = Math.add(x, y);
+        emit AllowanceIncreased();
     }
 
     function decreaseAllowance(address spender, uint256 subtractedValue) public checkIsPaused {
@@ -37,6 +39,7 @@ contract Token is Authenticator {
             uint256 y = subtractedValue;
             allowed[msg.sender][spender] = Math.sub(x, y);
         }
+        emit AllowanceDecreased();
     }
 
     function transfer(address recipient, uint256 amount) public checkIsPaused checkIsTransferable {
@@ -46,7 +49,7 @@ contract Token is Authenticator {
         emit Transfer(msg.sender, recipient, amount);
     }
 
-    function transferFrom(sender, recipient, amount) public checkIsPaused checkIsTransferable {
+    function transferFrom(address sender, address recipient, uint256 amount) public checkIsPaused checkIsTransferable {
         require(balances[sender] >= amount, "insufficient balance");
         require(allowed[sender][msg.sender] >= amount, "transfer amount exceeds allowance");
         balances[sender] -= amount;
@@ -84,7 +87,7 @@ contract Token is Authenticator {
         totalSupply += amount;
         totalVested += amount;
         vested[account] += amount;
-        emit Mint(account, amount);
+        emit MintWithVesting();
     }
 
     function releaseVestedTokens() public checkIsPaused {
@@ -123,13 +126,5 @@ contract Token is Authenticator {
     function votesOf(address account) public view returns (uint256) {return votes[account];}
     function allowance(address owner, address spender) public view returns (uint256) {return allowed[owner][spender];}
 
-    constructor() {
-        properties.totalSupply = 0;
-        properties.totalVested = 0;
-        properties.totalStaked = 0;
-        isMintable = true;
-        isBurnable = true;
-        isTransferable = true;
-        isPaused = false;
-    }
+    constructor() {}
 }
