@@ -34,6 +34,9 @@ contract State {
     // CONDUIT STATE
     bool internal conduitIsPaused;
 
+    // VAULT STATE
+    bool internal vaultIsPaused;
+
     // GOVERNANCE
     uint256 internal requiredQuorum;
     uint256 internal votingDelay;
@@ -46,4 +49,7 @@ contract State {
         uint256 end;
         uint256 released;
     }
+
+    // VAULT
+    mapping(string => address) internal tokens;
 }

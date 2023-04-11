@@ -46,4 +46,9 @@ contract Authenticator is State {
         require(conduitIsPaused == false);
         _;
     }
+
+    modifier checkVaultIsPaused() {
+        require(vaultIsPaused == false);
+        _;
+    }
 }
