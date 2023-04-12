@@ -11,7 +11,6 @@ with this we can access any tokens we have within the contract
 import "smart_contracts/contracts/Token.sol";
 import "smart_contracts/libraries/Math.sol";
 
-
 interface IERC20 {
     // OPTIONAL
     function name() public view returns (string);

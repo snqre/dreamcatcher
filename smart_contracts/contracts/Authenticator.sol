@@ -10,45 +10,4 @@ contract Authenticator is State {
         _;
         locked = false;
     }
-
-    // admins
-    modifier onlyAdmin(address account) {
-        require(isAdmin[account], "onlyAdmin");
-        _;
-    }
-
-    function toggleAdmin(address account) internal returns (bool) {
-        if (isAdmin[account] == false) {isAdmin[account] = true;}
-        else if (State.isAdmin[account] == true) {isAdmin[account] = false;}
-    }
-
-    modifier checkIsTransferable() {
-        require(isTransferable == true);
-        _;
-    }
-
-    modifier checkIsPaused() {
-        require(isPaused == false);
-        _;
-    }
-
-    modifier checkIsMintable() {
-        require(isMintable == true);
-        _;
-    }
-
-    modifier checkIsBurnable() {
-        require(isBurnable == true);
-        _;
-    }
-
-    modifier checkConduitIsPaused() {
-        require(conduitIsPaused == false);
-        _;
-    }
-
-    modifier checkVaultIsPaused() {
-        require(vaultIsPaused == false);
-        _;
-    }
 }

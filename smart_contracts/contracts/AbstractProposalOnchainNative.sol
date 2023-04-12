@@ -2,11 +2,25 @@
 pragma solidity ^0.8.0;
 import "smart_contracts/contracts/Authenticator.sol";
 import "smart_contracts/libraries/Math.sol";
-import "smart_contracts/libraries/Meta.sol";
-import "smart_contracts/contracts/TimeLock.sol";
+import "smart_contracts/contracts/state/StateProposal.sol"
+
+/*
+    our onchain native proposals we will allow other forms of voting in the future
+ */
 
 // messy still in the works **
-contract Proposal is Authenticator {
+abstract contract AbstractProposalOnchainNative is StateProposal {
+    
+    submitProposalOnchainNative() public pcount {
+        Proposal proposal = new Proposal (pcount, caption, description, creator, status, block.timestamp, condition)
+    }
+    
+    
+    
+    
+    
+    
+    
     uint256 minDuration;
     uint256 maxDuration;
     uint256 minFunding;

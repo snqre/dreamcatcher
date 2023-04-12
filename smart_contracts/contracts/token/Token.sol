@@ -1,0 +1,98 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+import "smart_contracts/libraries/Math.sol";
+
+interface IToken {
+    function name() public view returns (string);
+    function symbol() public view returns (string);
+    function decimals() public view returns (uint8);
+    function maxSupply() public view returns (uint256);
+    function totalSupply() public view returns (uint256);
+    function balanceOf(address account) public view returns (uint256);
+    function allowance(address owner, address spender) public view returns (uint256);
+    function increaseAllowance(address spender, uint256 addedValue) public (bool);
+    function decreaseAllowance(address spender, uint256 subtractedValue) public (bool);
+    function approve(address spender, uint256 amount) public returns (bool);
+    function transfer(address recipient, uint256 amount) public returns (bool);
+    function transferFrom(address sender, address recipient, uint256 amount) public returns (bool);
+}
+
+contract Token {
+    string   immutable name          = "Dreamcatcher";
+    string   immutable symbol        = "DREAM";
+    uint8    immutable decimals      = 18;
+    uint256  immutable totalSupply   = 200000000 * 10**decimals;
+    uint256  immutable maxSupply     = 200000000 * 10**decimals;
+
+    mapping(address => uint256) private balances;
+    mapping(address => uint256) private votes;
+
+    // PERMISSIONS
+    mapping(address => bool) private isAdmin;
+
+    event Transfer(address indexed from, address indexed to, uint256 amount);
+    event Approval(address indexed owner, address indexed spender, uint256 amount);
+    event AllowanceIncreased(address indexed account, address indexed spender, uint256 increase);
+    event AllowanceDecreased(address indexed account, address indexed spender, uint256 decrease);
+
+    function approve(address spender, uint256 amount) public returns (bool) {
+        require(msg.sender != address(0), "zero address");
+        require(spender != address(0), "zero address");
+        allowed[msg.sender][spender] = amount;
+        emit Approval(msg.sender, spender, amount);
+        return true;
+    }
+
+    function increaseAllowance(address spender, uint256 addedValue) public returns (bool) {   
+        require(msg.sender != address(0), "zero address");
+        require(spender != address(0), "zero address");
+        uint256 x = allowance(msg.sender, spender);
+        uint256 y = addedValue;
+        allowed[msg.sender][spender] = Math.add(x, y);
+        emit AllowanceIncreased(msg.sender, spender, addedValue);
+        return true;
+    }
+
+    function decreaseAllowance(address spender, uint256 subtractedValue) public returns (bool) {
+        uint256 currentAllowance = allowance(msg.sender, spender);
+        require(currentAllowance >= subtractedValue, "decrease allowance below zero");
+        unchecked {
+            require(msg.sender != address(0), "zero address");
+            require(spender != address(0), "zero address");
+            uint256 x = currentAllowance;
+            uint256 y = subtractedValue;
+            allowed[msg.sender][spender] = Math.sub(x, y);
+        }
+        emit AllowanceDecrease(msg.sender, spender, subtractedValue);
+        return true;
+    }
+
+    function transfer(address recipient, uint256 amount) public returns (bool) {
+        require(balances[msg.sender] >= amount, "insufficient balance");
+        balances[msg.sender] -= amount;
+        balances[recipient] += amount;
+        emit Transfer(msg.sender, recipient, amount);
+        return true;
+    }
+
+    function transferFrom(address sender, address recipient, uint256 amount) public returns (bool) {
+        require(balances[sender] >= amount, "insufficient balance");
+        require(allowed[sender][msg.sender] >= amount, "transfer amount exceeds allowance");
+        balances[sender] -= amount;
+        balances[recipient] += amount;
+        allowed[sender][msg.sender] -= amount;
+        emit Transfer(sender, recipient, amount);
+        return true;
+    }
+
+    function name() public view returns (string) {return name;}
+    function symbol() public view returns (string) {return symbol;}
+    function decimals() public view returns (uint8) {return decimals;}
+    function maxSupply() public view returns (uint256) {return maxSupply;}
+    function totalSupply() public view returns (uint256) {return totalSupply;}
+    function balanceOf(address account) public view returns (uint256) {return balances[account];}
+    function allowance(address owner, address spender) public view returns (uint256) {return allowed[owner][spender];}
+
+    constructor() {}
+}
