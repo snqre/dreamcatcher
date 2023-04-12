@@ -11,8 +11,8 @@ interface IToken {
     function totalSupply() public view returns (uint256);
     function balanceOf(address account) public view returns (uint256);
     function allowance(address owner, address spender) public view returns (uint256);
-    function increaseAllowance(address spender, uint256 addedValue) public (bool);
-    function decreaseAllowance(address spender, uint256 subtractedValue) public (bool);
+    function increaseAllowance(address spender, uint256 addedValue) public returns (bool);
+    function decreaseAllowance(address spender, uint256 subtractedValue) public returns (bool);
     function approve(address spender, uint256 amount) public returns (bool);
     function transfer(address recipient, uint256 amount) public returns (bool);
     function transferFrom(address sender, address recipient, uint256 amount) public returns (bool);
@@ -41,6 +41,7 @@ contract Token {
 
     mapping(address => uint256) internal balances;
     mapping(address => uint256) internal votes;
+    mapping(address => uint256) internal allowed;
 
     // PERMISSIONS
     mapping(address => bool) private isAdmin;        // highest level
@@ -56,19 +57,19 @@ contract Token {
     modifier admin() {require(isAdmin[msg.sender] == true, "only an admin can call this function");_;}
     modifier owner() {require(isOwner[msg.sender] == true, "only an owner can call this function");_;}
     modifier validator() {require(isValidator[msg.sender] == true, "only a validator can call this function");_;}
-    modifier extension() {require(isExtension[msg.sender] == true, "only approved contracts can call this function");}
+    modifier extension() {require(isExtension[msg.sender] == true, "only approved contracts can call this function");_;}
 
     function grantRoleAdmin(address account) public admin returns (bool) {isAdmin[account] = true; return true;}             // admin can grant admin
     function revokeRoleAdmin(address account) public admin returns (bool) {isAdmin[account] = false; return true;}           // admin can revoke admin
     function grantRoleOwner(address account) public admin returns (bool) {isOwner[account] = true; return true;}             // admin can grant owner
     function revokeRoleOwner(address account) public admin returns (bool) {isOwner[account] = false; return true;}           // admin can revoke owner
-    function revokeMyRoleOwner() public owner returns (bool) {isOwner[account] = false; return true;}                        // owner can revoke self owner
+    function revokeMyRoleOwner() public owner returns (bool) {isOwner[msg.sender] = false; return true;}                        // owner can revoke self owner
     function grantRoleValidator(address account) public admin returns (bool) {isValidator[account] = true; return true;}     // admin can grant validator
     function revokeRoleValidator(address account) public admin returns (bool) {isValidator[account] = false; return true;}   // admin can revoke validator
-    function revokeMyRoleValidator() public validator returns (bool) {isValidator[account] = false; return true;}            // validator can revoke self validator
-    function grantRoleExtension() public admin  returns (bool) {isExtension[account] = true; return true;}                   // admin can grant extension
-    function revokeRoleExtension() public admin return (bool) {isExtension[account] = false; return true;}                   // admin can revoke extension
-    function revokeMyRoleExtension() public extension return (bool) {isExtension[account] = false; return true;}             // extension can revoke self extension
+    function revokeMyRoleValidator() public validator returns (bool) {isValidator[msg.sender] = false; return true;}            // validator can revoke self validator
+    function grantRoleExtension(address account) public admin  returns (bool) {isExtension[account] = true; return true;}                   // admin can grant extension
+    function revokeRoleExtension(address account) public admin returns (bool) {isExtension[account] = false; return true;}                   // admin can revoke extension
+    function revokeMyRoleExtension() public extension returns (bool) {isExtension[msg.sender] = false; return true;}             // extension can revoke self extension
 
     function approve(address spender, uint256 amount) public returns (bool) {
         require(msg.sender != address(0), "zero address");
@@ -98,7 +99,7 @@ contract Token {
             uint256 y = subtractedValue;
             allowed[msg.sender][spender] = Math.sub(x, y);
         }
-        emit AllowanceDecrease(msg.sender, spender, subtractedValue);
+        emit AllowanceDecreased(msg.sender, spender, subtractedValue);
         return true;
     }
 
