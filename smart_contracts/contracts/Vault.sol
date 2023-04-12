@@ -37,6 +37,14 @@ contract Vault is Conduit {
         emit SupportedTokenContractDeleted(symbol);
     }
 
+
+    /*
+    
+    needs to come up with an appropiate staking model 
+    
+    
+     */
+
     function depositNativeToken(uint256 amount) public checkVaultIsPaused checkIsPaused checkIsTransferable {
         // tokens -> votes
         require(amount <= balances[msg.sender], "insufficient balance");
