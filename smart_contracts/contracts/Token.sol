@@ -13,6 +13,9 @@ contract Token is Authenticator {
     event Approval(address indexed owner, address indexed spender, uint256 amount);
     event AllowanceIncreased(address indexed account, address indexed spender, uint256 increase);
     event AllowanceDecreased(address indexed account, address indexed spender, uint256 decrease);
+    event Staked(address indexed account, uint256 amount, uint256 startTime, uint256 endTime, uint256 duration);
+    event StakeExtended(address indexed account, uint256 index, uint256 newDuration);
+    event Unstaked(address indexed account, uint256 amount, uint256 startTime, uint256 duration);
 
     function approve(address spender, uint256 amount) public checkIsPaused {
         require(msg.sender != address(0), "zero address");
@@ -113,6 +116,66 @@ contract Token is Authenticator {
         emit VestedTokensReleased(msg.sender, totalReleased);
     }
 
+    function stake(uint256 amount, uint256 duration) public checkIsPaused checkIsTransferable {
+        require(amount <=  balances[msg.sender], "insufficient balance");
+        require(duration > 0, "duration must be greater than zero");
+        uint256 startTime = block.timestamp;
+        uint256 endTime = startTime + duration;
+        Stake memory newStake = Stake(amount, startTime, endTime, duration);
+        stakes[msg.sender].push(newStake);
+        balances[msg.sender] -= amount;
+        staked[msg.sender] += amount;
+        votes[msg.sender] += amount;
+        emit Staked(msg.sender, amount, startTime, endTime, duration);
+    }
+
+    function extendStakeDuration(uint256 index, uint256 newDuration) public checkIsPaused checkIsTransferable {
+        require(index < stakes[msg.sender].length, "invalid stake index");
+        Stake storage stake = stakes[msg.sender][index];
+        require(stake.startTime + stake.duration > block.timestamp, "stake has already ended");
+        require(newDuration > stake.duration, "new duration must be greater than existing duration");
+        stake.duration = newDuration;
+        emit StakeExtended(msg.sender, index, newDuration);
+    }
+
+    function unstake(uint256 index) public checkIsPaused checkIsTransferable {
+        require(index < stakes[msg.sender].length, "invalid stake index");
+        Stake storage stake = stakes[msg.sender][index];
+        require(stake.startTime + stake.duration > block.timestamp, "stake has already ended");
+        uint256 amount = stake.amount;
+        emit Unstaked(msg.sender, amount, stake.startTime, stake.duration);
+        stake.amount = stakes[msg.sender][stakes[msg.sender].length - 1].amount;
+        stake.startTime = stakes[msg.sender][stakes[msg.sender].length - 1].startTime;
+        stake.duration = stakes[msg.sender][stakes[msg.sender].length - 1].duration;
+        stakes[msg.sender].pop();
+        balances[msg.sender] += amount;
+        staked[msg.sender] -= amount;
+        votes[msg.sender] -= amount;
+        
+    }
+
+    function unstakeAll() public checkIsPaused checkIsTransferable {
+        uint256 totalAmount = 0;
+        for (uint256 i = 0; i < stakes[msg.sender].length; i++) {
+            stake storage stake = stakes[msg.sender][i];
+            if (stake.startTime + stake.duration > block.timestamp) {
+                totalAmount += stake.amount;
+                emit Unstaked(msg.sender, stake.amount, stake.startTime, stake.duration);
+                stake.amount = stakes[msg.sender][stakes[msg.sender].length - 1].amount;
+                stake.startTime = stakes[msg.sender][stakes[msg.sender].length - 1].startTime;
+                stake.duration = stakes[msg.sender][stakes[msg.sender].length - 1].duration;
+                stakes[msg.sender].pop();
+                i--;
+            }
+        }
+        if (totalAmount > 0) {
+            balances[msg.sender] += totalAmount;
+            staked[msg.sender] -= totalAmount;
+            votes[msg.sender] -= totalAmount;
+        }
+    }
+    
+
     function name() public view returns (string memory) {return name;}
     function symbol() public view returns (string memory) {return symbol;}
     function decimals() public view returns (uint8) {return decimals;}
@@ -126,6 +189,7 @@ contract Token is Authenticator {
     function stakedOf(address account) public view returns (uint256) {return staked[account];}
     function votesOf(address account) public view returns (uint256) {return votes[account];}
     function allowance(address owner, address spender) public view returns (uint256) {return allowed[owner][spender];}
+    function getStakeCount(address account) public view returns (uint256) {return stakes[account].length;} // the amount of staking transaction batches with various details
 
     constructor() {}
 }

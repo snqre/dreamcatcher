@@ -25,6 +25,14 @@ contract State {
 
     mapping(address => mapping(address => uint256)) allowed;
 
+    mapping(address => Stake[]) public stakes;
+    struct Stake {
+        uint256 amount;
+        uint256 startTime;
+        uint256 endTime;
+        uint256 duration;
+    }
+
     // TOKEN STATE
     bool internal isTransferable;
     bool internal isPaused;
@@ -52,12 +60,6 @@ contract State {
 
     // VAULT
     mapping(string => address) internal tokens;
-    mapping(address => Deposit[]) internal deposits;
-    struct Deposit {
-        address depositor;
-        uint256 amount;
-        uint256 timestamp;
-        uint256 release;
-    }
+    
 
 }
