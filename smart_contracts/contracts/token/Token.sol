@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import "smart_contracts/libraries/Math.sol";
 import "smart_contracts/contracts/token/Authenticator.sol";
 
-// typical erc 20 implementation plus our custom functions
+// typical erc 20 implementation plus our custom functions **incomplete
 interface IToken {
     function name() public view returns (string);
     function symbol() public view returns (string);
@@ -112,12 +112,12 @@ contract Token is Authenticator {
     }
 
     // mint function will only ever be called once during deployment to mint the whole batch
-    function mint() {}
+    function mint() admin {}
 
-    // these are used to communicate with other contracts but in batch (can get a list of data from a map rather than use multiple transactions)
-    function packageVestingScheduleToExtention() {}
-    function packageBalanceArrToExtension() {}
-    function packageVoteArrToExtension() {}
+    // these are used to communicate with other extension contracts but in batch (can get a list of data from a map rather than use multiple transactions)
+    function packageVestingScheduleToExtention() external extension {}
+    function packageBalanceArrToExtension() external extension {}
+    function packageVoteArrToExtension() external extension {}
 
     // ERC 20 STANDARD
     function name() public view returns (string) {return name;}
