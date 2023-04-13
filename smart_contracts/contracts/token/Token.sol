@@ -47,6 +47,7 @@ contract Token is Authenticator {
     mapping(address => uint256) private staked;
     mapping(address => uint256) private votes;
     mapping(address => uint256) private allowed;
+    mapping(address => uint256) private timeSinceMembership;       // time since their votes has been > 0 or they are able to vote
 
     mapping(address => VestingSchedule[]) private schedules;
     struct VestingSchedule {
@@ -113,6 +114,24 @@ contract Token is Authenticator {
 
     // mint function will only ever be called once during deployment to mint the whole batch
     function mint() admin {}
+
+    // to be able to stake you need to be a validator as staking is responsible for issuing votes
+    // we will allow anyone to stake and unstake at anytime but if they unstake current votes will be cancelled
+    function stake(address account, uint256 amount) validator returns (bool) {
+        require(amount <= balances[account], "insufficient balance");
+        balances[account] -= amount;
+        staked[account] += amount;
+        votes[account] += amount;
+        return true;
+    }
+
+    function unstake(address account, uint256 amount) validator returns (bool) {
+        require(amount <= staked[account], "insufficient staked balance");
+        staked[account] -= amount;
+        votes[account] -= amount;
+        balances[account] += amount;
+        return true;
+    }
 
     // these are used to communicate with other extension contracts but in batch (can get a list of data from a map rather than use multiple transactions)
     function packageVestingScheduleToExtention() external extension {}
