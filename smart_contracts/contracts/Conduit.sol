@@ -11,25 +11,6 @@ with this we can access any tokens we have within the contract
 import "smart_contracts/contracts/Token.sol";
 import "smart_contracts/libraries/Math.sol";
 
-interface IERC20 {
-    // OPTIONAL
-    function name() public view returns (string);
-    function symbol() public view returns (string);
-    function decimals() public view returns (uint8);
-    
-    // STANDARD
-    function totalSupply() public view returns (uint256);
-    function balanceOf(address _owner) public view returns (uint256 balance);
-    function transfer(address _to, uint256 _value) public returns (bool success);
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
-    function approve(address _spender, uint256 _value) public returns (bool success);
-    function allowance(address _owner, address _spender) public view returns (uint256 remaining);
-
-    // EVENTS
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-}
-
 contract Conduit is Token {
     event Itransfer(address indexed token, address indexed recipient, uint256 amount);
     event ItransferFrom(address indexed token, address indexed sender, address indexed recipient, uint256 amount);
@@ -78,5 +59,4 @@ contract Conduit is Token {
         catch Error(string memory message) {revert(message);}
         catch {revert();}
     }
-
 }

@@ -4,12 +4,6 @@ pragma experimental ABIEncoderV2;
 
 import "smart_contracts/contracts/Governor.sol";
 
-inteface IDreamcatcher {
-    function submitProposalOnchainNative(string caption, string description, uint256 duration, )
-}
-
-contract ProxyDreamcatcher is Dream
-
 contract Dreamcatcher is Governor {
     function submitProposal(
         _caption,
