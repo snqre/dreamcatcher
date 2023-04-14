@@ -6,10 +6,10 @@ import "smart_contracts/contracts/token/Authenticator.sol";
 
 // typical erc 20 implementation plus our custom functions **incomplete
 interface IToken {
-    function name() public view returns (string);
-    function symbol() public view returns (string);
-    function decimals() public view returns (uint8);
-    function maxSupply() public view returns (uint256);
+    function name() external view returns (string);
+    function symbol() external view returns (string);
+    function decimals() external view returns (uint8);
+    function maxSupply() external view returns (uint256);
     function totalSupply() public view returns (uint256);
     function balanceOf(address account) public view returns (uint256);
     function allowance(address owner, address spender) public view returns (uint256);

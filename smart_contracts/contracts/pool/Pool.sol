@@ -19,50 +19,50 @@ interface ERC20 {
 }
 
 contract Conduit {
-    event Itransfer(address indexed token, address indexed recipient, uint256 amount);
-    event ItransferFrom(address indexed token, address indexed sender, address indexed recipient, uint256 amount);
-    event IApprove(address indexed token, address indexed spender, uint256 amount);
-    event IBalanceOf(address indexed token, address indexed account);
-    event IAllowance(address indexed token, address indexed owner, address indexed spender);
-
-    function Itransfer(address token, address recipient, uint256 amount) internal {
-        require(token != address(0), "zero address");
-        require(recipient != address(0), "zero address");
-        require(amount > 0, "transfer amount is equal or less than zero");
-        IERC20 token = IERC20(token);
-        try token.transfer(recipient, amount) {emit Itransfer(token, recipient, amount);}
+    event Itransfer(address indexed _token, address indexed _to, uint256 _value);
+    event ItransferFrom(address indexed _token, address indexed _from, address indexed _to, uint256 _value);
+    event IApprove(address indexed _token, address indexed _spender, uint256 _value);
+    event IBalanceOf(address indexed _token, address indexed _owner);
+    event IAllowance(address indexed _token, address indexed _owner, address indexed _spender);
+    
+    function Itransfer(address _token, address _to, uint256 _value) internal {
+        require(_token != address(0), "zero address");
+        require(_to != address(0), "zero address");
+        require(_value > 0, "transfer amount is equal or less than zero");
+        IERC20 token = IERC20(_token);
+        try token.transfer(_to, _value) {emit Itransfer(token, _to, _value);}
         catch Error(string memory message) {revert(message);}
         catch {revert();}
     }
 
-    function ItransferFrom(address token, address sender, address recipient, uint256 amount) internal {
-        require(token != address(0), "zero address");
-        require(sender != address(0), "zero address");
-        require(recipient != address(0), "zero address");
-        require(amount > 0, "transfer amount is equal or less than zero");
-        IERC20 token = IERC20(token);
-        try token.transferFrom(sender, recipient, amount) {emit ItransferFrom(token, sender, recipient, amount);}
+    function ItransferFrom(address _token, address sender, address _to, uint256 _value) internal {
+        require(_token != address(0), "zero address");
+        require(_sender != address(0), "zero address");
+        require(_to != address(0), "zero address");
+        require(_value > 0, "transfer amount is equal or less than zero");
+        IERC20 token = IERC20(_token);
+        try token.transferFrom(_sender, _to, _value) {emit ItransferFrom(token, _sender, _to, _value);}
         catch Error(string memory message) {revert(message);}
         catch {revert();}
     }
 
-    function IApprove(address token, address spender, uint256 amount) internal {
-        IERC20 token = IERC20(token);
-        try token.approve(spender, amount) {emit IApprove(token, spender, amount);}
+    function IApprove(address _token, address _spender, uint256 _value) internal {
+        IERC20 token = IERC20(_token);
+        try token.approve(_spender, _value) {emit IApprove(token, _spender, _value);}
         catch Error(string memory message) {revert(message);}
         catch {revert();}
     }
 
-    function IBalanceOf(address token, address account) internal returns (uint256) {
-        IERC20 token = IERC20(token);
-        try token.balanceOf(account) {return token.balanceOf(account); emit IBalanceOf(token, account);}
+    function IBalanceOf(address _token, address _owner) internal returns (uint256) {
+        IERC20 token = IERC20(_token);
+        try token.balanceOf(_owner) {return token.balanceOf(_owner); emit IBalanceOf(token, _owner);}
         catch Error(string memory message) {revert(message);}
         catch {revert();}
     }
 
-    function IAllowance(address token, address owner, address spender) internal returns (uint256) {
-        IERC20 token = IERC20(token);
-        try token.allowance(owner, spender) {return token.allowance(owner, spender); emit IAllowance(token, owner, spender);}
+    function IAllowance(address _token, address _owner, address _spender) internal returns (uint256) {
+        IERC20 token = IERC20(_token);
+        try token.allowance(_owner, _spender) {return token.allowance(_owner, _spender); emit IAllowance(token, _owner, _spender);}
         catch Error(string memory message) {revert(message);}
         catch {revert();}
     }
@@ -127,10 +127,28 @@ contract PoolToken {
 }
 
 // decentralizing the power to create funds?? liquidity too low for a big passive invester but can trade large liquidity
-contract Pool is Conduit, PoolToken { // the funding needs 
+contract PoolOpenEnd is Conduit, PoolToken { // the funding needs 
     /*
     Allowing anyone to start a fund
      */
+
+    uint256 aum; // assets under management
+    uint256 liabilities; // liabilities
+    uint256 netAssetValue; // aum - liabilities
+    uint256 netAssetValuePerShare; // nav / shares
+    uint256 numberOfContributors; // unique addresses who have contributed moola
+    uint256 managementFee // % being taken of aum per year
+
+    constructor() {}
+
+    function deposit() {
+
+    }
+
+    function withdraw() {
+
+    }
+
     struct Asset {
         address domain; // contract address of the ERC20 token
         uint256 allocation; // percentage of the fund that is allocated to this
@@ -187,6 +205,10 @@ contract Pool is Conduit, PoolToken { // the funding needs
     /*
     Swapping
      */
+}
+
+contract PoolCloseEnd {
+    
 }
 
 contract PoolFactory {
