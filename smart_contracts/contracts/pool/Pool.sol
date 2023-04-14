@@ -127,21 +127,56 @@ contract PoolToken {
 }
 
 // decentralizing the power to create funds?? liquidity too low for a big passive invester but can trade large liquidity
-contract PoolOpenEnd is Conduit, PoolToken { // the funding needs 
+contract Pool is Conduit, PoolToken { // the funding needs 
     /*
     Allowing anyone to start a fund
      */
+    
+    uint256 i = 0;
+    mapping(uint256 => Fund) internal funds;
+    struct Fund {
+        uint256 index;              // ref no of the fund
+        uint256 aum;                // asset under management
+        uint256 lbt;                // liabilities
+        uint256 nav;                // aum - lbt
+        uint256 navps;              // nav / totalSupply
+        uint256 uniqueContributors; // value of unique address of contributors
+        uint256 feeManagement;      // management fee
+        uint256 feePerformance;     // performance fee
+        uint256 threshold;          // threshold before performance fees apply
+        string name;                // name of the fund
+        string subSymbol;           // ticker of the fund within the DREAM ecosystem
+        uint8 decimals;             // decimals
+        address creator;            // address of the fund creator
+        uint256 creatorStake;       // amount of DREAM the creator has in the fund
+        uint256 fundingRequired;    // amount of DREAM requested for the fund
+        uint256 maxSupply;          // maximum possible contributions
+        uint256 totalSupply;        // total amount of shares of the closed fund being minted
+        bool canTransferOut;        // can this fund transfer funds out of the wallet
+        uint256 minDeposit;         // min deposit per address
+        uint256 maxDeposit;         // max deposit per address
+    }
+    mapping(uint256 => mapping(address => uint256)) fundsBalances;   // amount of fund tokens each address has per fund
+    mapping(uint256 => mapping(address => uint256)) fundsVote;       // some funds may want to have decentralized governance
+    mapping(uint256 => mapping(address => bool)) fundsIsWhitelisted; // some funds may want to white list who can use their fund
+    mapping(uint256 => mapping(address => bool)) fundsIsCreator;     // who is the creator
 
-    uint256 aum; // assets under management
-    uint256 liabilities; // liabilities
-    uint256 netAssetValue; // aum - liabilities
-    uint256 netAssetValuePerShare; // nav / shares
-    uint256 numberOfContributors; // unique addresses who have contributed moola
-    uint256 managementFee // % being taken of aum per year
+    modifier newFund() {
+        _;
+        i++;
+    }
 
     constructor() {}
 
-    function deposit() {
+    function createFund(string memory _name, string memory _subSymbol) external newFund returns (bool) {
+        Fund fund = fun
+
+    }
+
+    function deposit(uint256 _index, ) {
+        // transfer x amount of our token to the address
+        require(IBalanceOf(//our contract, msg.sender) >= _value);
+        Itransfer()
 
     }
 
@@ -207,8 +242,11 @@ contract PoolOpenEnd is Conduit, PoolToken { // the funding needs
      */
 }
 
-contract PoolCloseEnd {
+contract PoolCloseEnd is Conduit, PoolToken {
     
+    uint256 aum;
+    uint256 liability;
+    uint256 
 }
 
 contract PoolFactory {
