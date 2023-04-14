@@ -48,7 +48,7 @@ contract Token is Authenticator {
     mapping(address => uint256) private votes;
     mapping(address => uint256) private allowed;
     mapping(address => uint256) private timeSinceMembership;       // time since their votes has been > 0 or they are able to vote
-
+    
     mapping(address => VestingSchedule[]) private schedules;
     struct VestingSchedule {
         uint256 amount;
@@ -117,7 +117,7 @@ contract Token is Authenticator {
 
     // to be able to stake you need to be a validator as staking is responsible for issuing votes
     // we will allow anyone to stake and unstake at anytime but if they unstake current votes will be cancelled
-    function stake(address account, uint256 amount) validator returns (bool) {
+    function stake(address account, uint256 amount) public validator returns (bool) {
         require(amount <= balances[account], "insufficient balance");
         balances[account] -= amount;
         staked[account] += amount;
@@ -125,7 +125,7 @@ contract Token is Authenticator {
         return true;
     }
 
-    function unstake(address account, uint256 amount) validator returns (bool) {
+    function unstake(address account, uint256 amount) public validator returns (bool) {
         require(amount <= staked[account], "insufficient staked balance");
         staked[account] -= amount;
         votes[account] -= amount;
@@ -146,6 +146,8 @@ contract Token is Authenticator {
     function totalSupply() public view returns (uint256) {return totalSupply;}
     function balanceOf(address account) public view returns (uint256) {return balances[account];}
     function allowance(address owner, address spender) public view returns (uint256) {return allowed[owner][spender];}
+    // NATIVE FUNCTIONS
+    function timeSinceMembership(address account) public returns (uint256) {return timeSinceMembership[account];}
 
     constructor() {}
 }
