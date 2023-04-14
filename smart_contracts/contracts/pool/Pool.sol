@@ -4,6 +4,7 @@ pragma abicoder v2;
 
 import '@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol';
 import '@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol';
+import "smart_contracts/libraries/Math.sol";
 
 interface ERC20 {
     function totalSupply() external view returns (uint256);
@@ -81,31 +82,43 @@ contract PoolToken {
 
     mapping(address => bool) internal isCreator;
 
-    constructor(address _creator, string _name, string _subSymbol) {
-        creator = _creator;
-        name = _name;
-        subSymbol = _subSymbol;
-    }
-
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Mint(address indexed _to, uint256 _value);
-
+    event Burn(address indexed _to, uint256 _value);
     modifier creator() {
         require(isCreator[msg.sender] == true, "unauthorized");
         _;
     }
 
+    constructor(, string _name, string _subSymbol) {
+        creator = msg.sender;
+        name = _name;
+        subSymbol = _subSymbol;
+    }
+
     function transfer(address _to, uint256 _value) public returns (bool) {
         require(balances[msg.sender] >= _value), "insufficient balance";
-        balances[msg.sender] -= _value;
-        balances[_to] += _value;
+        Math.sub(balances[msg.sender], _value);
+        Math.add(balances[_to], _value);
         emit Transfer(msg.sender, _to, _value);
         return true;
     }
 
-    function mint(address _to, uint256 _value) public creator returns (bool) {
-        balances[_to] += _value;
+    function mint(address _to, uint256 _value) internal returns (bool) {
+        require(_to != address(0), "invalid address");
+        require(_value > 0, "invalid value");
+        Math.add(totalSupply, _value);
+        Math.add(balances[_to], _value);
         emit Mint(_to, _value);
+        return true;
+    }
+
+    function burn(address _to, uint256 _value) internal returns (bool) {
+        require(_value > 0, "invalid value");
+        require(balances[msg.sender] >= _value, "insufficient balance");
+        Math.sub(totalSupply, _value);
+        Math.sub(balances[msg.sender], _value);
+        emit Burn(msg.sender, _value);
         return true;
     }
 
@@ -114,7 +127,7 @@ contract PoolToken {
 }
 
 // decentralizing the power to create funds?? liquidity too low for a big passive invester but can trade large liquidity
-contract FundFactory is Conduit { // the funding needs 
+contract Pool is Conduit, PoolToken { // the funding needs 
     /*
     Allowing anyone to start a fund
      */
@@ -174,4 +187,8 @@ contract FundFactory is Conduit { // the funding needs
     /*
     Swapping
      */
+}
+
+contract PoolFactory {
+
 }
