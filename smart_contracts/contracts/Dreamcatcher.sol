@@ -16,130 +16,69 @@ import "smart_contracts/libraries/Settings.sol";
 
 contract Dreamcatcher is Vault {
     
-    TimelockController _timelock;
-
-
-
-    constructor()
-        Governor("Governor")
-        GovernorSettings(
-            21600, /* 3 days */
-            50400, /* 1 week */
-            0
-        )
-        GovernorVotes(baseERC20)
-        GovernorVotesQuorumFraction(10)
-        GovernorTimelockControl(_timelock)
-    {
-        baseERC20 = new BaseERC20();
-        //we have to change the parametrs late, this is just quickly wrote for testing:
-        address[] memory arrayOfAddresses = new address[](1);
-        arrayOfAddresses[0] = 0x1de8807f69E357FD91e47B34Dc2a66216a9DC4b4;
-        //address[] memory arrayOfAddresses;
-        //arrayOfAddresses Addreses = new address[](1);
-        //arrayOfAddresses.push(0x1de8807f69E357FD91e47B34Dc2a66216a9DC4b4);
-        _timelock = new TimelockController(
-            5,
-            arrayOfAddresses,
-            arrayOfAddresses,
-            0x1de8807f69E357FD91e47B34Dc2a66216a9DC4b4
-        );
+    struct Proposal {
+        string description;
+        uint voteCount;
+        bool executed;
     }
 
-    // The following functions are overrides required by Solidity.
-
-    function votingDelay()
-        public
-        view
-        override(IGovernor, GovernorSettings)
-        returns (uint256)
-    {
-        return super.votingDelay();
+    struct Member {
+        address memberAddress;
+        uint memberSince;
+        uint tokenBalance;
     }
 
-    function votingPeriod()
-        public
-        view
-        override(IGovernor, GovernorSettings)
-        returns (uint256)
-    {
-        return super.votingPeriod();
+    address[] public members;
+    mapping(address => Member) public memberInfo;
+    mapping(address => mapping(uint => bool)) public votes;
+    Proposal[] public proposals;
+
+    uint public totalSupply;
+    mapping(address => uint) public availableVotes;
+
+    event ProposalCreated(uint indexed proposalId, string description);
+    event VoteCast(address indexed voter, uint indexed proposalId, uint tokenAmount);
+
+    address votingTokenAddress;
+
+    function addVotingToken(address _votingTokenAddress) public {
+        votingTokenAddress = _votingTokenAddress;
     }
 
-    function quorum(uint256 blockNumber)
-        public
-        view
-        override(IGovernor, GovernorVotesQuorumFraction)
-        returns (uint256)
-    {
-        return super.quorum(blockNumber);
+    function countVotesOf(address _member) public {
+        require(memberInfo[_member].memberAddress == address(0), "Member already exists");
+        memberInfo[_member] = Member({
+            memberAddress: _member,
+            memberSince: block.timestamp,
+            tokenBalance: Token(votingTokenAddress).balanceOf(_member)
+        });
+        members.push(_member);
+        availableVotes[_member] = Token(votingTokenAddress).balanceOf(_member);
     }
 
-    function state(uint256 proposalId)
-        public
-        view
-        override(Governor, GovernorTimelockControl)
-        returns (ProposalState)
-    {
-        return super.state(proposalId);
+    function createProposal(string memory _description) public {
+        proposals.push(Proposal({
+            description: _description,
+            voteCount: 0,
+            executed: false
+        }));
+        emit ProposalCreated(proposals.length - 1, _description);
     }
 
-    function propose(
-        address[] memory targets,
-        uint256[] memory values,
-        bytes[] memory calldatas,
-        string memory description
-    ) public override(Governor, IGovernor) returns (uint256) {
-        return super.propose(targets, values, calldatas, description);
+    function vote(uint _proposalId, uint _tokenAmount) public {
+        require(memberInfo[msg.sender].memberAddress != address(0), "Only members can vote");
+        require(balances[msg.sender] >= _tokenAmount, "Not enough tokens to vote");
+        require(votes[msg.sender][_proposalId] == false, "You have already voted for this proposal");
+        votes[msg.sender][_proposalId] = true;
+        memberInfo[msg.sender].tokenBalance -= _tokenAmount;
+        proposals[_proposalId].voteCount += _tokenAmount;
+        emit VoteCast(msg.sender, _proposalId, _tokenAmount);
     }
 
-    function proposalThreshold()
-        public
-        view
-        override(Governor, GovernorSettings)
-        returns (uint256)
-    {
-        return super.proposalThreshold();
+    function executeProposal(uint _proposalId) public {
+        require(proposals[_proposalId].executed == false, "Proposal has already been executed");
+        require(proposals[_proposalId].voteCount > totalSupply / 2, "Proposal has not been approved by majority vote");
+        proposals[_proposalId].executed = true;
+        // execute proposal here
     }
-
-    function _execute(
-        uint256 proposalId,
-        address[] memory targets,
-        uint256[] memory values,
-        bytes[] memory calldatas,
-        bytes32 descriptionHash
-    ) internal override(Governor, GovernorTimelockControl) {
-        super._execute(proposalId, targets, values, calldatas, descriptionHash);
-    }
-
-    function _cancel(
-        address[] memory targets,
-        uint256[] memory values,
-        bytes[] memory calldatas,
-        bytes32 descriptionHash
-    ) internal override(Governor, GovernorTimelockControl) returns (uint256) {
-        return super._cancel(targets, values, calldatas, descriptionHash);
-    }
-
-    function _executor()
-        internal
-        view
-        override(Governor, GovernorTimelockControl)
-        returns (address)
-    {
-        return super._executor();
-    }
-
-    function supportsInterface(bytes4 interfaceId)
-        public
-        view
-        override(Governor, GovernorTimelockControl)
-        returns (bool)
-    {
-        return super.supportsInterface(interfaceId);
-    }
-
-    function sellVotingTokens() public {}
-
-    function buyVotingTokens() public {}
 }
