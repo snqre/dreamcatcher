@@ -169,11 +169,39 @@ contract Pool is Conduit, PoolToken { // the funding needs
     constructor() {}
 
     function createFund(string memory _name, string memory _subSymbol) external newFund returns (bool) {
-        Fund fund = fun
-
+        Fund memory fund = Fund({
+            index: i,
+            aum: 0,
+            lbt: 0,
+            nav: 0,
+            navps: 0,
+            uniqueContributors: 0,
+            feeManagement: _feeManagement,
+            feePerformance: _feePerformance,
+            threshold: _threshold,
+            name: _name,
+            subSymbol: _subSymbol,
+            decimals: 18,
+            creator: msg.sender,
+            creatorStake: 0,
+            fundingRequired: _fundingRequired,
+            maxSupply: _maxSupply,
+            totalSupply: 0,
+            canTransferOut: _canTransferOut,
+            minDeposit: _minDeposit,
+            maxDeposit: _maxDeposit
+        });
+        // the fund creator is creator
+        fundsIsCreator[i][msg.sender] = true;
+        fundsIsWhitelisted[i][msg.sender] = true;
+        // append fund to map
+        funds[i] = fund;
+        return true;
     }
 
-    function deposit(uint256 _index, ) {
+    function deposit(uint256 _index, uint256 _value) {
+        require(_index <= i, "fund ref not found");
+
         // transfer x amount of our token to the address
         require(IBalanceOf(//our contract, msg.sender) >= _value);
         Itransfer()
@@ -183,72 +211,4 @@ contract Pool is Conduit, PoolToken { // the funding needs
     function withdraw() {
 
     }
-
-    struct Asset {
-        address domain; // contract address of the ERC20 token
-        uint256 allocation; // percentage of the fund that is allocated to this
-
-    }
-
-    struct Type {
-        uint8 hedge = 0;
-        uint8 venture = 1;
-        uint8 investment = 2;
-    }
-
-    struct Pool {
-        string name;
-        string subTicker; // <DREAM> - <tkr>
-        address creator;
-        uint256 creatorStake; // does the owner have a stake in the fund
-        bool isImmutable; // the fund allocations cannot be changed
-        uint256 limitOfAuM; // Max amount money they want to manage
-        uint256 minDepositAmount;
-        bool allowedToMoveAssetsFromWallet; // can the creator move assets from the wallet
-        bool allowedToShort;
-        
-        address[] whitelisted; // you can pick who can contribute
-    }
-
-    mapping(string => Pool) private pool;
-
-
-    function newFund() public {
-
-    }
-
-    // will have batch transactions and delays
-    
-    /*
-    USDT -> Fund <- Tokens (DEX vs EX)
-     */
-    function setAllocations() {
-        // set the allocation
-    }
-
-    function singleSwap() {
-        // get cheapest price from aggregator
-        // make swap
-
-        // the fund can only swap so it cannot transfer money off the fund contract
-        // create
-
-
-        // accumulation > early stage > 7 - 10 years > distribution
-
-    }
-    /*
-    Swapping
-     */
-}
-
-contract PoolCloseEnd is Conduit, PoolToken {
-    
-    uint256 aum;
-    uint256 liability;
-    uint256 
-}
-
-contract PoolFactory {
-
 }
