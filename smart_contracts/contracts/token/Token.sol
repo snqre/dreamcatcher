@@ -7,7 +7,6 @@ import "dreamcatcher/.deps/openzeppelin/contracts/token/ERC20/extensions/ERC20Sn
 import "dreamcatcher/.deps/openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
 import "dreamcatcher/.deps/openzeppelin/contracts/token/ERC20/extensions/ERC20Capped.sol";
 
-contract NativeToken is
     ERC20,
     ERC20Votes,
     ERC20Snapshot,
