@@ -18,7 +18,5 @@ contract NativeToken is
         string memory _name,
         string memory _symbol,
         uint256 cap
-    ) ERC20("Dreamcatcher", "DREAM") ERC20Capped(200000000 * 10**decimals()) {
-
-    }
+    ) ERC20("Dreamcatcher", "DREAM") ERC20Capped(200000000 * 10**decimals()) {}
 }
