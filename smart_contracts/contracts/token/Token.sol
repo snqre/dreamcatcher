@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
-
+// incomeplete, refactoring, and making standalone
 import "smart_contracts/libraries/Math.sol";
 import "smart_contracts/contracts/token/Authenticator.sol";
 
@@ -57,58 +57,55 @@ contract Token is Authenticator {
         uint256 released;
     }
 
-    event Transfer(address indexed from, address indexed to, uint256 amount);
-    event Approval(address indexed owner, address indexed spender, uint256 amount);
-    event AllowanceIncreased(address indexed account, address indexed spender, uint256 increase);
-    event AllowanceDecreased(address indexed account, address indexed spender, uint256 decrease);
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+    event AllowanceIncreased(address indexed _owner, address indexed _spender, uint256 _value);
+    event AllowanceDecreased(address indexed _owner, address indexed _spender, uint256 _value);
+    event Mint(address indexed _to, uint256 _value);
 
-    function approve(address spender, uint256 amount) public returns (bool) {
+    function approve(address _spender, uint256 _value) external returns (bool) {
         require(msg.sender != address(0), "zero address");
-        require(spender != address(0), "zero address");
-        allowed[msg.sender][spender] = amount;
-        emit Approval(msg.sender, spender, amount);
+        require(_spender != address(0), "zero address");
+        allowed[msg.sender][_spender] = _value;
+        emit Approval(msg.sender, _spender, _value);
         return true;
     }
 
-    function increaseAllowance(address spender, uint256 addedValue) public returns (bool) {   
+    function increaseAllowance(address _spender, uint256 _value) external returns (bool) {
         require(msg.sender != address(0), "zero address");
-        require(spender != address(0), "zero address");
-        uint256 x = allowance(msg.sender, spender);
-        uint256 y = addedValue;
-        allowed[msg.sender][spender] = Math.add(x, y);
-        emit AllowanceIncreased(msg.sender, spender, addedValue);
+        require(_spender != address(0), "zero address");
+        allowed[msg.sender][_spender] = Math.add(allowance(msg.sender, _spender), _value);
+        emit AllowanceIncreased(msg.sender, _spender, _value);
         return true;
     }
 
-    function decreaseAllowance(address spender, uint256 subtractedValue) public returns (bool) {
-        uint256 currentAllowance = allowance(msg.sender, spender);
-        require(currentAllowance >= subtractedValue, "decrease allowance below zero");
+    function decreaseAllowance(address _spender, uint256 _value) external returns (bool) {
+        uint256 currentAllowance = allowance(msg.sender, _spender);
+        require(currentAllowance >= _value, "decrease allowance below zero");
         unchecked {
             require(msg.sender != address(0), "zero address");
-            require(spender != address(0), "zero address");
-            uint256 x = currentAllowance;
-            uint256 y = subtractedValue;
-            allowed[msg.sender][spender] = Math.sub(x, y);
+            require(_spender != address(0), "zero address");
+            allowed[msg.sender][_spender] = Math.sub(currentAllowance, _value);
         }
-        emit AllowanceDecreased(msg.sender, spender, subtractedValue);
+        emit AllowanceDecreased(msg.sender, _spender, _value);
         return true;
     }
 
-    function transfer(address recipient, uint256 amount) public returns (bool) {
-        require(balances[msg.sender] >= amount, "insufficient balance");
-        balances[msg.sender] -= amount;
-        balances[recipient] += amount;
-        emit Transfer(msg.sender, recipient, amount);
+    function transfer(address _to, uint256 _value) public returns (bool) {
+        require(balances[msg.sender] >= _value, "insufficient balance");
+        balances[msg.sender] -= _value;
+        balances[_to] += _value;
+        emit Transfer(msg.sender, _to, _value);
         return true;
     }
 
-    function transferFrom(address sender, address recipient, uint256 amount) public returns (bool) {
-        require(balances[sender] >= amount, "insufficient balance");
-        require(allowed[sender][msg.sender] >= amount, "transfer amount exceeds allowance");
-        balances[sender] -= amount;
-        balances[recipient] += amount;
-        allowed[sender][msg.sender] -= amount;
-        emit Transfer(sender, recipient, amount);
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+        require(balances[_from] >= _value, "insufficient balance");
+        require(allowed[_from][msg.sender] >= _value, "transfer amount exceeds allowance");
+        balances[_from] -= _value;
+        balances[_to] += _value;
+        allowed[_from][msg.sender] -= _value;
+        emit Transfer(_from, _to, _value);
         return true;
     }
 
