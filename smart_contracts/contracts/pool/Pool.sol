@@ -90,7 +90,7 @@ contract PoolToken {
         _;
     }
 
-    constructor(, string _name, string _subSymbol) {
+    constructor(string _name, string _subSymbol) {
         creator = msg.sender;
         name = _name;
         subSymbol = _subSymbol;

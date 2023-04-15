@@ -6,50 +6,50 @@ import "smart_contracts/contracts/token/Authenticator.sol";
 
 // typical erc 20 implementation plus our custom functions **incomplete
 interface IToken {
-    function name() external view returns (string);
-    function symbol() external view returns (string);
+    function name() external view returns (string memory);
+    function symbol() external view returns (string memory);
     function decimals() external view returns (uint8);
     function maxSupply() external view returns (uint256);
-    function totalSupply() public view returns (uint256);
-    function balanceOf(address account) public view returns (uint256);
-    function allowance(address owner, address spender) public view returns (uint256);
-    function increaseAllowance(address spender, uint256 addedValue) public returns (bool);
-    function decreaseAllowance(address spender, uint256 subtractedValue) public returns (bool);
-    function approve(address spender, uint256 amount) public returns (bool);
-    function transfer(address recipient, uint256 amount) public returns (bool);
-    function transferFrom(address sender, address recipient, uint256 amount) public returns (bool);
+    function totalSupply() external view returns (uint256);
+    function balanceOf(address account) external view returns (uint256);
+    function allowance(address owner, address spender) external view returns (uint256);
+    function increaseAllowance(address spender, uint256 addedValue) external returns (bool);
+    function decreaseAllowance(address spender, uint256 subtractedValue) external returns (bool);
+    function approve(address spender, uint256 amount) external returns (bool);
+    function transfer(address recipient, uint256 amount) external returns (bool);
+    function transferFrom(address sender, address recipient, uint256 amount) external returns (bool);
 }
 
 // allows other contracts to access role management if they are admin
 interface IRoleManagement {
-    function grantRoleAdmin(address account) public returns (bool);      // admin can grant admin
-    function revokeRoleAdmin(address account) public returns (bool);     // admin can revoke admin
-    function grantRoleOwner(address account) public returns (bool);      // admin can grant owner
-    function revokeRoleOwner(address account) public returns (bool);     // admin can revoke owner
-    function revokeMyRoleOwner() public returns (bool);                  // owner can revoke owner
-    function grantRoleValidator(address account) public returns (bool);  // admin can grant validator
-    function revokeRoleValidator(address account) public returns (bool); // admin can revoke validator
-    function revokeMyRoleValidator() public returns (bool);              // validator can revoke self validator
-    function grantRoleExtention() public returns (bool);                 // admin can grant extension
-    function revokeRoleExtension() public returns (bool);                // admin can revoke extension
-    function revokeMyRoleExtension() public returns (bool);              // extension can revoke self extension
+    function grantRoleAdmin(address _to) external returns (bool);      // admin can grant admin
+    function revokeRoleAdmin(address _to) external returns (bool);     // admin can revoke admin
+    function grantRoleOwner(address _to) external returns (bool);      // admin can grant owner
+    function revokeRoleOwner(address _to) external returns (bool);     // admin can revoke owner
+    function revokeMyRoleOwner() external returns (bool);                  // owner can revoke owner
+    function grantRoleValidator(address _to) external returns (bool);  // admin can grant validator
+    function revokeRoleValidator(address _to) external returns (bool); // admin can revoke validator
+    function revokeMyRoleValidator() external returns (bool);              // validator can revoke self validator
+    function grantRoleExtention() external returns (bool);                 // admin can grant extension
+    function revokeRoleExtension() external returns (bool);                // admin can revoke extension
+    function revokeMyRoleExtension() external returns (bool);              // extension can revoke self extension
 }
 
 contract Token is Authenticator {
-    string   immutable name          = "Dreamcatcher";
-    string   immutable symbol        = "DREAM";
-    uint8    immutable decimals      = 18;
-    uint256  immutable totalSupply   = 200000000 * 10**decimals;
-    uint256  immutable maxSupply     = 200000000 * 10**decimals;
+    string   private name_ = "Dreamcatcher";
+    string   private symbol_ = "DREAM";
+    uint8    private decimals_ = 18;
+    uint256  private totalSupply_ = 0 * 10**decimals_;
+    uint256  private maxSupply_ = 200_000_000 * 10**decimals_;
 
     mapping(address => uint256) internal balances;
     mapping(address => uint256) internal vested;      // amount of tokens the vault owes them and will release linearly
     mapping(address => uint256) internal staked;
     mapping(address => uint256) internal votes;
     mapping(address => mapping(address => uint256)) internal allowed;
-    mapping(address => uint256) internal timeSinceMembership;       // time since their votes has been > 0 or they are able to vote
+    mapping(address => uint256) internal _timeSinceMembership;       // time since their votes has been > 0 or they are able to vote
     
-    VestingSchedule {
+    struct VestingSchedule {
         uint256 startTime;
         uint256 end;
         uint256 value;
@@ -74,7 +74,9 @@ contract Token is Authenticator {
     event Stake(address indexed _owner, uint256 _value);
     event Unstake(address indexed _owner, uint256 _value);
     
-    constructor() {}
+    constructor() {
+        isAdmin[msg.sender] = true; 
+    }
 
     function approve(address _spender, uint256 _value) public returns (bool) {
         require(msg.sender != address(0), "zero address");
@@ -123,10 +125,11 @@ contract Token is Authenticator {
     }
 
     // mint function will only ever be called once during deployment to mint the whole batch
-    function mint(address _to, uint256 _value) external admin returns (bool) {
-        uint256 newTotalSupply = Math.add(totalSupply, _value);
-        require(newTotalSupply <= maxSupply);
+    function mint(address _to, uint256 _value) public admin payable returns (bool) {
+        uint256 newTotalSupply = Math.add(totalSupply_, _value);
+        require(newTotalSupply <= maxSupply_, "max supply reached");
         balances[_to] += _value;
+        totalSupply_ += _value;
         emit Mint(_to, _value);
         return true;
     }
@@ -151,14 +154,14 @@ contract Token is Authenticator {
         return true;
     }
 
-    function vest(address _owner, uint256 _value, uint256 _duration) publci admin countVestingId returns (bool) {
+    function vest(address _owner, uint256 _value, uint256 _duration) public admin countVestingId returns (bool) {
         uint256 vestingId = vestingId[msg.sender];
         VestingSchedule memory newSchedule = VestingSchedule({
             startTime: block.timestamp,
             duration: _duration,
             end: block.timestamp + _duration,
             value: _value,
-            releasedPerDay: Math.div(_value, Math.div(_duration / 1 days)),
+            releasedPerDay: _value / (_duration / 1 days),
             owner: _owner
         });
         schedule[msg.sender][vestingId] = newSchedule;
@@ -168,9 +171,9 @@ contract Token is Authenticator {
         uint256 totalReleased = 0;
         uint256 numSchedules = vestingId[msg.sender];
         for (uint256 i = 1; i <= numSchedules; i++) {
-            if (block.timestamp >= schedule.startTime && block.timestamp <= schedule.end) {
-                uint256 elapsedTime = block.timestamp - schedule.startTime;
-                uint256 vestedAmount = (elapsedTime / 1 days) * schedule.releasedPerDay;
+            if (block.timestamp >= schedule[msg.sender][i].startTime && block.timestamp <= schedule[msg.sender][i].end) {
+                uint256 elapsedTime = block.timestamp - schedule[msg.sender][i].startTime;
+                uint256 vestedAmount = (elapsedTime / 1 days) * schedule[msg.sender][i].releasedPerDay;
                 totalReleased += vestedAmount;
             }
         }
@@ -180,7 +183,7 @@ contract Token is Authenticator {
     
 
     function increaseAllowanceOwedBalance(uint256 _vestingId) external returns (bool) {
-        VestingSchedule storage schedule = schedules[msg.sender][_vestingId];
+        VestingSchedule storage schedule = schedule[msg.sender][_vestingId];
         
         require(block.timestamp >= schedule.end, "Vesting not completed");
         
@@ -192,7 +195,7 @@ contract Token is Authenticator {
         address spender = msg.sender;
         allowed[self][spender] = allowed[self][spender] + vestedAmount;
         
-        emit AllowanceIncreased(msg.sender, vestedAmount);
+        emit AllowanceIncreased(address(this), msg.sender, vestedAmount);
         
         return true;
     }
@@ -203,13 +206,13 @@ contract Token is Authenticator {
     function packageVoteArrToExtension() external extension {}
 
     // ERC 20 STANDARD
-    function name() public view returns (string) {return name;}
-    function symbol() public view returns (string) {return symbol;}
-    function decimals() public view returns (uint8) {return decimals;}
-    function maxSupply() public view returns (uint256) {return maxSupply;}
-    function totalSupply() public view returns (uint256) {return totalSupply;}
+    function name() public view returns (string memory) {return name_;}
+    function symbol() public view returns (string memory) {return symbol_;}
+    function decimals() public view returns (uint8) {return decimals_;}
+    function maxSupply() public view returns (uint256) {return maxSupply_;}
+    function totalSupply() public view returns (uint256) {return totalSupply_;}
     function balanceOf(address account) public view returns (uint256) {return balances[account];}
     function allowance(address owner, address spender) public view returns (uint256) {return allowed[owner][spender];}
     // NATIVE FUNCTIONS
-    function timeSinceMembership(address account) public returns (uint256) {return timeSinceMembership[account];}
+    function timeSinceMembership(address account) public returns (uint256) {return _timeSinceMembership[account];}
 }

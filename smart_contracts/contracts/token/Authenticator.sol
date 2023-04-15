@@ -12,10 +12,10 @@ contract Authenticator {
     }
 
     // PERMISSIONS
-    mapping(address => bool) private isAdmin;        // highest level
-    mapping(address => bool) private isOwner;        // temp role
-    mapping(address => bool) private isValidator;    // exchanges native tokens for votes or has permission to do so
-    mapping(address => bool) private isExtension;
+    mapping(address => bool) internal isAdmin;        // highest level
+    mapping(address => bool) internal isOwner;        // temp role
+    mapping(address => bool) internal isValidator;    // exchanges native tokens for votes or has permission to do so
+    mapping(address => bool) internal isExtension;
 
     modifier admin() {require(isAdmin[msg.sender] == true, "only an admin can call this function");_;}
     modifier owner() {require(isOwner[msg.sender] == true, "only an owner can call this function");_;}
