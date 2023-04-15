@@ -42,19 +42,28 @@ contract Token is Authenticator {
     uint256  immutable totalSupply   = 200000000 * 10**decimals;
     uint256  immutable maxSupply     = 200000000 * 10**decimals;
 
-    mapping(address => uint256) private balances;
-    mapping(address => uint256) private vested;      // amount of tokens the vault owes them and will release linearly
-    mapping(address => uint256) private staked;
-    mapping(address => uint256) private votes;
-    mapping(address => uint256) private allowed;
-    mapping(address => uint256) private timeSinceMembership;       // time since their votes has been > 0 or they are able to vote
+    mapping(address => uint256) internal balances;
+    mapping(address => uint256) internal vested;      // amount of tokens the vault owes them and will release linearly
+    mapping(address => uint256) internal staked;
+    mapping(address => uint256) internal votes;
+    mapping(address => mapping(address => uint256)) internal allowed;
+    mapping(address => uint256) internal timeSinceMembership;       // time since their votes has been > 0 or they are able to vote
     
-    mapping(address => VestingSchedule[]) private schedules;
-    struct VestingSchedule {
-        uint256 amount;
-        uint256 start;
+    VestingSchedule {
+        uint256 startTime;
         uint256 end;
-        uint256 released;
+        uint256 value;
+        uint256 duration;
+        uint256 releasedPerDay;
+        address owner;
+    }
+    mapping(address => uint256) vestingId;
+    // [address][vestingId] = VestingSchedule
+    mapping(address => mapping(uint256 => VestingSchedule)) schedule;
+
+    modifier countVestingId() {
+        vestingId[msg.sender] ++;
+        _;
     }
 
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
@@ -62,8 +71,12 @@ contract Token is Authenticator {
     event AllowanceIncreased(address indexed _owner, address indexed _spender, uint256 _value);
     event AllowanceDecreased(address indexed _owner, address indexed _spender, uint256 _value);
     event Mint(address indexed _to, uint256 _value);
+    event Stake(address indexed _owner, uint256 _value);
+    event Unstake(address indexed _owner, uint256 _value);
+    
+    constructor() {}
 
-    function approve(address _spender, uint256 _value) external returns (bool) {
+    function approve(address _spender, uint256 _value) public returns (bool) {
         require(msg.sender != address(0), "zero address");
         require(_spender != address(0), "zero address");
         allowed[msg.sender][_spender] = _value;
@@ -71,7 +84,7 @@ contract Token is Authenticator {
         return true;
     }
 
-    function increaseAllowance(address _spender, uint256 _value) external returns (bool) {
+    function increaseAllowance(address _spender, uint256 _value) public returns (bool) {
         require(msg.sender != address(0), "zero address");
         require(_spender != address(0), "zero address");
         allowed[msg.sender][_spender] = Math.add(allowance(msg.sender, _spender), _value);
@@ -79,7 +92,7 @@ contract Token is Authenticator {
         return true;
     }
 
-    function decreaseAllowance(address _spender, uint256 _value) external returns (bool) {
+    function decreaseAllowance(address _spender, uint256 _value) public returns (bool) {
         uint256 currentAllowance = allowance(msg.sender, _spender);
         require(currentAllowance >= _value, "decrease allowance below zero");
         unchecked {
@@ -110,23 +123,77 @@ contract Token is Authenticator {
     }
 
     // mint function will only ever be called once during deployment to mint the whole batch
-    function mint() admin {}
-
-    // to be able to stake you need to be a validator as staking is responsible for issuing votes
-    // we will allow anyone to stake and unstake at anytime but if they unstake current votes will be cancelled
-    function stake(address account, uint256 amount) public validator returns (bool) {
-        require(amount <= balances[account], "insufficient balance");
-        balances[account] -= amount;
-        staked[account] += amount;
-        votes[account] += amount;
+    function mint(address _to, uint256 _value) external admin returns (bool) {
+        uint256 newTotalSupply = Math.add(totalSupply, _value);
+        require(newTotalSupply <= maxSupply);
+        balances[_to] += _value;
+        emit Mint(_to, _value);
         return true;
     }
 
-    function unstake(address account, uint256 amount) public validator returns (bool) {
-        require(amount <= staked[account], "insufficient staked balance");
-        staked[account] -= amount;
-        votes[account] -= amount;
-        balances[account] += amount;
+    // to be able to stake you need to be a validator as staking is responsible for issuing votes
+    // we will allow anyone to stake and unstake at anytime but if they unstake current votes will be cancelled
+    function stake(address _owner, uint256 _value) public validator returns (bool) {
+        require(_value <= balances[_owner], "insufficient balance");
+        balances[_owner] -= _value;
+        staked[_owner] += _value;
+        votes[_owner] += _value;
+        emit Stake(_owner, _value);
+        return true;
+    }
+
+    function unstake(address _owner, uint256 _value) public validator returns (bool) {
+        require(_value <= staked[_owner], "insufficient staked balance");
+        staked[_owner] -= _value;
+        votes[_owner] -= _value;
+        balances[_owner] += _value;
+        emit Unstake(_owner, _value);
+        return true;
+    }
+
+    function vest(address _owner, uint256 _value, uint256 _duration) publci admin countVestingId returns (bool) {
+        uint256 vestingId = vestingId[msg.sender];
+        VestingSchedule memory newSchedule = VestingSchedule({
+            startTime: block.timestamp,
+            duration: _duration,
+            end: block.timestamp + _duration,
+            value: _value,
+            releasedPerDay: Math.div(_value, Math.div(_duration / 1 days)),
+            owner: _owner
+        });
+        schedule[msg.sender][vestingId] = newSchedule;
+    }
+
+    function calculateVestedAmount() public view returns (uint256) {
+        uint256 totalReleased = 0;
+        uint256 numSchedules = vestingId[msg.sender];
+        for (uint256 i = 1; i <= numSchedules; i++) {
+            if (block.timestamp >= schedule.startTime && block.timestamp <= schedule.end) {
+                uint256 elapsedTime = block.timestamp - schedule.startTime;
+                uint256 vestedAmount = (elapsedTime / 1 days) * schedule.releasedPerDay;
+                totalReleased += vestedAmount;
+            }
+        }
+        return totalReleased;
+    }
+    
+    
+
+    function increaseAllowanceOwedBalance(uint256 _vestingId) external returns (bool) {
+        VestingSchedule storage schedule = schedules[msg.sender][_vestingId];
+        
+        require(block.timestamp >= schedule.end, "Vesting not completed");
+        
+        uint256 vestedAmount = schedule.value;
+        
+        // increase allowance of the account
+        require(msg.sender != address(0), "Zero address");
+        address self = address(this);
+        address spender = msg.sender;
+        allowed[self][spender] = allowed[self][spender] + vestedAmount;
+        
+        emit AllowanceIncreased(msg.sender, vestedAmount);
+        
         return true;
     }
 
@@ -145,6 +212,4 @@ contract Token is Authenticator {
     function allowance(address owner, address spender) public view returns (uint256) {return allowed[owner][spender];}
     // NATIVE FUNCTIONS
     function timeSinceMembership(address account) public returns (uint256) {return timeSinceMembership[account];}
-
-    constructor() {}
 }
