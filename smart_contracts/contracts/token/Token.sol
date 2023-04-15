@@ -14,9 +14,11 @@ contract NativeToken is
     ERC20Permit,
     ERC20Capped
 {
-    constructor(
-        string memory _name,
-        string memory _symbol,
-        uint256 cap
-    ) ERC20("Dreamcatcher", "DREAM") ERC20Capped(200000000 * 10**decimals()) {}
+    /**
+    200 million total supply && max supply
+     */
+    constructor()
+        ERC20("Dreamcatcher", "DREAM")
+        ERC20Capped(200000000 * 10**decimals())
+    {}
 }
