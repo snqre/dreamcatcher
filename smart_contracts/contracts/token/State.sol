@@ -5,6 +5,8 @@ pragma solidity ^0.8.0;
 store all variable states as this is the base
  */
 
+// **deprecated connection starts from authenticator
+
 contract State {
     // TOKEN
     string internal name;

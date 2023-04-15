@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+// key 
 contract Authenticator {
     bool private locked;
     modifier reentrancyLock() {
