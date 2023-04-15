@@ -1,6 +1,27 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
-// incomeplete, refactoring, and making standalone
+
+/**
+=.=.=.=.= DREAMCATCHER TOKEN =.=.=.=.=
+ERC20:
+    totalSupply()
+    balanceOf()
+    transfer(_to, _amount)
+    allowance(_owner, _spender)
+    approve(_spender, _amount)
+    transferFrom(_from, _to, _amount)
+
+    Events:
+        Transfer(_from, _to, _value)
+        Approval(_owner, _spender, _value)
+
+Inheritance 101
+- virtual: function can be overriden
+- override: to overide inherited function
+- (explicitly call) ContractName.functionName()
+- (call 1 level higher up) super.functionName()
+
+ */
 import "smart_contracts/libraries/Math.sol";
 import "smart_contracts/contracts/token/Authenticator.sol";
 
@@ -74,7 +95,7 @@ contract Token is Authenticator {
     event Stake(address indexed _owner, uint256 _value);
     event Unstake(address indexed _owner, uint256 _value);
     
-    constructor() {
+    constructor(string memory _name, string memory _symbol, uint _decimals, uint _totalSupply) {
         isAdmin[msg.sender] = true; 
     }
 
