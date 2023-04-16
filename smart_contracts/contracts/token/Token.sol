@@ -12,7 +12,9 @@ pragma solidity ^0.8.0;
 import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/Counters.sol";
 import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/cryptography/ECDSA.sol";
 import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/cryptography/EIP712.sol";
-
+import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/interfaces/IERC5805.sol";
+import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/math/Math.sol";
+import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/math/SafeCast.sol";
 
 inteface IERC20 {
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
@@ -57,7 +59,27 @@ library LibToken {
 
 }
 
-contract Token is IERC20, IERC20Permit, EIP712 {
+/**
+ERC20
+# totalSupply()
+# maxSupply() && cap()
+# balanceOf(_owner)
+# transfer(_to, _amount)
+# allowance(_owner, _spender)
+# approve(_spender, _amount)
+# transferFrom(_from, _to, _amount)
+# name()
+# symbol()
+# decimals()
+
+PERMIT
+# permit(_owner, _spender, _value, _deadline, _v, _r, s)
+# nonces(_owner)
+# DOMAIN_SEPARATOR()
+
+ */
+
+contract Token is IERC20, IERC20Permit, EIP712, IERC5805 {
     // var_ :: because function names conflict with ERC20 get functions
     bytes private name_;
     bytes private symbol_;
@@ -72,12 +94,145 @@ contract Token is IERC20, IERC20Permit, EIP712 {
     bytes32 private constant PERMIT_TYPEHASH = keccak256("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)");
     bytes32 private PERMIT_TYPEHASH_DEPRECATED_SLOT;
 
+    // VOTES
+    struct Checkpoint {
+        uint32 fromBlock;
+        votes;
+    }
+    bytes32 private constant DELEGATION_TYPEHASH = keccak256("Delegation(address delegatee,uint256 nonce,uint256 expiry)");
+    mapping(address=>address) private delegates;
+    mapping(address=>Checkpoint[]) private checkpoints;
+    Checkpoint[] private totalSupplyCheckpoints;
+
     constructor() EIP712(LibToken.getBytesAsString("Dreamcatcher", "1") {
         name_ = LibToken.setStringAsBytes("Dreamcatcher");
         symbol_ = LibToken.setStringAsBytes("DREAM");
         totalSupply_ = 0;
         maxSupply_ = 200000000 * 10**18; // 200 million
     }
+
+    // VOTES
+    function clock() public view returns (uint48) {
+        return SafeCast.toUint48(block.number);
+    }
+
+    function CLOCK_MODE() public view returns (string memory) {
+        require(clock() == block.number);
+        return "mode=blocknumber&from=default";
+    }
+
+    function checkpoints(address _owner, uint32 _pos) public view returns (Checkpoint memory) {
+        return checkpoints[_owner][_pos];
+    }
+
+    function numCheckpoints(address _owner) public view (uint32) {
+        return SafeCast.toUint32(checkpoints[_owner].length);
+    }
+
+    function delegates(address _owner) public view returns (address) {
+        return delegates[_owner];
+    }
+
+    function getVotes(address _owner) public view returns (uint256) {
+        uint256 pos = checkpoints[_owner].length;
+        unchecked {
+            return pos == 0 ? 0 : checkpoints[_owner][pos - 1].votes;
+        }
+    }
+
+    function getPastVotes(address _owner, uint256 _timepoint) public view returns (uint256) {
+        require(_timepoint < clock(), "future lookup");
+        return checkpointsLookUp(checkpoints[_owner], timepoint);
+    }
+
+    function getPastTotalSupply(uint256 _timepoint) public view returns (uint256) {
+        require(timepoint < clock(), "future lookup");
+        return checkpointsLookUp(totalSupplyCheckpoints, _timepoint);
+    }
+
+    function delegateBySig(address _delegatee, uint256 _nonce, uint256 _expiry, uint8 _v, bytes32 _r, bytes32 _s) public {
+        require(block.timestamp <= _expiry, "signature expired");
+        address signer = ECDSA.recover(
+            _hashTypedDataV4(keccak256(abi.encode(DELEGATION_TYPEHASH, _delegatee, _nonce, _expiry))),
+            _v,
+            _r,
+            _s
+        );
+        require(nonce == useNonce(signer), "invalid nonce");
+        // delegator, delagatee
+        address currentDelegate = delegates(signer);
+        uint256 delegatorBalance = balanceOf(signer);
+        delagates[signer] = _delegatee;
+        emit DelegateChanged(signer, currentDelegate, _delegatee);
+        // src, dst, amount
+        // src == currentDelegate, dst == delegatee, amount == delegator balance
+        if (currentDelegate != _delegatee && delegatorBalance > 0) {
+            if (currentDelegate != address(0)) {
+                ()
+            }
+        }
+    }
+
+    function writeCheckpoint(Checkpoint[] storage ckpts, function(uint256, uint256) view returns (uint256) op, uint256 delta) private returns (uint256 _oldWeight, uint256 _newWeight) {
+        uint256 pos = ckpts.length;
+
+        unchecked {
+            Checkpoint memory oldCkpt = pos == 0 ? Checkpoint(0, 0) : unsafeAccess(ckpts, pos - 1);
+
+            oldWeight = oldCkpt.votes;
+            newWeight = op(oldWeight, delta);
+
+            if (pos > 0 && oldCkpt.fromBlock == clock()) {
+                unsafeAccess(ckpts, pos - 1).votes = SafeCast.toUint224(newWeight);
+            } else {
+                ckpts.push(Checkpoint({fromBlock: SafeCast.toUint32(clock()), votes: SafeCast.toUint224(newWeigth)}));
+            }
+        }
+    }
+
+    function add(uint256 a, uint256 b) private pure returns (uint256) {
+        return a + b;
+    }
+
+    function subtract(uint256 a, uint256 b) private pure returns (uint256) {
+        return a - b;
+    }
+
+    function unsafeAccess(Checkpoint[] storage ckpts, uint256 _pos) private pure returns (Checkpoint storage result) {
+        assembly {
+            mstore(0, ckpts.slot)
+            result.slot := add(keccak256(0, 0x20), _pos)
+        }
+    }
+
+    function checkpointsLookUp(Checkpoint[] storage ckpts, uint256 _timepoint) private view returns (uint256) {
+        uint256 length = ckpts.length;
+        uint256 low = 0;
+        uint256 high = length;
+        if (length > 5) {
+            uint256 mid = length - Math.sqrt(length);
+            if (unsafeAccess(ckpts, mid).frameBlock > timepoint) {
+                high = mid;
+            } else {
+                low = mid + 1;
+            }
+        }
+
+        while (low < high) {
+            uint256 mid = Math.average(low, high);
+            if (unsafeAccess(ckpts, mid).fromBlock > timepoint) {
+                high = mid;
+            } else {
+                low = mid + 1;
+            }
+        }
+
+        unchecked {
+            return high == 0 ? 0 : unsafeAccess(ckpts, high - 1).votes;
+        }
+    }
+    
+
     
     // PERMIT
     function permit(address _owner, address _spender, uint256 _value, uint256 _deadline, uint8 _v, bytes32 _r, bytes32 _s) public {
@@ -92,7 +247,7 @@ contract Token is IERC20, IERC20Permit, EIP712 {
         allowances[_owner][_spender] = _value;
         emit Approval(_owner, _spender, _value);
     }
-    
+    // VOTES
     // PERMIT
     function nonces(address _owner) public view returns (uint256) {return nonces[_owner].current();}
     function DOMAIN_SEPARATOR() external view returns (bytes32) {return _domainSeparatorV4();}
