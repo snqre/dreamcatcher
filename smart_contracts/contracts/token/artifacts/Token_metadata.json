@@ -11,29 +11,20 @@
 				"type": "constructor"
 			},
 			{
-				"anonymous": false,
+				"inputs": [],
+				"name": "InvalidShortString",
+				"type": "error"
+			},
+			{
 				"inputs": [
 					{
-						"indexed": true,
-						"internalType": "address",
-						"name": "_owner",
-						"type": "address"
-					},
-					{
-						"indexed": true,
-						"internalType": "address",
-						"name": "_spender",
-						"type": "address"
-					},
-					{
-						"indexed": false,
-						"internalType": "uint256",
-						"name": "_value",
-						"type": "uint256"
+						"internalType": "string",
+						"name": "str",
+						"type": "string"
 					}
 				],
-				"name": "AllowanceDecreased",
-				"type": "event"
+				"name": "StringTooLong",
+				"type": "error"
 			},
 			{
 				"anonymous": false,
@@ -41,44 +32,19 @@
 					{
 						"indexed": true,
 						"internalType": "address",
-						"name": "_owner",
+						"name": "owner",
 						"type": "address"
 					},
 					{
 						"indexed": true,
 						"internalType": "address",
-						"name": "_spender",
+						"name": "spender",
 						"type": "address"
 					},
 					{
 						"indexed": false,
 						"internalType": "uint256",
-						"name": "_value",
-						"type": "uint256"
-					}
-				],
-				"name": "AllowanceIncreased",
-				"type": "event"
-			},
-			{
-				"anonymous": false,
-				"inputs": [
-					{
-						"indexed": true,
-						"internalType": "address",
-						"name": "_owner",
-						"type": "address"
-					},
-					{
-						"indexed": true,
-						"internalType": "address",
-						"name": "_spender",
-						"type": "address"
-					},
-					{
-						"indexed": false,
-						"internalType": "uint256",
-						"name": "_value",
+						"name": "value",
 						"type": "uint256"
 					}
 				],
@@ -91,17 +57,23 @@
 					{
 						"indexed": true,
 						"internalType": "address",
-						"name": "_to",
+						"name": "delegator",
 						"type": "address"
 					},
 					{
-						"indexed": false,
-						"internalType": "uint256",
-						"name": "_value",
-						"type": "uint256"
+						"indexed": true,
+						"internalType": "address",
+						"name": "fromDelegate",
+						"type": "address"
+					},
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "toDelegate",
+						"type": "address"
 					}
 				],
-				"name": "Mint",
+				"name": "DelegateChanged",
 				"type": "event"
 			},
 			{
@@ -110,17 +82,29 @@
 					{
 						"indexed": true,
 						"internalType": "address",
-						"name": "_owner",
+						"name": "delegate",
 						"type": "address"
 					},
 					{
 						"indexed": false,
 						"internalType": "uint256",
-						"name": "_value",
+						"name": "previousBalance",
+						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "newBalance",
 						"type": "uint256"
 					}
 				],
-				"name": "Stake",
+				"name": "DelegateVotesChanged",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [],
+				"name": "EIP712DomainChanged",
 				"type": "event"
 			},
 			{
@@ -129,19 +113,19 @@
 					{
 						"indexed": true,
 						"internalType": "address",
-						"name": "_from",
+						"name": "from",
 						"type": "address"
 					},
 					{
 						"indexed": true,
 						"internalType": "address",
-						"name": "_to",
+						"name": "to",
 						"type": "address"
 					},
 					{
 						"indexed": false,
 						"internalType": "uint256",
-						"name": "_value",
+						"name": "value",
 						"type": "uint256"
 					}
 				],
@@ -149,23 +133,30 @@
 				"type": "event"
 			},
 			{
-				"anonymous": false,
-				"inputs": [
+				"inputs": [],
+				"name": "CLOCK_MODE",
+				"outputs": [
 					{
-						"indexed": true,
-						"internalType": "address",
-						"name": "_owner",
-						"type": "address"
-					},
-					{
-						"indexed": false,
-						"internalType": "uint256",
-						"name": "_value",
-						"type": "uint256"
+						"internalType": "string",
+						"name": "",
+						"type": "string"
 					}
 				],
-				"name": "Unstake",
-				"type": "event"
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "DOMAIN_SEPARATOR",
+				"outputs": [
+					{
+						"internalType": "bytes32",
+						"name": "",
+						"type": "bytes32"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
 			},
 			{
 				"inputs": [
@@ -195,12 +186,12 @@
 				"inputs": [
 					{
 						"internalType": "address",
-						"name": "_spender",
+						"name": "spender",
 						"type": "address"
 					},
 					{
 						"internalType": "uint256",
-						"name": "_value",
+						"name": "amount",
 						"type": "uint256"
 					}
 				],
@@ -236,12 +227,61 @@
 			},
 			{
 				"inputs": [],
-				"name": "calculateVestedAmount",
+				"name": "cap",
 				"outputs": [
 					{
 						"internalType": "uint256",
 						"name": "",
 						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "account",
+						"type": "address"
+					},
+					{
+						"internalType": "uint32",
+						"name": "pos",
+						"type": "uint32"
+					}
+				],
+				"name": "checkpoints",
+				"outputs": [
+					{
+						"components": [
+							{
+								"internalType": "uint32",
+								"name": "fromBlock",
+								"type": "uint32"
+							},
+							{
+								"internalType": "uint224",
+								"name": "votes",
+								"type": "uint224"
+							}
+						],
+						"internalType": "struct ERC20Votes.Checkpoint",
+						"name": "",
+						"type": "tuple"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "clock",
+				"outputs": [
+					{
+						"internalType": "uint48",
+						"name": "",
+						"type": "uint48"
 					}
 				],
 				"stateMutability": "view",
@@ -264,12 +304,12 @@
 				"inputs": [
 					{
 						"internalType": "address",
-						"name": "_spender",
+						"name": "spender",
 						"type": "address"
 					},
 					{
 						"internalType": "uint256",
-						"name": "_value",
+						"name": "subtractedValue",
 						"type": "uint256"
 					}
 				],
@@ -288,18 +328,12 @@
 				"inputs": [
 					{
 						"internalType": "address",
-						"name": "account",
+						"name": "delegatee",
 						"type": "address"
 					}
 				],
-				"name": "grantRoleAdmin",
-				"outputs": [
-					{
-						"internalType": "bool",
-						"name": "",
-						"type": "bool"
-					}
-				],
+				"name": "delegate",
+				"outputs": [],
 				"stateMutability": "nonpayable",
 				"type": "function"
 			},
@@ -307,105 +341,111 @@
 				"inputs": [
 					{
 						"internalType": "address",
-						"name": "account",
-						"type": "address"
-					}
-				],
-				"name": "grantRoleExtension",
-				"outputs": [
-					{
-						"internalType": "bool",
-						"name": "",
-						"type": "bool"
-					}
-				],
-				"stateMutability": "nonpayable",
-				"type": "function"
-			},
-			{
-				"inputs": [
-					{
-						"internalType": "address",
-						"name": "account",
-						"type": "address"
-					}
-				],
-				"name": "grantRoleOwner",
-				"outputs": [
-					{
-						"internalType": "bool",
-						"name": "",
-						"type": "bool"
-					}
-				],
-				"stateMutability": "nonpayable",
-				"type": "function"
-			},
-			{
-				"inputs": [
-					{
-						"internalType": "address",
-						"name": "account",
-						"type": "address"
-					}
-				],
-				"name": "grantRoleValidator",
-				"outputs": [
-					{
-						"internalType": "bool",
-						"name": "",
-						"type": "bool"
-					}
-				],
-				"stateMutability": "nonpayable",
-				"type": "function"
-			},
-			{
-				"inputs": [
-					{
-						"internalType": "address",
-						"name": "_spender",
+						"name": "delegatee",
 						"type": "address"
 					},
 					{
 						"internalType": "uint256",
-						"name": "_value",
+						"name": "nonce",
 						"type": "uint256"
-					}
-				],
-				"name": "increaseAllowance",
-				"outputs": [
+					},
 					{
-						"internalType": "bool",
-						"name": "",
-						"type": "bool"
+						"internalType": "uint256",
+						"name": "expiry",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint8",
+						"name": "v",
+						"type": "uint8"
+					},
+					{
+						"internalType": "bytes32",
+						"name": "r",
+						"type": "bytes32"
+					},
+					{
+						"internalType": "bytes32",
+						"name": "s",
+						"type": "bytes32"
 					}
 				],
+				"name": "delegateBySig",
+				"outputs": [],
 				"stateMutability": "nonpayable",
 				"type": "function"
 			},
 			{
 				"inputs": [
 					{
-						"internalType": "uint256",
-						"name": "_vestingId",
-						"type": "uint256"
+						"internalType": "address",
+						"name": "account",
+						"type": "address"
 					}
 				],
-				"name": "increaseAllowanceOwedBalance",
+				"name": "delegates",
 				"outputs": [
 					{
-						"internalType": "bool",
+						"internalType": "address",
 						"name": "",
-						"type": "bool"
+						"type": "address"
 					}
 				],
-				"stateMutability": "nonpayable",
+				"stateMutability": "view",
 				"type": "function"
 			},
 			{
 				"inputs": [],
-				"name": "maxSupply",
+				"name": "eip712Domain",
+				"outputs": [
+					{
+						"internalType": "bytes1",
+						"name": "fields",
+						"type": "bytes1"
+					},
+					{
+						"internalType": "string",
+						"name": "name",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "version",
+						"type": "string"
+					},
+					{
+						"internalType": "uint256",
+						"name": "chainId",
+						"type": "uint256"
+					},
+					{
+						"internalType": "address",
+						"name": "verifyingContract",
+						"type": "address"
+					},
+					{
+						"internalType": "bytes32",
+						"name": "salt",
+						"type": "bytes32"
+					},
+					{
+						"internalType": "uint256[]",
+						"name": "extensions",
+						"type": "uint256[]"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "timepoint",
+						"type": "uint256"
+					}
+				],
+				"name": "getPastTotalSupply",
 				"outputs": [
 					{
 						"internalType": "uint256",
@@ -420,16 +460,59 @@
 				"inputs": [
 					{
 						"internalType": "address",
-						"name": "_to",
+						"name": "account",
 						"type": "address"
 					},
 					{
 						"internalType": "uint256",
-						"name": "_value",
+						"name": "timepoint",
 						"type": "uint256"
 					}
 				],
-				"name": "mint",
+				"name": "getPastVotes",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "account",
+						"type": "address"
+					}
+				],
+				"name": "getVotes",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "spender",
+						"type": "address"
+					},
+					{
+						"internalType": "uint256",
+						"name": "addedValue",
+						"type": "uint256"
+					}
+				],
+				"name": "increaseAllowance",
 				"outputs": [
 					{
 						"internalType": "bool",
@@ -454,63 +537,22 @@
 				"type": "function"
 			},
 			{
-				"inputs": [],
-				"name": "packageBalanceArrToExtension",
-				"outputs": [],
-				"stateMutability": "nonpayable",
-				"type": "function"
-			},
-			{
-				"inputs": [],
-				"name": "packageVestingScheduleToExtention",
-				"outputs": [],
-				"stateMutability": "nonpayable",
-				"type": "function"
-			},
-			{
-				"inputs": [],
-				"name": "packageVoteArrToExtension",
-				"outputs": [],
-				"stateMutability": "nonpayable",
-				"type": "function"
-			},
-			{
-				"inputs": [],
-				"name": "revokeMyRoleExtension",
-				"outputs": [
+				"inputs": [
 					{
-						"internalType": "bool",
-						"name": "",
-						"type": "bool"
+						"internalType": "address",
+						"name": "owner",
+						"type": "address"
 					}
 				],
-				"stateMutability": "nonpayable",
-				"type": "function"
-			},
-			{
-				"inputs": [],
-				"name": "revokeMyRoleOwner",
+				"name": "nonces",
 				"outputs": [
 					{
-						"internalType": "bool",
+						"internalType": "uint256",
 						"name": "",
-						"type": "bool"
+						"type": "uint256"
 					}
 				],
-				"stateMutability": "nonpayable",
-				"type": "function"
-			},
-			{
-				"inputs": [],
-				"name": "revokeMyRoleValidator",
-				"outputs": [
-					{
-						"internalType": "bool",
-						"name": "",
-						"type": "bool"
-					}
-				],
-				"stateMutability": "nonpayable",
+				"stateMutability": "view",
 				"type": "function"
 			},
 			{
@@ -521,95 +563,57 @@
 						"type": "address"
 					}
 				],
-				"name": "revokeRoleAdmin",
+				"name": "numCheckpoints",
 				"outputs": [
 					{
-						"internalType": "bool",
+						"internalType": "uint32",
 						"name": "",
-						"type": "bool"
+						"type": "uint32"
 					}
 				],
-				"stateMutability": "nonpayable",
+				"stateMutability": "view",
 				"type": "function"
 			},
 			{
 				"inputs": [
 					{
 						"internalType": "address",
-						"name": "account",
+						"name": "owner",
 						"type": "address"
-					}
-				],
-				"name": "revokeRoleExtension",
-				"outputs": [
-					{
-						"internalType": "bool",
-						"name": "",
-						"type": "bool"
-					}
-				],
-				"stateMutability": "nonpayable",
-				"type": "function"
-			},
-			{
-				"inputs": [
+					},
 					{
 						"internalType": "address",
-						"name": "account",
-						"type": "address"
-					}
-				],
-				"name": "revokeRoleOwner",
-				"outputs": [
-					{
-						"internalType": "bool",
-						"name": "",
-						"type": "bool"
-					}
-				],
-				"stateMutability": "nonpayable",
-				"type": "function"
-			},
-			{
-				"inputs": [
-					{
-						"internalType": "address",
-						"name": "account",
-						"type": "address"
-					}
-				],
-				"name": "revokeRoleValidator",
-				"outputs": [
-					{
-						"internalType": "bool",
-						"name": "",
-						"type": "bool"
-					}
-				],
-				"stateMutability": "nonpayable",
-				"type": "function"
-			},
-			{
-				"inputs": [
-					{
-						"internalType": "address",
-						"name": "_owner",
+						"name": "spender",
 						"type": "address"
 					},
 					{
 						"internalType": "uint256",
-						"name": "_value",
+						"name": "value",
 						"type": "uint256"
-					}
-				],
-				"name": "stake",
-				"outputs": [
+					},
 					{
-						"internalType": "bool",
-						"name": "",
-						"type": "bool"
+						"internalType": "uint256",
+						"name": "deadline",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint8",
+						"name": "v",
+						"type": "uint8"
+					},
+					{
+						"internalType": "bytes32",
+						"name": "r",
+						"type": "bytes32"
+					},
+					{
+						"internalType": "bytes32",
+						"name": "s",
+						"type": "bytes32"
 					}
 				],
+				"name": "permit",
+				"outputs": [],
 				"stateMutability": "nonpayable",
 				"type": "function"
 			},
@@ -624,25 +628,6 @@
 					}
 				],
 				"stateMutability": "view",
-				"type": "function"
-			},
-			{
-				"inputs": [
-					{
-						"internalType": "address",
-						"name": "account",
-						"type": "address"
-					}
-				],
-				"name": "timeSinceMembership",
-				"outputs": [
-					{
-						"internalType": "uint256",
-						"name": "",
-						"type": "uint256"
-					}
-				],
-				"stateMutability": "nonpayable",
 				"type": "function"
 			},
 			{
@@ -662,12 +647,12 @@
 				"inputs": [
 					{
 						"internalType": "address",
-						"name": "_to",
+						"name": "to",
 						"type": "address"
 					},
 					{
 						"internalType": "uint256",
-						"name": "_value",
+						"name": "amount",
 						"type": "uint256"
 					}
 				],
@@ -686,17 +671,17 @@
 				"inputs": [
 					{
 						"internalType": "address",
-						"name": "_from",
+						"name": "from",
 						"type": "address"
 					},
 					{
 						"internalType": "address",
-						"name": "_to",
+						"name": "to",
 						"type": "address"
 					},
 					{
 						"internalType": "uint256",
-						"name": "_value",
+						"name": "amount",
 						"type": "uint256"
 					}
 				],
@@ -710,64 +695,107 @@
 				],
 				"stateMutability": "nonpayable",
 				"type": "function"
-			},
-			{
-				"inputs": [
-					{
-						"internalType": "address",
-						"name": "_owner",
-						"type": "address"
-					},
-					{
-						"internalType": "uint256",
-						"name": "_value",
-						"type": "uint256"
-					}
-				],
-				"name": "unstake",
-				"outputs": [
-					{
-						"internalType": "bool",
-						"name": "",
-						"type": "bool"
-					}
-				],
-				"stateMutability": "nonpayable",
-				"type": "function"
-			},
-			{
-				"inputs": [
-					{
-						"internalType": "address",
-						"name": "_owner",
-						"type": "address"
-					},
-					{
-						"internalType": "uint256",
-						"name": "_value",
-						"type": "uint256"
-					},
-					{
-						"internalType": "uint256",
-						"name": "_duration",
-						"type": "uint256"
-					}
-				],
-				"name": "vest",
-				"outputs": [
-					{
-						"internalType": "bool",
-						"name": "",
-						"type": "bool"
-					}
-				],
-				"stateMutability": "nonpayable",
-				"type": "function"
 			}
 		],
 		"devdoc": {
+			"events": {
+				"Approval(address,address,uint256)": {
+					"details": "Emitted when the allowance of a `spender` for an `owner` is set by a call to {approve}. `value` is the new allowance."
+				},
+				"DelegateChanged(address,address,address)": {
+					"details": "Emitted when an account changes their delegate."
+				},
+				"DelegateVotesChanged(address,uint256,uint256)": {
+					"details": "Emitted when a token transfer or delegate change results in changes to a delegate's number of votes."
+				},
+				"EIP712DomainChanged()": {
+					"details": "MAY be emitted to signal that the domain could have changed."
+				},
+				"Transfer(address,address,uint256)": {
+					"details": "Emitted when `value` tokens are moved from one account (`from`) to another (`to`). Note that `value` may be zero."
+				}
+			},
 			"kind": "dev",
-			"methods": {},
+			"methods": {
+				"CLOCK_MODE()": {
+					"details": "Description of the clock"
+				},
+				"DOMAIN_SEPARATOR()": {
+					"details": "See {IERC20Permit-DOMAIN_SEPARATOR}."
+				},
+				"allowance(address,address)": {
+					"details": "See {IERC20-allowance}."
+				},
+				"approve(address,uint256)": {
+					"details": "See {IERC20-approve}. NOTE: If `amount` is the maximum `uint256`, the allowance is not updated on `transferFrom`. This is semantically equivalent to an infinite approval. Requirements: - `spender` cannot be the zero address."
+				},
+				"balanceOf(address)": {
+					"details": "See {IERC20-balanceOf}."
+				},
+				"cap()": {
+					"details": "Returns the cap on the token's total supply."
+				},
+				"checkpoints(address,uint32)": {
+					"details": "Get the `pos`-th checkpoint for `account`."
+				},
+				"clock()": {
+					"details": "Clock used for flagging checkpoints. Can be overridden to implement timestamp based checkpoints (and voting)."
+				},
+				"decimals()": {
+					"details": "Returns the number of decimals used to get its user representation. For example, if `decimals` equals `2`, a balance of `505` tokens should be displayed to a user as `5.05` (`505 / 10 ** 2`). Tokens usually opt for a value of 18, imitating the relationship between Ether and Wei. This is the default value returned by this function, unless it's overridden. NOTE: This information is only used for _display_ purposes: it in no way affects any of the arithmetic of the contract, including {IERC20-balanceOf} and {IERC20-transfer}."
+				},
+				"decreaseAllowance(address,uint256)": {
+					"details": "Atomically decreases the allowance granted to `spender` by the caller. This is an alternative to {approve} that can be used as a mitigation for problems described in {IERC20-approve}. Emits an {Approval} event indicating the updated allowance. Requirements: - `spender` cannot be the zero address. - `spender` must have allowance for the caller of at least `subtractedValue`."
+				},
+				"delegate(address)": {
+					"details": "Delegate votes from the sender to `delegatee`."
+				},
+				"delegateBySig(address,uint256,uint256,uint8,bytes32,bytes32)": {
+					"details": "Delegates votes from signer to `delegatee`"
+				},
+				"delegates(address)": {
+					"details": "Get the address `account` is currently delegating to."
+				},
+				"eip712Domain()": {
+					"details": "See {EIP-5267}."
+				},
+				"getPastTotalSupply(uint256)": {
+					"details": "Retrieve the `totalSupply` at the end of `timepoint`. Note, this value is the sum of all balances. It is NOT the sum of all the delegated votes! Requirements: - `timepoint` must be in the past"
+				},
+				"getPastVotes(address,uint256)": {
+					"details": "Retrieve the number of votes for `account` at the end of `timepoint`. Requirements: - `timepoint` must be in the past"
+				},
+				"getVotes(address)": {
+					"details": "Gets the current votes balance for `account`"
+				},
+				"increaseAllowance(address,uint256)": {
+					"details": "Atomically increases the allowance granted to `spender` by the caller. This is an alternative to {approve} that can be used as a mitigation for problems described in {IERC20-approve}. Emits an {Approval} event indicating the updated allowance. Requirements: - `spender` cannot be the zero address."
+				},
+				"name()": {
+					"details": "Returns the name of the token."
+				},
+				"nonces(address)": {
+					"details": "See {IERC20Permit-nonces}."
+				},
+				"numCheckpoints(address)": {
+					"details": "Get number of checkpoints for `account`."
+				},
+				"permit(address,address,uint256,uint256,uint8,bytes32,bytes32)": {
+					"details": "See {IERC20Permit-permit}."
+				},
+				"symbol()": {
+					"details": "Returns the symbol of the token, usually a shorter version of the name."
+				},
+				"totalSupply()": {
+					"details": "See {IERC20-totalSupply}."
+				},
+				"transfer(address,uint256)": {
+					"details": "See {IERC20-transfer}. Requirements: - `to` cannot be the zero address. - the caller must have a balance of at least `amount`."
+				},
+				"transferFrom(address,address,uint256)": {
+					"details": "See {IERC20-transferFrom}. Emits an {Approval} event indicating the updated allowance. This is not required by the EIP. See the note at the beginning of {ERC20}. NOTE: Does not update the allowance if the current allowance is the maximum `uint256`. Requirements: - `from` and `to` cannot be the zero address. - `from` must have a balance of at least `amount`. - the caller must have allowance for ``from``'s tokens of at least `amount`."
+				}
+			},
 			"version": 1
 		},
 		"userdoc": {
@@ -792,28 +820,196 @@
 		"remappings": []
 	},
 	"sources": {
-		"smart_contracts/contracts/token/Authenticator.sol": {
-			"keccak256": "0xa0ba21de2f2f4e998460d37e872a3cd454a584f042d5c10effa10aec6123a592",
+		"https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/governance/utils/IVotes.sol": {
+			"keccak256": "0xfbe80e237f5db9f14d674773abc7f77c96378506bb2bc9cebae97e427a25612c",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://72e0eda73315e27123d707b6e173bbc671148b1864b1250311a613ebb4511a7a",
-				"dweb:/ipfs/QmSvg49tVvzZMxUyu2qfeox4jnu5WTMPXwTndVYNCZw7v3"
+				"bzz-raw://dafa22cbfda661009ef9a345733c6b33fa8e260b0b2896d778658e2b139910e4",
+				"dweb:/ipfs/QmReLQsnEmH9otmLJjiZnWSLhKWiYTTePizXPyLNeNtees"
+			]
+		},
+		"https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/interfaces/IERC5267.sol": {
+			"keccak256": "0x6df04f39889de6f277a0e3f2c307f3f0a2dba677d1ed877d50fb39c1184992b8",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://03af6d201c35597a22b7bd24e84b2fffd5821de653d139484d6bf8ea3c86d2ae",
+				"dweb:/ipfs/QmV4RfQVsJd86aCRevLmMdbxGrU5QgbffTif1zRTGUR68D"
+			]
+		},
+		"https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/interfaces/IERC5805.sol": {
+			"keccak256": "0xf922a28d03040dfc977b8c2f57dd85056f2af8be708c4ff969a0682374e28f67",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://f05e8b3045e01e1951255d9ca27f18c4234d51a98fa93439c5d9c439dbf265d6",
+				"dweb:/ipfs/QmPPj9C6hX6A4st6HycgZZY3kd8puiY8PcLSgK6xYzfkt5"
+			]
+		},
+		"https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/interfaces/IERC6372.sol": {
+			"keccak256": "0x9215f1ff3c15ee9f7c2157fe5762fd01a0c511183a6273b86b320ae49001f1a0",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://dcd0412ac5996410565d49a6dc18361f1d82670761793cd0646589aaf2dcefde",
+				"dweb:/ipfs/QmVfz2Xha8uRPcNmgNXMU9gwVzfk64RxGowUzwtduoonsp"
+			]
+		},
+		"https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/ERC20.sol": {
+			"keccak256": "0xb62681ccbf84aef125665cfdfc0bf13b532925b1a520d6c935913560f539a31b",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://21dbc5b8aede7dee8f0e3bf296a58270f376f8e40d6f8becccde5b3cf34bc8df",
+				"dweb:/ipfs/QmfHPWrtGiMNhTtLDYtqSd1eVd35Zqgd4PW9bR3i23oJgg"
+			]
+		},
+		"https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/IERC20.sol": {
+			"keccak256": "0x00c839ff53d07d19db2e7cfa1e5133f9ee90a8d64b0e2e57f50446a2d1a3a0e0",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://3dac621d015a68a5251b1e5d41dda0faf252699bf6e8bcf46a958b29964d9dd1",
+				"dweb:/ipfs/QmP9axjgZv4cezAhALoTemM62sdLtMDJ9MGTxECnNwHgSJ"
+			]
+		},
+		"https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/extensions/ERC20Capped.sol": {
+			"keccak256": "0x3fe04ed1daf0f12454333fde982a25b103860d8a010dd5d8479b83ebf1dfb788",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://8322152771e94c9e28a3bd9e7c9d5dd4fdd00ae214f95915962a6638d8dfc7d6",
+				"dweb:/ipfs/QmaXJvF3UjRHacx3nPgt94DwAuXCkEoz6fS7MLr2jbuJyW"
+			]
+		},
+		"https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/extensions/ERC20Permit.sol": {
+			"keccak256": "0xf84f1c4f09ba032cbcd0c2fa13517e94b1c1350837a0c47a51e7cde92704e0b5",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://dbc0cf8f8fda53daa8ed06bec221ac47449d6d85d14bc22c2b2ce4c49bd19fde",
+				"dweb:/ipfs/QmRHYgHcWJq3gmLcy7BQijDahwv6wrzbkpThLxjDEDR8XR"
+			]
+		},
+		"https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/extensions/ERC20Snapshot.sol": {
+			"keccak256": "0x7fbb989bb4bf2681dc832d451c8fa09f0ae3cd9c19ce31bceefef30de2665a21",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://89069b36777af5ae185cb09acafd1ea2fb367d6465e52808ee5c5a17220aaa61",
+				"dweb:/ipfs/Qme43iFcJ1vPm4shFE7h9eve2i9veCwcsqQkZSq3nLqnqD"
+			]
+		},
+		"https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/extensions/ERC20Votes.sol": {
+			"keccak256": "0xbcf45fb83d96c79064e3089215d7ca6c755f5236c4a42f83491e465dbf29ed67",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://026407f899c1894f8162085c8cc3256467039f356111fba740695fb1d91c36a4",
+				"dweb:/ipfs/Qmb7HiuKFD3QGyVk4yrCwn5d1GLhuyKVEdcrqnnGMM5HUM"
+			]
+		},
+		"https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/extensions/IERC20Metadata.sol": {
+			"keccak256": "0x8de418a5503946cabe331f35fe242d3201a73f67f77aaeb7110acb1f30423aca",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://5a376d3dda2cb70536c0a45c208b29b34ac560c4cb4f513a42079f96ba47d2dd",
+				"dweb:/ipfs/QmZQg6gn1sUpM8wHzwNvSnihumUCAhxD119MpXeKp8B9s8"
+			]
+		},
+		"https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/extensions/IERC20Permit.sol": {
+			"keccak256": "0x35e258421ae206f3db37281cea70871b4c3553914734aa76139a41af60ac1abb",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://2ef94b6bc4ee356db612a1849c615f7dd4b15542d6c8584c86bb9243a7913cf0",
+				"dweb:/ipfs/QmaxFj5NFpAjjitZtHPNS9PPtCuBATaRz9ktDDRCQCQ83y"
+			]
+		},
+		"https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/Arrays.sol": {
+			"keccak256": "0x0fae118a27527798f9d7c78f6ef26d0da91e8ff4df2b540e1673425727b14a77",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://8fd12ebb8e171cae574042f2eeb8d82e7a197d16106d8a057e42022e32682189",
+				"dweb:/ipfs/QmS6mUsY8fYGnTJgoJPpH3E2mkjSAqE8YSyEFry1QDCJYL"
+			]
+		},
+		"https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/Context.sol": {
+			"keccak256": "0xe2e337e6dde9ef6b680e07338c493ebea1b5fd09b43424112868e9cc1706bca7",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://6df0ddf21ce9f58271bdfaa85cde98b200ef242a05a3f85c2bc10a8294800a92",
+				"dweb:/ipfs/QmRK2Y5Yc6BK7tGKkgsgn3aJEQGi5aakeSPZvS65PV8Xp3"
+			]
+		},
+		"https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/Counters.sol": {
+			"keccak256": "0xf0018c2440fbe238dd3a8732fa8e17a0f9dce84d31451dc8a32f6d62b349c9f1",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://59e1c62884d55b70f3ae5432b44bb3166ad71ae3acd19c57ab6ddc3c87c325ee",
+				"dweb:/ipfs/QmezuXg5GK5oeA4F91EZhozBFekhq5TD966bHPH18cCqhu"
+			]
+		},
+		"https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/ShortStrings.sol": {
+			"keccak256": "0xf415bea43be5587b449753cfddab434182034ded22e50bc9dce4ac4a613045ee",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://9baf7a59358eef93ae8635d00b89285adc2295870f12f720e5b54800d54568b1",
+				"dweb:/ipfs/QmTSKWkpvFdHkT9NrLPmS1SVeSgvV6hbS5xb91giLoEr32"
+			]
+		},
+		"https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/StorageSlot.sol": {
+			"keccak256": "0x20ecf3c67cab5ec0a1d0cc7d980fa236ffdfd8579d8d8b6b89d29329bc6e78ae",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://b52e4581ee6605732661d367845d2c551e0efcf81852f29248aef6d4be0a300b",
+				"dweb:/ipfs/QmaLPj2TrVCTPH6D1BEjBVCb9N1dLJ6pTcoJwCmM3HWkfC"
+			]
+		},
+		"https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/Strings.sol": {
+			"keccak256": "0x2626d8ab3dfdad0fad630c212ad146d59473d0f48b771784c61a7c1dbbea1f3f",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://d7c144532f1e7c76ac95fb6a8f617c1f740d7a73442a907eb60910e99dfa1fbf",
+				"dweb:/ipfs/QmZsGyooD6emxB8JCuugRjnRYS2MPZEL586uuV7dgC8Jng"
+			]
+		},
+		"https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/cryptography/ECDSA.sol": {
+			"keccak256": "0xbb3a7044647cb4088be40b49b87ff990fac44f2d50569110a2b2ce7942365020",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://5deecb9394b327096dee59f6d2600e5dc41795d20d6312b9e17184d04941855e",
+				"dweb:/ipfs/QmNRLLFHxfdzPBcUF2NpyGqBoYzGGoR34g7HWFzEcPokEX"
+			]
+		},
+		"https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/cryptography/EIP712.sol": {
+			"keccak256": "0xa8f005abb8835d40af525bcf3cdc31d7e4a55730ce9b584d3fe4e5db442fb0ed",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://a0a1184f05c5a953155e11cb977e5c08a3b4442919c7e928d3e3adbf06ae6fff",
+				"dweb:/ipfs/QmdRf7Cg7e9va2K29Kb7KLng26GmUmpti7mAEhGbAQXS7r"
+			]
+		},
+		"https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/math/Math.sol": {
+			"keccak256": "0xbaf3bd8c64ac943fafde717797ee797c96360586b9448ea25e9872490a6e6858",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://bab65b9b5ea0c68e96e1a73460db616042f639d144a6a75595434cfa2a483ed4",
+				"dweb:/ipfs/QmUgwEcWXaEu4VSpymiVq8tZYKgA44HPMWZowpg2L8Kiij"
+			]
+		},
+		"https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/math/SafeCast.sol": {
+			"keccak256": "0x52a8cfb0f5239d11b457dcdd1b326992ef672714ca8da71a157255bddd13f3ad",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://495145362c7ff1c9ca88c58bbbbcb412e3c2004406647412394486552ff6c278",
+				"dweb:/ipfs/QmNNCeng6d5eRPDn6tkWSQhjE39XWfQEfjA63rRwHmr1iH"
+			]
+		},
+		"https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/math/SignedMath.sol": {
+			"keccak256": "0xf92515413956f529d95977adc9b0567d583c6203fc31ab1c23824c35187e3ddc",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://c50fcc459e49a9858b6d8ad5f911295cb7c9ab57567845a250bf0153f84a95c7",
+				"dweb:/ipfs/QmcEW85JRzvDkQggxiBBLVAasXWdkhEysqypj9EaB6H2g6"
 			]
 		},
 		"smart_contracts/contracts/token/Token.sol": {
-			"keccak256": "0x4b72eec82f6b06e42b291b6ba096ef13bb9628767ba575e7174c9917c851a938",
+			"keccak256": "0x5449b65c9b928b713652912548320f8dbc8bb0635d330175a0a5167706cbd784",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://18cc84c60c42d17052f845900f6bcec80f1d4ad52d60bf3cdca809e762bb59b5",
-				"dweb:/ipfs/QmQ2rduwAZTz1YYMN71zbMm6xo46ricBve7K4VPmkqnJAX"
-			]
-		},
-		"smart_contracts/libraries/Math.sol": {
-			"keccak256": "0xa5569d6bfc253be02181f5431379170dc613da3fe71858e1d78fd1a98f363b6e",
-			"license": "MIT",
-			"urls": [
-				"bzz-raw://58de13bfab99701ce8f238148f82adb79609ef3f0fdb6e0063f751eb3053e44f",
-				"dweb:/ipfs/QmTHVsgHikdvRTf9o9mwjtjkaEKAtje12DWBdS4cqjEWZL"
+				"bzz-raw://c25e26a1ed21c527d800f0cf31a4494fbc5b949414a81fa6fff3a8b75841d78c",
+				"dweb:/ipfs/QmfBdeFxfeX5Rvk7dBFY5kHQA1gVwwPiUhjhhfhNfhombF"
 			]
 		}
 	},
