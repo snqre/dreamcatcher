@@ -159,33 +159,71 @@ contract Token is IERC20, IERC20Permit, EIP712, IERC5805 {
             _s
         );
         require(nonce == useNonce(signer), "invalid nonce");
-        // delegator, delagatee
-        address currentDelegate = delegates(signer);
-        uint256 delegatorBalance = balanceOf(signer);
-        delagates[signer] = _delegatee;
-        emit DelegateChanged(signer, currentDelegate, _delegatee);
-        // src, dst, amount
-        // src == currentDelegate, dst == delegatee, amount == delegator balance
-        if (currentDelegate != _delegatee && delegatorBalance > 0) {
-            if (currentDelegate != address(0)) {
-                ()
+        delegate(signer, _delegatee);
+    }
+
+    function checkpointsLookUp(Checkpoint[] storage ckpts, uint256 _timepoint) private view returns (uint256) {
+        uint256 length = ckpts.length;
+        uint256 low = 0;
+        uint256 high = length;
+        if (length > 5) {
+            uint256 mid = length - Math.sqrt(length);
+            if (unsafeAccess(ckpts, mid).fromeBlock > _timepoint) {
+                high = mid;
+            } else {
+                low = mid + 1;
+            }
+        }
+
+        while (low < high) {
+            uint256 mid = Math.average(low, high);
+            if (unsafeAccess(ckpts, mid).fromBlock > _timepoint) {
+                high = mid;
+            } else {
+                low = mid + 1;
+            }
+        }
+
+        unchecked {
+            return high == 0 ? 0 : unsafeAccess(ckpts, high - 1).votes;
+        }
+    }
+
+    function delegate(address _delegator, address _delegatee) internal {
+        address currentDelegate = delegates(_delegator);
+        uint256 delegatorBalance = balanceOf(_delegator);
+        delegates[_delegator] = _delegatee;
+        emit DelegateChanged(_delegator, currentDelegate, _delegatee);
+        moveVotingPower(currentDelegate, _delegatee, delegatorBalance);
+    }
+
+    function moveVotingPower(address _src, address _dst, uint256 _amount) private {
+        if (_src != _dst && _amount > 0) {
+            if (_src != address(0)) {
+                (uint256 oldWeight, uint256 newWeight) = writeCheckpoint(checkpoints[_src], subtract, _amount);
+                emit DelegateVotesChanged(_src, oldWeight, newWeight);
+            }
+
+            if (_dst != address(0)) {
+                (uint256 oldWeight, uint256 newWeight) = writeCheckpoint(checkpoints[_dst], add, _amount);
+                emit DelegateVotesChanged(_dst, oldWeight, newWeight);
             }
         }
     }
 
-    function writeCheckpoint(Checkpoint[] storage ckpts, function(uint256, uint256) view returns (uint256) op, uint256 delta) private returns (uint256 _oldWeight, uint256 _newWeight) {
+    function writeCheckpoint(Checkpoint[] storage ckpts, function(uint256, uint256) view returns (uint256) op, uint256 delta) private returns (uint256 oldWeigth, uint256 newWeight) {
         uint256 pos = ckpts.length;
-
         unchecked {
             Checkpoint memory oldCkpt = pos == 0 ? Checkpoint(0, 0) : unsafeAccess(ckpts, pos - 1);
-
             oldWeight = oldCkpt.votes;
             newWeight = op(oldWeight, delta);
-
             if (pos > 0 && oldCkpt.fromBlock == clock()) {
-                unsafeAccess(ckpts, pos - 1).votes = SafeCast.toUint224(newWeight);
+                unsafeAccess(ckpts, pos - 1).votes = SafeCast.toUint244(newWeight);
             } else {
-                ckpts.push(Checkpoint({fromBlock: SafeCast.toUint32(clock()), votes: SafeCast.toUint224(newWeigth)}));
+                ckpts.push(Checkpoint({
+                    fromBlock: SafeCast.toUint32(clock()),
+                    votes: SafeCast.toUint244(newWeight)
+                }));
             }
         }
     }
@@ -204,35 +242,6 @@ contract Token is IERC20, IERC20Permit, EIP712, IERC5805 {
             result.slot := add(keccak256(0, 0x20), _pos)
         }
     }
-
-    function checkpointsLookUp(Checkpoint[] storage ckpts, uint256 _timepoint) private view returns (uint256) {
-        uint256 length = ckpts.length;
-        uint256 low = 0;
-        uint256 high = length;
-        if (length > 5) {
-            uint256 mid = length - Math.sqrt(length);
-            if (unsafeAccess(ckpts, mid).frameBlock > timepoint) {
-                high = mid;
-            } else {
-                low = mid + 1;
-            }
-        }
-
-        while (low < high) {
-            uint256 mid = Math.average(low, high);
-            if (unsafeAccess(ckpts, mid).fromBlock > timepoint) {
-                high = mid;
-            } else {
-                low = mid + 1;
-            }
-        }
-
-        unchecked {
-            return high == 0 ? 0 : unsafeAccess(ckpts, high - 1).votes;
-        }
-    }
-    
-
     
     // PERMIT
     function permit(address _owner, address _spender, uint256 _value, uint256 _deadline, uint8 _v, bytes32 _r, bytes32 _s) public {
@@ -357,6 +366,7 @@ contract Token is IERC20, IERC20Permit, EIP712, IERC5805 {
         }
         emit Transfer(address(0), _to, _amount);
         afterTokenTransfer(address(0), _to, _amount);
+        writeCheckpoint(totalSupplyCheckpoints, add, _amount);
     }
 
     function burn(address _from, uint256 _amount) internal {
@@ -369,15 +379,16 @@ contract Token is IERC20, IERC20Permit, EIP712, IERC5805 {
         }
         emit Transfer(_from, address(0), _amount);
         afterTokenTransfer(_from, address(0), _amount);
+        writeCheckpoint(totalSupplyCheckpoints, subtract, _amount);
     }
 
     // before transfers
     function beforeTokenTransfer(address _from, address _to, uint256 _amount) internal {
-
+        
     }
     // after transfers
     function afterTokenTransfer(address _from, address _to, uint256 _amount) internal {
-
+        moveVotingPower(delegates(_from), delegates(_to), _amount);
     }
 
 }
