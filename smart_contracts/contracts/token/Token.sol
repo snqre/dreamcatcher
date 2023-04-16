@@ -65,15 +65,19 @@ interface IERC20Permit {
     function DOMAIN_SEPARATOR() external view returns (bytes32);
 }
 
+contract BaseToken {
+    string private immutable name;
+    function name() public view returns (string memory) {return "Dreamcather";}
+}
+
 contract Token is IERC20, IERC20Metadata {
     string   private immutable name_;
     string   private immutable symbol_;
-    uint8    private decimals_;
+    uint8    private immutable decimals_;
     uint256  private totalSupply_;
     uint256  private immutable maxSupply_;
     mapping(address => uint256) private balances_;
     mapping(address => mapping(address => uint256)) private allowances_;
-
     constructor() {
         name_ = "Dreamcatcher";
         symbol_ = "DREAM";
@@ -81,59 +85,61 @@ contract Token is IERC20, IERC20Metadata {
         totalSupply_ = 0;
         maxSupply_ = 200000000 * 10**decimals_;
     }
-
-    // =.=.=.=.= ERC20 PUBLIC VIS
-    function name() public view returns (string memory) {return name_;}
-    function symbol() public view returns (string memory) {return symbol_;}
-    function decimals() public view returns (uint8) {return decimals_;}
-    function balanceOf(address _owner) public view returns (uint256) {return balances_[_owner];}
-    function totalSupply() public view returns (uint256) {return totalSupply_;}
-    function maxSupply() public view returns (uint256) {return maxSupply_;}
-    function allowance(address _owner, address _spender) public view returns (uint256) {return allowances_[_owner][_spender];}
-    function approve(address _spender, uint256 _amount) public returns (bool) {
-        address owner = Get.msgSender();
-        require(owner != address(0), "Approve from the zero address");
-        require(_spender != address(0), "Approve from the zero address");
-        allowances_[owner][_spender] = _amount;
-        emit Approval(owner, _spender, _amount);
-        return true;
+    modifier isNotZeroAddress(address _owner) {
+        require(_owner != address(0));
+        _;
     }
-    function transfer(address _to, uint256 _amount) public returns (bool) {
-        address memory _from = Get.msgSender();
-        require(_from != address(0), "Transfer from the zero address");
-        require(_to != address(0), "Transfer to the zero address");
+
+    modifier isTransfer(address _from, address _to, uint256 _amount) {
         beforeTokenTransfer(_from, _to, _amount);
-        require(balances_[_from] >= _amount, "Transfer amount exceeds balance");
-        unchecked {
-            balances_[_from] -= _amount;
-            balances_[_to] += _amount;
-        }
+        _;
         emit Transfer(_from, _to, _amount);
         afterTokenTransfer(_from, _to, _amount);
+    }
+    
+    function name() public view returns (string memory) {return name_;}          // immutable readonly
+    function symbol() public view returns (string memory) {return symbol_;}      // immutable readonly
+    function decimals() public view returns (uint8) {return decimals_;}          // immutable readonly
+    function balanceOf(address _owner) public view returns (uint256) {return balances_[_owner];}
+    function balanceIncrease(address _owner, uint256 _amount) internal {balances_[_owner] += _amount;}
+    function balanceDecrease(address _owner, uint256 _amount) internal {balances_[_owner] -= _amount;}
+    function totalSupply() public view returns (uint256) {return totalSupply_;}
+    function totalSupplyIncrease(uint256 _amount) internal {totalSupply_ += _amount;}
+    function totalSupplyDecrease(uint256 _amount) internal {totalSupply_ -= _amount;}
+    function maxSupply() public view returns (uint256) {return maxSupply_;}
+    function allowance(address _owner, address _spender) public view returns (uint256) {return allowances_[_owner][_spender];}
+    function approve(address _spender, uint256 _amount) public isNotZeroAddress(Get.msgSender()) isNotZeroAddress(_spender) returns (bool) {
+        allowances_[Get.msgSender()][_spender] = _amount;
+        emit Approval(Get.msgSender(), _spender, _amount);
         return true;
     }
-    function transferFrom(address _from, address _to, uint256 _amount) public returns (bool) {
+    function transfer(address _to, uint256 _amount) public isTransfer(Get.msgSender(), _to, _amount) isNotZeroAddress(Get.msgSender()) isNotZeroAddress(_to) returns (bool) {
+        require(balances_[Get.msgSender()] >= _amount, "Transfer amount exceeds balance");
+        unchecked {
+            balanceDecrease(Get.msgSender(), _amount);
+            balanceIncrease(_to, _amount);
+        }
+        return true;
+    }
+    function transferFrom(address _from, address _to, uint256 _amount) public isTransfer(_from, _to, _amount) isNotZeroAddress(_from) isNotZeroAddress(Get.msgSender()) returns (bool) {
         address _spender = Get.msgSender();
         uint256 currentAllowance = allowance(_from, _spender);
         if (currentAllowance != type(uint256).max) {
             require(currentAllowance >= _amount, "Insufficient allowance");
             unchecked {
-                require(_from != address(0), "Approve from the zero address");
-                require(_spender != address(0), "Approve to the zero address");
                 allowances_[_from][_spender] = _amount;
                 emit Approval(_from, _spender, _amount);
             }
         }
         require(_from != address(0), "Transfer from the zero address");
         require(_to != address(0), "Transfer to the zero address");
-        beforeTokenTransfer(_from, _to, _amount);
+
         require(balances_[_from] >= _amount, "Transfer amount exceeds balance");
         unchecked {
             balances_[_from] -= _amount;
             balances_[_to] += _amount;
         }
         emit Transfer(_from, _to, _amount);
-        afterTokenTransfer(_from, _to, _amount);
         return true;
     }
     function increaseAllowance(address _spender, uint256 _addedValue) public returns (bool) {
@@ -157,7 +163,6 @@ contract Token is IERC20, IERC20Metadata {
         return true;
     }
     // =.=.=.=.= ERC20 INTERNAL VIS
-    function increase
     function mint(address _to, uint256 _amount) internal {
         require(totalSupply_ + _amount <= maxSupply_, "Max supply exceeded");
         require(_to != address(0), "Mint to the zero address");
