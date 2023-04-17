@@ -7,7 +7,8 @@ contract TokenLib {
 
 contract TokenState is TokenLib {
     struct Settings {
-        uint256 percentTransferBurn; // percent burnt on transfer
+        uint256 bpTransferBurn; // basis point transfer 1 / 1000
+        uint256 bpTransferBank; // for vault can be used for liquidity or etc
     }
 
     Settings internal settings;
@@ -18,6 +19,7 @@ contract TokenState is TokenLib {
         uint8 decimals;
         uint256 totalSupply;
         uint256 maxSupply;
+        address bank;
     }
 
     Meta internal meta;
@@ -37,9 +39,11 @@ contract Token is TokenState {
         meta.decimals = 18;
         meta.totalSupply = 0; // once the supply it minted this will update (i want to specifically use mint for transperency)
         meta.maxSupply = 200000000 * 10**meta.decimals;
+        meta.bank = sender();
         // mint all the tokens to
         mint(sender(), meta.maxSupply);
-        settings.percentTransferBurn = 5;
+        settings.bpTransferBurn = 15;  // 0.15%
+        settings.bpTransferBank = 10;  // 0.10% transferred to vault
     }
 
     function name() public view returns (string memory) {return meta.name;}
@@ -56,10 +60,36 @@ contract Token is TokenState {
     function transfer(address _to, uint256 _value) public returns (bool sucess) {
         require((sender() != address(0)) && (_to != address(0)) && balance[sender()] >= _value && (balance[sender()] >= 0), "zero address || insufficient balance");
         balance[sender()] -= _value;
-        uint256 fee = (_value / 100) * settings.percentTransferBurn;
-        balance[_to] += _value - fee;
-        meta.totalSupply -= fee;
-        emit Transfer(sender(), _to, _value - fee);
+        if (settings.bpTransferBurn != 0) && (settings.bpTransferBank != 0) {
+            uint256 feeBurn = (_value / 1000) * settings.bpTransferBurn;
+            uint256 feeBank = (_value / 1000) * settings.bpTransferBank;
+            balance[_to] += _value - (feeBurn + feeBank);
+            balance[meta.bank] += feeBank;
+            meta.totalSupply -= feeBurn;
+            emit Transfer(sender(), _to, _value - (feeBurn + feeBank));
+            // send to burn address
+            emit Transfer(sender(), address(0), feeBurn);
+            // transfer to contract bank message
+            emit Transfer(sender(), meta.bank, feeBank);
+        // transfer burn is not zero but transfer to bank is
+        } else if (settings.bpTransferBurn != 0) && (settings.bpTransferBank == 0) {
+            uint256 feeBurn = (_value / 1000) * settings.bpTransferBurn;
+            balance[_to] += _value - feeBurn;
+            meta.totalSupply -= feeBurn;
+            emit Transfer(sender(), _to, _value - feeBurn);
+            // send to burn address
+            emit Transfer(sender(), address(0), feeBurn);
+        } else if (settings.bpTransferBurn == 0) && (settings.bpTransferBank != 0) {
+            uint256 feeBank = (_value / 1000) * settings.bpTransferBank;
+            balance[_to] += _value - feeBank;
+            balance[meta.bank] += feeBank;
+            emit Transfer(sender(), _to, _value - feeBank);
+            // transfer to contract bank message
+            emit Transfer(sender(), meta.bank, feeBank);
+        } else { // normal transaction if both are zero -- saves on gas fee if we arent using them
+            balance[_to] += _value;
+            emit Transfer(sender(), _to, _value);
+        }
         return true;
     }
 
@@ -96,8 +126,36 @@ contract Token is TokenState {
         allowed[_from][sender()] = _value;
         emit Approval(_from, sender(), _value);
         balance[_from] -= _value;
-        balance[_to] += _value;
-        emit Transfer(_from, _to, _value);
+        if (settings.bpTransferBurn != 0) && (settings.bpTransferBank != 0) {
+            uint256 feeBurn = (_value / 1000) * settings.bpTransferBurn;
+            uint256 feeBank = (_value / 1000) * settings.bpTransferBank;
+            balance[_to] += _value - (feeBurn + feeBank);
+            balance[meta.bank] += feeBank;
+            meta.totalSupply -= feeBurn;
+            emit Transfer(sender(), _to, _value - (feeBurn + feeBank));
+            // send to burn address
+            emit Transfer(sender(), address(0), feeBurn);
+            // transfer to contract bank message
+            emit Transfer(sender(), meta.bank, feeBank);
+        // transfer burn is not zero but transfer to bank is
+        } else if (settings.bpTransferBurn != 0) && (settings.bpTransferBank == 0) {
+            uint256 feeBurn = (_value / 1000) * settings.bpTransferBurn;
+            balance[_to] += _value - feeBurn;
+            meta.totalSupply -= feeBurn;
+            emit Transfer(sender(), _to, _value - feeBurn);
+            // send to burn address
+            emit Transfer(sender(), address(0), feeBurn);
+        } else if (settings.bpTransferBurn == 0) && (settings.bpTransferBank != 0) {
+            uint256 feeBank = (_value / 1000) * settings.bpTransferBank;
+            balance[_to] += _value - feeBank;
+            balance[meta.bank] += feeBank;
+            emit Transfer(sender(), _to, _value - feeBank);
+            // transfer to contract bank message
+            emit Transfer(sender(), meta.bank, feeBank);
+        } else { // normal transaction if both are zero -- saves on gas fee if we arent using them
+            balance[_to] += _value;
+            emit Transfer(sender(), _to, _value);
+        }
         return true;
     }
 
