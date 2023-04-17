@@ -7,11 +7,9 @@ contract TokenLib {
 
 contract TokenState is TokenLib {
     struct Settings {
-        uint256 bpTransferBurn; // basis point transfer 1 / 1000
+        uint256 bpTransferBurn; // basis point transfer 1 / 1000 **100 == 1%
         uint256 bpTransferBank; // for vault can be used for liquidity or etc
     }
-
-    Settings internal settings;
 
     struct Meta {
         string name;
@@ -22,6 +20,7 @@ contract TokenState is TokenLib {
         address bank;
     }
 
+    Settings internal settings;
     Meta internal meta;
 
     mapping(address => uint256) internal balance;
@@ -42,8 +41,8 @@ contract Token is TokenState {
         meta.bank = sender();
         // mint all the tokens to
         mint(sender(), meta.maxSupply);
-        settings.bpTransferBurn = 15;  // 0.15%
-        settings.bpTransferBank = 10;  // 0.10% transferred to vault
+        settings.bpTransferBurn = 0;  // start 0 but after exposure period 0.15%
+        settings.bpTransferBank = 0;  // start 0 but after exposure period 0.10% transferred to vault
     }
 
     function name() public view returns (string memory) {return meta.name;}
@@ -118,9 +117,9 @@ contract Token is TokenState {
     function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
         require(allowance(_from, sender()) != type(uint256).max);
         require(allowance(_from, sender()) >= _value);
-        require(_from != address(0));
-        require(sender() != address(0));
-        require(_to != address(0));
+        require(_from != address(0), "zero address");
+        require(sender() != address(0), "zero address");
+        require(_to != address(0), "zero address");
         require(balance[_from] >= _value, "insufficient balance");
         require((balance[_from] >= 0));
         allowed[_from][sender()] = _value;
