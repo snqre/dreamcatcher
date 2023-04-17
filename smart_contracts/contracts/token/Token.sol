@@ -2,10 +2,16 @@
 pragma solidity ^0.8.9;
 
 contract TokenLib {
-    function sender() internal returns (address) {return msg.sender;}
+    function sender() internal view returns (address) {return msg.sender;}
 }
 
 contract TokenState is TokenLib {
+    struct Settings {
+        uint256 percentTransferBurn; // percent burnt on transfer
+    }
+
+    Settings internal settings;
+
     struct Meta {
         string name;
         string symbol;
@@ -22,7 +28,7 @@ contract TokenState is TokenLib {
 
 contract Token is TokenState {
 
-    event Transfer(address indexed _from, address indexed _to, uint258 _value);
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 
     constructor() {
@@ -33,6 +39,7 @@ contract Token is TokenState {
         meta.maxSupply = 200000000 * 10**meta.decimals;
         // mint all the tokens to
         mint(sender(), meta.maxSupply);
+        settings.percentTransferBurn = 5;
     }
 
     function name() public view returns (string memory) {return meta.name;}
@@ -41,7 +48,7 @@ contract Token is TokenState {
     function totalSupply() public view returns (uint256) {return meta.totalSupply;}
     function maxSupply() public view returns (uint256) {return meta.maxSupply;}
 
-    function balanceOf(address _owner) public view returns (uint256 balance) {
+    function balanceOf(address _owner) public view returns (uint256) {
         require(_owner != address(0), "zero address");
         return balance[_owner];
     }
@@ -49,8 +56,10 @@ contract Token is TokenState {
     function transfer(address _to, uint256 _value) public returns (bool sucess) {
         require((sender() != address(0)) && (_to != address(0)) && balance[sender()] >= _value && (balance[sender()] >= 0), "zero address || insufficient balance");
         balance[sender()] -= _value;
-        balance[_to] += _value;
-        emit Transfer(sender(), _to, _value);
+        uint256 fee = (_value / 100) * settings.percentTransferBurn;
+        balance[_to] += _value - fee;
+        meta.totalSupply -= fee;
+        emit Transfer(sender(), _to, _value - fee);
         return true;
     }
 
@@ -76,8 +85,14 @@ contract Token is TokenState {
         return true;
     }
 
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
-        require((allowance(_from, sender()) != type(uint256).max) && (allowance(_from, sender() >= _value)) && (_from != address(0)) && (sender() != address(0)) && (_to != address(0)) && (balance[_from] >= _value) && (balance[_from] >= 0), "insufficient allowance || allowance(_owner, _spender) != type(uint256).max || zero address || insufficient balance");
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+        require(allowance(_from, sender()) != type(uint256).max);
+        require(allowance(_from, sender()) >= _value);
+        require(_from != address(0));
+        require(sender() != address(0));
+        require(_to != address(0));
+        require(balance[_from] >= _value);
+        require((balance[_from] >= 0));
         allowed[_from][sender()] = _value;
         emit Approval(_from, sender(), _value);
         balance[_from] -= _value;
@@ -88,6 +103,7 @@ contract Token is TokenState {
 
     function mint(address _to, uint256 _value) internal {
         require(_to != address(0), "zero address");
+        require(meta.totalSupply + _value <= meta.maxSupply);
         meta.totalSupply += _value;
         balance[_to] += _value;
         emit Transfer(address(0), _to, _value);
