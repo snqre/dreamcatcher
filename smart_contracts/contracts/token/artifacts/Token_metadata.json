@@ -322,11 +322,11 @@
 	},
 	"sources": {
 		"smart_contracts/contracts/token/Token.sol": {
-			"keccak256": "0xb94682e4eee707ff300f45e8436a1b94a056ac648c9055c4e0f073048037f6cd",
+			"keccak256": "0xed851f9c5573e1ff88edd9b024023e5fb91860c43b4d88c386f4b44a87043d6d",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://dc5d0c6c906a08f91f483da90298d2ec5ca49a72a5e1ffa1812bd1193a715cfc",
-				"dweb:/ipfs/QmP44QGm5tSXKHr9BNjpHm8rNb2Zu6W1Bv3tZk3bfcAEMt"
+				"bzz-raw://f1533fb17dfc6e459d6c086a0df4139bd9fb4814e3631adc978aa2aed12ddcb1",
+				"dweb:/ipfs/QmU8Bckf8RFSGRV6LcKTEFESfc3DHTkKYgUZNDJk1cWtcQ"
 			]
 		}
 	},

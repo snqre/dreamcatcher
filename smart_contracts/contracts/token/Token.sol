@@ -60,7 +60,7 @@ contract Token is TokenState {
     function transfer(address _to, uint256 _value) public returns (bool sucess) {
         require((sender() != address(0)) && (_to != address(0)) && balance[sender()] >= _value && (balance[sender()] >= 0), "zero address || insufficient balance");
         balance[sender()] -= _value;
-        if (settings.bpTransferBurn != 0) && (settings.bpTransferBank != 0) {
+        if (settings.bpTransferBurn != 0 && settings.bpTransferBank != 0) {
             uint256 feeBurn = (_value / 1000) * settings.bpTransferBurn;
             uint256 feeBank = (_value / 1000) * settings.bpTransferBank;
             balance[_to] += _value - (feeBurn + feeBank);
@@ -72,14 +72,14 @@ contract Token is TokenState {
             // transfer to contract bank message
             emit Transfer(sender(), meta.bank, feeBank);
         // transfer burn is not zero but transfer to bank is
-        } else if (settings.bpTransferBurn != 0) && (settings.bpTransferBank == 0) {
+        } else if (settings.bpTransferBurn != 0 && settings.bpTransferBank == 0) {
             uint256 feeBurn = (_value / 1000) * settings.bpTransferBurn;
             balance[_to] += _value - feeBurn;
             meta.totalSupply -= feeBurn;
             emit Transfer(sender(), _to, _value - feeBurn);
             // send to burn address
             emit Transfer(sender(), address(0), feeBurn);
-        } else if (settings.bpTransferBurn == 0) && (settings.bpTransferBank != 0) {
+        } else if (settings.bpTransferBurn == 0 && settings.bpTransferBank != 0) {
             uint256 feeBank = (_value / 1000) * settings.bpTransferBank;
             balance[_to] += _value - feeBank;
             balance[meta.bank] += feeBank;
@@ -121,12 +121,12 @@ contract Token is TokenState {
         require(_from != address(0));
         require(sender() != address(0));
         require(_to != address(0));
-        require(balance[_from] >= _value);
+        require(balance[_from] >= _value, "insufficient balance");
         require((balance[_from] >= 0));
         allowed[_from][sender()] = _value;
         emit Approval(_from, sender(), _value);
         balance[_from] -= _value;
-        if (settings.bpTransferBurn != 0) && (settings.bpTransferBank != 0) {
+        if (settings.bpTransferBurn != 0 && settings.bpTransferBank != 0) {
             uint256 feeBurn = (_value / 1000) * settings.bpTransferBurn;
             uint256 feeBank = (_value / 1000) * settings.bpTransferBank;
             balance[_to] += _value - (feeBurn + feeBank);
@@ -138,14 +138,14 @@ contract Token is TokenState {
             // transfer to contract bank message
             emit Transfer(sender(), meta.bank, feeBank);
         // transfer burn is not zero but transfer to bank is
-        } else if (settings.bpTransferBurn != 0) && (settings.bpTransferBank == 0) {
+        } else if (settings.bpTransferBurn != 0 && settings.bpTransferBank == 0) {
             uint256 feeBurn = (_value / 1000) * settings.bpTransferBurn;
             balance[_to] += _value - feeBurn;
             meta.totalSupply -= feeBurn;
             emit Transfer(sender(), _to, _value - feeBurn);
             // send to burn address
             emit Transfer(sender(), address(0), feeBurn);
-        } else if (settings.bpTransferBurn == 0) && (settings.bpTransferBank != 0) {
+        } else if (settings.bpTransferBurn == 0 && settings.bpTransferBank != 0) {
             uint256 feeBank = (_value / 1000) * settings.bpTransferBank;
             balance[_to] += _value - feeBank;
             balance[meta.bank] += feeBank;
