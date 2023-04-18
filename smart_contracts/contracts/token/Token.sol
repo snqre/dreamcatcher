@@ -1,14 +1,24 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.9;
 
+contract Authenticator {
+    mapping(address => bool) internal isAdmin;
+    mapping(address => bool) internal isDev;    // we will maintain some control of the contract for period after deployment to improve and fine tuine it
+}
+
 contract TokenLib {
     function sender() internal view returns (address) {return msg.sender;}
 }
 
 contract TokenState is TokenLib {
+    struct VotingMechanic {
+        uint256 voteWeightPerToken; // how much voting power you can get per token
+    }
+
     struct Settings {
         uint256 bpTransferBurn; // basis point transfer 1 / 1000 **100 == 1%
         uint256 bpTransferBank; // for vault can be used for liquidity or etc
+        VotingMechanic VotingMechanic;
     }
 
     struct Meta {
@@ -43,6 +53,7 @@ contract Token is TokenState {
         mint(sender(), meta.maxSupply);
         settings.bpTransferBurn = 0;  // start 0 but after exposure period 0.15%
         settings.bpTransferBank = 0;  // start 0 but after exposure period 0.10% transferred to vault
+        settings.VotingMechanic.voteWeightPerToken = 1; // x vote per token
     }
 
     function name() public view returns (string memory) {return meta.name;}
