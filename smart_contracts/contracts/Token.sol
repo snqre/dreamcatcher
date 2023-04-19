@@ -1,19 +1,65 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.9;
+pragma solidity ^0.8.9; // note that in  pragma greater than 0.8.0 overflow and underflow is automatically checked
 
-contract TokenLib {
-    function sender() internal view returns (address) {return msg.sender;}
+import "smart_contracts/contracts/Authenticator.sol";
+
+interface IERC20 {
+    function name() public view returns (string memory);
+    function symbol() public view returns (string memory);
+    function decimals() public view returns (uint8);
+    function totalSupply() public view returns (uint256);
+    function balanceOf(address _owner) public view returns (uint256);
+    function transfer(address _to, uint256 _value) public returns (bool success);
+    function allowance(address _owner, address _spender) public view returns (uint256 remaining);
+    function approve(address _spender, uint256 _value) public returns (bool success);
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool);
+
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 }
 
-contract TokenState is TokenLib {
+interface ICustomToken {
+    function maxSupply() public view returns (uint256);
+    function stakeOf(address _owner) public view returns (uint256);
+    function votesOf(address _owner) public view returns (uint256);
+    // ripped straight from @openzeppelin
+    function increaseAllowance(address _spender, uint256 _value) public returns (bool);
+    function decreaseAllowance(address _spender, uint256 _value) public returns (bool);
+    // staking and unstaking functions and features here
+    /**
+    Staking goes to our bank or vault, it cannot be used by anyone, it just stays there
+    When we make earnings or give out rewards, stakers will be able to withdraw directly from the vault
+     */
+    function stake(uint256 _value) public returns (bool);
+    function unstake(uint256 _value) public returns (bool);
+
+    // distribution mechanin
+    function distribute() public returns (bool);
+}
+
+// inherit from authenticator contract
+contract TokenState is Authenticator {
     struct VotingMechanic {
         uint256 voteWeightPerToken; // how much voting power you can get per token
+    }
+
+    struct State {
+        // conditions are difficult to change but can be chanegd in case of emergency or strong requirmeent require large quorum to do so
+        bool isPaused;
+        bool isTransferable;
+        bool isMintable;
+        bool isBurnable;
+        bool isTempHalt; // temp halt with limited duration, does not pause the eco fully but only when required
+        uint256 durationTempHalt;
+        bool isMonetized; // temp halt or fully disable monetizeation within the contract
+        uint256 durationTempMonetizationHalt;
     }
 
     struct Settings {
         uint256 bpTransferBurn; // basis point transfer 1 / 1000 **100 == 1%
         uint256 bpTransferBank; // for vault can be used for liquidity or etc
         VotingMechanic VotingMechanic;
+        State state; // conditional booleans
     }
 
     struct Meta {
@@ -25,10 +71,19 @@ contract TokenState is TokenLib {
         address bank;
     }
 
+    struct VestingSchedule {
+        uint256 amount;
+        uint256 start;
+        uint256 end;
+        uint256 released; // approved for | basically how much can the users pull out of the main vault
+    }
+
     Settings internal settings;
     Meta internal meta;
 
     mapping(address => uint256) internal balance;
+    mapping(address => uint256) internal staked; // amount of their tokens staked cannot be both in balance and staked must be only one
+    mapping(address => uint256) internal votes; // amount of voting weight this account has typically only given when staked
     mapping(address => mapping(address => uint256)) internal allowed;
 }
 
@@ -42,13 +97,27 @@ contract Token is TokenState {
         meta.symbol = "DREAM";
         meta.decimals = 18;
         meta.totalSupply = 0; // once the supply it minted this will update (i want to specifically use mint for transperency)
-        meta.maxSupply = 200000000 * 10**meta.decimals;
+        meta.maxSupply = 200000000 * 10**meta.decimals; // 200_000_000.000000000000000000 *much divisible ... much wow
         meta.bank = sender();
-        // mint all the tokens to
-        mint(sender(), meta.maxSupply);
+        // settings default start || something else to note about exchanges is that when they trade within
+        // their platforms they do not make transfers which might impact our bottomline
         settings.bpTransferBurn = 0;  // start 0 but after exposure period 0.15% | 15
         settings.bpTransferBank = 0;  // start 0 but after exposure period 0.10% transferred to vault
         settings.VotingMechanic.voteWeightPerToken = 1; // x vote per token
+        // initial distribution team active 10,000,000
+        mint(, 5_000_000 * 10**meta.decimals); // team 1
+        mint(, 2_000_000 * 10**meta.decimals); // team m 2
+        mint(, 2_000_000 * 10**meta.decimals); // team m 3
+        mint(, 250000 * 10**meta.decimals); // team 4
+        mint(, 250000 * 10**meta.decimals); // team 5
+        mint(, 250000 * 10**meta.decimals);
+        mint(, 250000 * 10**meta.decimals);
+        // 28,000,000
+        mint(sender(), 28000000 * 10**meta.decimals);
+        // 2,000,000 personal for fund
+        mint()
+        // 10,000,000 SERIES A & B
+        mint(sender(), 10000000 * 10**meta.decimals);
     }
 
     function name() public view returns (string memory) {return meta.name;}
@@ -61,8 +130,17 @@ contract Token is TokenState {
         require(_owner != address(0), "zero address");
         return balance[_owner];
     }
+    function stakeOf(address _owner) public view returns (uint256) {
+        require(_owner != address(0), "zero address");
+        return staked[_owner];
+    }
 
-    function transfer(address _to, uint256 _value) public returns (bool sucess) {
+    function votesOf(address _owner) public view returns (uint256) {
+        require(_owner != address(0), "zero address");
+        return votes[_owner];
+    }
+
+    function transfer(address _to, uint256 _value) public returns (bool sucecss) {
         require((sender() != address(0)) && (_to != address(0)) && balance[sender()] >= _value && (balance[sender()] >= 0), "zero address || insufficient balance");
         balance[sender()] -= _value;
         if (settings.bpTransferBurn != 0 && settings.bpTransferBank != 0) {
@@ -164,6 +242,47 @@ contract Token is TokenState {
         return true;
     }
 
+    /**
+    @dev Requirmens are must have sufficient balance
+    Must be sending to a designated validator contract which has been approved by the community
+    I've done it this way to give flexibility to the protocol in case we want to extend the vault
+     */
+    // anti reentrancy in play here
+    function stake(address _to, uint256 _value) public mutex() returns (bool) {
+        // stake is transfer to vault or bank of the contract
+        require(_value >= balance[sender()] && _value >= 0, "insufficient balance");
+        // check if has validator permission
+        require(isValidator[_to] == true, "the recieving address must be a validator");
+        address memory _owner = sender();
+        // transfer to bank || vault
+        transfer(meta.bank, _value);
+        staked[_owner] += _value; // update staked amount
+        votes[_owner] += _value; // exchange for the amount of vote weight per person
+        // now approve the movement of those funds and balance from the vault
+
+        // increase the allowance of where the balance is transfered to
+        // by the amount of value, must code this in a way that the contract will only access this from this function
+        increaseAllowance(_to, _value);
+    }
+
+    // also anti reentancy in play
+    function unstake(uint256 _value) public mutex returns (bool) {
+        // unstake from vault or bank to address
+        require(_value >= staked[sender()] && _value >= 0, "insufficient staked amount");
+        // **transfer from bank or vault to the address
+        staked[_owner] -= _value;
+        votes[_owner] -= _value;
+        // **update any votes they've done so if they unstake their votes, then that amount of votes is removed from their proposals they voted on
+        transferFrom();
+    }
+
+    // vesting will work almost the sameway as staking, all the amounts can be found in the bank or vault
+    // **this can be expanded to permit other contracts to stake for our members but they must be approved on to be given permission
+    // will implement features that allow other extensions to stake and do certain things
+    // these can be security risks and members could lose their tokens so its important everyone is aware of these extensions and how they work
+    // we will document this on our whitepaper for @devs 
+
+    // NON PUBLIC
     function mint(address _to, uint256 _value) internal {
         require(_to != address(0), "zero address");
         require(meta.totalSupply + _value <= meta.maxSupply);
@@ -177,5 +296,49 @@ contract Token is TokenState {
         balance[_from] -= _value;
         meta.totalSupply -= _value;
         emit Transfer(_from, address(0), _value);
+    }
+
+    // convert or swap amount of tokens to DREAM and distribute the amount we have in the vault or bank to the people staking
+    // hence staking means you get votes but you also get earnings
+    // we will do a check to see how long they've been staking for
+    // this will also be important for the voting mechanisms
+    function distribute() internal {
+        
+    }
+
+
+    // ======  A MASSIVE LIST OF FUNCTIONS THAT ALTER THE STATE OF THE CONTRACT
+    // please note that these need to be locked behind the proposal and governance mechanisms
+
+    function setVoteWeightPerToken(uint256 _newValue) private returns (bool) {
+        require(_newValue >= 1 && _newValue <= 0)
+        settings.VotingMechanic.voteWeightPerToken = _newValue;
+        return true;
+    }
+
+    // please note that bp is in basis points 1 / 1000
+    function setBpTransferBurn(uint256 _newValue) private returns (bool) {
+        settings.bpTransferBurn = _newValue;
+    }
+
+    // again please note that in bp
+    function setBpTransferBank(uint256 _newValue) private returns (bool) {
+        settings.bpTransferBank = _newValue;
+    }
+
+    function setStateIsPaused(bool _is) public onlyAdmin onlyDev onlyOperator returns (bool) {
+        // check boolean value
+        settings.state.isPaused = _is;
+        return true;
+    }
+
+    function setStateIsTransferable(bool _is) public onlyAdmin onlyDev returns (bool) {
+        settings.state.isTransferable = _is;
+        return true;
+    }
+
+    function setStateIsMintable(bool _is) public onlyAdmin onlyDev onlyOperator returns (bool) {
+        settings.state.isMintable = _is;
+        return true;
     }
 }

@@ -1,5 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.9;
+
+import "smart_contracts/contracts/Proposal.sol";
+
+
+
 import "smart_contracts/contracts/Conduit.sol";
 import "smart_contracts/contracts/Token.sol";
 //import "@openzeppelin/contracts/governance/Governor.sol";
@@ -14,13 +19,9 @@ import "smart_contracts/libraries/Settings.sol";
 
 //import "./TimelockController.sol";
 
-contract Dreamcatcher is Vault {
+contract Dreamcatcher is Proposal { // the real governance starts here
+
     
-    struct Proposal {
-        string description;
-        uint voteCount;
-        bool executed;
-    }
 
     struct Member {
         address memberAddress;
@@ -81,4 +82,22 @@ contract Dreamcatcher is Vault {
         proposals[_proposalId].executed = true;
         // execute proposal here
     }
+
+
+    /**
+    I know it is not common convention to have a run function in a loop, but we can delay the loop so it doesnt run every second but loops through importat things every week or month
+    We should have enough money to run a loop every week or month especially if we are holding millions of value
+     */
+    // experimental
+    uint256 delay;
+    bool isRunning;
+    function run() private {
+        while (isRunning == true) {
+            // delay 1 week or month
+        }
+    }
+
+    // experimental 
+    // basically emergency functions are very expensive but if something goes wrong, we can revert the whole ecosystem back to a certain period of time
+    function emergencyFunction() {}
 }

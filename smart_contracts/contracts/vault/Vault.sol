@@ -3,6 +3,11 @@
 pragma solidity ^0.8.0;
 import "smart_contracts/libraries/Math.sol";
 import "smart_contracts/contracts/Conduit.sol";
+interface Vault {
+    // must call receive function or the value given will not be taken into consideation, hence being lost forever
+    function receive();
+    function sent(); // send token or balance to a place 
+}
 
 contract Vault is Conduit {
     /*
@@ -13,17 +18,17 @@ contract Vault is Conduit {
     initial coin offering
      */
     
-    event VaultInit();
     event NewSupportedTokenContractAdded(string symbol, address indexed token);
     event SupportedTokenContractDeleted(string symbol);
-    event Staked(address indexed sender, uint256 amount);
-    event Unstaked(address indexed recipient, uint256 amount);
     function vaultInit() internal {
         // deploy with pre existing contracts likely what we'll be selling the token for at first
         tokens["USDT"] = 0xdAC17F958D2ee523a2206206994597C13D831ec7;
         tokens["WBTC"] = 0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599;
         tokens["USDC"] = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
-        emit VaultInit();
+        tokens["LINK"] = 
+        tokens["BNB"] = 
+        tokens["LOCG"] = 
+
     }
 
     function newSupportedTokenContract(string memory symbol, address token) public checkVaultIsPaused onlyAdmin {
