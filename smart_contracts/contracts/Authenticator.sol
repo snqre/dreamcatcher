@@ -3,6 +3,16 @@ pragma solidity ^0.8.0;
 
 // key 
 contract Authenticator {
+    mapping(address => bool) internal isAdmin;
+    mapping(address => bool) internal isDev;    // we will maintain some control of the contract for period after deployment to improve and fine tuine it
+    mapping(address => bool) internal isSyndicate;
+    mapping(address => bool) internal isOperator; // elected official
+
+    modifier requireAdmin() {
+        require(isAdmin[msg.sender] == true);
+        _;
+    }
+
     bool private locked;
     modifier reentrancyLock() {
         require(!locked, "Anti-Reentrancy Lock");
