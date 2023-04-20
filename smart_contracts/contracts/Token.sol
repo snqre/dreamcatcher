@@ -56,6 +56,8 @@ contract TokenState is Authenticator {
     }
 
     struct Settings {
+        uint256 bpTransferBurnMax; // Maximum fee that can be charged
+        uint256 bpTransferBankMax; // Maximum fee that can be charged
         uint256 bpTransferBurn; // basis point transfer 1 / 1000 **100 == 1%
         uint256 bpTransferBank; // for vault can be used for liquidity or etc
         VotingMechanic VotingMechanic;
@@ -126,19 +128,9 @@ contract Token is TokenState {
     function totalSupply() public view returns (uint256) {return meta.totalSupply;}
     function maxSupply() public view returns (uint256) {return meta.maxSupply;}
 
-    function balanceOf(address _owner) public view returns (uint256) {
-        require(_owner != address(0), "zero address");
-        return balance[_owner];
-    }
-    function stakeOf(address _owner) public view returns (uint256) {
-        require(_owner != address(0), "zero address");
-        return staked[_owner];
-    }
-
-    function votesOf(address _owner) public view returns (uint256) {
-        require(_owner != address(0), "zero address");
-        return votes[_owner];
-    }
+    function balanceOf(address _owner) public view returns (uint256) {return balance[_owner];}
+    function stakeOf(address _owner) public view returns (uint256) {return staked[_owner];}
+    function votesOf(address _owner) public view returns (uint256) {return votes[_owner];}
 
     function transfer(address _to, uint256 _value) public returns (bool sucecss) {
         require((sender() != address(0)) && (_to != address(0)) && balance[sender()] >= _value && (balance[sender()] >= 0), "zero address || insufficient balance");
@@ -242,38 +234,91 @@ contract Token is TokenState {
         return true;
     }
 
-    /**
-    @dev Requirmens are must have sufficient balance
-    Must be sending to a designated validator contract which has been approved by the community
-    I've done it this way to give flexibility to the protocol in case we want to extend the vault
-     */
-    // anti reentrancy in play here
-    function stake(address _to, uint256 _value) public mutex() returns (bool) {
-        // stake is transfer to vault or bank of the contract
-        require(_value >= balance[sender()] && _value >= 0, "insufficient balance");
-        // check if has validator permission
-        require(isValidator[_to] == true, "the recieving address must be a validator");
-        address memory _owner = sender();
-        // transfer to bank || vault
-        transfer(meta.bank, _value);
-        staked[_owner] += _value; // update staked amount
-        votes[_owner] += _value; // exchange for the amount of vote weight per person
-        // now approve the movement of those funds and balance from the vault
-
-        // increase the allowance of where the balance is transfered to
-        // by the amount of value, must code this in a way that the contract will only access this from this function
-        increaseAllowance(_to, _value);
+    function stake(address _to, uint256 _value) public returns (bool) {
+        address _owner = sender();
+        require(balance[_owner] >= _value && _value >= 0  && isValidator[_to] != false  && _owner != address(0) && _to != address(0));
+        balance[_owner] -= _value;
+        if (settings.bpTransferBurn != 0 && settings.bpTransferBank != 0) {
+            uint256 _feeBurn = (_value / 1000) * settings.bpTransferBurn;
+            uint256 _feeBank = (_value / 1000) * settings.bpTransferBank;
+            uint256 _newValue = _value - (_feeBurn + _feeBank);
+            balance[_to] += _newValue;
+            balance[meta.bank] += _feeBank;
+            meta.totalSupply -= _feeBurn;
+            staked[_owner] += _newValue;
+            votes[_owner] += _newValue;
+            // main
+            emit Transfer(_owner, _to, _newValue);
+            // burn
+            emit Transfer(_owner, address(0), _feeBurn);
+            // bank
+            emit Transfer(_owner, meta.bank, _feeBank);
+        } else if (settings.bpTransferBurn != 0 && settings.bpTransferBank == 0) {
+            uint256 _feeBurn = (_value / 1000) * settings.bpTransferBurn;
+            uint256 _newValue = _value - _feeBurn;
+            balance[_to] += _newValue;
+            meta.totalSupply -= feeBurn;
+            staked[_owner] += _newValue;
+            votes[_owner] += _newValue;
+            emit Transfer(_owner, _to, _newValue);
+            // burn
+            emit Transfer(_owner, address(0), _feeBurn);
+        } else if (settings.bpTransferBurn == 0 && settings.bpTransferBank != 0) {
+            uint256 _feeBank = (_value / 1000) * settings.bpTransferBank;
+            uint256 _newValue = _value - _feeBank;
+            balance[_to] += _newValue;
+            balance[meta.bank] += _feeBank;
+            staked[_owner] += _newValue;
+            votes[_owner] += _newValue;
+            emit Transfer(_owner, _to, _newValue);
+            // bank
+            emit Transfer(_owner, meta.bank, _feeBank);
+        } else {
+            balance[_to] += _value;
+            staked[_owner] += _newValue;
+            votes[_owner] += _newValue;
+            emit Transfer(_owner, _to, _value);
+        }
+        return true;
     }
 
-    // also anti reentancy in play
-    function unstake(uint256 _value) public mutex returns (bool) {
-        // unstake from vault or bank to address
-        require(_value >= staked[sender()] && _value >= 0, "insufficient staked amount");
-        // **transfer from bank or vault to the address
+    function unstake(address _from, uint256 _value) public mutex returns (bool) {
+        address _owner = sender();
+        require(staked[_owner] >= _value && _value >= 0 && isValidator[_from] != false && _owner != address(0) && _to != address(0));
         staked[_owner] -= _value;
         votes[_owner] -= _value;
-        // **update any votes they've done so if they unstake their votes, then that amount of votes is removed from their proposals they voted on
-        transferFrom();
+        if (settings.bpTransferBurn != 0 && settings.bpTransferBank != 0) {
+            uint256 _feeBurn = (_value / 1000) * settings.bpTransferBurn;
+            uint256 _feeBank = (_value / 1000) * settings.bpTransferBank;
+            uint256 _newValue = _value - (_feeBurn + _feeBank);
+            balance[_owner] += _newValue;
+            balance[meta.bank] += _feeBank;
+            meta.totalSupply -= _feeBurn;
+            emit Transfer(_from, _owner, _newValue);
+            // burn
+            emit Transfer(_from, address(0), _feeBurn);
+            // bank
+            emit Transfer(_from, meta.bank, _feeBank);
+        } else if (settings.bpTransferBurn != 0 && settings.bpTransferBank == 0) {
+            uint256 _feeBurn = (_value / 1000) * settings.bpTransferBurn;
+            uint256 _newValue = _value - _feeBurn;
+            balance[_owner] += _newValue;
+            meta.totalSupply -= _feeBurn;
+            emit Transfer(_from, _owner, _newValue);
+            // burn
+            emit Transfer(_from, address(0), _feeBurn);
+        } else if (settings.bpTransferBurn == 0 && settings.bpTransferBank != 0) {
+            uint256 _feeBank = (_value / 1000) * settings.bpTransferBank;
+            uint256 _newValue = _value - _feeBank;
+            balance[_owner] += _newValue;
+            balance[meta.bank] += _feeBank;
+            emit Transfer(_from, _owner, _newValue);
+            // bank
+            emit Transfer(_from, meta.bank, _feeBank); 
+        } else {
+            balance[_owner] += _value;
+            emit Transfer(_from, _owner, _value);
+        }
     }
 
     // vesting will work almost the sameway as staking, all the amounts can be found in the bank or vault
