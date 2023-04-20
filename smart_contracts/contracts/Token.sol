@@ -61,6 +61,7 @@ contract TokenState is Authenticator {
         uint256 bpTransferBankMax; // Maximum fee that can be charged
         uint256 bpTransferBurn; // basis point transfer 1 / 1000 **100 == 1%
         uint256 bpTransferBank; // for vault can be used for liquidity or etc
+        uint256 bpDistribution; // % of vault to distribute to stakers bp
         VotingMechanic VotingMechanic;
         State state; // conditional booleans
     }
@@ -103,6 +104,8 @@ contract Token is TokenState {
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 
+    
+
     constructor() {
         meta.name = "Dreamcatcher";
         meta.symbol = "DREAM";
@@ -114,26 +117,36 @@ contract Token is TokenState {
         settings.bpTransferBurn = 0;  // start 0 but after exposure period 0.15% | 15
         settings.bpTransferBank = 0;  // start 0 but after exposure period 0.10% transferred to vault
         settings.VotingMechanic.voteWeightPerToken = 1; // x vote per token
+
+
     }
 
-    function name() public view returns (string memory) {return meta.name;}
-    function symbol() public view returns (string memory) {return meta.symbol;}
-    function decimals() public view returns (uint8) {return meta.decimals;}
-    function totalSupply() public view returns (uint256) {return meta.totalSupply;}
-    function maxSupply() public view returns (uint256) {return meta.maxSupply;}
+    function mint_(address _to, uint256 _value) private {
+        require(_to != address(0) && meta.totalSupply + _value <= meta.maxSupply);
+        (meta.totalSupply, balance[_to]) += _value;
+        emit Transfer(address(0), _to, _value);
+    }
 
-    function balanceOf(address _owner) public view returns (uint256) {return balance[_owner];}
-    function stakeOf(address _owner) public view returns (uint256) {return staked[_owner];}
-    function votesOf(address _owner) public view returns (uint256) {return votes[_owner];}
+    function mintWithVesting_(address _for, uint256 _value, uint256 _duration, string _id, string _releaseType) private {
 
-    function approve_(address _owner, address _spender, uint256 _value) private {
         require(
-            _owner   != address(0) &&
-            _spender != address(0)
+            schedules[_for][_id] == 0 &&
+            meta.totalSupply + _value <= meta.maxSupply
         );
 
-        allowed[_owner][_spender] = _value;
-        emit Approval(_owner, _spender, _value);
+        if (_releaseType == "-cliff") {
+            mint_(meta.vault, _value);
+
+            schedules[_to][_id] = new VestingSchedule({
+            id: _id,
+            releaseType: _releaseType,
+            duration: _duration,
+            start: _start,
+            end: _start + _duration,
+            value: _value,
+            released: 0
+            });
+        }
     }
 
     function transfer_(address _from, address _to, uint256 _value, uint256 _bpFeeBurn, uint256 _bpFeeBank) private returns (bool, uint256) {
@@ -161,7 +174,6 @@ contract Token is TokenState {
             _newValue   // value after fee
         );
     }
-
 
     function transfer(address _to, uint256 _value) public returns (bool) {
         (bool _success, uint256 _newValue) = transfer_(sender(), _to, _value, settings.bpTransferBurn, settings.bpTransferBank);
@@ -216,43 +228,10 @@ contract Token is TokenState {
         return true;
     }
 
+    // mint then lock in vault or validator
     
 
-    // NON PUBLIC
-    function mint(address _to, uint256 _value) internal {
-        require(_to != address(0) && meta.totalSupply + _value <= meta.maxSupply);
-        meta.totalSupply += _value;
-        balance[_to] += _value;
-        emit Transfer(address(0), _to, _value);
-    }
-
-    // mint then lock in vault or validator
-    function lockedMint(address _to, uint256 _value, uint256 _duration, string _id, string _releaseType) internal {
-        address _from = address(0);
-        // check if that tag has not been used before
-        require(schedules[_to][_id] == 0);
-        require(schedules[_to][_id] == 0 && _to != address(0) && isValidator[_to] != false && meta.totalSupply + _value <= meta.maxSupply);
-        meta.totalSupply += _value;
-        // give to validator to hold
-        balance[meta.bank] += _value;
-        locked[_to] += _value;
-
-        uint256 _start = block.timestamp;
-
-        schedules[_to][_id] = new VestingSchedule({
-            id: _id,
-            releaseType: _releaseType,
-            duration: _duration,
-            start: _start,
-            end: _start + _duration,
-            locked: _value,
-            released: 0
-        });
-
-        
-    }
-
-    function lockedMintRelease(string _id) public returns (bool) {
+    function release(string _id) public returns (bool) {
         string memory _releaseType = schedules[_to][_id].releaseType;
 
         if (_releaseType == "-cliff") {
@@ -312,4 +291,14 @@ contract Token is TokenState {
         settings.state.isMintable = _is;
         return true;
     }
+
+    function name() public view returns (string memory) {return meta.name;}
+    function symbol() public view returns (string memory) {return meta.symbol;}
+    function decimals() public view returns (uint8) {return meta.decimals;}
+    function totalSupply() public view returns (uint256) {return meta.totalSupply;}
+    function maxSupply() public view returns (uint256) {return meta.maxSupply;}
+
+    function balanceOf(address _owner) public view returns (uint256) {return balance[_owner];}
+    function stakeOf(address _owner) public view returns (uint256) {return staked[_owner];}
+    function votesOf(address _owner) public view returns (uint256) {return votes[_owner];}
 }
