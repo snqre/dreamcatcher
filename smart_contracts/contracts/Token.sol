@@ -85,6 +85,7 @@ contract TokenState is Authenticator {
 
     mapping(address => uint256) internal balance;
     mapping(address => uint256) internal staked; // amount of their tokens staked cannot be both in balance and staked must be only one
+    mapping(address => uint256) internal locked;
     mapping(address => uint256) internal votes; // amount of voting weight this account has typically only given when staked
     mapping(address => mapping(address => uint256)) internal allowed;
 }
@@ -101,25 +102,9 @@ contract Token is TokenState {
         meta.totalSupply = 0; // once the supply it minted this will update (i want to specifically use mint for transperency)
         meta.maxSupply = 200000000 * 10**meta.decimals; // 200_000_000.000000000000000000 *much divisible ... much wow
         meta.bank = sender();
-        // settings default start || something else to note about exchanges is that when they trade within
-        // their platforms they do not make transfers which might impact our bottomline
         settings.bpTransferBurn = 0;  // start 0 but after exposure period 0.15% | 15
         settings.bpTransferBank = 0;  // start 0 but after exposure period 0.10% transferred to vault
         settings.VotingMechanic.voteWeightPerToken = 1; // x vote per token
-        // initial distribution team active 10,000,000
-        mint(, 5_000_000 * 10**meta.decimals); // team 1
-        mint(, 2_000_000 * 10**meta.decimals); // team m 2
-        mint(, 2_000_000 * 10**meta.decimals); // team m 3
-        mint(, 250000 * 10**meta.decimals); // team 4
-        mint(, 250000 * 10**meta.decimals); // team 5
-        mint(, 250000 * 10**meta.decimals);
-        mint(, 250000 * 10**meta.decimals);
-        // 28,000,000
-        mint(sender(), 28000000 * 10**meta.decimals);
-        // 2,000,000 personal for fund
-        mint()
-        // 10,000,000 SERIES A & B
-        mint(sender(), 10000000 * 10**meta.decimals);
     }
 
     function name() public view returns (string memory) {return meta.name;}
@@ -144,9 +129,9 @@ contract Token is TokenState {
         meta.totalSupply -= _feeBurn;
         emit Transfer(_owner, _to, _newValue);
         // burn
-        emit Transfer(_owner, address(0), _feeBurn);
+        if (_feeBurn != 0) {emit Transfer(_owner, address(0), _feeBurn);}
         // bank
-        emit Transfer(_owner, meta.bank, _feeBank);
+        if (_feeBank != 0) {emit Transfer(_owner, meta.bank, _feeBank);}
         return true;
     }
 
@@ -186,9 +171,9 @@ contract Token is TokenState {
         meta.totalSupply -= _feeBurn;
         emit Transfer(_owner, _to, _newValue);
         // burn
-        emit Transfer(_owner, address(0), _feeBurn);
+        if (_feeBurn != 0) {emit Transfer(_owner, address(0), _feeBurn);}
         // bank
-        emit Transfer(_owner, meta.bank, _feeBank);
+        if (_feeBank != 0) {emit Transfer(_owner, meta.bank, _feeBank);}
         return true;
     }
 
@@ -206,13 +191,13 @@ contract Token is TokenState {
         meta.totalSupply -= _feeBurn;
         emit Transfer(_owner, _to, _newValue);
         // burn
-        emit Transfer(_owner, address(0), _feeBurn);
+        if (_feeBurn != 0) {emit Transfer(_owner, address(0), _feeBurn);}
         // bank
-        emit Transfer(_owner, meta.bank, _feeBank);
+        if (_feeBank != 0) {emit Transfer(_owner, meta.bank, _feeBank);}
         return true;
     }
 
-    function unstake(address _from, uint256 _value) public mutex returns (bool) {
+    function unstake(address _from, uint256 _value) public returns (bool) {
         address _owner = sender();
         require(staked[_owner] >= _value && _value >= 0 && isValidator[_from] != false && _owner != address(0) && _to != address(0));
         staked[_owner] -= _value;
@@ -225,33 +210,37 @@ contract Token is TokenState {
         meta.totalSupply -= _feeBurn;
         emit Transfer(_from, _owner, _newValue);
         // burn
-        emit Transfer(_from, address(0), _feeBurn);
+        if (_feeBurn != 0) {emit Transfer(_from, address(0), _feeBurn);}
         // bank
-        emit Transfer(_from, meta.bank, _feeBank);
+        if (_feeBank != 0) {emit Transfer(_from, meta.bank, _feeBank);}
         return true;
     }
 
-    // vesting will work almost the sameway as staking, all the amounts can be found in the bank or vault
-    // **this can be expanded to permit other contracts to stake for our members but they must be approved on to be given permission
-    // will implement features that allow other extensions to stake and do certain things
-    // these can be security risks and members could lose their tokens so its important everyone is aware of these extensions and how they work
-    // we will document this on our whitepaper for @devs 
-
     // NON PUBLIC
     function mint(address _to, uint256 _value) internal {
-        require(_to != address(0), "zero address");
-        require(meta.totalSupply + _value <= meta.maxSupply);
+        require(_to != address(0) && meta.totalSupply + _value <= meta.maxSupply);
         meta.totalSupply += _value;
         balance[_to] += _value;
         emit Transfer(address(0), _to, _value);
     }
 
+    function mintWithVesting(address _to, uint256 _value, uint256 _duration) internal {
+        require(_to != address(0) && meta.totalSupply + _value <= meta.maxSupply);
+        meta.totalSupply += _value;
+        
+    }
+
+    function release() public {
+        
+    }
+
     function burn(address _from, uint256 _value) internal {
-        require((_from != address(0)) && (balance[_from] >= _value), "zero address");
+        require(_from != address(0) && balance[_from] >= _value);
         balance[_from] -= _value;
         meta.totalSupply -= _value;
         emit Transfer(_from, address(0), _value);
     }
+
 
     // convert or swap amount of tokens to DREAM and distribute the amount we have in the vault or bank to the people staking
     // hence staking means you get votes but you also get earnings
