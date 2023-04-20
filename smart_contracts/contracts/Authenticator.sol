@@ -47,7 +47,7 @@ contract Authenticator is IAuthenticator, LibAuthenticator {
     modifier onlyOperator() {require(isOperator[sender()] == true, "Authenticator: operator permission required");_;}
     modifier onlyExtension() {require(isExtension[sender()] == true, "Authenticator: extension permission required");_;}
     modifier onlyValidator() {require(isValidator[sender()] == true, "validator permission required");}
-    
+
     // Here i'm trying to see if i can make it so we can assign certain things to created role during runtime
     mapping(string => mapping(address => bool)) private isRole;
     function checkRole(string _roleCaption, address _owner) public view returns (bool) {

@@ -39,6 +39,7 @@ interface ICustomToken {
 
 // inherit from authenticator contract
 contract TokenState is Authenticator {
+
     struct VotingMechanic {
         uint256 voteWeightPerToken; // how much voting power you can get per token
     }
@@ -69,26 +70,33 @@ contract TokenState is Authenticator {
         string symbol;
         uint8 decimals;
         uint256 totalSupply;
+        uint256 totalStaked;
+        uint256 totalVotes;
         uint256 maxSupply;
         address bank;
-    }
-
-    struct VestingSchedule {
-        uint256 amount;
-        uint256 start;
-        uint256 end;
-        uint256 released; // approved for | basically how much can the users pull out of the main vault
+        address vault;
     }
 
     Settings internal settings;
     Meta internal meta;
 
+    struct VestingSchedule {
+        string id;
+        string releaseType;
+        uint256 duration;
+        uint256 start;
+        uint256 end;
+        uint256 value;
+    }
+
+    mapping(address => mapping(string => VestingSchedule)) internal schedules;
+
     mapping(address => uint256) internal balance;
     mapping(address => uint256) internal staked; // amount of their tokens staked cannot be both in balance and staked must be only one
-    mapping(address => uint256) internal locked;
     mapping(address => uint256) internal votes; // amount of voting weight this account has typically only given when staked
     mapping(address => mapping(address => uint256)) internal allowed;
 }
+
 
 contract Token is TokenState {
 
@@ -102,6 +110,7 @@ contract Token is TokenState {
         meta.totalSupply = 0; // once the supply it minted this will update (i want to specifically use mint for transperency)
         meta.maxSupply = 200000000 * 10**meta.decimals; // 200_000_000.000000000000000000 *much divisible ... much wow
         meta.bank = sender();
+        meta.vault = sender();
         settings.bpTransferBurn = 0;  // start 0 but after exposure period 0.15% | 15
         settings.bpTransferBank = 0;  // start 0 but after exposure period 0.10% transferred to vault
         settings.VotingMechanic.voteWeightPerToken = 1; // x vote per token
@@ -117,22 +126,72 @@ contract Token is TokenState {
     function stakeOf(address _owner) public view returns (uint256) {return staked[_owner];}
     function votesOf(address _owner) public view returns (uint256) {return votes[_owner];}
 
-    function transfer(address _to, uint256 _value) public returns (bool sucecss) {
-        address _owner = sender();
-        require(_owner != address(0) && _to != address(0) && balance[_owner] >= _value && balance[_owner] >= 0 && _value >= 0 && settings.bpTransferBurn >= 0 && settings.bpTransferBank >= 0);
-        balance[_owner] -= _value;
-        uint256 _feeBurn = (_value / 1000) * settings.bpTransferBurn;
-        uint256 _feeBank = (_value / 1000) * settings.bpTransferBank;
+    function approve_(address _owner, address _spender, uint256 _value) private {
+        require(
+            _owner   != address(0) &&
+            _spender != address(0)
+        );
+
+        allowed[_owner][_spender] = _value;
+        emit Approval(_owner, _spender, _value);
+    }
+
+    function transfer_(address _from, address _to, uint256 _value, uint256 _bpFeeBurn, uint256 _bpFeeBank) private returns (bool, uint256) {
+        require(
+            _from != address(0) &&
+            _to   != address(0) &&
+            balance[_from] >= _value &&
+            balance[_from] >= 0 &&
+            _value >= 0
+        );
+
+        balance[_from] -= _value;
+        uint256 _feeBurn = (_value / 1000) * _bpFeeBurn;
+        uint256 _feeBank = (_value / 1000) * _bpFeeBank;
         uint256 _newValue = _value - (_feeBurn + _feeBank);
         balance[_to] += _newValue;
-        balance[_meta.bank] += _feeBank;
+        balance[meta.vault] += _feeBank;
         meta.totalSupply -= _feeBurn;
-        emit Transfer(_owner, _to, _newValue);
-        // burn
-        if (_feeBurn != 0) {emit Transfer(_owner, address(0), _feeBurn);}
-        // bank
-        if (_feeBank != 0) {emit Transfer(_owner, meta.bank, _feeBank);}
-        return true;
+        emit Transfer(_from, _to, _newValue);
+        if (_feeBurn != 0) {emit Transfer(_from, address(0), _feeBurn);}
+        if (_feeBank != 0) {emit Transfer(_from, meta.vault, _feeBank);}
+
+        return (
+            true,       // success
+            _newValue   // value after fee
+        );
+    }
+
+
+    function transfer(address _to, uint256 _value) public returns (bool) {
+        (bool _success, uint256 _newValue) = transfer_(sender(), _to, _value, settings.bpTransferBurn, settings.bpTransferBank);
+        return _success;
+    }
+
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+        require(
+            allowance(_from, sender()) != type(uint256).max &&
+            allowance(_from, sender()) >= _value
+        );
+
+        allowed[_from][sender()] = _value;
+        emit Approval(_from, sender(), _value);
+
+        (bool _success, uint256 _newValue) = transfer_(_from, _to, _value, settings.bpTransferBurn, settings.bpTransferBank);
+        return _success;
+    }
+
+    function stake(uint256 _value) public returns (bool) {
+        (bool _success, uint256 _newValue) = transfer_(sender(), meta.vault, _value, settings.bpTransferBurn, settings.bpTransferBank);
+        (staked[sender()], votes[sender()], meta.totalStaked, meta.totalVotes) += _newValue;
+        return _success;
+    }
+
+    function unstake(uint256 _value) public returns (bool) {
+        require(staked[sender()] >= _value);
+        (bool _success, uint256 _newValue) = transfer_(meta.vault, sender(), _value, settings.bpTransferBurn, settings.bpTransferBank);
+        (staked[sender()], votes[sender()], meta.totalStaked, meta.totalVotes) -= _value;
+        return _success;
     }
 
     function allowance(address _owner, address _spender) public view returns (uint256 remaining) {return allowed[_owner][_spender];}
@@ -157,64 +216,7 @@ contract Token is TokenState {
         return true;
     }
 
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
-        address _owner = sender();
-        require(allowance(_from, _owner) != type(uint256).max && allowance(_from, _owner) >= _value && _from != address(0) && _owner != address(0) && _to != address(0) && balance[_from] >= _value && balance[_from] >= 0);
-        allowed[_from][_owner] = _value;
-        emit Approval(_from, _owner, _value);
-        balance[_from] -= _value;
-        uint256 _feeBurn = (_value / 1000) * settings.bpTransferBurn;
-        uint256 _feeBank = (_value / 1000) * settings.bpTransferBank;
-        uint256 _newValue = _value - (_feeBurn + _feeBank);
-        balance[_to] += _newValue;
-        balance[meta.bank] += _feeBank;
-        meta.totalSupply -= _feeBurn;
-        emit Transfer(_owner, _to, _newValue);
-        // burn
-        if (_feeBurn != 0) {emit Transfer(_owner, address(0), _feeBurn);}
-        // bank
-        if (_feeBank != 0) {emit Transfer(_owner, meta.bank, _feeBank);}
-        return true;
-    }
-
-    function stake(address _to, uint256 _value) public returns (bool) {
-        address _owner = sender();
-        require(balance[_owner] >= _value && _value >= 0  && isValidator[_to] != false  && _owner != address(0) && _to != address(0));
-        balance[_owner] -= _value;
-        uint256 _feeBurn = (_value / 1000) * settings.bpTransferBurn;
-        uint256 _feeBank = (_value / 1000) * settings.bpTransferBank;
-        uint256 _newValue = _value - (_feeBurn + _feeBank);
-        staked[_owner] += _newValue;
-        votes[_owner] += _newValue;
-        balance[_to] += _newValue;
-        balance[meta.bank] += _feeBank;
-        meta.totalSupply -= _feeBurn;
-        emit Transfer(_owner, _to, _newValue);
-        // burn
-        if (_feeBurn != 0) {emit Transfer(_owner, address(0), _feeBurn);}
-        // bank
-        if (_feeBank != 0) {emit Transfer(_owner, meta.bank, _feeBank);}
-        return true;
-    }
-
-    function unstake(address _from, uint256 _value) public returns (bool) {
-        address _owner = sender();
-        require(staked[_owner] >= _value && _value >= 0 && isValidator[_from] != false && _owner != address(0) && _to != address(0));
-        staked[_owner] -= _value;
-        votes[_owner] -= _value;
-        uint256 _feeBurn = (_value / 1000) * settings.bpTransferBurn;
-        uint256 _feeBank = (_value / 1000) * settings.bpTransferBank;
-        uint256 _newValue = _value - (_feeBurn + _feeBank);
-        balance[_owner] += _newValue;
-        balance[meta.bank] += _feeBank;
-        meta.totalSupply -= _feeBurn;
-        emit Transfer(_from, _owner, _newValue);
-        // burn
-        if (_feeBurn != 0) {emit Transfer(_from, address(0), _feeBurn);}
-        // bank
-        if (_feeBank != 0) {emit Transfer(_from, meta.bank, _feeBank);}
-        return true;
-    }
+    
 
     // NON PUBLIC
     function mint(address _to, uint256 _value) internal {
@@ -224,13 +226,44 @@ contract Token is TokenState {
         emit Transfer(address(0), _to, _value);
     }
 
-    function mintWithVesting(address _to, uint256 _value, uint256 _duration) internal {
-        require(_to != address(0) && meta.totalSupply + _value <= meta.maxSupply);
+    // mint then lock in vault or validator
+    function lockedMint(address _to, uint256 _value, uint256 _duration, string _id, string _releaseType) internal {
+        address _from = address(0);
+        // check if that tag has not been used before
+        require(schedules[_to][_id] == 0);
+        require(schedules[_to][_id] == 0 && _to != address(0) && isValidator[_to] != false && meta.totalSupply + _value <= meta.maxSupply);
         meta.totalSupply += _value;
+        // give to validator to hold
+        balance[meta.bank] += _value;
+        locked[_to] += _value;
+
+        uint256 _start = block.timestamp;
+
+        schedules[_to][_id] = new VestingSchedule({
+            id: _id,
+            releaseType: _releaseType,
+            duration: _duration,
+            start: _start,
+            end: _start + _duration,
+            locked: _value,
+            released: 0
+        });
+
         
     }
 
-    function release() public {
+    function lockedMintRelease(string _id) public returns (bool) {
+        string memory _releaseType = schedules[_to][_id].releaseType;
+
+        if (_releaseType == "-cliff") {
+            require(schedules[sender()][_id].end >= block.timestamp && schedules[_to][_id].value > 0);
+            transferFromVault(sender(), _value);
+            schedules[sender()][_id].value = 0;
+        } else if (_releaseType == "-linear") {
+            // release amount that has been assigned
+        } else if (_releaseType == "-log") {
+            //
+        }
 
     }
 
