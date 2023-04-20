@@ -193,19 +193,19 @@ contract Token is TokenState {
     }
 
     function stake(uint256 _value) public returns (bool) {
-        (bool _success, uint256 _newValue) = transfer_(sndr, meta.vault, _value, settings.bpTransferBurn, settings.bpTransferBank);
-        staked[sndr] += _newValue;
-        votes[sndr] += _newValue;
+        (bool _success, uint256 _newValue) = transfer_(msg.sender, meta.vault, _value, settings.bpTransferBurn, settings.bpTransferBank);
+        staked[msg.sender] += _newValue;
+        votes[msg.sender] += _newValue;
         meta.totalStaked += _newValue;
         meta.totalVotes += _newValue;
         return _success;
     }
 
     function unstake(uint256 _value) public returns (bool) {
-        require(staked[sndr] >= _value);
-        (bool _success, uint256 _newValue) = transfer_(meta.vault, sndr, _value, settings.bpTransferBurn, settings.bpTransferBank);
-        staked[sndr] -= _value;
-        votes[sndr] -= _value;
+        require(staked[msg.sender] >= _value);
+        (bool _success, uint256 _newValue) = transfer_(meta.vault, msg.sender, _value, settings.bpTransferBurn, settings.bpTransferBank);
+        staked[msg.sender] -= _value;
+        votes[msg.sender] -= _value;
         meta.totalStaked -= _value;
         meta.totalVotes -= _value;
         return _success;
