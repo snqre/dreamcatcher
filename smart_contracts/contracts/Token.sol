@@ -231,7 +231,7 @@ contract Token is TokenState {
     }
 
     function release() public {
-        
+
     }
 
     function burn(address _from, uint256 _value) internal {
@@ -253,12 +253,6 @@ contract Token is TokenState {
 
     // ======  A MASSIVE LIST OF FUNCTIONS THAT ALTER THE STATE OF THE CONTRACT
     // please note that these need to be locked behind the proposal and governance mechanisms
-
-    function setVoteWeightPerToken(uint256 _newValue) private returns (bool) {
-        require(_newValue >= 1 && _newValue <= 0)
-        settings.VotingMechanic.voteWeightPerToken = _newValue;
-        return true;
-    }
 
     // please note that bp is in basis points 1 / 1000
     function setBpTransferBurn(uint256 _newValue) private returns (bool) {
