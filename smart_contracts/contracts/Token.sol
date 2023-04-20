@@ -196,47 +196,19 @@ contract Token is TokenState {
         address _owner = sender();
         require(balance[_owner] >= _value && _value >= 0  && isValidator[_to] != false  && _owner != address(0) && _to != address(0));
         balance[_owner] -= _value;
-        if (settings.bpTransferBurn != 0 && settings.bpTransferBank != 0) {
-            uint256 _feeBurn = (_value / 1000) * settings.bpTransferBurn;
-            uint256 _feeBank = (_value / 1000) * settings.bpTransferBank;
-            uint256 _newValue = _value - (_feeBurn + _feeBank);
-            balance[_to] += _newValue;
-            balance[meta.bank] += _feeBank;
-            meta.totalSupply -= _feeBurn;
-            staked[_owner] += _newValue;
-            votes[_owner] += _newValue;
-            // main
-            emit Transfer(_owner, _to, _newValue);
-            // burn
-            emit Transfer(_owner, address(0), _feeBurn);
-            // bank
-            emit Transfer(_owner, meta.bank, _feeBank);
-        } else if (settings.bpTransferBurn != 0 && settings.bpTransferBank == 0) {
-            uint256 _feeBurn = (_value / 1000) * settings.bpTransferBurn;
-            uint256 _newValue = _value - _feeBurn;
-            balance[_to] += _newValue;
-            meta.totalSupply -= feeBurn;
-            staked[_owner] += _newValue;
-            votes[_owner] += _newValue;
-            emit Transfer(_owner, _to, _newValue);
-            // burn
-            emit Transfer(_owner, address(0), _feeBurn);
-        } else if (settings.bpTransferBurn == 0 && settings.bpTransferBank != 0) {
-            uint256 _feeBank = (_value / 1000) * settings.bpTransferBank;
-            uint256 _newValue = _value - _feeBank;
-            balance[_to] += _newValue;
-            balance[meta.bank] += _feeBank;
-            staked[_owner] += _newValue;
-            votes[_owner] += _newValue;
-            emit Transfer(_owner, _to, _newValue);
-            // bank
-            emit Transfer(_owner, meta.bank, _feeBank);
-        } else {
-            balance[_to] += _value;
-            staked[_owner] += _newValue;
-            votes[_owner] += _newValue;
-            emit Transfer(_owner, _to, _value);
-        }
+        uint256 _feeBurn = (_value / 1000) * settings.bpTransferBurn;
+        uint256 _feeBank = (_value / 1000) * settings.bpTransferBank;
+        uint256 _newValue = _value - (_feeBurn + _feeBank);
+        staked[_owner] += _newValue;
+        votes[_owner] += _newValue;
+        balance[_to] += _newValue;
+        balance[meta.bank] += _feeBank;
+        meta.totalSupply -= _feeBurn;
+        emit Transfer(_owner, _to, _newValue);
+        // burn
+        emit Transfer(_owner, address(0), _feeBurn);
+        // bank
+        emit Transfer(_owner, meta.bank, _feeBank);
         return true;
     }
 
@@ -245,38 +217,18 @@ contract Token is TokenState {
         require(staked[_owner] >= _value && _value >= 0 && isValidator[_from] != false && _owner != address(0) && _to != address(0));
         staked[_owner] -= _value;
         votes[_owner] -= _value;
-        if (settings.bpTransferBurn != 0 && settings.bpTransferBank != 0) {
-            uint256 _feeBurn = (_value / 1000) * settings.bpTransferBurn;
-            uint256 _feeBank = (_value / 1000) * settings.bpTransferBank;
-            uint256 _newValue = _value - (_feeBurn + _feeBank);
-            balance[_owner] += _newValue;
-            balance[meta.bank] += _feeBank;
-            meta.totalSupply -= _feeBurn;
-            emit Transfer(_from, _owner, _newValue);
-            // burn
-            emit Transfer(_from, address(0), _feeBurn);
-            // bank
-            emit Transfer(_from, meta.bank, _feeBank);
-        } else if (settings.bpTransferBurn != 0 && settings.bpTransferBank == 0) {
-            uint256 _feeBurn = (_value / 1000) * settings.bpTransferBurn;
-            uint256 _newValue = _value - _feeBurn;
-            balance[_owner] += _newValue;
-            meta.totalSupply -= _feeBurn;
-            emit Transfer(_from, _owner, _newValue);
-            // burn
-            emit Transfer(_from, address(0), _feeBurn);
-        } else if (settings.bpTransferBurn == 0 && settings.bpTransferBank != 0) {
-            uint256 _feeBank = (_value / 1000) * settings.bpTransferBank;
-            uint256 _newValue = _value - _feeBank;
-            balance[_owner] += _newValue;
-            balance[meta.bank] += _feeBank;
-            emit Transfer(_from, _owner, _newValue);
-            // bank
-            emit Transfer(_from, meta.bank, _feeBank); 
-        } else {
-            balance[_owner] += _value;
-            emit Transfer(_from, _owner, _value);
-        }
+        uint256 _feeBurn = (_value / 1000) * settings.bpTransferBurn;
+        uint256 _feeBank = (_value / 1000) * settings.bpTransferBank;
+        uint256 _newValue = _value - (_feeBurn + _feeBank);
+        balance[_owner] += _newValue;
+        balance[meta.bank] += _feeBank;
+        meta.totalSupply -= _feeBurn;
+        emit Transfer(_from, _owner, _newValue);
+        // burn
+        emit Transfer(_from, address(0), _feeBurn);
+        // bank
+        emit Transfer(_from, meta.bank, _feeBank);
+        return true;
     }
 
     // vesting will work almost the sameway as staking, all the amounts can be found in the bank or vault
