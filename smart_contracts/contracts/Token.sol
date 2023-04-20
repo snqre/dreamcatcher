@@ -4,37 +4,34 @@ pragma solidity ^0.8.9; // note that in  pragma greater than 0.8.0 overflow and 
 import "smart_contracts/contracts/Authenticator.sol";
 
 interface IERC20 {
-    function name() public view returns (string memory);
-    function symbol() public view returns (string memory);
-    function decimals() public view returns (uint8);
-    function totalSupply() public view returns (uint256);
-    function balanceOf(address _owner) public view returns (uint256);
-    function transfer(address _to, uint256 _value) public returns (bool success);
-    function allowance(address _owner, address _spender) public view returns (uint256 remaining);
-    function approve(address _spender, uint256 _value) public returns (bool success);
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool);
+    function name() external view returns (string memory);
+    function symbol() external view returns (string memory);
+    function decimals() external view returns (uint8);
+    function totalSupply() external view returns (uint256);
+    function balanceOf(address _owner) external view returns (uint256);
+    function transfer(address _to, uint256 _value) external returns (bool success);
+    function allowance(address _owner, address _spender) external view returns (uint256 remaining);
+    function approve(address _spender, uint256 _value) external returns (bool success);
+    function transferFrom(address _from, address _to, uint256 _value) external returns (bool);
 
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 }
 
 interface ICustomToken {
-    function maxSupply() public view returns (uint256);
-    function stakeOf(address _owner) public view returns (uint256);
-    function votesOf(address _owner) public view returns (uint256);
+    function maxSupply() external view returns (uint256);
+    function stakeOf(address _owner) external view returns (uint256);
+    function votesOf(address _owner) external view returns (uint256);
     // ripped straight from @openzeppelin
-    function increaseAllowance(address _spender, uint256 _value) public returns (bool);
-    function decreaseAllowance(address _spender, uint256 _value) public returns (bool);
+    function increaseAllowance(address _spender, uint256 _value) external returns (bool);
+    function decreaseAllowance(address _spender, uint256 _value) external returns (bool);
     // staking and unstaking functions and features here
     /**
     Staking goes to our bank or vault, it cannot be used by anyone, it just stays there
     When we make earnings or give out rewards, stakers will be able to withdraw directly from the vault
      */
-    function stake(uint256 _value) public returns (bool);
-    function unstake(uint256 _value) public returns (bool);
-
-    // distribution mechanin
-    function distribute() public returns (bool);
+    function stake(uint256 _value) external returns (bool);
+    function unstake(uint256 _value) external returns (bool);
 }
 
 // inherit from authenticator contract
@@ -88,6 +85,7 @@ contract TokenState is Authenticator {
         uint256 start;
         uint256 end;
         uint256 value;
+        bool isNotEmpty;
     }
 
     mapping(address => mapping(string => VestingSchedule)) internal schedules;
@@ -112,41 +110,42 @@ contract Token is TokenState {
         meta.decimals = 18;
         meta.totalSupply = 0; // once the supply it minted this will update (i want to specifically use mint for transperency)
         meta.maxSupply = 200000000 * 10**meta.decimals; // 200_000_000.000000000000000000 *much divisible ... much wow
-        meta.bank = sender();
-        meta.vault = sender();
+        meta.bank = sndr;
+        meta.vault = sndr;
         settings.bpTransferBurn = 0;  // start 0 but after exposure period 0.15% | 15
         settings.bpTransferBank = 0;  // start 0 but after exposure period 0.10% transferred to vault
         settings.VotingMechanic.voteWeightPerToken = 1; // x vote per token
 
-
+        mint_(meta.vault, 200000000 * 10**meta.decimals);
     }
 
     function mint_(address _to, uint256 _value) private {
         require(_to != address(0) && meta.totalSupply + _value <= meta.maxSupply);
-        (meta.totalSupply, balance[_to]) += _value;
+        meta.totalSupply += _value;
+        balance[_to] += _value;
         emit Transfer(address(0), _to, _value);
     }
 
-    function mintWithVesting_(address _for, uint256 _value, uint256 _duration, string _id, string _releaseType) private {
+    function mintWithVesting_(address _for, uint256 _value, uint256 _duration, string memory _id, string memory _releaseType) private {
 
         require(
-            schedules[_for][_id] == 0 &&
+            schedules[_for][_id].isNotEmpty != true &&
             meta.totalSupply + _value <= meta.maxSupply
         );
 
-        if (_releaseType == "-cliff") {
-            mint_(meta.vault, _value);
 
-            schedules[_to][_id] = new VestingSchedule({
+        mint_(meta.vault, _value);
+
+        schedules[_for][_id] = VestingSchedule({
             id: _id,
             releaseType: _releaseType,
             duration: _duration,
-            start: _start,
-            end: _start + _duration,
+            start: block.timestamp,
+            end: block.timestamp + _duration,
             value: _value,
-            released: 0
-            });
-        }
+            isNotEmpty: true
+        });
+
     }
 
     function transfer_(address _from, address _to, uint256 _value, uint256 _bpFeeBurn, uint256 _bpFeeBank) private returns (bool, uint256) {
@@ -176,73 +175,79 @@ contract Token is TokenState {
     }
 
     function transfer(address _to, uint256 _value) public returns (bool) {
-        (bool _success, uint256 _newValue) = transfer_(sender(), _to, _value, settings.bpTransferBurn, settings.bpTransferBank);
+        (bool _success, uint256 _newValue) = transfer_(sndr, _to, _value, settings.bpTransferBurn, settings.bpTransferBank);
         return _success;
     }
 
     function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
         require(
-            allowance(_from, sender()) != type(uint256).max &&
-            allowance(_from, sender()) >= _value
+            allowance(_from, sndr) != type(uint256).max &&
+            allowance(_from, sndr) >= _value
         );
 
-        allowed[_from][sender()] = _value;
-        emit Approval(_from, sender(), _value);
+        allowed[_from][sndr] = _value;
+        emit Approval(_from, sndr, _value);
 
         (bool _success, uint256 _newValue) = transfer_(_from, _to, _value, settings.bpTransferBurn, settings.bpTransferBank);
         return _success;
     }
 
     function stake(uint256 _value) public returns (bool) {
-        (bool _success, uint256 _newValue) = transfer_(sender(), meta.vault, _value, settings.bpTransferBurn, settings.bpTransferBank);
-        (staked[sender()], votes[sender()], meta.totalStaked, meta.totalVotes) += _newValue;
+        (bool _success, uint256 _newValue) = transfer_(sndr, meta.vault, _value, settings.bpTransferBurn, settings.bpTransferBank);
+        staked[sndr] += _newValue;
+        votes[sndr] += _newValue;
+        meta.totalStaked += _newValue;
+        meta.totalVotes += _newValue;
         return _success;
     }
 
     function unstake(uint256 _value) public returns (bool) {
-        require(staked[sender()] >= _value);
-        (bool _success, uint256 _newValue) = transfer_(meta.vault, sender(), _value, settings.bpTransferBurn, settings.bpTransferBank);
-        (staked[sender()], votes[sender()], meta.totalStaked, meta.totalVotes) -= _value;
+        require(staked[sndr] >= _value);
+        (bool _success, uint256 _newValue) = transfer_(meta.vault, sndr, _value, settings.bpTransferBurn, settings.bpTransferBank);
+        staked[sndr] -= _value;
+        votes[sndr] -= _value;
+        meta.totalStaked -= _value;
+        meta.totalVotes -= _value;
         return _success;
     }
 
     function allowance(address _owner, address _spender) public view returns (uint256 remaining) {return allowed[_owner][_spender];}
     function increaseAllowance(address _spender, uint256 _value) public returns (bool) {
-        require((sender() != address(0)) && (_spender != address(0)), "zero address");
-        allowed[sender()][_spender] = allowance(sender(), _spender) + _value;
-        emit Approval(sender(), _spender, allowance(sender(), _spender) + _value);
+        require((sndr != address(0)) && (_spender != address(0)), "zero address");
+        allowed[sndr][_spender] = allowance(sndr, _spender) + _value;
+        emit Approval(sndr, _spender, allowance(sndr, _spender) + _value);
         return true;
     }
 
     function decreaseAllowance(address _spender, uint256 _value) public returns (bool) {
-        require((allowance(sender(), _spender) >= _value) && (sender() != address(0)) && (_spender != address(0)), "zero address || decreased allowance below zero");
-        allowed[sender()][_spender] = allowance(sender(), _spender) - _value;
-        emit Approval(sender(), _spender, allowance(sender(), _spender) - _value);
+        require((allowance(sndr, _spender) >= _value) && (sndr != address(0)) && (_spender != address(0)), "zero address || decreased allowance below zero");
+        allowed[sndr][_spender] = allowance(sndr, _spender) - _value;
+        emit Approval(sndr, _spender, allowance(sndr, _spender) - _value);
         return true;
     }
 
     function approve(address _spender, uint256 _value) public returns (bool success) {
-        require((sender() != address(0)) && (_spender != address(0)), "zero address");
-        allowed[sender()][_spender] = _value;
-        emit Approval(sender(), _spender, _value);
+        require((sndr != address(0)) && (_spender != address(0)), "zero address");
+        allowed[sndr][_spender] = _value;
+        emit Approval(sndr, _spender, _value);
         return true;
     }
 
     // mint then lock in vault or validator
     
+    function release(string memory _id) public returns (bool) {
+        string memory _releaseType = schedules[sndr][_id].releaseType;
 
-    function release(string _id) public returns (bool) {
-        string memory _releaseType = schedules[_to][_id].releaseType;
 
-        if (_releaseType == "-cliff") {
-            require(schedules[sender()][_id].end >= block.timestamp && schedules[_to][_id].value > 0);
-            transferFromVault(sender(), _value);
-            schedules[sender()][_id].value = 0;
-        } else if (_releaseType == "-linear") {
-            // release amount that has been assigned
-        } else if (_releaseType == "-log") {
-            //
-        }
+        require(schedules[sndr][_id].end >= block.timestamp && schedules[sndr][_id].value > 0);
+        transfer_(
+            meta.vault,
+            sndr,
+            schedules[sndr][_id].value,
+            settings.bpTransferBurn,
+            settings.bpTransferBank
+        );
+        schedules[sndr][_id].value = 0;
 
     }
 

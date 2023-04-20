@@ -1,0 +1,86 @@
+{
+	"deploy": {
+		"VM:-": {
+			"linkReferences": {},
+			"autoDeployLib": true
+		},
+		"main:1": {
+			"linkReferences": {},
+			"autoDeployLib": true
+		},
+		"ropsten:3": {
+			"linkReferences": {},
+			"autoDeployLib": true
+		},
+		"rinkeby:4": {
+			"linkReferences": {},
+			"autoDeployLib": true
+		},
+		"kovan:42": {
+			"linkReferences": {},
+			"autoDeployLib": true
+		},
+		"goerli:5": {
+			"linkReferences": {},
+			"autoDeployLib": true
+		},
+		"Custom": {
+			"linkReferences": {},
+			"autoDeployLib": true
+		}
+	},
+	"data": {
+		"bytecode": {
+			"functionDebugData": {
+				"@_137": {
+					"entryPoint": null,
+					"id": 137,
+					"parameterSlots": 0,
+					"returnSlots": 0
+				},
+				"@sender_169": {
+					"entryPoint": 98,
+					"id": 169,
+					"parameterSlots": 0,
+					"returnSlots": 1
+				}
+			},
+			"generatedSources": [],
+			"linkReferences": {},
+			"object": "60806040526013606260201b60091760201c565b6000806101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908373ffffffffffffffffffffffffffffffffffffffff160217905550348015605d57600080fd5b50606a565b600033905090565b60478060776000396000f3fe6080604052600080fd5b60003390509056fea2646970667358221220bdbe18898a4a808ca145db08f2cf5802d7a6a1295af726e17e8a393c4018e04264736f6c63430008120033",
+			"opcodes": "PUSH1 0x80 PUSH1 0x40 MSTORE PUSH1 0x13 PUSH1 0x62 PUSH1 0x20 SHL PUSH1 0x9 OR PUSH1 0x20 SHR JUMP JUMPDEST PUSH1 0x0 DUP1 PUSH2 0x100 EXP DUP2 SLOAD DUP2 PUSH20 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF MUL NOT AND SWAP1 DUP4 PUSH20 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF AND MUL OR SWAP1 SSTORE POP CALLVALUE DUP1 ISZERO PUSH1 0x5D JUMPI PUSH1 0x0 DUP1 REVERT JUMPDEST POP PUSH1 0x6A JUMP JUMPDEST PUSH1 0x0 CALLER SWAP1 POP SWAP1 JUMP JUMPDEST PUSH1 0x47 DUP1 PUSH1 0x77 PUSH1 0x0 CODECOPY PUSH1 0x0 RETURN INVALID PUSH1 0x80 PUSH1 0x40 MSTORE PUSH1 0x0 DUP1 REVERT JUMPDEST PUSH1 0x0 CALLER SWAP1 POP SWAP1 JUMP INVALID LOG2 PUSH5 0x6970667358 0x22 SLT KECCAK256 0xBD 0xBE XOR DUP10 DUP11 0x4A DUP1 DUP13 LOG1 GASLIMIT 0xDB ADDMOD CALLCODE 0xCF PC MUL 0xD7 0xA6 LOG1 0x29 GAS 0xF7 0x26 0xE1 PUSH31 0x8A393C4018E04264736F6C6343000812003300000000000000000000000000 ",
+			"sourceMap": "121:1956:0:-:0;;;166:17;:15;;;;;:17;;:::i;:::-;151:32;;;;;;;;;;;;;;;;;;;;2048:16;;;;;;;;;;121:1956;;500:70:1;541:7;558:10;551:17;;500:70;:::o;121:1956:0:-;;;;;;;"
+		},
+		"deployedBytecode": {
+			"functionDebugData": {
+				"@sender_169": {
+					"entryPoint": 9,
+					"id": 169,
+					"parameterSlots": 0,
+					"returnSlots": 1
+				}
+			},
+			"generatedSources": [],
+			"immutableReferences": {},
+			"linkReferences": {},
+			"object": "6080604052600080fd5b60003390509056fea2646970667358221220bdbe18898a4a808ca145db08f2cf5802d7a6a1295af726e17e8a393c4018e04264736f6c63430008120033",
+			"opcodes": "PUSH1 0x80 PUSH1 0x40 MSTORE PUSH1 0x0 DUP1 REVERT JUMPDEST PUSH1 0x0 CALLER SWAP1 POP SWAP1 JUMP INVALID LOG2 PUSH5 0x6970667358 0x22 SLT KECCAK256 0xBD 0xBE XOR DUP10 DUP11 0x4A DUP1 DUP13 LOG1 GASLIMIT 0xDB ADDMOD CALLCODE 0xCF PC MUL 0xD7 0xA6 LOG1 0x29 GAS 0xF7 0x26 0xE1 PUSH31 0x8A393C4018E04264736F6C6343000812003300000000000000000000000000 ",
+			"sourceMap": "121:1956:0:-:0;;;;;;500:70:1;541:7;558:10;551:17;;500:70;:::o"
+		},
+		"gasEstimates": {
+			"creation": {
+				"codeDepositCost": "14200",
+				"executionCost": "infinite",
+				"totalCost": "infinite"
+			}
+		},
+		"methodIdentifiers": {}
+	},
+	"abi": [
+		{
+			"inputs": [],
+			"stateMutability": "nonpayable",
+			"type": "constructor"
+		}
+	]
+}

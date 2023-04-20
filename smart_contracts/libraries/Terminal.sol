@@ -18,6 +18,10 @@ library Terminal {
         uint256 endOn;
     }
 
+
+    function sender() internal view returns (address) {return msg.sender;}
+
+
     function connectTo(
         bool _isRootModule,
         string memory _moduleType,
