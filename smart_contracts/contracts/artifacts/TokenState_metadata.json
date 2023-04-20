@@ -41,11 +41,11 @@
 			]
 		},
 		"smart_contracts/contracts/Token.sol": {
-			"keccak256": "0xc988244e2e6be32a09bb189ae9ff5f7d5de9a4031a73ed6a229a720b3921cdcb",
+			"keccak256": "0xd6608fcc421533f864acd08496300f4dddc30e37e516a1bcddc11f251a0b131d",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://ace84ececad5f691dae0d1ea08b993e0e0f912b9e1ffd64f2b6d7a0dd3f6d1d8",
-				"dweb:/ipfs/QmQnPVXCrxcZXwGez7Vmg5m5E2532TLMRyDpZH6wWcvYwB"
+				"bzz-raw://1d7f436df79075862f1e5532133289a80e54091a88bc2b6e81e1f4598b730ca1",
+				"dweb:/ipfs/QmXmHvSHjNBdqNYXoKcSxUfETZxUn11vtdKWEsZR9Y9o2J"
 			]
 		},
 		"smart_contracts/libraries/Terminal.sol": {
