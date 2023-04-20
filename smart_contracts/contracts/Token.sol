@@ -133,38 +133,20 @@ contract Token is TokenState {
     function votesOf(address _owner) public view returns (uint256) {return votes[_owner];}
 
     function transfer(address _to, uint256 _value) public returns (bool sucecss) {
-        require((sender() != address(0)) && (_to != address(0)) && balance[sender()] >= _value && (balance[sender()] >= 0), "zero address || insufficient balance");
-        balance[sender()] -= _value;
-        if (settings.bpTransferBurn != 0 && settings.bpTransferBank != 0) {
-            uint256 feeBurn = (_value / 1000) * settings.bpTransferBurn;
-            uint256 feeBank = (_value / 1000) * settings.bpTransferBank;
-            balance[_to] += _value - (feeBurn + feeBank);
-            balance[meta.bank] += feeBank;
-            meta.totalSupply -= feeBurn;
-            emit Transfer(sender(), _to, _value - (feeBurn + feeBank));
-            // send to burn address
-            emit Transfer(sender(), address(0), feeBurn);
-            // transfer to contract bank message
-            emit Transfer(sender(), meta.bank, feeBank);
-        // transfer burn is not zero but transfer to bank is
-        } else if (settings.bpTransferBurn != 0 && settings.bpTransferBank == 0) {
-            uint256 feeBurn = (_value / 1000) * settings.bpTransferBurn;
-            balance[_to] += _value - feeBurn;
-            meta.totalSupply -= feeBurn;
-            emit Transfer(sender(), _to, _value - feeBurn);
-            // send to burn address
-            emit Transfer(sender(), address(0), feeBurn);
-        } else if (settings.bpTransferBurn == 0 && settings.bpTransferBank != 0) {
-            uint256 feeBank = (_value / 1000) * settings.bpTransferBank;
-            balance[_to] += _value - feeBank;
-            balance[meta.bank] += feeBank;
-            emit Transfer(sender(), _to, _value - feeBank);
-            // transfer to contract bank message
-            emit Transfer(sender(), meta.bank, feeBank);
-        } else { // normal transaction if both are zero -- saves on gas fee if we arent using them
-            balance[_to] += _value;
-            emit Transfer(sender(), _to, _value);
-        }
+        address _owner = sender();
+        require(_owner != address(0) && _to != address(0) && balance[_owner] >= _value && balance[_owner] >= 0 && _value >= 0 && settings.bpTransferBurn >= 0 && settings.bpTransferBank >= 0);
+        balance[_owner] -= _value;
+        uint256 _feeBurn = (_value / 1000) * settings.bpTransferBurn;
+        uint256 _feeBank = (_value / 1000) * settings.bpTransferBank;
+        uint256 _newValue = _value - (_feeBurn + _feeBank);
+        balance[_to] += _newValue;
+        balance[_meta.bank] += _feeBank;
+        meta.totalSupply -= _feeBurn;
+        emit Transfer(_owner, _to, _newValue);
+        // burn
+        emit Transfer(_owner, address(0), _feeBurn);
+        // bank
+        emit Transfer(_owner, meta.bank, _feeBank);
         return true;
     }
 
