@@ -43,14 +43,10 @@ contract TokenState is Authenticator {
 
     struct State {
         // conditions are difficult to change but can be chanegd in case of emergency or strong requirmeent require large quorum to do so
-        bool isPaused;
-        bool isTransferable;
-        bool isMintable;
-        bool isBurnable;
-        bool isTempHalt; // temp halt with limited duration, does not pause the eco fully but only when required
-        uint256 durationTempHalt;
-        bool isMonetized; // temp halt or fully disable monetizeation within the contract
-        uint256 durationTempMonetizationHalt;
+        bool paused;
+        bool transferable;
+        bool mintable;
+        bool burnable;
     }
 
     struct Settings {
@@ -69,7 +65,9 @@ contract TokenState is Authenticator {
         uint8 decimals;
         uint256 totalSupply;
         uint256 totalStaked;
+        uint256 totalVested;
         uint256 totalVotes;
+        uint256 totalBurnt;
         uint256 maxSupply;
         address bank;
         address vault;
@@ -79,13 +77,12 @@ contract TokenState is Authenticator {
     Meta internal meta;
 
     struct VestingSchedule {
-        string id;
-        string releaseType;
+        string caption;
         uint256 duration;
         uint256 start;
         uint256 end;
         uint256 value;
-        bool isNotEmpty;
+        bool used;
     }
 
     mapping(address => mapping(string => VestingSchedule)) internal schedules;
@@ -119,35 +116,17 @@ contract Token is TokenState {
         mint_(meta.vault, 200000000 * 10**meta.decimals);
     }
 
-    function mint_(address _to, uint256 _value) private {
-        require(_to != address(0) && meta.totalSupply + _value <= meta.maxSupply);
-        meta.totalSupply += _value;
-        balance[_to] += _value;
-        emit Transfer(address(0), _to, _value);
-    }
+    function name() public view returns (string memory) {return meta.name;}
+    function symbol() public view returns (string memory) {return meta.symbol;}
+    function decimals() public view returns (uint8) {return meta.decimals;}
+    function totalSupply() public view returns (uint256) {return meta.totalSupply;}
+    function maxSupply() public view returns (uint256) {return meta.maxSupply;}
 
-    function mintWithVesting_(address _for, uint256 _value, uint256 _duration, string memory _id, string memory _releaseType) private {
+    function balanceOf(address _owner) public view returns (uint256) {return balance[_owner];}
+    function stakeOf(address _owner) public view returns (uint256) {return staked[_owner];}
+    function votesOf(address _owner) public view returns (uint256) {return votes[_owner];}
 
-        require(
-            schedules[_for][_id].isNotEmpty != true &&
-            meta.totalSupply + _value <= meta.maxSupply
-        );
-
-
-        mint_(meta.vault, _value);
-
-        schedules[_for][_id] = VestingSchedule({
-            id: _id,
-            releaseType: _releaseType,
-            duration: _duration,
-            start: block.timestamp,
-            end: block.timestamp + _duration,
-            value: _value,
-            isNotEmpty: true
-        });
-
-    }
-
+    // working!
     function transfer_(address _from, address _to, uint256 _value, uint256 _bpFeeBurn, uint256 _bpFeeBank) private returns (bool, uint256) {
         require(
             _from != address(0) &&
@@ -174,11 +153,13 @@ contract Token is TokenState {
         );
     }
 
+    // working!
     function transfer(address _to, uint256 _value) public returns (bool) {
         (bool _success, uint256 _newValue) = transfer_(sndr, _to, _value, settings.bpTransferBurn, settings.bpTransferBank);
         return _success;
     }
 
+    // need testing
     function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
         require(
             allowance(_from, sndr) != type(uint256).max &&
@@ -192,6 +173,7 @@ contract Token is TokenState {
         return _success;
     }
 
+    // working!
     function stake(uint256 _value) public returns (bool) {
         (bool _success, uint256 _newValue) = transfer_(msg.sender, meta.vault, _value, settings.bpTransferBurn, settings.bpTransferBank);
         staked[msg.sender] += _newValue;
@@ -201,6 +183,7 @@ contract Token is TokenState {
         return _success;
     }
 
+    // working!
     function unstake(uint256 _value) public returns (bool) {
         require(staked[msg.sender] >= _value);
         (bool _success, uint256 _newValue) = transfer_(meta.vault, msg.sender, _value, settings.bpTransferBurn, settings.bpTransferBank);
@@ -212,6 +195,8 @@ contract Token is TokenState {
     }
 
     function allowance(address _owner, address _spender) public view returns (uint256 remaining) {return allowed[_owner][_spender];}
+    
+    // need testing
     function increaseAllowance(address _spender, uint256 _value) public returns (bool) {
         require((sndr != address(0)) && (_spender != address(0)), "zero address");
         allowed[sndr][_spender] = allowance(sndr, _spender) + _value;
@@ -219,13 +204,15 @@ contract Token is TokenState {
         return true;
     }
 
+    // need testing
     function decreaseAllowance(address _spender, uint256 _value) public returns (bool) {
         require((allowance(sndr, _spender) >= _value) && (sndr != address(0)) && (_spender != address(0)), "zero address || decreased allowance below zero");
         allowed[sndr][_spender] = allowance(sndr, _spender) - _value;
         emit Approval(sndr, _spender, allowance(sndr, _spender) - _value);
         return true;
     }
-
+    
+    // need testing
     function approve(address _spender, uint256 _value) public returns (bool success) {
         require((sndr != address(0)) && (_spender != address(0)), "zero address");
         allowed[sndr][_spender] = _value;
@@ -233,77 +220,100 @@ contract Token is TokenState {
         return true;
     }
 
-    // mint then lock in vault or validator
-    
-    function release(string memory _id) public returns (bool) {
-        string memory _releaseType = schedules[sndr][_id].releaseType;
-
-
-        require(schedules[sndr][_id].end >= block.timestamp && schedules[sndr][_id].value > 0);
-        transfer_(
-            meta.vault,
-            sndr,
-            schedules[sndr][_id].value,
-            settings.bpTransferBurn,
-            settings.bpTransferBank
+    function release(string memory _caption) public returns (bool) {
+        require(
+            schedules[msg.sender][_caption].end >= block.timestamp && // cannot release before end
+            schedules[msg.sender][_caption].value > 0                 // cannot release if there is nothing to release
         );
-        schedules[sndr][_id].value = 0;
+
+        transfer_(
+            meta.vault,                             // from
+            msg.sender,                             // to
+            schedules[msg.sender][_caption].value,  // value
+            settings.bpTransferBurn,                // fee
+            settings.bpTransferBank                 // fee
+        );
+
+        schedules[msg.sender][_caption].value = 0;  // update schedule value
 
     }
 
-    function burn(address _from, uint256 _value) internal {
-        require(_from != address(0) && balance[_from] >= _value);
-        balance[_from] -= _value;
-        meta.totalSupply -= _value;
-        emit Transfer(_from, address(0), _value);
-    }
-
-
-    // convert or swap amount of tokens to DREAM and distribute the amount we have in the vault or bank to the people staking
-    // hence staking means you get votes but you also get earnings
-    // we will do a check to see how long they've been staking for
-    // this will also be important for the voting mechanisms
-    function distribute() internal {
+    function mintWithVesting_(     // a simple cliff vesting schedule
+        address _owner,            // vested for
+        uint256 _value,            // value
+        uint256 _duration,         // duration seconds till release from call of this function
+        string memory _caption     // readable caption to identify the staking schedule per address
+        ) public onlyAdmin onlyOperator onlyDev returns (bool success) {
         
+        require(
+            schedules[_owner][_caption].used == false,   // check if schedule slot is empty
+            "_caption already in use"                    // schedule already in use or used
+        );
+
+        schedules[_owner][_caption] = VestingSchedule({
+            caption:     _caption,                       // readable caption to identify the staking schedule per address
+            duration:    _duration,                      // duration seconds till release from call of this function
+            start:       block.timestamp,                // start now
+            end:         block.timestamp + _duration,    // end at
+            value:       _value,                         // value
+            used:        true                            // update used
+        });
+
+        meta.totalVested += _value;                      // update totalVested
+        mint(_value);                                    // mint to vault **only once released will it be transfered to _owner
+
     }
 
+    function mint(uint256 _value) public onlyAdmin onlyOperator onlyDev returns (bool success) {
+        uint256 _newValue = meta.totalSupply + meta.totalBurnt + _value;
+        require(
+            settings.state.mintable != false &&         // check mintable
+            _newValue <= meta.maxSupply,                // check maxSupply && totalBurnt
+            "_newValue !<= maxSupply"                   // revert message if maxSupply reached
+        );
 
-    // ======  A MASSIVE LIST OF FUNCTIONS THAT ALTER THE STATE OF THE CONTRACT
-    // please note that these need to be locked behind the proposal and governance mechanisms
+        balance[meta.vault] += _value;                  // mint in vault
+        meta.totalSupply += _value;                     // update totalSupply
 
-    // please note that bp is in basis points 1 / 1000
-    function setBpTransferBurn(uint256 _newValue) private returns (bool) {
-        settings.bpTransferBurn = _newValue;
+        emit Transfer(address(0), meta.vault, _value);  // emit event
+        return true;                                    // bool success
     }
 
-    // again please note that in bp
-    function setBpTransferBank(uint256 _newValue) private returns (bool) {
-        settings.bpTransferBank = _newValue;
+    function burn(uint256 _value) public onlyAdmin onlyOperator onlyDev returns (bool success) {
+        uint256 _availableBalance = balance[meta.vault] - (meta.totalStaked + meta.totalVested);
+        require(
+            settings.state.burnable != false &&          // check burnable
+            _availableBalance >= _value,                 // check balance
+            "insufficient balance"                       // revert message if vault balance is insufficient
+        );
+        
+        balance[meta.vault] -= _value;                   // burn
+        meta.totalSupply -= _value;                      // update totalSupply
+        meta.totalBurnt += _value;                       // update totalBurnt **can never mint more even if you burn totalSupply
+
+        emit Transfer(meta.vault, address(0), _value);   // emit event
+        return true;                                     // bool success
+    }
+    
+    function updateSettings(uint256 _bpFeeBurn, uint256 _bpFeeBank) public onlyAdmin onlyOperator onlyDev returns (bool success) {
+        require(
+            _bpFeeBurn >= 0 &&                  // cannot be less than zero
+            _bpFeeBurn <= 10000 &&              // cannot be more than 10_000 (100%)
+            _bpFeeBank >= 0 &&                  // cannot be less than zero
+            _bpFeeBank <= 10000,                // cannot be more than 10_000 (100%)
+            "_bpFeeBurn || _bpFeeBank !range"   // revert message if one of these values are out of range
+        );
+
+        settings.bpTransferBurn = _bpFeeBurn;   // update transfer fee
+        settings.bpTransferBank = _bpFeeBank;   // update transfer fee
+        return true;                            // bool success
     }
 
-    function setStateIsPaused(bool _is) public onlyAdmin onlyDev onlyOperator returns (bool) {
-        // check boolean value
-        settings.state.isPaused = _is;
-        return true;
+    function updateSettingsState(bool _paused, bool _transferable, bool _mintable, bool _burnable) public onlyAdmin onlyOperator onlyDev returns (bool success) {
+        settings.state.paused = _paused;                // is paused
+        settings.state.transferable = _transferable;    // is transferable
+        settings.state.mintable = _mintable;            // is mintable **cannot mint more than maxSupply regardless
+        settings.state.burnable = _burnable;            // is burnable
+        return true;                                    // bool success
     }
-
-    function setStateIsTransferable(bool _is) public onlyAdmin onlyDev returns (bool) {
-        settings.state.isTransferable = _is;
-        return true;
-    }
-
-    function setStateIsMintable(bool _is) public onlyAdmin onlyDev onlyOperator returns (bool) {
-        settings.state.isMintable = _is;
-        return true;
-    }
-
-    function name() public view returns (string memory) {return meta.name;}
-    function symbol() public view returns (string memory) {return meta.symbol;}
-    function decimals() public view returns (uint8) {return meta.decimals;}
-    function totalSupply() public view returns (uint256) {return meta.totalSupply;}
-    function maxSupply() public view returns (uint256) {return meta.maxSupply;}
-
-    function balanceOf(address _owner) public view returns (uint256) {return balance[_owner];}
-    function stakeOf(address _owner) public view returns (uint256) {return staked[_owner];}
-    function votesOf(address _owner) public view returns (uint256) {return votes[_owner];}
 }
