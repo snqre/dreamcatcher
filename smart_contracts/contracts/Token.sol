@@ -97,7 +97,7 @@ contract TokenState is Authenticator {
 }
 
 contract Token is TokenState {
-
+    
     modifier paused() {
         require(
             settings.state.paused != true           // cannot be paused
