@@ -1,9 +1,16 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.9; // note that in  pragma greater than 0.8.0 overflow and underflow is automatically checked
+pragma solidity ^0.8.0;
+
+/**
+Note to self:
+    1) refactor tf out of this
+ */
+
 
 import "smart_contracts/contracts/Authenticator.sol";
 
 interface IERC20 {
+
     function name() external view returns (string memory);
     function symbol() external view returns (string memory);
     function decimals() external view returns (uint8);
@@ -18,21 +25,17 @@ interface IERC20 {
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 }
 
-interface ICustomToken { // this is where custum functions
+interface ICustomToken {
+
+    function totalVotes() external view returns (uint256);
+    function totalStaked() external view returns (uint256);
     function maxSupply() external view returns (uint256);
     function stakeOf(address _owner) external view returns (uint256);
     function votesOf(address _owner) external view returns (uint256);
-    // ripped straight from @openzeppelin
     function increaseAllowance(address _spender, uint256 _value) external returns (bool);
     function decreaseAllowance(address _spender, uint256 _value) external returns (bool);
-    // staking and unstaking functions and features here
-    /**
-    Staking goes to our bank or vault, it cannot be used by anyone, it just stays there
-    When we make earnings or give out rewards, stakers will be able to withdraw directly from the vault
-     */
     function stake(uint256 _value) external returns (bool);
     function unstake(uint256 _value) external returns (bool);
-    
 }
 
 // inherit from authenticator contract
@@ -43,7 +46,7 @@ contract TokenState is Authenticator {
     }
 
     struct State {
-        // conditions are difficult to change but can be chanegd in case of emergency or strong requirmeent require large quorum to do so
+
         bool paused;
         bool transferable;
         bool mintable;
@@ -61,68 +64,111 @@ contract TokenState is Authenticator {
     }
 
     struct Meta {
-        string name;
-        string symbol;
-        uint8 decimals;
-        uint256 totalSupply;
-        uint256 totalStaked;
-        uint256 totalVested;
-        uint256 totalVotes;
-        uint256 totalBurnt;
-        uint256 maxSupply;
-        address bank;
-        address vault;
+        string name;            // name
+        string symbol;          // symbol
+        uint8 decimals;         // decimals
+        uint256 totalSupply;    // supply
+        uint256 totalStaked;    // staked in vault
+        uint256 totalVested;    // vested in vault
+        uint256 totalVotes;     // votes
+        uint256 totalBurnt;     // all time burnt
+        uint256 maxSupply;      // hard cap
+        address bank;           // **deprecated
+        address vault;          // address of contract vault
     }
 
-    Settings internal settings;
-    Meta internal meta;
+    Settings internal settings; // also properties of token
+    Meta internal meta;         // properties of token
 
     struct VestingSchedule {
-        string caption;
-        uint256 duration;
-        uint256 start;
-        uint256 end;
-        uint256 value;
-        bool used;
+        string caption;         // id
+        uint256 duration;       // duration
+        uint256 start;          // block.timestamp
+        uint256 end;            // unlock
+        uint256 value;          // amount
+        bool used;              // already in use
     }
 
-    mapping(address => mapping(string => VestingSchedule)) internal schedules;
-
-    mapping(address => uint256) internal balance;
-    mapping(address => uint256) internal staked; // amount of their tokens staked cannot be both in balance and staked must be only one
-    mapping(address => uint256) internal votes; // amount of voting weight this account has typically only given when staked
-    mapping(address => mapping(address => uint256)) internal allowed;
+    mapping(address => mapping(string => VestingSchedule)) internal schedules;      // schedules
+    mapping(address => uint256) internal balance;                                   // balance
+    mapping(address => uint256) internal staked;                                    // staked
+    mapping(address => uint256) internal votes;                                     // votes
+    mapping(address => mapping(address => uint256)) internal allowed;               // allowances || allowed
 }
-
 
 contract Token is TokenState {
 
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+    modifier paused() {
+        require(
+            settings.state.paused != true           // cannot be paused
+        );
+        _;                                          // execute function
+    }
 
-    
+    modifier transferable() {
+        require(
+            settings.state.transferable == true     // must be transferable
+        );
+        _;                                          // execute function
+    }
+
+    modifier mintable() {
+        require(
+            settings.state.mintable == true         // must be mintable
+        );
+        _;                                          // execute function
+    }
+
+    modifier burnable() {
+        require(
+            settings.state.burnable == true         // must be burnable
+        );
+        _;                                          // execute function
+    }
+
+    event Transfer(
+        address indexed _from,
+        address indexed _to, 
+        uint256 _value
+    );
+
+    event Approval(
+        address indexed _owner, 
+        address indexed _spender, 
+        uint256 _value
+    );
 
     constructor() {
-        meta.name = "Dreamcatcher";
-        meta.symbol = "DREAM";
-        meta.decimals = 18;
-        meta.totalSupply = 0; // once the supply it minted this will update (i want to specifically use mint for transperency)
-        meta.maxSupply = 200000000 * 10**meta.decimals; // 200_000_000.000000000000000000 *much divisible ... much wow
-        meta.bank = sndr;
-        meta.vault = sndr;
-        settings.bpTransferBurn = 0;  // start 0 but after exposure period 0.15% | 15
-        settings.bpTransferBank = 0;  // start 0 but after exposure period 0.10% transferred to vault
-        settings.VotingMechanic.voteWeightPerToken = 1; // x vote per token
+        meta.name = "Dreamcatcher";                     // set name
+        meta.symbol = "DREAM";                          // set symbol
+        meta.decimals = 18;                             // set decimals
+        meta.totalSupply = 0;                           // initial totalSupply
+        meta.maxSupply = 200000000 * 10**meta.decimals; // 200000000.000000000000000000
+        meta.vault = msg.sender;                        // set vault address to contract address
+        settings.bpTransferBurn = 0;                    // 0 | 100 == 1%
+        settings.bpTransferBank = 0;                    // 0 | 100 == 1%
+        settings.VotingMechanic.voteWeightPerToken = 1; // 1 token == 1 vote
 
+        bool _paused         = false;
+        bool _transferable   = true;
+        bool _mintable       = true;
+        bool _burnable       = true;
+        updateSettingsState(_paused, _transferable, _mintable, _burnable);      // update state settings
         mint_(meta.vault, 200000000 * 10**meta.decimals);
+
+
+
+        _mintable = false;                                                      // all supply has been minted
+        updateSettingsState(_paused, _transferable, _mintable, _burnable);      // update state settings
     }
 
     function name() public view returns (string memory) {return meta.name;}
     function symbol() public view returns (string memory) {return meta.symbol;}
     function decimals() public view returns (uint8) {return meta.decimals;}
+    function totalVotes() public view returns (uint256) {return meta.totalVotes;}
+    function totalStaked() public view returns (uint256) {return meta.totalStaked;}
     function totalSupply() public view returns (uint256) {return meta.totalSupply;}
     function maxSupply() public view returns (uint256) {return meta.maxSupply;}
-
     function balanceOf(address _owner) public view returns (uint256) {return balance[_owner];}
     function stakeOf(address _owner) public view returns (uint256) {return staked[_owner];}
     function votesOf(address _owner) public view returns (uint256) {return votes[_owner];}
@@ -155,13 +201,13 @@ contract Token is TokenState {
     }
 
     // working!
-    function transfer(address _to, uint256 _value) public returns (bool) {
+    function transfer(address _to, uint256 _value) public transferable returns (bool) {
         (bool _success, uint256 _newValue) = transfer_(sndr, _to, _value, settings.bpTransferBurn, settings.bpTransferBank);
         return _success;
     }
 
     // need testing
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+    function transferFrom(address _from, address _to, uint256 _value) public transferable returns (bool) {
         require(
             allowance(_from, sndr) != type(uint256).max &&
             allowance(_from, sndr) >= _value
@@ -175,7 +221,7 @@ contract Token is TokenState {
     }
 
     // working!
-    function stake(uint256 _value) public returns (bool) {
+    function stake(uint256 _value) public transferable returns (bool) {
         (bool _success, uint256 _newValue) = transfer_(msg.sender, meta.vault, _value, settings.bpTransferBurn, settings.bpTransferBank);
         staked[msg.sender] += _newValue;
         votes[msg.sender] += _newValue;
@@ -185,7 +231,7 @@ contract Token is TokenState {
     }
 
     // working!
-    function unstake(uint256 _value) public returns (bool) {
+    function unstake(uint256 _value) public transferable returns (bool) {
         require(staked[msg.sender] >= _value);
         (bool _success, uint256 _newValue) = transfer_(meta.vault, msg.sender, _value, settings.bpTransferBurn, settings.bpTransferBank);
         staked[msg.sender] -= _value;
@@ -193,6 +239,22 @@ contract Token is TokenState {
         meta.totalStaked -= _value;
         meta.totalVotes -= _value;
         return _success;
+    }
+
+    // delegate vote to ** must ensure that if unstaked all delagates stop having those votes
+    function delegateVote(address _to, uint256 _value) public returns (bool) {
+        require(
+            votesOf(msg.sender) >= _value &&
+            stakeOf(msg.sender) >= _value
+        );
+
+        votes[msg.sender] -= _value;
+        votes[msg.sender] += _value;
+    }
+
+    // revoke delegated votes
+    function undertakeVote(address _from, uint256 _value) public returns (bool) {
+
     }
 
     function allowance(address _owner, address _spender) public view returns (uint256 remaining) {return allowed[_owner][_spender];}
@@ -239,12 +301,12 @@ contract Token is TokenState {
         return true;                                // bool success
     }
 
-    function mintWithVesting_(     // a simple cliff vesting schedule
+    function mintWithVesting(     // a simple cliff vesting schedule
         address _owner,            // vested for
         uint256 _value,            // value
         uint256 _duration,         // duration seconds till release from call of this function
         string memory _caption     // readable caption to identify the staking schedule per address
-        ) public onlyAdmin onlyOperator onlyDev returns (bool success) {
+        ) public mintable onlyAdmin onlyOperator onlyDev returns (bool success) {
         
         require(
             schedules[_owner][_caption].used == false,   // check if schedule slot is empty
@@ -265,7 +327,7 @@ contract Token is TokenState {
 
     }
 
-    function mint(uint256 _value) public onlyAdmin onlyOperator onlyDev returns (bool success) {
+    function mint(uint256 _value) public mintable onlyAdmin onlyOperator onlyDev returns (bool success) {
         uint256 _newValue = meta.totalSupply + meta.totalBurnt + _value;
         require(
             settings.state.mintable != false &&         // check mintable
@@ -280,7 +342,7 @@ contract Token is TokenState {
         return true;                                    // bool success
     }
 
-    function burn(uint256 _value) public onlyAdmin onlyOperator onlyDev returns (bool success) {
+    function burn(uint256 _value) public burnable onlyAdmin onlyOperator onlyDev returns (bool success) {
         uint256 _availableBalance = balance[meta.vault] - (meta.totalStaked + meta.totalVested);
         require(
             settings.state.burnable != false &&          // check burnable

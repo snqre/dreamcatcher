@@ -1,40 +1,73 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "smart_contracts/libraries/Terminal.sol";
+contract AuthenticatorState {
 
-// key 
-contract Authenticator {
-    address sndr = Terminal.sender();
-    mapping(address => bool) internal isAdmin;
-    mapping(address => bool) internal isDev;    // we will maintain some control of the contract for period after deployment to improve and fine tuine it
-    mapping(address => bool) internal isSyndicate;
-    mapping(address => bool) internal isOperator; // elected official
-    // ====== RESERVED FOR EXTERNAL CONTRACTS NOT TO INTENDED FOR USE OF USER ADDRESSES
-    mapping(address => bool) internal isValidator; // validators can stake and hold
-    mapping(address => bool) internal isProposer; // can propose -- reserved for external contracts not for users in case we want to outsource the propose function
-    mapping(address => bool) internal isExtension; // extension contract must be given permission
+    mapping(address => bool) internal isAdmin;      // address > bool | -human -contract
+    mapping(address => bool) internal isDev;        // address > bool | -human **temp
+    mapping(address => bool) internal isSyndicate;  // address > bool | -human
+    mapping(address => bool) internal isOperator;   // address > bool | -human
+    mapping(address => bool) internal isValidator;  // address > bool | -contract
+    mapping(address => bool) internal isExtension;  // address > bool | -contract
+}
 
-    modifier onlyAdmin() {require(isAdmin[sndr] == true, "Authenticator: admin permission required");_;}
-    modifier onlyDev() {require(isDev[sndr] == true, "Authenticator: dev permission required");_;}
-    modifier onlySyndicate() {require(isSyndicate[sndr] == true, "Authenticator: syndicate permission required");_;}
-    modifier onlyOperator() {require(isOperator[sndr] == true, "Authenticator: operator permission required");_;}
-    modifier onlyExtension() {require(isExtension[sndr] == true, "Authenticator: extension permission required");_;}
-    modifier onlyValidator() {require(isValidator[sndr] == true, "validator permission required");_;}
+contract Authenticator is AuthenticatorState {
 
-    // mutex anti reentrancy lock
-    // 1 mutex leaves the contract vulnerable to DDOS and denial of service attacks so its import to use this only where required
-    // if we need more mutex, then we can have a second lock but the maximum is 1 per function
-    bool private locked;
-    modifier antiReentrancy() {
-        require(!locked, "MUTEXT: is locked");
-        locked = true;
-        _;
-        locked = false;
+    modifier onlyAdmin() {
+        require(
+            isAdmin[msg.sender] == true,        // check admin permission
+            "onlyAdmin"                         // revert message
+        );
+        _;                                      // execute function
     }
 
-    constructor() {}
+    modifier onlyDev() {
+        require(
+            isDev[msg.sender] == true,          // check dev permission
+            "onlyDev"                           // revert message
+        );
+        _;                                      // execute function
+    }
 
+    modifier onlyOperator() {
+        require(
+            isOperator[msg.sender] == true,     // check operator permission
+            "onlyOperator"                      // revert message
+        );
+        _;                                      // execute function
+    }
+
+    modifier onlySyndicate() {
+        require(
+            isSyndicate[msg.sender] == true,    // check syndicate permission
+            "onlySyndicate"                     // revert message
+        );
+        _;                                      // execute function
+    }
     
+    modifier onlyExtension() {
+        require(
+            isExtension[msg.sender] == true,    // check extension permission
+            "onlyExtension"                     // revert message
+        );
+        _;                                      // execute function
+    }
 
+    modifier onlyValidator() {
+        require(
+            isValidator[msg.sender] == true,    // check validator permission
+            "onlyValidator"                     // revert message
+        );
+        _;                                      // execute function
+    }
+
+    bool private locked;                        // state
+    modifier antiReentrancy() {
+        require(
+            !locked                             // cannot be locked
+        );
+        locked = true;                          // set as locked before executing function
+        _;                                      // execute function
+        locked = false;                         // unlock after function execution
+    }
 }
