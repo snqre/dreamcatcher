@@ -26,7 +26,7 @@ contract Authenticator {
     // 1 mutex leaves the contract vulnerable to DDOS and denial of service attacks so its import to use this only where required
     // if we need more mutex, then we can have a second lock but the maximum is 1 per function
     bool private locked;
-    modifier mutex() {
+    modifier antiReentrancy() {
         require(!locked, "MUTEXT: is locked");
         locked = true;
         _;

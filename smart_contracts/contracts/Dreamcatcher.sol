@@ -21,7 +21,9 @@ import "smart_contracts/libraries/Settings.sol";
 
 contract Dreamcatcher is Proposal { // the real governance starts here
 
-    
+    meta.vault;
+    meta.totalVotes;
+    meta.totalStaked;
 
     struct Member {
         address memberAddress;

@@ -18,7 +18,7 @@ interface IERC20 {
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 }
 
-interface ICustomToken {
+interface ICustomToken { // this is where custum functions
     function maxSupply() external view returns (uint256);
     function stakeOf(address _owner) external view returns (uint256);
     function votesOf(address _owner) external view returns (uint256);
@@ -32,6 +32,7 @@ interface ICustomToken {
      */
     function stake(uint256 _value) external returns (bool);
     function unstake(uint256 _value) external returns (bool);
+    
 }
 
 // inherit from authenticator contract
@@ -220,7 +221,7 @@ contract Token is TokenState {
         return true;
     }
 
-    function release(string memory _caption) public returns (bool) {
+    function release(string memory _caption) public returns (bool success) {
         require(
             schedules[msg.sender][_caption].end >= block.timestamp && // cannot release before end
             schedules[msg.sender][_caption].value > 0                 // cannot release if there is nothing to release
@@ -235,7 +236,7 @@ contract Token is TokenState {
         );
 
         schedules[msg.sender][_caption].value = 0;  // update schedule value
-
+        return true;                                // bool success
     }
 
     function mintWithVesting_(     // a simple cliff vesting schedule
