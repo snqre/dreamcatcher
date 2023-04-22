@@ -1,12 +1,11 @@
-#
-Token {
+# Token
     State.sol > Authenticator.sol > Token.sol
-}
 
-Vault {
-    Conduit.sol > Vault.sol
-}
+# Vault
+    State.sol > Authenticator.sol > Conduit.sol > Vault.sol
 
-Dreamcatcher {
-    Governance Mechanisms
-}
+# Dreamcatcher
+    State.sol > Authenticator.sol > Proposal > Dreamcatcher.sol
+
+# Pool
+    State.sol > Authenticator.sol > ERC20 > Pool
