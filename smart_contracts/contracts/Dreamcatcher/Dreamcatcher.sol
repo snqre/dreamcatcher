@@ -1,0 +1,105 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.9;
+
+import "smart_contracts/contracts/Proposal.sol";
+
+
+
+import "smart_contracts/contracts/Conduit.sol";
+import "smart_contracts/contracts/Token.sol";
+//import "@openzeppelin/contracts/governance/Governor.sol";
+//import "@openzeppelin/contracts/governance/extensions/GovernorSettings.sol";
+//import "@openzeppelin/contracts/governance/extensions/GovernorCountingSimple.sol";
+//import "@openzeppelin/contracts/governance/extensions/GovernorVotes.sol";
+//import "@openzeppelin/contracts/governance/extensions/GovernorVotesQuorumFraction.sol";
+//import "@openzeppelin/contracts/governance/extensions/GovernorTimelockControl.sol";
+import "./BaseERC20.sol";
+import "smart_contracts/contracts/Vault.sol";
+import "smart_contracts/libraries/Settings.sol";
+
+//import "./TimelockController.sol";
+
+contract Dreamcatcher is Proposal { // the real governance starts here
+
+    meta.vault;
+    meta.totalVotes;
+    meta.totalStaked;
+
+    struct Member {
+        address memberAddress;
+        uint memberSince;
+        uint tokenBalance;
+    }
+
+    address[] public members;
+    mapping(address => Member) public memberInfo;
+    mapping(address => mapping(uint => bool)) public votes;
+    Proposal[] public proposals;
+
+    uint public totalSupply;
+    mapping(address => uint) public availableVotes;
+
+    event ProposalCreated(uint indexed proposalId, string description);
+    event VoteCast(address indexed voter, uint indexed proposalId, uint tokenAmount);
+
+    address votingTokenAddress;
+
+    function addVotingToken(address _votingTokenAddress) public {
+        votingTokenAddress = _votingTokenAddress;
+    }
+
+    function countVotesOf(address _member) public {
+        require(memberInfo[_member].memberAddress == address(0), "Member already exists");
+        memberInfo[_member] = Member({
+            memberAddress: _member,
+            memberSince: block.timestamp,
+            tokenBalance: Token(votingTokenAddress).balanceOf(_member)
+        });
+        members.push(_member);
+        availableVotes[_member] = Token(votingTokenAddress).balanceOf(_member);
+    }
+
+    function createProposal(string memory _description) public {
+        proposals.push(Proposal({
+            description: _description,
+            voteCount: 0,
+            executed: false
+        }));
+        emit ProposalCreated(proposals.length - 1, _description);
+    }
+
+    function vote(uint _proposalId, uint _tokenAmount) public {
+        require(memberInfo[msg.sender].memberAddress != address(0), "Only members can vote");
+        require(balances[msg.sender] >= _tokenAmount, "Not enough tokens to vote");
+        require(votes[msg.sender][_proposalId] == false, "You have already voted for this proposal");
+        votes[msg.sender][_proposalId] = true;
+        memberInfo[msg.sender].tokenBalance -= _tokenAmount;
+        proposals[_proposalId].voteCount += _tokenAmount;
+        emit VoteCast(msg.sender, _proposalId, _tokenAmount);
+    }
+
+    function executeProposal(uint _proposalId) public {
+        require(proposals[_proposalId].executed == false, "Proposal has already been executed");
+        require(proposals[_proposalId].voteCount > totalSupply / 2, "Proposal has not been approved by majority vote");
+        proposals[_proposalId].executed = true;
+        // execute proposal here
+    }
+
+
+    /**
+    I know it is not common convention to have a run function in a loop, but we can delay the loop so it doesnt run every second but loops through importat things every week or month
+    We should have enough money to run a loop every week or month especially if we are holding millions of value
+     */
+    // experimental
+    uint256 delay;
+    bool isRunning;
+    function run() private {
+        while (isRunning == true) {
+            // delay 1 week or month
+        }
+    }
+
+    // experimental 
+    // basically emergency functions are very expensive but if something goes wrong, we can revert the whole ecosystem back to a certain period of time
+    function emergencyFunction() {}
+}

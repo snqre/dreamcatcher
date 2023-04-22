@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "smart_contracts/contracts/Authenticator.sol";
+import "smart_contracts/contracts/Token/Authenticator.sol";
 
 interface IERC20 {
 
@@ -45,7 +45,10 @@ contract Token is Authenticator, IERC20, ICustomToken {
         meta.vault = msg.sender;                        // set vault address to contract address
         settings.bpTransferBurn = 0;                    // 0 | 100 == 1%
         settings.bpTransferBank = 0;                    // 0 | 100 == 1%
-        settings.votingMechanic.voteWeightPerToken = 1;
+        settings.bpTransferBurnMin = 0;
+        settings.bpTransferBankMin = 0;
+        settings.bpTransferBurnMax = 10000;
+        settings.bpTransferBankMax = 10000;
 
         isAdmin[msg.sender] = true;
 
@@ -108,7 +111,7 @@ contract Token is Authenticator, IERC20, ICustomToken {
         emit Transfer(_from, _to, _value);
         return true;
     }
-
+    
     function burn_(address _from, uint256 _value) internal returns (bool) {
         require(
             _value >= 0 &&
