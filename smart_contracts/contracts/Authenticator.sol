@@ -78,7 +78,7 @@ contract Authenticator is State, IAuthenticator {
     }
 
     constructor() {
-        
+
         settings.roles.admin.cur = 0;
         settings.roles.operator.cur = 0;
         settings.roles.syndicate.cur = 0;
@@ -98,7 +98,7 @@ contract Authenticator is State, IAuthenticator {
         settings.roles.extension.max = INFINITE;
     }
     // =.=.=.=.= ADMIN =.=.=.=.=
-    function grantRoleAdmin_(address _owner, uint256 _duration) internal onlyAdmin returns (bool) {
+    function grantRoleAdmin_(address _owner, uint256 _duration) external onlyAdmin returns (bool) {
         uint256 _max = settings.roles.admin.max;
         uint256 _min = settings.roles.admin.min;
         uint256 _cur = settings.roles.admin.cur;
@@ -124,7 +124,7 @@ contract Authenticator is State, IAuthenticator {
         return true;
     }
 
-    function revokeRoleAdmin_(address _owner) internal onlyAdmin returns (bool) {
+    function revokeRoleAdmin_(address _owner) external onlyAdmin returns (bool) {
         uint256 _max = settings.roles.admin.max;
         uint256 _min = settings.roles.admin.min;
         uint256 _cur = settings.roles.admin.cur;
@@ -148,7 +148,7 @@ contract Authenticator is State, IAuthenticator {
         return true;
     }
 
-    function extendRoleAdmin_(address _owner, uint256 _duration) internal onlyAdmin returns (bool) {
+    function extendRoleAdmin_(address _owner, uint256 _duration) external onlyAdmin returns (bool) {
         require(
             _duration >= 0 &&
             isAdmin[_owner] != true &&
@@ -162,7 +162,7 @@ contract Authenticator is State, IAuthenticator {
         return true;
     }
     // =.=.=.=.= OPERATOR =.=.=.=.=
-    function grantRoleOperator_(address _owner, uint256 _duration) internal onlyAdmin returns (bool) {
+    function grantRoleOperator_(address _owner, uint256 _duration) external onlyAdmin returns (bool) {
         uint256 _max = settings.roles.operator.max;
         uint256 _min = settings.roles.operator.min;
         uint256 _cur = settings.roles.operator.cur;
@@ -188,7 +188,7 @@ contract Authenticator is State, IAuthenticator {
         return true;
     }
 
-    function revokeRoleOperator_(address _owner) internal onlyAdmin returns (bool) {
+    function revokeRoleOperator_(address _owner) external onlyAdmin returns (bool) {
         uint256 _max = settings.roles.syndicate.max;
         uint256 _min = settings.roles.syndicate.min;
         uint256 _cur = settings.roles.syndicate.cur;
@@ -212,7 +212,7 @@ contract Authenticator is State, IAuthenticator {
         return true;
     }
 
-    function extendRoleOperator_(address _owner, uint256 _duration) internal onlyAdmin returns (bool) {
+    function extendRoleOperator_(address _owner, uint256 _duration) external onlyAdmin returns (bool) {
         require(
             _duration >= 0 &&
             isAdmin[_owner] != true &&
@@ -226,7 +226,7 @@ contract Authenticator is State, IAuthenticator {
         return true;
     }
     // =.=.=.=.= SYNDICATE =.=.=.=.=
-    function grantRoleSyndicate_(address _owner, uint256 _duration) internal onlyAdmin returns (bool) {
+    function grantRoleSyndicate_(address _owner, uint256 _duration) external onlyAdmin returns (bool) {
         uint256 _max = settings.roles.syndicate.max;
         uint256 _min = settings.roles.syndicate.min;
         uint256 _cur = settings.roles.syndicate.cur;
@@ -252,7 +252,7 @@ contract Authenticator is State, IAuthenticator {
         return true;
     }
 
-    function revokeRoleSyndicate_(address _owner) internal onlyAdmin returns (bool) {
+    function revokeRoleSyndicate_(address _owner) external onlyAdmin returns (bool) {
         uint256 _max = settings.roles.syndicate.max;
         uint256 _min = settings.roles.syndicate.min;
         uint256 _cur = settings.roles.syndicate.cur;
@@ -276,7 +276,7 @@ contract Authenticator is State, IAuthenticator {
         return true;
     }
 
-    function extendRoleSyndicate_(address _owner, uint256 _duration) internal onlyAdmin returns (bool) {
+    function extendRoleSyndicate_(address _owner, uint256 _duration) external onlyAdmin returns (bool) {
         require(
             _duration >= 0 &&
             isAdmin[_owner] != true &&
@@ -291,7 +291,7 @@ contract Authenticator is State, IAuthenticator {
     }
 
     // =.=.=.=.= VALIDATOR =.=.=.=.=
-    function grantRoleValidator_(address _owner, uint256 _duration) internal onlyAdmin returns (bool) {
+    function grantRoleValidator_(address _owner, uint256 _duration) external onlyAdmin returns (bool) {
         uint256 _max = settings.roles.validator.max;
         uint256 _min = settings.roles.validator.min;
         uint256 _cur = settings.roles.validator.cur;
@@ -317,7 +317,7 @@ contract Authenticator is State, IAuthenticator {
         return true;
     }
 
-    function revokeRoleValidator_(address _owner) internal onlyAdmin returns (bool) {
+    function revokeRoleValidator_(address _owner) external onlyAdmin returns (bool) {
         uint256 _max = settings.roles.validator.max;
         uint256 _min = settings.roles.validator.min;
         uint256 _cur = settings.roles.validator.cur;
@@ -341,7 +341,7 @@ contract Authenticator is State, IAuthenticator {
         return true;
     }
 
-    function extendRoleValidator_(address _owner, uint256 _duration) internal onlyAdmin returns (bool) {
+    function extendRoleValidator_(address _owner, uint256 _duration) external onlyAdmin returns (bool) {
         require(
             _duration >= 0 &&
             isAdmin[_owner] != true &&
@@ -355,7 +355,7 @@ contract Authenticator is State, IAuthenticator {
         return true;
     }
     // =.=.=.=.= EXTENSION =.=.=.=.=
-    function grantRoleExtension_(address _owner, uint256 _duration) internal onlyAdmin returns (bool) {
+    function grantRoleExtension_(address _owner, uint256 _duration) external onlyAdmin returns (bool) {
         uint256 _max = settings.roles.extension.max;
         uint256 _min = settings.roles.extension.min;
         uint256 _cur = settings.roles.extension.cur;
@@ -381,7 +381,7 @@ contract Authenticator is State, IAuthenticator {
         return true;
     }
 
-    function revokeRoleExtension_(address _owner) internal onlyAdmin returns (bool) {
+    function revokeRoleExtension_(address _owner) external onlyAdmin returns (bool) {
         uint256 _max = settings.roles.extension.max;
         uint256 _min = settings.roles.extension.min;
         uint256 _cur = settings.roles.extension.cur;
