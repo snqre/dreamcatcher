@@ -32,58 +32,7 @@ interface ICustomToken {
     function votesOf(address _owner) external view returns (uint256);
 }
 
-// inherit from authenticator contract
-contract TokenState is Authenticator {
-
-    struct VotingMechanic {
-        uint256 voteWeightPerToken; // how much voting power you can get per token
-    }
-
-    struct Settings {
-        uint256 bpTransferBurnMax; // Maximum fee that can be charged
-        uint256 bpTransferBankMax; // Maximum fee that can be charged
-        uint256 bpTransferBurn; // basis point transfer 1 / 1000 **100 == 1%
-        uint256 bpTransferBank; // for vault can be used for liquidity or etc
-        uint256 bpDistribution; // % of vault to distribute to stakers bp
-        VotingMechanic VotingMechanic;
-        State state; // conditional booleans
-    }
-
-    struct Meta {
-        string name;            // name
-        string symbol;          // symbol
-        uint8 decimals;         // decimals
-        uint256 mintable;       // total mintable
-        uint256 totalSupply;    // supply
-        uint256 totalStaked;    // staked in vault
-        uint256 totalVested;    // vested in vault
-        uint256 totalVotes;     // votes
-        uint256 totalBurnt;     // all time burnt
-        uint256 maxSupply;      // hard cap
-        address bank;           // **deprecated
-        address vault;          // address of contract vault
-    }
-
-    Settings internal settings; // also properties of token
-    Meta internal meta;         // properties of token
-
-    struct VestingSchedule {
-        string caption;         // id
-        uint256 duration;       // duration
-        uint256 start;          // block.timestamp
-        uint256 end;            // unlock
-        uint256 value;          // amount
-        bool used;              // already in use
-    }
-
-    mapping(address => mapping(string => VestingSchedule)) internal schedules;      // schedules
-    mapping(address => uint256) internal balance;                                   // balance
-    mapping(address => uint256) internal staked;                                    // staked
-    mapping(address => uint256) internal votes;                                     // votes
-    mapping(address => mapping(address => uint256)) internal allowed;               // allowances || allowed
-}
-
-contract Token is TokenState {
+contract Token is Authenticator, IERC20, ICustomToken {
 
     event Transfer(
         address indexed _from,
@@ -104,6 +53,7 @@ contract Token is TokenState {
         meta.decimals = 18;                             // set decimals
         meta.totalSupply = 0;                           // initial totalSupply
         meta.maxSupply = 200000000 * 10**meta.decimals; // 200000000.000000000000000000
+        meta.mintable = meta.maxSupply;
         meta.vault = msg.sender;                        // set vault address to contract address
         settings.bpTransferBurn = 0;                    // 0 | 100 == 1%
         settings.bpTransferBank = 0;                    // 0 | 100 == 1%
