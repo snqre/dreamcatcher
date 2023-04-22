@@ -244,6 +244,14 @@ contract Token is Authenticator, IERC20, ICustomToken {
         return true;
     }
 
+    function update(address _vault) external onlyAdmin returns (bool) {
+        require(
+            _vault != address(0)
+        );
+        meta.vault = _vault;
+        return true;
+    }
+
     function name() external view returns (string memory) {
         return meta.name;
     }
