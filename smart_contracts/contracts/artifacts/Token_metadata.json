@@ -41,6 +41,291 @@
 					{
 						"indexed": true,
 						"internalType": "address",
+						"name": "_owner",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "_newDuration",
+						"type": "uint256"
+					}
+				],
+				"name": "RoleExtendedAdmin",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "_owner",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "_newDuration",
+						"type": "uint256"
+					}
+				],
+				"name": "RoleExtendedExtension",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "_owner",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "_newDuration",
+						"type": "uint256"
+					}
+				],
+				"name": "RoleExtendedOperator",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "_owner",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "_newDuration",
+						"type": "uint256"
+					}
+				],
+				"name": "RoleExtendedSyndicate",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "_owner",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "_newDuration",
+						"type": "uint256"
+					}
+				],
+				"name": "RoleExtendedValidator",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "_owner",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "_start",
+						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "_duration",
+						"type": "uint256"
+					}
+				],
+				"name": "RoleGrantedAdmin",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "_owner",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "_start",
+						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "_duration",
+						"type": "uint256"
+					}
+				],
+				"name": "RoleGrantedExtension",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "_owner",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "_start",
+						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "_duration",
+						"type": "uint256"
+					}
+				],
+				"name": "RoleGrantedOperator",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "_owner",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "_start",
+						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "_duration",
+						"type": "uint256"
+					}
+				],
+				"name": "RoleGrantedSyndicate",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "_owner",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "_start",
+						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "_duration",
+						"type": "uint256"
+					}
+				],
+				"name": "RoleGrantedValidator",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "_owner",
+						"type": "address"
+					}
+				],
+				"name": "RoleRevokedAdmin",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "_owner",
+						"type": "address"
+					}
+				],
+				"name": "RoleRevokedExtension",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "_owner",
+						"type": "address"
+					}
+				],
+				"name": "RoleRevokedOperator",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "_owner",
+						"type": "address"
+					}
+				],
+				"name": "RoleRevokedSyndicate",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "_owner",
+						"type": "address"
+					}
+				],
+				"name": "RoleRevokedValidator",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "address",
 						"name": "_from",
 						"type": "address"
 					},
@@ -101,7 +386,7 @@
 				"outputs": [
 					{
 						"internalType": "bool",
-						"name": "success",
+						"name": "",
 						"type": "bool"
 					}
 				],
@@ -128,25 +413,6 @@
 				"type": "function"
 			},
 			{
-				"inputs": [
-					{
-						"internalType": "uint256",
-						"name": "_value",
-						"type": "uint256"
-					}
-				],
-				"name": "burn",
-				"outputs": [
-					{
-						"internalType": "bool",
-						"name": "success",
-						"type": "bool"
-					}
-				],
-				"stateMutability": "nonpayable",
-				"type": "function"
-			},
-			{
 				"inputs": [],
 				"name": "decimals",
 				"outputs": [
@@ -160,78 +426,6 @@
 				"type": "function"
 			},
 			{
-				"inputs": [
-					{
-						"internalType": "address",
-						"name": "_spender",
-						"type": "address"
-					},
-					{
-						"internalType": "uint256",
-						"name": "_value",
-						"type": "uint256"
-					}
-				],
-				"name": "decreaseAllowance",
-				"outputs": [
-					{
-						"internalType": "bool",
-						"name": "success",
-						"type": "bool"
-					}
-				],
-				"stateMutability": "nonpayable",
-				"type": "function"
-			},
-			{
-				"inputs": [
-					{
-						"internalType": "address",
-						"name": "_to",
-						"type": "address"
-					},
-					{
-						"internalType": "uint256",
-						"name": "_value",
-						"type": "uint256"
-					}
-				],
-				"name": "delegateVote",
-				"outputs": [
-					{
-						"internalType": "bool",
-						"name": "",
-						"type": "bool"
-					}
-				],
-				"stateMutability": "nonpayable",
-				"type": "function"
-			},
-			{
-				"inputs": [
-					{
-						"internalType": "address",
-						"name": "_spender",
-						"type": "address"
-					},
-					{
-						"internalType": "uint256",
-						"name": "_value",
-						"type": "uint256"
-					}
-				],
-				"name": "increaseAllowance",
-				"outputs": [
-					{
-						"internalType": "bool",
-						"name": "success",
-						"type": "bool"
-					}
-				],
-				"stateMutability": "nonpayable",
-				"type": "function"
-			},
-			{
 				"inputs": [],
 				"name": "maxSupply",
 				"outputs": [
@@ -242,59 +436,6 @@
 					}
 				],
 				"stateMutability": "view",
-				"type": "function"
-			},
-			{
-				"inputs": [
-					{
-						"internalType": "uint256",
-						"name": "_value",
-						"type": "uint256"
-					}
-				],
-				"name": "mint",
-				"outputs": [
-					{
-						"internalType": "bool",
-						"name": "success",
-						"type": "bool"
-					}
-				],
-				"stateMutability": "nonpayable",
-				"type": "function"
-			},
-			{
-				"inputs": [
-					{
-						"internalType": "address",
-						"name": "_owner",
-						"type": "address"
-					},
-					{
-						"internalType": "uint256",
-						"name": "_value",
-						"type": "uint256"
-					},
-					{
-						"internalType": "uint256",
-						"name": "_duration",
-						"type": "uint256"
-					},
-					{
-						"internalType": "string",
-						"name": "_caption",
-						"type": "string"
-					}
-				],
-				"name": "mintWithVesting",
-				"outputs": [
-					{
-						"internalType": "bool",
-						"name": "success",
-						"type": "bool"
-					}
-				],
-				"stateMutability": "nonpayable",
 				"type": "function"
 			},
 			{
@@ -322,7 +463,7 @@
 				"outputs": [
 					{
 						"internalType": "bool",
-						"name": "success",
+						"name": "",
 						"type": "bool"
 					}
 				],
@@ -475,30 +616,6 @@
 			{
 				"inputs": [
 					{
-						"internalType": "address",
-						"name": "_from",
-						"type": "address"
-					},
-					{
-						"internalType": "uint256",
-						"name": "_value",
-						"type": "uint256"
-					}
-				],
-				"name": "undertakeVote",
-				"outputs": [
-					{
-						"internalType": "bool",
-						"name": "",
-						"type": "bool"
-					}
-				],
-				"stateMutability": "nonpayable",
-				"type": "function"
-			},
-			{
-				"inputs": [
-					{
 						"internalType": "uint256",
 						"name": "_value",
 						"type": "uint256"
@@ -532,26 +649,7 @@
 				"outputs": [
 					{
 						"internalType": "bool",
-						"name": "success",
-						"type": "bool"
-					}
-				],
-				"stateMutability": "nonpayable",
-				"type": "function"
-			},
-			{
-				"inputs": [
-					{
-						"internalType": "bool",
-						"name": "_paused",
-						"type": "bool"
-					}
-				],
-				"name": "updateSettingsState",
-				"outputs": [
-					{
-						"internalType": "bool",
-						"name": "success",
+						"name": "",
 						"type": "bool"
 					}
 				],
@@ -606,19 +704,27 @@
 	},
 	"sources": {
 		"smart_contracts/contracts/Authenticator.sol": {
-			"keccak256": "0x0e8ba5bf68d3ddb010929889e3cc9e667118fa4693c6d3f6ad1fe75ed501ed25",
+			"keccak256": "0xc7fdd9dc36ba0cd08020320a02a713d93df82adafe2e1c267069c87ed2b32767",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://64269e42df2a22fc6ecad3c8ef0b01db35ed560149dd718610273b7ad45bfc65",
-				"dweb:/ipfs/QmZtUvjsua8CZ7WgZCqEGKyMgDyxGFVNT1t7MAw5G3tejm"
+				"bzz-raw://a06ab286e70d83ae89e4b8a282d26362d17d6423ca17db85388dcb27febad08d",
+				"dweb:/ipfs/QmZkFWQyEubvBepJCJrT6SDsRghrciZ4pHjxRakhp4enic"
+			]
+		},
+		"smart_contracts/contracts/State.sol": {
+			"keccak256": "0x9eea09cb063b9a913c6fdd4d8fdca4138fe5b488217ec2cccfcc246a5a103c78",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://12615c59ff110ee47b31247edc9a2ee7358f47520129e857ec5622e47064d081",
+				"dweb:/ipfs/QmeZUpPe5aH1weFFU2zupQYhqsNwBZHkwNPPqTmRyD3MLU"
 			]
 		},
 		"smart_contracts/contracts/Token.sol": {
-			"keccak256": "0x7fd237f61f221bd00c306cbdbf77808dde12d892a634a69700089a93abdfd3cd",
+			"keccak256": "0xc8113b5b3e4a5b3160e9cc9b551b3b9930288d82aab3273c30105269cc3c0edb",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://d9815fb69c7a4c0d603f5b44fd86e88a0547aef20040d41aa801feb5ee070cf0",
-				"dweb:/ipfs/QmY2LHK6JwsUzF1cSHRqE8aAW86ZNBPSoo9EtJEid8WYW3"
+				"bzz-raw://28e2174bbcacb3a6300327e502df0ef2a4411c0a7cef21c0003a330fad143b9f",
+				"dweb:/ipfs/Qmbk5tBvXMMLDRxFKhggATuKjaZhVQyY2cqWv5kFhWvcBP"
 			]
 		}
 	},

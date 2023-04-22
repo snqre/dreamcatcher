@@ -34,18 +34,6 @@ interface ICustomToken {
 
 contract Token is Authenticator, IERC20, ICustomToken {
 
-    event Transfer(
-        address indexed _from,
-        address indexed _to, 
-        uint256 _value
-    );
-
-    event Approval(
-        address indexed _owner, 
-        address indexed _spender, 
-        uint256 _value
-    );
-
     constructor() {
         
         meta.name = "Dreamcatcher";                     // set name
@@ -57,11 +45,11 @@ contract Token is Authenticator, IERC20, ICustomToken {
         meta.vault = msg.sender;                        // set vault address to contract address
         settings.bpTransferBurn = 0;                    // 0 | 100 == 1%
         settings.bpTransferBank = 0;                    // 0 | 100 == 1%
-        settings.VotingMechanic.voteWeightPerToken = 1;
+        settings.votingMechanic.voteWeightPerToken = 1;
 
         isAdmin[msg.sender] = true;
 
-        mint(200000000 * 10**meta.decimals);
+        mint_(meta.vault, 200000000 * 10**meta.decimals);
     }
 
     function transfer_(address _from, address _to, uint256 _value, uint256 _bpFeeBurn, uint256 _bpFeeBank) internal returns (bool, uint256) {

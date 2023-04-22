@@ -6,11 +6,6 @@
 	"output": {
 		"abi": [
 			{
-				"inputs": [],
-				"stateMutability": "nonpayable",
-				"type": "constructor"
-			},
-			{
 				"anonymous": false,
 				"inputs": [
 					{
@@ -309,7 +304,7 @@
 	},
 	"settings": {
 		"compilationTarget": {
-			"smart_contracts/contracts/Authenticator.sol": "Authenticator"
+			"smart_contracts/contracts/Authenticator.sol": "IAuthenticator"
 		},
 		"evmVersion": "paris",
 		"libraries": {},

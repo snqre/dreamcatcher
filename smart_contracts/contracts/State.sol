@@ -54,7 +54,7 @@ contract State {
         uint256 bpTransferBankMax;
         uint256 bpTransferBurn;
         uint256 bpTransferBank;
-        VotingMechanic votignMechanic;
+        VotingMechanic votingMechanic;
     }
 
     mapping(address => bool) internal isAdmin;      // address > bool | -human -contract

@@ -49,66 +49,18 @@
 		},
 		"gasEstimates": null,
 		"methodIdentifiers": {
-			"decreaseAllowance(address,uint256)": "a457c2d7",
-			"increaseAllowance(address,uint256)": "39509351",
 			"maxSupply()": "d5abeb01",
+			"release(string)": "f34e3723",
 			"stake(uint256)": "a694fc3a",
 			"stakeOf(address)": "42623360",
 			"totalStaked()": "817b1cd2",
 			"totalVotes()": "0d15fd77",
 			"unstake(uint256)": "2e17de78",
+			"updateSettings(uint256,uint256)": "015af8ee",
 			"votesOf(address)": "79ec5d3a"
 		}
 	},
 	"abi": [
-		{
-			"inputs": [
-				{
-					"internalType": "address",
-					"name": "_spender",
-					"type": "address"
-				},
-				{
-					"internalType": "uint256",
-					"name": "_value",
-					"type": "uint256"
-				}
-			],
-			"name": "decreaseAllowance",
-			"outputs": [
-				{
-					"internalType": "bool",
-					"name": "",
-					"type": "bool"
-				}
-			],
-			"stateMutability": "nonpayable",
-			"type": "function"
-		},
-		{
-			"inputs": [
-				{
-					"internalType": "address",
-					"name": "_spender",
-					"type": "address"
-				},
-				{
-					"internalType": "uint256",
-					"name": "_value",
-					"type": "uint256"
-				}
-			],
-			"name": "increaseAllowance",
-			"outputs": [
-				{
-					"internalType": "bool",
-					"name": "",
-					"type": "bool"
-				}
-			],
-			"stateMutability": "nonpayable",
-			"type": "function"
-		},
 		{
 			"inputs": [],
 			"name": "maxSupply",
@@ -120,6 +72,25 @@
 				}
 			],
 			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "string",
+					"name": "_caption",
+					"type": "string"
+				}
+			],
+			"name": "release",
+			"outputs": [
+				{
+					"internalType": "bool",
+					"name": "",
+					"type": "bool"
+				}
+			],
+			"stateMutability": "nonpayable",
 			"type": "function"
 		},
 		{
@@ -195,6 +166,30 @@
 				}
 			],
 			"name": "unstake",
+			"outputs": [
+				{
+					"internalType": "bool",
+					"name": "",
+					"type": "bool"
+				}
+			],
+			"stateMutability": "nonpayable",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "uint256",
+					"name": "_bpFeeBurn",
+					"type": "uint256"
+				},
+				{
+					"internalType": "uint256",
+					"name": "_bpFeeBank",
+					"type": "uint256"
+				}
+			],
+			"name": "updateSettings",
 			"outputs": [
 				{
 					"internalType": "bool",

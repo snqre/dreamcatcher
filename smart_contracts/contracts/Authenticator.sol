@@ -26,25 +26,6 @@ interface IAuthenticator {
 }
 
 contract Authenticator is State, IAuthenticator {
-    event RoleGrantedAdmin(address indexed _owner, uint256 _start, uint256 _duration);
-    event RoleRevokedAdmin(address indexed _owner);
-    event RoleExtendedAdmin(address indexed _owner, uint256 _newDuration);
-
-    event RoleGrantedOperator(address indexed _owner, uint256 _start, uint256 _duration);
-    event RoleRevokedOperator(address indexed _owner);
-    event RoleExtendedOperator(address indexed _owner, uint256 _newDuration);
-
-    event RoleGrantedSyndicate(address indexed _owner, uint256 _start, uint256 _duration);
-    event RoleRevokedSyndicate(address indexed _owner);
-    event RoleExtendedSyndicate(address indexed _owner, uint256 _newDuration);
-
-    event RoleGrantedValidator(address indexed _owner, uint256 _start, uint256 _duration);
-    event RoleRevokedValidator(address indexed _owner);
-    event RoleExtendedValidator(address indexed _owner, uint256 _newDuration);
-
-    event RoleGrantedExtension(address indexed _owner, uint256 _start, uint256 _duration);
-    event RoleRevokedExtension(address indexed _owner);
-    event RoleExtendedExtension(address indexed _owner, uint256 _newDuration);
 
     modifier onlyAdmin() {
         address _sender = msg.sender;
@@ -93,6 +74,7 @@ contract Authenticator is State, IAuthenticator {
             expiryExtension[_sender] <= block.timestamp,
             "onlyExtension"
         );
+        _;
     }
 
     constructor() {
@@ -165,7 +147,7 @@ contract Authenticator is State, IAuthenticator {
         return true;
     }
 
-    function extendRoleAdmin_(address _owner, _duration) internal onlyAdmin returns (bool) {
+    function extendRoleAdmin_(address _owner, uint256 _duration) internal onlyAdmin returns (bool) {
         require(
             _duration >= 0 &&
             isAdmin[_owner] != true &&
@@ -229,7 +211,7 @@ contract Authenticator is State, IAuthenticator {
         return true;
     }
 
-    function extendRoleOperator_(address _owner, _duration) internal onlyAdmin returns (bool) {
+    function extendRoleOperator_(address _owner, uint256 _duration) internal onlyAdmin returns (bool) {
         require(
             _duration >= 0 &&
             isAdmin[_owner] != true &&
@@ -293,7 +275,7 @@ contract Authenticator is State, IAuthenticator {
         return true;
     }
 
-    function extendRoleSyndicate_(address _owner, _duration) internal onlyAdmin returns (bool) {
+    function extendRoleSyndicate_(address _owner, uint256 _duration) internal onlyAdmin returns (bool) {
         require(
             _duration >= 0 &&
             isAdmin[_owner] != true &&
@@ -358,7 +340,7 @@ contract Authenticator is State, IAuthenticator {
         return true;
     }
 
-    function extendRoleValidator_(address _owner, _duration) internal onlyAdmin returns (bool) {
+    function extendRoleValidator_(address _owner, uint256 _duration) internal onlyAdmin returns (bool) {
         require(
             _duration >= 0 &&
             isAdmin[_owner] != true &&
