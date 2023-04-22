@@ -48,9 +48,6 @@ contract TokenState is Authenticator {
     struct State {
 
         bool paused;
-        bool transferable;
-        bool mintable;
-        bool burnable;
     }
 
     struct Settings {
@@ -98,33 +95,7 @@ contract TokenState is Authenticator {
 
 contract Token is TokenState {
     
-    modifier paused() {
-        require(
-            settings.state.paused != true           // cannot be paused
-        );
-        _;                                          // execute function
-    }
-
-    modifier transferable() {
-        require(
-            settings.state.transferable == true     // must be transferable
-        );
-        _;                                          // execute function
-    }
-
-    modifier mintable() {
-        require(
-            settings.state.mintable == true         // must be mintable
-        );
-        _;                                          // execute function
-    }
-
-    modifier burnable() {
-        require(
-            settings.state.burnable == true         // must be burnable
-        );
-        _;                                          // execute function
-    }
+    modifier paused() {require(settings.state.paused != true);_;}
 
     event Transfer(
         address indexed _from,
@@ -139,6 +110,7 @@ contract Token is TokenState {
     );
 
     constructor() {
+        
         meta.name = "Dreamcatcher";                     // set name
         meta.symbol = "DREAM";                          // set symbol
         meta.decimals = 18;                             // set decimals
@@ -149,17 +121,7 @@ contract Token is TokenState {
         settings.bpTransferBank = 0;                    // 0 | 100 == 1%
         settings.VotingMechanic.voteWeightPerToken = 1; // 1 token == 1 vote
 
-        bool _paused         = false;
-        bool _transferable   = true;
-        bool _mintable       = true;
-        bool _burnable       = true;
-        updateSettingsState(_paused, _transferable, _mintable, _burnable);      // update state settings
         mint_(meta.vault, 200000000 * 10**meta.decimals);
-
-
-
-        _mintable = false;                                                      // all supply has been minted
-        updateSettingsState(_paused, _transferable, _mintable, _burnable);      // update state settings
     }
 
     function name() public view returns (string memory) {return meta.name;}
@@ -201,13 +163,13 @@ contract Token is TokenState {
     }
 
     // working!
-    function transfer(address _to, uint256 _value) public transferable returns (bool) {
+    function transfer(address _to, uint256 _value) public paused returns (bool) {
         (bool _success, uint256 _newValue) = transfer_(sndr, _to, _value, settings.bpTransferBurn, settings.bpTransferBank);
         return _success;
     }
 
     // need testing
-    function transferFrom(address _from, address _to, uint256 _value) public transferable returns (bool) {
+    function transferFrom(address _from, address _to, uint256 _value) public paused returns (bool) {
         require(
             allowance(_from, sndr) != type(uint256).max &&
             allowance(_from, sndr) >= _value
@@ -221,41 +183,41 @@ contract Token is TokenState {
     }
 
     // working!
-    function stake(uint256 _value) public transferable returns (bool) {
+    function stake(uint256 _value) public paused returns (bool) {
         (bool _success, uint256 _newValue) = transfer_(msg.sender, meta.vault, _value, settings.bpTransferBurn, settings.bpTransferBank);
-        staked[msg.sender] += _newValue;
-        votes[msg.sender] += _newValue;
-        meta.totalStaked += _newValue;
-        meta.totalVotes += _newValue;
+        staked[msg.sender]   += _newValue;
+        votes[msg.sender]    += _newValue;
+        meta.totalStaked     += _newValue;
+        meta.totalVotes      += _newValue;
         return _success;
     }
 
     // working!
-    function unstake(uint256 _value) public transferable returns (bool) {
+    function unstake(uint256 _value) public paused returns (bool) {
         require(staked[msg.sender] >= _value);
         (bool _success, uint256 _newValue) = transfer_(meta.vault, msg.sender, _value, settings.bpTransferBurn, settings.bpTransferBank);
-        staked[msg.sender] -= _value;
-        votes[msg.sender] -= _value;
-        meta.totalStaked -= _value;
-        meta.totalVotes -= _value;
+        staked[msg.sender]   -= _value;
+        votes[msg.sender]    -= _value;
+        meta.totalStaked     -= _value;
+        meta.totalVotes      -= _value;
         return _success;
     }
 
     // delegate vote to ** must ensure that if unstaked all delagates stop having those votes
-    function delegateVote(address _to, uint256 _value) public returns (bool) {
+    function delegateVote(address _to, uint256 _value) public paused returns (bool) {
         require(
             votesOf(msg.sender) >= _value &&
             stakeOf(msg.sender) >= _value
         );
 
-        votes[msg.sender] -= _value;
-        votes[_to] += _value;
+        votes[msg.sender]    -= _value;
+        votes[_to]           += _value;
 
         return true;
     }
 
     // revoke delegated votes
-    function undertakeVote(address _from, uint256 _value) public returns (bool) {
+    function undertakeVote(address _from, uint256 _value) public paused returns (bool) {
         votes[_from] -= _value;
         votes[msg.sender] += _value;
 
@@ -265,30 +227,34 @@ contract Token is TokenState {
     function allowance(address _owner, address _spender) public view returns (uint256 remaining) {return allowed[_owner][_spender];}
     
     // need testing
-    function increaseAllowance(address _spender, uint256 _value) public returns (bool) {
-        require((sndr != address(0)) && (_spender != address(0)), "zero address");
-        allowed[sndr][_spender] = allowance(sndr, _spender) + _value;
-        emit Approval(sndr, _spender, allowance(sndr, _spender) + _value);
+    function increaseAllowance(address _spender, uint256 _value) public paused returns (bool success) {
+        require(msg.sender != address(0) && _spender != address(0));
+        allowed[msg.sender][_spender] = allowance(msg.sender, _spender) + _value;
+        emit Approval(msg.sender, _spender, allowance(msg.sender, _spender) + _value);
         return true;
     }
 
     // need testing
-    function decreaseAllowance(address _spender, uint256 _value) public returns (bool) {
-        require((allowance(sndr, _spender) >= _value) && (sndr != address(0)) && (_spender != address(0)), "zero address || decreased allowance below zero");
-        allowed[sndr][_spender] = allowance(sndr, _spender) - _value;
-        emit Approval(sndr, _spender, allowance(sndr, _spender) - _value);
+    function decreaseAllowance(address _spender, uint256 _value) public paused returns (bool success) {
+        require(
+            allowance(msg.sender, _spender) >= _value &&
+            msg.sender != address(0) &&
+            _spender != address(0)
+        );
+        allowed[msg.sender][_spender] = allowance(msg.sender, _spender) - _value;
+        emit Approval(msg.sender, _spender, allowance(msg.sender, _spender) - _value);
         return true;
     }
     
     // need testing
-    function approve(address _spender, uint256 _value) public returns (bool success) {
+    function approve(address _spender, uint256 _value) public paused returns (bool success) {
         require((sndr != address(0)) && (_spender != address(0)), "zero address");
         allowed[sndr][_spender] = _value;
         emit Approval(sndr, _spender, _value);
         return true;
     }
 
-    function release(string memory _caption) public returns (bool success) {
+    function release(string memory _caption) public paused returns (bool success) {
         require(
             schedules[msg.sender][_caption].end >= block.timestamp && // cannot release before end
             schedules[msg.sender][_caption].value > 0                 // cannot release if there is nothing to release
@@ -311,7 +277,7 @@ contract Token is TokenState {
         uint256 _value,            // value
         uint256 _duration,         // duration seconds till release from call of this function
         string memory _caption     // readable caption to identify the staking schedule per address
-        ) public mintable onlyAdmin onlyOperator onlyDev returns (bool success) {
+        ) public paused onlyAdmin onlyOperator onlyDev returns (bool success) {
         
         require(
             schedules[_owner][_caption].used == false,   // check if schedule slot is empty
@@ -332,7 +298,7 @@ contract Token is TokenState {
 
     }
 
-    function mint(uint256 _value) public mintable onlyAdmin onlyOperator onlyDev returns (bool success) {
+    function mint(uint256 _value) public paused onlyAdmin onlyOperator onlyDev returns (bool success) {
         uint256 _newValue = meta.totalSupply + meta.totalBurnt + _value;
         require(
             settings.state.mintable != false &&         // check mintable
@@ -377,11 +343,8 @@ contract Token is TokenState {
         return true;                            // bool success
     }
 
-    function updateSettingsState(bool _paused, bool _transferable, bool _mintable, bool _burnable) public onlyAdmin onlyOperator onlyDev returns (bool success) {
-        settings.state.paused = _paused;                // is paused
-        settings.state.transferable = _transferable;    // is transferable
-        settings.state.mintable = _mintable;            // is mintable **cannot mint more than maxSupply regardless
-        settings.state.burnable = _burnable;            // is burnable
-        return true;                                    // bool success
+    function updateSettingsState(bool _paused) public onlyAdmin onlyOperator onlyDev returns (bool success) {
+        settings.state.paused = _paused;
+        return true;
     }
 }
