@@ -54,6 +54,8 @@
 			"maxSupply()": "d5abeb01",
 			"stake(uint256)": "a694fc3a",
 			"stakeOf(address)": "42623360",
+			"totalStaked()": "817b1cd2",
+			"totalVotes()": "0d15fd77",
 			"unstake(uint256)": "2e17de78",
 			"votesOf(address)": "79ec5d3a"
 		}
@@ -148,6 +150,32 @@
 				}
 			],
 			"name": "stakeOf",
+			"outputs": [
+				{
+					"internalType": "uint256",
+					"name": "",
+					"type": "uint256"
+				}
+			],
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"inputs": [],
+			"name": "totalStaked",
+			"outputs": [
+				{
+					"internalType": "uint256",
+					"name": "",
+					"type": "uint256"
+				}
+			],
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"inputs": [],
+			"name": "totalVotes",
 			"outputs": [
 				{
 					"internalType": "uint256",

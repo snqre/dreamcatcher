@@ -18,7 +18,7 @@
 	},
 	"settings": {
 		"compilationTarget": {
-			"smart_contracts/contracts/Token.sol": "TokenState"
+			"smart_contracts/contracts/Authenticator.sol": "AuthenticatorState"
 		},
 		"evmVersion": "paris",
 		"libraries": {},
@@ -38,14 +38,6 @@
 			"urls": [
 				"bzz-raw://64269e42df2a22fc6ecad3c8ef0b01db35ed560149dd718610273b7ad45bfc65",
 				"dweb:/ipfs/QmZtUvjsua8CZ7WgZCqEGKyMgDyxGFVNT1t7MAw5G3tejm"
-			]
-		},
-		"smart_contracts/contracts/Token.sol": {
-			"keccak256": "0x7fd237f61f221bd00c306cbdbf77808dde12d892a634a69700089a93abdfd3cd",
-			"license": "MIT",
-			"urls": [
-				"bzz-raw://d9815fb69c7a4c0d603f5b44fd86e88a0547aef20040d41aa801feb5ee070cf0",
-				"dweb:/ipfs/QmY2LHK6JwsUzF1cSHRqE8aAW86ZNBPSoo9EtJEid8WYW3"
 			]
 		}
 	},

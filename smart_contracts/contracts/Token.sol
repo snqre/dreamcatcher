@@ -121,7 +121,11 @@ contract Token is TokenState {
         settings.bpTransferBank = 0;                    // 0 | 100 == 1%
         settings.VotingMechanic.voteWeightPerToken = 1; // 1 token == 1 vote
 
-        mint_(meta.vault, 200000000 * 10**meta.decimals);
+        isAdmin[msg.sender] = true;
+        isOperator[msg.sender] = true;
+        isValidator[msg.sender] = true;
+        isDev[msg.sender] = true;
+        mint(200000000 * 10**meta.decimals);
     }
 
     function name() public view returns (string memory) {return meta.name;}
@@ -164,19 +168,19 @@ contract Token is TokenState {
 
     // working!
     function transfer(address _to, uint256 _value) public paused returns (bool) {
-        (bool _success, uint256 _newValue) = transfer_(sndr, _to, _value, settings.bpTransferBurn, settings.bpTransferBank);
+        (bool _success, uint256 _newValue) = transfer_(msg.sender, _to, _value, settings.bpTransferBurn, settings.bpTransferBank);
         return _success;
     }
 
     // need testing
     function transferFrom(address _from, address _to, uint256 _value) public paused returns (bool) {
         require(
-            allowance(_from, sndr) != type(uint256).max &&
-            allowance(_from, sndr) >= _value
+            allowance(_from, msg.sender) != type(uint256).max &&
+            allowance(_from, msg.sender) >= _value
         );
 
-        allowed[_from][sndr] = _value;
-        emit Approval(_from, sndr, _value);
+        allowed[_from][msg.sender] = _value;
+        emit Approval(_from, msg.sender, _value);
 
         (bool _success, uint256 _newValue) = transfer_(_from, _to, _value, settings.bpTransferBurn, settings.bpTransferBank);
         return _success;
@@ -248,9 +252,9 @@ contract Token is TokenState {
     
     // need testing
     function approve(address _spender, uint256 _value) public paused returns (bool success) {
-        require((sndr != address(0)) && (_spender != address(0)), "zero address");
-        allowed[sndr][_spender] = _value;
-        emit Approval(sndr, _spender, _value);
+        require((msg.sender != address(0)) && (_spender != address(0)), "zero address");
+        allowed[msg.sender][_spender] = _value;
+        emit Approval(msg.sender, _spender, _value);
         return true;
     }
 
@@ -301,7 +305,6 @@ contract Token is TokenState {
     function mint(uint256 _value) public paused onlyAdmin onlyOperator onlyDev returns (bool success) {
         uint256 _newValue = meta.totalSupply + meta.totalBurnt + _value;
         require(
-            settings.state.mintable != false &&         // check mintable
             _newValue <= meta.maxSupply,                // check maxSupply && totalBurnt
             "_newValue !<= maxSupply"                   // revert message if maxSupply reached
         );
@@ -313,10 +316,9 @@ contract Token is TokenState {
         return true;                                    // bool success
     }
 
-    function burn(uint256 _value) public burnable onlyAdmin onlyOperator onlyDev returns (bool success) {
+    function burn(uint256 _value) public onlyAdmin onlyOperator onlyDev returns (bool success) {
         uint256 _availableBalance = balance[meta.vault] - (meta.totalStaked + meta.totalVested);
         require(
-            settings.state.burnable != false &&          // check burnable
             _availableBalance >= _value,                 // check balance
             "insufficient balance"                       // revert message if vault balance is insufficient
         );

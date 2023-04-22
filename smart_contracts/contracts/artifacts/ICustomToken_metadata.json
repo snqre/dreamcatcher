@@ -105,6 +105,32 @@
 				"type": "function"
 			},
 			{
+				"inputs": [],
+				"name": "totalStaked",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "totalVotes",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
 				"inputs": [
 					{
 						"internalType": "uint256",
@@ -150,11 +176,7 @@
 		},
 		"userdoc": {
 			"kind": "user",
-			"methods": {
-				"stake(uint256)": {
-					"notice": "Staking goes to our bank or vault, it cannot be used by anyone, it just stays there When we make earnings or give out rewards, stakers will be able to withdraw directly from the vault"
-				}
-			},
+			"methods": {},
 			"version": 1
 		}
 	},
@@ -175,27 +197,19 @@
 	},
 	"sources": {
 		"smart_contracts/contracts/Authenticator.sol": {
-			"keccak256": "0xc297d15e3d7e1ef21964885da14b43446be171dcea333a5a276749c457bf91f4",
+			"keccak256": "0x0e8ba5bf68d3ddb010929889e3cc9e667118fa4693c6d3f6ad1fe75ed501ed25",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://bf66103e3921ed7dc6c51f82dceb417381c6b188390ef8c9a0b37d58f64f178c",
-				"dweb:/ipfs/QmZ8reHj84vB6xQ9Jaw4nsxoePnLr51sXyoTFxSWwv5442"
+				"bzz-raw://64269e42df2a22fc6ecad3c8ef0b01db35ed560149dd718610273b7ad45bfc65",
+				"dweb:/ipfs/QmZtUvjsua8CZ7WgZCqEGKyMgDyxGFVNT1t7MAw5G3tejm"
 			]
 		},
 		"smart_contracts/contracts/Token.sol": {
-			"keccak256": "0xd6608fcc421533f864acd08496300f4dddc30e37e516a1bcddc11f251a0b131d",
+			"keccak256": "0x7fd237f61f221bd00c306cbdbf77808dde12d892a634a69700089a93abdfd3cd",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://1d7f436df79075862f1e5532133289a80e54091a88bc2b6e81e1f4598b730ca1",
-				"dweb:/ipfs/QmXmHvSHjNBdqNYXoKcSxUfETZxUn11vtdKWEsZR9Y9o2J"
-			]
-		},
-		"smart_contracts/libraries/Terminal.sol": {
-			"keccak256": "0x2ca1c8de581615b5fa3f88761fae516753de712d5a629d95a5f81466dfda196f",
-			"license": "MIT",
-			"urls": [
-				"bzz-raw://86690b4282e8c576fd1b547a57ca7a3162f8c0486149265ac085aa1d0b14a116",
-				"dweb:/ipfs/QmSQd38xiuv6aniDwh26uw7yqLYbbEXV3UvzQ56KMPDdhv"
+				"bzz-raw://d9815fb69c7a4c0d603f5b44fd86e88a0547aef20040d41aa801feb5ee070cf0",
+				"dweb:/ipfs/QmY2LHK6JwsUzF1cSHRqE8aAW86ZNBPSoo9EtJEid8WYW3"
 			]
 		}
 	},
