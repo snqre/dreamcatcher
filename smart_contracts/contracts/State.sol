@@ -108,9 +108,9 @@ contract State {
     Settings internal settings;
     Meta internal meta;
 
-    mapping(address => mapping(string => VestingSchedule)) internal schedules;      // schedules
     mapping(address => uint256) internal balance;                                   // balance
     mapping(address => uint256) internal staked;                                    // staked
     mapping(address => uint256) internal votes;                                     // votes
-    mapping(address => mapping(address => uint256)) internal allowed;     
+    mapping(address => mapping(address => uint256)) internal allowed;
+    mapping(address => mapping(string => VestingSchedule)) internal schedules;      // schedules
 }

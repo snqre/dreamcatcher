@@ -43,23 +43,17 @@ interface IConduit {
 
 contract Conduit is IConduit, Token {
     
-    function ITransfer_(address _token, address _to, uint256 _value) internal onlyAdmin {
+    function ITransfer_(address _token, address _to, uint256 _value) internal onlyAdmin returns (bool) {
         require(
             _token != address(0) &&
             _to != address(0) &&
             _value >= 0
         );
         IERC20 _token = IERC20(_token);
-        try _token.transfer(_to, _value) {
-            // do nothing
-        } catch Error(string memory _message) {
-            revert(_message);
-        } catch {
-            revert();
-        }
+        _token.transfer(_to, _value);
     }
 
-    function ItransferFrom(address _token, address _sender, address _to, uint256 _value) external onlyAdmin {
+    function ITransferFrom_(address _token, address _sender, address _to, uint256 _value) internal onlyAdmin returns (bool) {
         require(
             _token != address(0) &&
             _sender != address(0) &&
@@ -67,41 +61,16 @@ contract Conduit is IConduit, Token {
             _value >= 0
         );
         IERC20 _token = IERC20(_token);
-        try _token.transferFrom(_sender, _to, _value) {
-            emit ItransferFrom(_token, _sender, _to, _value);
-        } catch Error(string memory _message) {
-            revert(_message);
-        } catch {
-            revert();
-        }
+        _token.transferFrom(_sender, _to, _value);
     }
 
-    function Iapprove(address _token, address _spender, uint256 _value) external onlyAdmin {
+    function IApprove_(address _token, address _spender, uint256 _value) internal onlyAdmin returns (bool) {
         IERC20 _token = IERC20(_token);
-        try _token.approve(_spender, _value) {
-            emit Ia
-        }
-        
+        _token.approve(_spender, _value);
     }
 
-    function IApprove(address token, address spender, uint256 amount) public checkConduitIsPaused onlyAdmin {
-        IERC20 token = IERC20(token);
-        try token.approve(spender, amount) {emit IApprove(token, spender, amount);}
-        catch Error(string memory message) {revert(message);}
-        catch {revert();}
-    }
-
-    function IBalanceOf(address token, address account) public checkConduitIsPaused returns (uint256) {
-        IERC20 token = IERC20(token);
-        try token.balanceOf(account) {return token.balanceOf(account); emit IBalanceOf(token, account);}
-        catch Error(string memory message) {revert(message);}
-        catch {revert();}
-    }
-
-    function IAllowance(address token, address owner, address spender) public checkConduitIsPaused onlyAdmin returns (uint256) {
-        IERC20 token = IERC20(token);
-        try token.allowance(owner, spender) {return token.allowance(owner, spender); emit IAllowance(token, owner, spender);}
-        catch Error(string memory message) {revert(message);}
-        catch {revert();}
+    function IBalanceOf_(address _token) internal returns (uint256) {
+        IERC20 _token = IERC20(_token);
+        _token.balanceOf(meta.vault);
     }
 }
