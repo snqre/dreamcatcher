@@ -34,7 +34,7 @@ interface ICustomToken {
 
 contract Token is Authenticator, IERC20, ICustomToken {
 
-    constructor() {
+    constructor(address _vault) {
         
         meta.name = "Dreamcatcher";                     // set name
         meta.symbol = "DREAM";                          // set symbol
@@ -42,7 +42,7 @@ contract Token is Authenticator, IERC20, ICustomToken {
         meta.totalSupply = 0;                           // initial totalSupply
         meta.maxSupply = 200000000 * 10**meta.decimals; // 200000000.000000000000000000
         meta.mintable = meta.maxSupply;
-        meta.vault = msg.sender;                        // set vault address to contract address
+        meta.vault = _vault;                            // set vault address to contract address
         settings.bpTransferBurn = 0;                    // 0 | 100 == 1%
         settings.bpTransferBank = 0;                    // 0 | 100 == 1%
         settings.bpTransferBurnMin = 0;
@@ -229,12 +229,14 @@ contract Token is Authenticator, IERC20, ICustomToken {
     }
 
     function updateSettings(uint256 _bpFeeBurn, uint256 _bpFeeBank) external onlyAdmin returns (bool) {
+        uint256 _bpFeeBurnMin = settings.bpTransferBurnMin;
+        uint256 _bpFeeBurnMax = settings.bpTransferBankMin;
         uint256 _bpFeeBurnMax = settings.bpTransferBurnMax;
         uint256 _bpFeeBankMax = settings.bpTransferBankMax;
         require(
-            _bpFeeBurn >= 0 &&
+            _bpFeeBurn >= _bpFeeBurnMin &&
             _bpFeeBurn <= _bpFeeBurnMax &&
-            _bpFeeBank >= 0 &&
+            _bpFeeBank >= _bpFeeBankMin &&
             _bpFeeBank <= _bpFeeBankMax
         );
         settings.bpTransferBurn = _bpFeeBurn;
