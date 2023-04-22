@@ -95,6 +95,7 @@ contract Authenticator is State, IAuthenticator {
         settings.roles.syndicate.max = 6;
         settings.roles.validator.max = INFINITE;
         settings.roles.extension.max = INFINITE;
+
     }
     // =.=.=.=.= ADMIN =.=.=.=.=
     function grantRoleAdmin_(address _owner, uint256 _duration) internal onlyAdmin returns (bool) {
