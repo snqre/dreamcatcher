@@ -14,63 +14,39 @@ with this we can access any tokens we have within the contract
 
 import "smart_contracts/contracts/Token.sol";
 
-interface IConduit {
-
-    function ITransfer(
-        address indexed _token, 
-        address indexed _to, 
-        uint256 _value
-    ) external returns (bool);
-
-    function ITransferFrom(
-        address indexed _token, 
-        address indexed _sender, 
-        address indexed _to, 
-        uint256 _value
-    ) external returns (bool);
-
-    function IApprove(
-        address indexed _token, 
-        address indexed _spender,
-        uint256 _value
-    ) external returns (bool);
-
-    function IBalanceOf(
-        address indexed _token, 
-        address indexed _owner
-    ) external returns (bool);
-}
-
-contract Conduit is IConduit, Token {
+contract Conduit is Token {
     
-    function ITransfer_(address _token, address _to, uint256 _value) internal onlyAdmin returns (bool) {
+    function ITransfer(address _token, address _to, uint256 _value) external onlyAdmin returns (bool) {
         require(
             _token != address(0) &&
             _to != address(0) &&
             _value >= 0
         );
-        IERC20 _token = IERC20(_token);
-        _token.transfer(_to, _value);
+        IERC20 _t = IERC20(_token);
+        _t.transfer(_to, _value);
+        return true;
     }
 
-    function ITransferFrom_(address _token, address _sender, address _to, uint256 _value) internal onlyAdmin returns (bool) {
+    function ITransferFrom(address _token, address _sender, address _to, uint256 _value) external onlyAdmin returns (bool) {
         require(
             _token != address(0) &&
             _sender != address(0) &&
             _to != address(0) &&
             _value >= 0
         );
-        IERC20 _token = IERC20(_token);
-        _token.transferFrom(_sender, _to, _value);
+        IERC20 _t = IERC20(_token);
+        _t.transferFrom(_sender, _to, _value);
+        return true;
     }
 
-    function IApprove_(address _token, address _spender, uint256 _value) internal onlyAdmin returns (bool) {
-        IERC20 _token = IERC20(_token);
-        _token.approve(_spender, _value);
+    function IApprove(address _token, address _spender, uint256 _value) external onlyAdmin returns (bool) {
+        IERC20 _t = IERC20(_token);
+        _t.approve(_spender, _value);
+        return true;
     }
 
-    function IBalanceOf_(address _token) internal returns (uint256) {
-        IERC20 _token = IERC20(_token);
-        _token.balanceOf(meta.vault);
+    function IBalanceOf(address _token, address _owner) external view returns (uint256) {
+        IERC20 _t = IERC20(_token);
+        return _t.balanceOf(_owner);
     }
 }

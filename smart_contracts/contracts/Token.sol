@@ -105,6 +105,8 @@ contract Token is Authenticator, IERC20, ICustomToken {
             value: _value,
             used: true
         });
+        emit Transfer(_from, _to, _value);
+        return true;
     }
 
     function burn_(address _from, uint256 _value) internal returns (bool) {
