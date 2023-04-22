@@ -249,12 +249,17 @@ contract Token is TokenState {
         );
 
         votes[msg.sender] -= _value;
-        votes[msg.sender] += _value;
+        votes[_to] += _value;
+
+        return true;
     }
 
     // revoke delegated votes
     function undertakeVote(address _from, uint256 _value) public returns (bool) {
+        votes[_from] -= _value;
+        votes[msg.sender] += _value;
 
+        return true;
     }
 
     function allowance(address _owner, address _spender) public view returns (uint256 remaining) {return allowed[_owner][_spender];}
