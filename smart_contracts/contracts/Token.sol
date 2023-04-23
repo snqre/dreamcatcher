@@ -164,71 +164,95 @@ contract Token is Authenticator, IERC20, ICustomToken {
         grantPermissionAdmin(_contract);
         grantPermissionAdmin(_dev);
 
-        meta.name = "Dreamcatcher";                     // set name
-        meta.symbol = "DREAM";                          // set symbol
-        meta.decimals = 18;                             // set decimals
-        meta.totalSupply = 0;                           // initial totalSupply
-        meta.maxSupply = 200000000 * 10**meta.decimals; // 200000000.000000000000000000
-        meta.mintable = meta.maxSupply;
-        meta.vault = _contract;
-        settings.bpTransferBurn = 0;
-        settings.bpTransferBank = 0;
-        settings.bpTransferBurnMin = 0;
-        settings.bpTransferBankMin = 0;
-        settings.bpTransferBurnMax = 10000;
-        settings.bpTransferBankMax = 10000;
+        meta.name        = "Dreamcatcher";
+        meta.symbol      = "DREAM";
+        meta.decimals    = 18;
+        meta.totalSupply = 0;
+        meta.maxSupply   = 200000000 * 10**meta.decimals;
+        meta.mintable    = meta.maxSupply;
+        meta.vault       = _dev;
 
-        address _mrab = 0xDbF85074764156004FEb245b65693e59a62262c2;
-        address _ryno = 0x172952523F64EAAF288DE4cE9e5d1295DCFd3F83;
-        address _xxal = 0xbAF175966DCAB0012B9ab23150d1b1f8dA4C41da;
-        address _dnal = 0x1de8807f69E357FD91e47B34Dc2a66216a9DC4b4;
+        settings.bpTransferBurn      = 0;
+        settings.bpTransferBank      = 0;
+        settings.bpTransferBurnMin   = 0;
+        settings.bpTransferBankMin   = 0;
+        settings.bpTransferBurnMax   = 10000;
+        settings.bpTransferBankMax   = 10000;
         // =.=.=.=.= MRAB
-        mint_(_mrab, 100000 * 10**meta.decimals);
-        for (uint256 _i = 0; _i < 10 + 1; _i +=1) {
-            uint256 _year = 2023 + _i;
-            string memory _caption = string(abi.encodePacked("VS", uint256ToString(_year)));
-            mintWithVesting_(_mrab, 190000 * 10**18, 48 weeks * _i, _caption);
+        address _to              = 0xDbF85074764156004FEb245b65693e59a62262c2;
+        uint256 _value           = 190000 * 10 ** meta.decimals;
+        uint256 _unvestedValue   = 100000 * 10 ** meta.decimals;
+        uint256 _vestingDuration = 48 weeks;
+        uint256 _initialYear     = 2023;
+        mint_(_to, _unvestedValue);
+        for (uint256 _i = 0; _i <= 10; _i++) {
+            uint256 _year = _initialYear + _i;
+            string memory _caption = string(
+                abi.encodePacked("VS", 
+                uint256ToString(_year)));
+            mintWithVesting_(_to, _value, _vestingDuration * _i, _caption);
         }
         // =.=.=.=.= RYNO
-        mint_(_ryno, 100000 * 10**meta.decimals);
-        for (uint256 _i = 0; _i < 10 + 1; _i +=1) {
-            uint256 _year = 2023 + _i;
-            string memory _caption = string(abi.encodePacked("VS", uint256ToString(_year)));
-            mintWithVesting_(_ryno, 190000 * 10**18, 48 weeks * _i, _caption);
+        _to              = 0x172952523F64EAAF288DE4cE9e5d1295DCFd3F83;
+        _value           = 190000 * 10 ** meta.decimals;
+        _unvestedValue   = 100000 * 10 ** meta.decimals;
+        _vestingDuration = 48 weeks;
+        _initialYear     = 2023;
+        mint_(_to, _unvestedValue);
+        for (uint256 _i = 0; _i <= 10; _i++) {
+            uint256 _year = _initialYear + _i;
+            string memory _caption = string(
+                abi.encodePacked("VS", 
+                uint256ToString(_year)));
+            mintWithVesting_(_to, _value, _vestingDuration * _i, _caption);
         }
         // =.=.=.=.= XXAL
-        mint_(_xxal, 100000 * 10**meta.decimals);
-        for (uint256 _i = 0; _i < 10 + 1; _i +=1) {
-            uint256 _year = 2023 + _i;
-            string memory _caption = string(abi.encodePacked("VS", uint256ToString(_year)));
-            mintWithVesting_(_xxal, 190000 * 10**18, 48 weeks * _i, _caption);
+        _to              = 0xbAF175966DCAB0012B9ab23150d1b1f8dA4C41da;
+        _value           = 190000 * 10 ** meta.decimals;
+        _unvestedValue   = 100000 * 10 ** meta.decimals;
+        _vestingDuration = 48 weeks;
+        _initialYear     = 2023;
+        mint_(_to, _unvestedValue);
+        for (uint256 _i = 0; _i <= 10; _i++) {
+            uint256 _year = _initialYear + _i;
+            string memory _caption = string(
+                abi.encodePacked("VS", 
+                uint256ToString(_year)));
+            mintWithVesting_(_to, _value, _vestingDuration * _i, _caption);
         }
         // =.=.=.=.= DNAL
-        mint_(_dnal, 100000 * 10**meta.decimals);
-        for (uint256 _i = 0; _i < 10 + 1; _i +=1) {
-            uint256 _year = 2023 + _i;
-            string memory _caption = string(abi.encodePacked("VS", uint256ToString(_year)));
-            mintWithVesting_(_dnal, 190000 * 10**18, 48 weeks * _i, _caption);
+        _to              = 0x1de8807f69E357FD91e47B34Dc2a66216a9DC4b4;
+        _value           = 190000 * 10 ** meta.decimals;
+        _unvestedValue   = 100000 * 10 ** meta.decimals;
+        _vestingDuration = 48 weeks;
+        _initialYear     = 2023;
+        mint_(_to, _unvestedValue);
+        for (uint256 _i = 0; _i <= 10; _i++) {
+            uint256 _year = _initialYear + _i;
+            string memory _caption = string(
+                abi.encodePacked("VS", 
+                uint256ToString(_year)));
+            mintWithVesting_(_to, _value, _vestingDuration * _i, _caption);
         }
-
+        // =.=.=.=.=
         mint_(meta.vault, 180000000 * 10**meta.decimals);
     }
 
     function transfer_(address _from, address _to, uint256 _value, uint256 _bpFeeBurn, uint256 _bpFeeBank) internal returns (bool, uint256) {
         require(
-            _from != address(0) &&
-            _to   != address(0) &&
-            balance[_from] >= _value &&
-            balance[_from] >= 0 &&
-            _value >= 0
+            _from            != address(0) &&
+            _to              != address(0) &&
+            balance[_from]   >= _value &&
+            balance[_from]   >= 0 &&
+            _value           >= 0
         );
-        balance[_from] -= _value;
-        uint256 _feeBurn = (_value / 1000) * _bpFeeBurn;
-        uint256 _feeBank = (_value / 1000) * _bpFeeBank;
-        uint256 _newValue = _value - (_feeBurn + _feeBank);
-        balance[_to] += _newValue;
-        balance[meta.vault] += _feeBank;
-        meta.totalSupply -= _feeBurn;
+        balance[_from]       -= _value;
+        uint256 _feeBurn     = (_value / 1000) * _bpFeeBurn;
+        uint256 _feeBank     = (_value / 1000) * _bpFeeBank;
+        uint256 _newValue    = _value - (_feeBurn + _feeBank);
+        balance[_to]         += _newValue;
+        balance[meta.vault]  += _feeBank;
+        meta.totalSupply     -= _feeBurn;
         emit Transfer(_from, _to, _newValue);
         if (_feeBurn != 0) {emit Transfer(_from, address(0), _feeBurn);}
         if (_feeBank != 0) {emit Transfer(_from, meta.vault, _feeBank);}
