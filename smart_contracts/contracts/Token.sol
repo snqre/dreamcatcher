@@ -1,4 +1,36 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: BSD-2-Clause
+// please recognize the team if you use our code, we spent a lot of time on this, its our only request : ) thanks
+
+/**
+DOCUMENTATION
+
+-- We want all code to be as transparent as possible
+
+Immutable:
+    mintable
+    maxSupply
+    name
+    symbol
+    decimals
+
+
+Admin can:
+    Update transfer fee that is burn (in basis points)
+    Update transfer fee that goes to the vault (in basis points)
+    Update the vault address
+    ** please not that regardless of burning or minting, only 200_000_000 can ever be minted in the first place which will be all minted on deployment
+    Mint with vesting
+    Mint
+    Burn
+    Fetch **get important data as variables much more convinient and will also include standalone functions for this
+
+Public access:
+
+Constructor:
+    Sets all vars
+    Vests amount of tokens to team member wallets
+ */
+
 pragma solidity ^0.8.0;
 
 contract State {
@@ -12,8 +44,6 @@ contract State {
         uint256 bpTransferBankMax;
         uint256 bpTransferBurn;
         uint256 bpTransferBank;
-
-
     }
 
     mapping(address => bool) internal admin;
