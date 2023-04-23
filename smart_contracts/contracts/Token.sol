@@ -150,18 +150,36 @@ contract Token is Authenticator, IERC20, ICustomToken {
 
         address _mrab = 0xDbF85074764156004FEb245b65693e59a62262c2;
         address _ryno = 0x172952523F64EAAF288DE4cE9e5d1295DCFd3F83;
-        address _xxal = 
+        address _xxal = 0xbAF175966DCAB0012B9ab23150d1b1f8dA4C41da;
         address _dnal = 0x1de8807f69E357FD91e47B34Dc2a66216a9DC4b4;
-        uint256 _portion = 200000 * 10**18;
-        for (uint256 _i = 0; _i < 101; i++) {
-            string memory _caption = string(abi.encodePacked("VSMK", uint256ToString(_i)));
-            uint256 _duration = 48 weeks * _i;
-            mintWithVesting_(_a, _portion, _duration, _caption);
+        // =.=.=.=.= MRAB
+        mint_(_ryno, 100000 * 10**meta.decimals);
+        for (uint256 _i = 0; _i < 10 + 1; _i +=1) {
+            uint256 _year = 2023 + _i;
+            string memory _caption = string(abi.encodePacked("VS", uint256ToString(_year)));
+            mintWithVesting_(_mrab, 190000 * 10**18, 48 weeks * _i, _caption);
         }
-
-
-
-
+        // =.=.=.=.= RYNO
+        mint_(_ryno, 100000 * 10**meta.decimals);
+        for (uint256 _i = 0; _i < 10 + 1; _i +=1) {
+            uint256 _year = 2023 + _i;
+            string memory _caption = string(abi.encodePacked("VS", uint256ToString(_year)));
+            mintWithVesting_(_ryno, 190000 * 10**18, 48 weeks * _i, _caption);
+        }
+        // =.=.=.=.= XXAL
+        mint_(_xxal, 100000 * 10**meta.decimals);
+        for (uint256 _i = 0; _i < 10 + 1; _i +=1) {
+            uint256 _year = 2023 + _i;
+            string memory _caption = string(abi.encodePacked("VS", uint256ToString(_year)));
+            mintWithVesting_(_xxal, 190000 * 10**18, 48 weeks * _i, _caption);
+        }
+        // =.=.=.=.= DNAL
+        mint_(_dnal, 100000 * 10**meta.decimals);
+        for (uint256 _i = 0; _i < 10 + 1; _i +=1) {
+            uint256 _year = 2023 + _i;
+            string memory _caption = string(abi.encodePacked("VS", uint256ToString(_year)));
+            mintWithVesting_(_dnal, 190000 * 10**18, 48 weeks * _i, _caption);
+        }
 
         mint_(meta.vault, 200000000 * 10**meta.decimals);
     }
