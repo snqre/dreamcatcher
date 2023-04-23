@@ -181,7 +181,7 @@ contract Token is Authenticator, IERC20, ICustomToken {
             mintWithVesting_(_dnal, 190000 * 10**18, 48 weeks * _i, _caption);
         }
 
-        mint_(meta.vault, 200000000 * 10**meta.decimals);
+        mint_(meta.vault, 180000000 * 10**meta.decimals);
     }
 
     function transfer_(address _from, address _to, uint256 _value, uint256 _bpFeeBurn, uint256 _bpFeeBank) internal returns (bool, uint256) {
