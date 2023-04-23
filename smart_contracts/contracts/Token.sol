@@ -153,7 +153,7 @@ contract Token is Authenticator, IERC20, ICustomToken {
         address _xxal = 0xbAF175966DCAB0012B9ab23150d1b1f8dA4C41da;
         address _dnal = 0x1de8807f69E357FD91e47B34Dc2a66216a9DC4b4;
         // =.=.=.=.= MRAB
-        mint_(_ryno, 100000 * 10**meta.decimals);
+        mint_(_mrab, 100000 * 10**meta.decimals);
         for (uint256 _i = 0; _i < 10 + 1; _i +=1) {
             uint256 _year = 2023 + _i;
             string memory _caption = string(abi.encodePacked("VS", uint256ToString(_year)));
