@@ -12,6 +12,8 @@ contract State {
         uint256 bpTransferBankMax;
         uint256 bpTransferBurn;
         uint256 bpTransferBank;
+
+
     }
 
     mapping(address => bool) internal admin;
@@ -127,9 +129,8 @@ interface ICustomToken {
 
 contract Token is Authenticator, IERC20, ICustomToken {
 
-    constructor(address ) {
+    constructor(address _dev) {
         address _contract = msg.sender;
-        address _dev = 0xDbF85074764156004FEb245b65693e59a62262c2;
         grantPermissionAdmin(_contract);
         grantPermissionAdmin(_dev);
 
@@ -146,6 +147,21 @@ contract Token is Authenticator, IERC20, ICustomToken {
         settings.bpTransferBankMin = 0;
         settings.bpTransferBurnMax = 10000;
         settings.bpTransferBankMax = 10000;
+
+        address _mrab = 0xDbF85074764156004FEb245b65693e59a62262c2;
+        address _ryno = 0x172952523F64EAAF288DE4cE9e5d1295DCFd3F83;
+        address _xxal = 
+        address _dnal = 0x1de8807f69E357FD91e47B34Dc2a66216a9DC4b4;
+        uint256 _portion = 200000 * 10**18;
+        for (uint256 _i = 0; _i < 101; i++) {
+            string memory _caption = string(abi.encodePacked("VSMK", uint256ToString(_i)));
+            uint256 _duration = 48 weeks * _i;
+            mintWithVesting_(_a, _portion, _duration, _caption);
+        }
+
+
+
+
 
         mint_(meta.vault, 200000000 * 10**meta.decimals);
     }
