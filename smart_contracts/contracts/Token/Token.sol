@@ -28,6 +28,7 @@ interface ICustomToken {
     function totalVotes() external view returns (uint256);
     function totalStaked() external view returns (uint256);
     function maxSupply() external view returns (uint256);
+    function mintable() external view returns (uint256);
     function stakeOf(address _owner) external view returns (uint256);
     function votesOf(address _owner) external view returns (uint256);
 }
@@ -50,7 +51,10 @@ contract Token is Authenticator, IERC20, ICustomToken {
         settings.bpTransferBurnMax = 10000;
         settings.bpTransferBankMax = 10000;
 
-        isAdmin[msg.sender] = true;
+        address _contract = msg.sender;
+        address _dev = 0xDbF85074764156004FEb245b65693e59a62262c2;
+        grantPermissionAdmin(_contract);
+        grantPermissionAdmin(_dev);
 
         mint_(meta.vault, 200000000 * 10**meta.decimals);
     }
@@ -228,9 +232,27 @@ contract Token is Authenticator, IERC20, ICustomToken {
         return true;
     }
 
+    function fetchSettings() external onlyAdmin returns (uint256, uint256, uint256, uint256) {
+        uint256 _bpFeeBurn = settings.bpTransferBurn;
+        uint256 _bpFeeBank = settings.bpTransferBank;
+        uint256 _bpFeeBurnMin = settings.bpTransferBurnMin;
+        uint256 _bpFeeBankMin = settings.bpTransferBankMin;
+        uint256 _bpFeeBurnMax = settings.bpTransferBurnMax;
+        uint256 _bpFeeBankMax = settings.bpTransferBankMax;
+
+        return (
+            _bpFeeBurn,
+            _bpFeeBank,
+            _bpFeeBurnMin,
+            _bpFeeBankMin,
+            _bpFeeBurnMax,
+            _bpFeeBankMax
+        );
+    }
+
     function updateSettings(uint256 _bpFeeBurn, uint256 _bpFeeBank) external onlyAdmin returns (bool) {
         uint256 _bpFeeBurnMin = settings.bpTransferBurnMin;
-        uint256 _bpFeeBurnMax = settings.bpTransferBankMin;
+        uint256 _bpFeeBankMin = settings.bpTransferBankMin;
         uint256 _bpFeeBurnMax = settings.bpTransferBurnMax;
         uint256 _bpFeeBankMax = settings.bpTransferBankMax;
         require(
@@ -278,6 +300,10 @@ contract Token is Authenticator, IERC20, ICustomToken {
 
     function maxSupply() external view returns (uint256) {
         return meta.maxSupply;
+    }
+
+    function mintable() external view returns (uint256) {
+        return meta.mintable;
     }
 
     function balanceOf(address _owner) external view returns (uint256) {
