@@ -91,6 +91,16 @@ contract Vault is Authenticator {
         return _value;
     }
 
+
+    // need to find a way to get the contract to send this
+    // for approve to work the contract itself must call the approve function
+    // msg.sender must be = to meta.vault
+    //?? address.call && address.delegatecall
+    function IApprove(address _tokenContract, address _spender, uint256 _value) public returns (bool) {
+        IERC20 _token = IERC20(_tokenContract);
+        _token.approve(_spender, _value);
+    }
+
     function ITransferFromVault(address _tokenContract, address _to, uint256 _value) payable external onlyAdmin returns (bool) {
         IERC20 _token = IERC20(_tokenContract);
         address _from = meta.vault;
@@ -98,7 +108,8 @@ contract Vault is Authenticator {
             _to != address(0) &&
             _token.balanceOf(_from) >= _value
         );
-        bool _success = _token.transfer(_to, _value);
+        IApprove(_tokenContract, , )
+        bool _success = _token.transferFrom(meta.vault, _to, _value);
         return _success;
     }
 }
