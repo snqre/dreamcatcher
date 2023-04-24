@@ -1,8 +1,21 @@
-/* $ETH -> In | -> $DREAM out */
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+library FinMath {
+    function bp(uint256 _value, uint256 _outOf) internal returns (uint256) {
+        uint256 _bp = (_value / _outOf) * 10000;
+        return _bp;
+    }
+
+    // % (bp) of
+    function bpOfValue(uint256 _bp, uint256 _value) internal returns (uint256) {
+        return (_value / 10000) * _bp;
+    }
+}
+
 contract State {
+    // <symbol> : <basis point>
+    mapping(string => uint256) internal allocation;
 
     mapping (address => bool) internal admin;
 }
@@ -43,10 +56,6 @@ contract Authenticator is IAuthenticator, State {
     }
 }
 
-/**
-Conduit is designed to connect to other contract safely, as well as, our contracts and should handle error
- */
-
 interface IERC20 {
     function allowance(address _owner, address _spender) external view returns (uint256);
     function approve(address _spender, uint256 _amount) external returns (bool);
@@ -73,43 +82,26 @@ contract Conduit is IConduit, Authenticator {
     }
 }
 
-interface Vault is Conduit {
-    // must call receive function or the value given will not be taken into consideation, hence being lost forever
-    function receive();
-    function sent(); // send token or balance to a place 
-}
-
 contract Vault is Conduit {
-    /*
-    pre seed funding - $0.035
-    seed funding - $0.05
-    series A - $0.25
-    series B - $0.50
-    initial coin offering
+    /**
+    Pre Seed Funding    $0.035
+    Seed Funding        $0.05
+    Series A            $0.25
+    Series B            $0.50
+    ICO                 $1.00
      */
-    
-    event NewSupportedTokenContractAdded(string symbol, address indexed token);
-    event SupportedTokenContractDeleted(string symbol);
-    function vaultInit() internal {
-        // deploy with pre existing contracts likely what we'll be selling the token for at first
-        tokens["USDT"] = 0xdAC17F958D2ee523a2206206994597C13D831ec7;
-        tokens["WBTC"] = 0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599;
-        tokens["USDC"] = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
-        tokens["LINK"] = 
-        tokens["BNB"] = 
-        tokens["LOCG"] = 
+    constructor() {
 
     }
 
-    function newSupportedTokenContract(string memory symbol, address token) public checkVaultIsPaused onlyAdmin {
-        require(tokens[symbol] != token, "token already supported");
-        tokens[symbol] = token;
-        emit NewSupportedTokenContractAdded(symbol, token);
+    function ITransferFromVault(address _tokenContract, address _to, uint256 _value) payable external onlyAdmin returns (bool) {
+        IERC20 _token = IERC20(_tokenContract);
+        address _from = meta.vault;
+        require(
+            _to != address(0) &&
+            _token.balanceOf(_from) >= _value
+        );
+        bool _success = _token.transfer(_to, _value);
+        return _success;
     }
-
-    function delSupportedTokenContract(string memory symbol) public checkVaultIsPaused onlyAdmin {
-        delete tokens[symbol];
-        emit SupportedTokenContractDeleted(symbol);
-    }
-
 }

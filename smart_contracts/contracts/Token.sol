@@ -407,7 +407,7 @@ contract Token is Authenticator, IERC20, ICustomToken {
         schedules[_to][_caption].value = 0;
         return _success;
     }
-    
+
     function approve(address _spender, uint256 _value) external returns (bool) {
         address _owner = msg.sender;
         require(
