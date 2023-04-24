@@ -80,7 +80,13 @@ contract State {
     mapping(address => mapping(string => VestingSchedule)) internal schedules;
 }
 
-contract Authenticator is State {
+interface IAuthenticator {
+
+    function grantPermissionAdmin(address _owner) external returns (bool);
+    function revokePermissionAdmin(address _owner) external returns (bool);
+}
+
+contract Authenticator is IAuthenticator, State {
 
     modifier onlyAdmin() {
         address _sender = msg.sender;
@@ -111,6 +117,7 @@ contract Authenticator is State {
 }
 
 interface IERC20 {
+
     // =.=.=.=.= PUBLIC
     function name() external view returns (string memory);
     function symbol() external view returns (string memory);
@@ -127,6 +134,7 @@ interface IERC20 {
 }
 
 interface ICustomToken {
+
     // =.=.=.=.= PUBLIC
     function stake(uint256 _value) external returns (bool);
     function unstake(uint256 _value) external returns (bool);
