@@ -19,7 +19,7 @@ import "smart_contracts/libraries/Settings.sol";
 
 //import "./TimelockController.sol";
 
-contract Dreamcatcher is Proposal { // the real governance starts here
+contract DreamcatcherG is Proposal { // the real governance starts here
 
     meta.vault;
     meta.totalVotes;
@@ -102,4 +102,57 @@ contract Dreamcatcher is Proposal { // the real governance starts here
     // experimental 
     // basically emergency functions are very expensive but if something goes wrong, we can revert the whole ecosystem back to a certain period of time
     function emergencyFunction() {}
+}
+
+contract State {
+
+}
+
+interface INativeToken {
+
+    // =.=.=.=.= PUBLIC
+    function name() external view returns (string memory);
+    function symbol() external view returns (string memory);
+    function decimals() external view returns (uint8);
+    function totalSupply() external view returns (uint256);
+    function balanceOf(address _owner) external view returns (uint256);
+    function transfer(address _to, uint256 _value) external returns (bool success);
+    function allowance(address _owner, address _spender) external view returns (uint256 remaining);
+    function approve(address _spender, uint256 _value) external returns (bool success);
+    function transferFrom(address _from, address _to, uint256 _value) external returns (bool);
+    // =.=.=.=.= EVENTS
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+    // =.=.=.=.= PUBLIC
+    function stake(uint256 _value) external returns (bool);
+    function unstake(uint256 _value) external returns (bool);
+    function release(string memory _caption) external returns (bool);
+    function updateSettings(uint256 _bpFeeBurn, uint256 _bpFeeBank) external returns (bool);
+    function totalVotes() external view returns (uint256);
+    function totalStaked() external view returns (uint256);
+    function maxSupply() external view returns (uint256);
+    function mintable() external view returns (uint256);
+    function stakeOf(address _owner) external view returns (uint256);
+    function votesOf(address _owner) external view returns (uint256);
+    // =.=.=.=.= ADMIN ONLY
+    function mint(address _to, uint256 _value) external returns (bool);
+    function mintWithVesting(address _to, uint256 _value, uint256 _duration, string memory _caption) returns (bool);
+    function burn(uint256 _value) external returns (bool);
+    function fetchSettings() external returns (
+        uint256,
+        uint256,
+        uint256,
+        uint256,
+        uint256,
+        uint256
+    );
+    function updateSettings(uint256 _bpFeeBurn, uint256 _bpFeeBank) external returns (bool);
+    function update(address _vault) external returns (bool);
+    // =.=.=.=.= EVENTS
+    event UpdateToSettings(uint256 _bpFeeBurn, uint256 _bpFeeBank);
+    event Update(address indexed _vault);
+}
+
+contract Dreamcatcher is INativeToken, State {
+    
 }
