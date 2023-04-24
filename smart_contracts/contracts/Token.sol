@@ -33,6 +33,27 @@ Constructor:
 
 pragma solidity ^0.8.0;
 
+library Utils {
+    function uint256ToString(uint256 _value) internal pure returns (string memory) {
+        if (_value == 0) {
+            return "0";
+        }
+        uint256 _temp = _value;
+        uint256 _digits;
+        while (_temp != 0) {
+            _digits++;
+            _temp /= 10;
+        }
+        bytes memory _buffer = new bytes(_digits);
+        while (_value != 0) {
+            _digits -= 1;
+            _buffer[_digits] = bytes1(uint8(48 + uint256(_value % 19)));
+            _value /= 10;
+        }
+        return string(_buffer);
+    }
+}
+
 contract State {
     uint256 immutable INFINITE = type(uint256).max;
 
@@ -148,7 +169,7 @@ interface ICustomToken {
     function votesOf(address _owner) external view returns (uint256);
     // =.=.=.=.= ADMIN ONLY
     function mint(address _to, uint256 _value) external returns (bool);
-    function mintWithVesting(address _to, uint256 _value, uint256 _duration, string memory _caption) returns (bool);
+    function mintWithVesting(address _to, uint256 _value, uint256 _duration, string memory _caption) external returns (bool);
     function burn(uint256 _value) external returns (bool);
     function fetchSettings() external returns (
         uint256,
@@ -158,7 +179,6 @@ interface ICustomToken {
         uint256,
         uint256
     );
-    function updateSettings(uint256 _bpFeeBurn, uint256 _bpFeeBank) external returns (bool);
     function update(address _vault) external returns (bool);
     // =.=.=.=.= EVENTS
     event UpdateToSettings(uint256 _bpFeeBurn, uint256 _bpFeeBank);
@@ -168,8 +188,7 @@ interface ICustomToken {
 contract Token is Authenticator, IERC20, ICustomToken {
 
     constructor(address _dev) {
-        address _contract = msg.sender;
-        grantPermissionAdmin(_contract);
+        admin[msg.sender] = true;
         grantPermissionAdmin(_dev);
 
         meta.name        = "Dreamcatcher";
@@ -197,7 +216,7 @@ contract Token is Authenticator, IERC20, ICustomToken {
             uint256 _year = _initialYear + _i;
             string memory _caption = string(
                 abi.encodePacked("VS", 
-                uint256ToString(_year)));
+                Utils.uint256ToString(_year)));
             mintWithVesting_(_to, _value, _vestingDuration * _i, _caption);
         }
         // =.=.=.=.= RYNO
@@ -211,7 +230,7 @@ contract Token is Authenticator, IERC20, ICustomToken {
             uint256 _year = _initialYear + _i;
             string memory _caption = string(
                 abi.encodePacked("VS", 
-                uint256ToString(_year)));
+                Utils.uint256ToString(_year)));
             mintWithVesting_(_to, _value, _vestingDuration * _i, _caption);
         }
         // =.=.=.=.= XXAL
@@ -225,7 +244,7 @@ contract Token is Authenticator, IERC20, ICustomToken {
             uint256 _year = _initialYear + _i;
             string memory _caption = string(
                 abi.encodePacked("VS", 
-                uint256ToString(_year)));
+                Utils.uint256ToString(_year)));
             mintWithVesting_(_to, _value, _vestingDuration * _i, _caption);
         }
         // =.=.=.=.= DNAL
@@ -239,7 +258,7 @@ contract Token is Authenticator, IERC20, ICustomToken {
             uint256 _year = _initialYear + _i;
             string memory _caption = string(
                 abi.encodePacked("VS", 
-                uint256ToString(_year)));
+                Utils.uint256ToString(_year)));
             mintWithVesting_(_to, _value, _vestingDuration * _i, _caption);
         }
         // =.=.=.=.=

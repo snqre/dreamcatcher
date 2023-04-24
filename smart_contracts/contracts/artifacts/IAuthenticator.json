@@ -48,293 +48,49 @@
 			"sourceMap": ""
 		},
 		"gasEstimates": null,
-		"methodIdentifiers": {}
+		"methodIdentifiers": {
+			"grantPermissionAdmin(address)": "96b75b1a",
+			"revokePermissionAdmin(address)": "db3c5fca"
+		}
 	},
 	"abi": [
 		{
-			"anonymous": false,
 			"inputs": [
 				{
-					"indexed": true,
 					"internalType": "address",
 					"name": "_owner",
 					"type": "address"
-				},
-				{
-					"indexed": false,
-					"internalType": "uint256",
-					"name": "_newDuration",
-					"type": "uint256"
 				}
 			],
-			"name": "RoleExtendedAdmin",
-			"type": "event"
+			"name": "grantPermissionAdmin",
+			"outputs": [
+				{
+					"internalType": "bool",
+					"name": "",
+					"type": "bool"
+				}
+			],
+			"stateMutability": "nonpayable",
+			"type": "function"
 		},
 		{
-			"anonymous": false,
 			"inputs": [
 				{
-					"indexed": true,
-					"internalType": "address",
-					"name": "_owner",
-					"type": "address"
-				},
-				{
-					"indexed": false,
-					"internalType": "uint256",
-					"name": "_newDuration",
-					"type": "uint256"
-				}
-			],
-			"name": "RoleExtendedExtension",
-			"type": "event"
-		},
-		{
-			"anonymous": false,
-			"inputs": [
-				{
-					"indexed": true,
-					"internalType": "address",
-					"name": "_owner",
-					"type": "address"
-				},
-				{
-					"indexed": false,
-					"internalType": "uint256",
-					"name": "_newDuration",
-					"type": "uint256"
-				}
-			],
-			"name": "RoleExtendedOperator",
-			"type": "event"
-		},
-		{
-			"anonymous": false,
-			"inputs": [
-				{
-					"indexed": true,
-					"internalType": "address",
-					"name": "_owner",
-					"type": "address"
-				},
-				{
-					"indexed": false,
-					"internalType": "uint256",
-					"name": "_newDuration",
-					"type": "uint256"
-				}
-			],
-			"name": "RoleExtendedSyndicate",
-			"type": "event"
-		},
-		{
-			"anonymous": false,
-			"inputs": [
-				{
-					"indexed": true,
-					"internalType": "address",
-					"name": "_owner",
-					"type": "address"
-				},
-				{
-					"indexed": false,
-					"internalType": "uint256",
-					"name": "_newDuration",
-					"type": "uint256"
-				}
-			],
-			"name": "RoleExtendedValidator",
-			"type": "event"
-		},
-		{
-			"anonymous": false,
-			"inputs": [
-				{
-					"indexed": true,
-					"internalType": "address",
-					"name": "_owner",
-					"type": "address"
-				},
-				{
-					"indexed": false,
-					"internalType": "uint256",
-					"name": "_start",
-					"type": "uint256"
-				},
-				{
-					"indexed": false,
-					"internalType": "uint256",
-					"name": "_duration",
-					"type": "uint256"
-				}
-			],
-			"name": "RoleGrantedAdmin",
-			"type": "event"
-		},
-		{
-			"anonymous": false,
-			"inputs": [
-				{
-					"indexed": true,
-					"internalType": "address",
-					"name": "_owner",
-					"type": "address"
-				},
-				{
-					"indexed": false,
-					"internalType": "uint256",
-					"name": "_start",
-					"type": "uint256"
-				},
-				{
-					"indexed": false,
-					"internalType": "uint256",
-					"name": "_duration",
-					"type": "uint256"
-				}
-			],
-			"name": "RoleGrantedExtension",
-			"type": "event"
-		},
-		{
-			"anonymous": false,
-			"inputs": [
-				{
-					"indexed": true,
-					"internalType": "address",
-					"name": "_owner",
-					"type": "address"
-				},
-				{
-					"indexed": false,
-					"internalType": "uint256",
-					"name": "_start",
-					"type": "uint256"
-				},
-				{
-					"indexed": false,
-					"internalType": "uint256",
-					"name": "_duration",
-					"type": "uint256"
-				}
-			],
-			"name": "RoleGrantedOperator",
-			"type": "event"
-		},
-		{
-			"anonymous": false,
-			"inputs": [
-				{
-					"indexed": true,
-					"internalType": "address",
-					"name": "_owner",
-					"type": "address"
-				},
-				{
-					"indexed": false,
-					"internalType": "uint256",
-					"name": "_start",
-					"type": "uint256"
-				},
-				{
-					"indexed": false,
-					"internalType": "uint256",
-					"name": "_duration",
-					"type": "uint256"
-				}
-			],
-			"name": "RoleGrantedSyndicate",
-			"type": "event"
-		},
-		{
-			"anonymous": false,
-			"inputs": [
-				{
-					"indexed": true,
-					"internalType": "address",
-					"name": "_owner",
-					"type": "address"
-				},
-				{
-					"indexed": false,
-					"internalType": "uint256",
-					"name": "_start",
-					"type": "uint256"
-				},
-				{
-					"indexed": false,
-					"internalType": "uint256",
-					"name": "_duration",
-					"type": "uint256"
-				}
-			],
-			"name": "RoleGrantedValidator",
-			"type": "event"
-		},
-		{
-			"anonymous": false,
-			"inputs": [
-				{
-					"indexed": true,
 					"internalType": "address",
 					"name": "_owner",
 					"type": "address"
 				}
 			],
-			"name": "RoleRevokedAdmin",
-			"type": "event"
-		},
-		{
-			"anonymous": false,
-			"inputs": [
+			"name": "revokePermissionAdmin",
+			"outputs": [
 				{
-					"indexed": true,
-					"internalType": "address",
-					"name": "_owner",
-					"type": "address"
+					"internalType": "bool",
+					"name": "",
+					"type": "bool"
 				}
 			],
-			"name": "RoleRevokedExtension",
-			"type": "event"
-		},
-		{
-			"anonymous": false,
-			"inputs": [
-				{
-					"indexed": true,
-					"internalType": "address",
-					"name": "_owner",
-					"type": "address"
-				}
-			],
-			"name": "RoleRevokedOperator",
-			"type": "event"
-		},
-		{
-			"anonymous": false,
-			"inputs": [
-				{
-					"indexed": true,
-					"internalType": "address",
-					"name": "_owner",
-					"type": "address"
-				}
-			],
-			"name": "RoleRevokedSyndicate",
-			"type": "event"
-		},
-		{
-			"anonymous": false,
-			"inputs": [
-				{
-					"indexed": true,
-					"internalType": "address",
-					"name": "_owner",
-					"type": "address"
-				}
-			],
-			"name": "RoleRevokedValidator",
-			"type": "event"
+			"stateMutability": "nonpayable",
+			"type": "function"
 		}
 	]
 }

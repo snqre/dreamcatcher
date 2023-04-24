@@ -18,7 +18,7 @@
 	},
 	"settings": {
 		"compilationTarget": {
-			"smart_contracts/contracts/State.sol": "State"
+			"smart_contracts/contracts/Token.sol": "State"
 		},
 		"evmVersion": "paris",
 		"libraries": {},
@@ -32,12 +32,12 @@
 		"remappings": []
 	},
 	"sources": {
-		"smart_contracts/contracts/State.sol": {
-			"keccak256": "0xadc5fa632997ceeedf8be2b1e4e9b502b4497813a2f8117a33eee922faf008e6",
-			"license": "MIT",
+		"smart_contracts/contracts/Token.sol": {
+			"keccak256": "0x538c2c2cfa819cc1c8983ff782a9bcd77f900f36c63c486eb0c3682fa94ed8e3",
+			"license": "BSD-2-Clause",
 			"urls": [
-				"bzz-raw://cf851e0a14c2f542490c44e3ed11242558217826e9e55275a76cb75e41766e4d",
-				"dweb:/ipfs/QmRmEk4n2AE4aPiNMCcfyMYXEkRt4A9Cop75EjDkYztGu3"
+				"bzz-raw://a7ae775719222d475d27590a122d28ed6f848e32d4df1a2447b62ccf868fa6f8",
+				"dweb:/ipfs/QmTw7nRCnXHN4rBMhBzz8ifrgdNoeUb5rV76PDZjBRqoof"
 			]
 		}
 	},

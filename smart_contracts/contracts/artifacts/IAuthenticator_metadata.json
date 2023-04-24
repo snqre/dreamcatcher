@@ -6,289 +6,42 @@
 	"output": {
 		"abi": [
 			{
-				"anonymous": false,
 				"inputs": [
 					{
-						"indexed": true,
 						"internalType": "address",
 						"name": "_owner",
 						"type": "address"
-					},
-					{
-						"indexed": false,
-						"internalType": "uint256",
-						"name": "_newDuration",
-						"type": "uint256"
 					}
 				],
-				"name": "RoleExtendedAdmin",
-				"type": "event"
+				"name": "grantPermissionAdmin",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "",
+						"type": "bool"
+					}
+				],
+				"stateMutability": "nonpayable",
+				"type": "function"
 			},
 			{
-				"anonymous": false,
 				"inputs": [
 					{
-						"indexed": true,
-						"internalType": "address",
-						"name": "_owner",
-						"type": "address"
-					},
-					{
-						"indexed": false,
-						"internalType": "uint256",
-						"name": "_newDuration",
-						"type": "uint256"
-					}
-				],
-				"name": "RoleExtendedExtension",
-				"type": "event"
-			},
-			{
-				"anonymous": false,
-				"inputs": [
-					{
-						"indexed": true,
-						"internalType": "address",
-						"name": "_owner",
-						"type": "address"
-					},
-					{
-						"indexed": false,
-						"internalType": "uint256",
-						"name": "_newDuration",
-						"type": "uint256"
-					}
-				],
-				"name": "RoleExtendedOperator",
-				"type": "event"
-			},
-			{
-				"anonymous": false,
-				"inputs": [
-					{
-						"indexed": true,
-						"internalType": "address",
-						"name": "_owner",
-						"type": "address"
-					},
-					{
-						"indexed": false,
-						"internalType": "uint256",
-						"name": "_newDuration",
-						"type": "uint256"
-					}
-				],
-				"name": "RoleExtendedSyndicate",
-				"type": "event"
-			},
-			{
-				"anonymous": false,
-				"inputs": [
-					{
-						"indexed": true,
-						"internalType": "address",
-						"name": "_owner",
-						"type": "address"
-					},
-					{
-						"indexed": false,
-						"internalType": "uint256",
-						"name": "_newDuration",
-						"type": "uint256"
-					}
-				],
-				"name": "RoleExtendedValidator",
-				"type": "event"
-			},
-			{
-				"anonymous": false,
-				"inputs": [
-					{
-						"indexed": true,
-						"internalType": "address",
-						"name": "_owner",
-						"type": "address"
-					},
-					{
-						"indexed": false,
-						"internalType": "uint256",
-						"name": "_start",
-						"type": "uint256"
-					},
-					{
-						"indexed": false,
-						"internalType": "uint256",
-						"name": "_duration",
-						"type": "uint256"
-					}
-				],
-				"name": "RoleGrantedAdmin",
-				"type": "event"
-			},
-			{
-				"anonymous": false,
-				"inputs": [
-					{
-						"indexed": true,
-						"internalType": "address",
-						"name": "_owner",
-						"type": "address"
-					},
-					{
-						"indexed": false,
-						"internalType": "uint256",
-						"name": "_start",
-						"type": "uint256"
-					},
-					{
-						"indexed": false,
-						"internalType": "uint256",
-						"name": "_duration",
-						"type": "uint256"
-					}
-				],
-				"name": "RoleGrantedExtension",
-				"type": "event"
-			},
-			{
-				"anonymous": false,
-				"inputs": [
-					{
-						"indexed": true,
-						"internalType": "address",
-						"name": "_owner",
-						"type": "address"
-					},
-					{
-						"indexed": false,
-						"internalType": "uint256",
-						"name": "_start",
-						"type": "uint256"
-					},
-					{
-						"indexed": false,
-						"internalType": "uint256",
-						"name": "_duration",
-						"type": "uint256"
-					}
-				],
-				"name": "RoleGrantedOperator",
-				"type": "event"
-			},
-			{
-				"anonymous": false,
-				"inputs": [
-					{
-						"indexed": true,
-						"internalType": "address",
-						"name": "_owner",
-						"type": "address"
-					},
-					{
-						"indexed": false,
-						"internalType": "uint256",
-						"name": "_start",
-						"type": "uint256"
-					},
-					{
-						"indexed": false,
-						"internalType": "uint256",
-						"name": "_duration",
-						"type": "uint256"
-					}
-				],
-				"name": "RoleGrantedSyndicate",
-				"type": "event"
-			},
-			{
-				"anonymous": false,
-				"inputs": [
-					{
-						"indexed": true,
-						"internalType": "address",
-						"name": "_owner",
-						"type": "address"
-					},
-					{
-						"indexed": false,
-						"internalType": "uint256",
-						"name": "_start",
-						"type": "uint256"
-					},
-					{
-						"indexed": false,
-						"internalType": "uint256",
-						"name": "_duration",
-						"type": "uint256"
-					}
-				],
-				"name": "RoleGrantedValidator",
-				"type": "event"
-			},
-			{
-				"anonymous": false,
-				"inputs": [
-					{
-						"indexed": true,
 						"internalType": "address",
 						"name": "_owner",
 						"type": "address"
 					}
 				],
-				"name": "RoleRevokedAdmin",
-				"type": "event"
-			},
-			{
-				"anonymous": false,
-				"inputs": [
+				"name": "revokePermissionAdmin",
+				"outputs": [
 					{
-						"indexed": true,
-						"internalType": "address",
-						"name": "_owner",
-						"type": "address"
+						"internalType": "bool",
+						"name": "",
+						"type": "bool"
 					}
 				],
-				"name": "RoleRevokedExtension",
-				"type": "event"
-			},
-			{
-				"anonymous": false,
-				"inputs": [
-					{
-						"indexed": true,
-						"internalType": "address",
-						"name": "_owner",
-						"type": "address"
-					}
-				],
-				"name": "RoleRevokedOperator",
-				"type": "event"
-			},
-			{
-				"anonymous": false,
-				"inputs": [
-					{
-						"indexed": true,
-						"internalType": "address",
-						"name": "_owner",
-						"type": "address"
-					}
-				],
-				"name": "RoleRevokedSyndicate",
-				"type": "event"
-			},
-			{
-				"anonymous": false,
-				"inputs": [
-					{
-						"indexed": true,
-						"internalType": "address",
-						"name": "_owner",
-						"type": "address"
-					}
-				],
-				"name": "RoleRevokedValidator",
-				"type": "event"
+				"stateMutability": "nonpayable",
+				"type": "function"
 			}
 		],
 		"devdoc": {
@@ -304,7 +57,7 @@
 	},
 	"settings": {
 		"compilationTarget": {
-			"smart_contracts/contracts/Authenticator.sol": "IAuthenticator"
+			"smart_contracts/contracts/Token.sol": "IAuthenticator"
 		},
 		"evmVersion": "paris",
 		"libraries": {},
@@ -318,20 +71,12 @@
 		"remappings": []
 	},
 	"sources": {
-		"smart_contracts/contracts/Authenticator.sol": {
-			"keccak256": "0x22895ae194eccc675f9108c746cae625821de4b1703c505965a0df8a1eb868bb",
-			"license": "MIT",
+		"smart_contracts/contracts/Token.sol": {
+			"keccak256": "0x538c2c2cfa819cc1c8983ff782a9bcd77f900f36c63c486eb0c3682fa94ed8e3",
+			"license": "BSD-2-Clause",
 			"urls": [
-				"bzz-raw://f5216455cb83749f2b80b9c0e2b10653128ea0d8e5e2b9309f47acd0525fcf20",
-				"dweb:/ipfs/QmX6ZpseY3EizgfBEhFdpnHrN7MwfYqFiNiYsRLHqVkzPV"
-			]
-		},
-		"smart_contracts/contracts/State.sol": {
-			"keccak256": "0xadc5fa632997ceeedf8be2b1e4e9b502b4497813a2f8117a33eee922faf008e6",
-			"license": "MIT",
-			"urls": [
-				"bzz-raw://cf851e0a14c2f542490c44e3ed11242558217826e9e55275a76cb75e41766e4d",
-				"dweb:/ipfs/QmRmEk4n2AE4aPiNMCcfyMYXEkRt4A9Cop75EjDkYztGu3"
+				"bzz-raw://a7ae775719222d475d27590a122d28ed6f848e32d4df1a2447b62ccf868fa6f8",
+				"dweb:/ipfs/QmTw7nRCnXHN4rBMhBzz8ifrgdNoeUb5rV76PDZjBRqoof"
 			]
 		}
 	},

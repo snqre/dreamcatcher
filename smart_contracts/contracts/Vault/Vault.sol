@@ -18,6 +18,12 @@ contract State {
     mapping(string => uint256) internal allocation;
 
     mapping (address => bool) internal admin;
+
+    struct Meta {
+        address vault;
+    }
+
+    Meta internal meta;
 }
 
 interface IAuthenticator {
@@ -59,30 +65,12 @@ contract Authenticator is IAuthenticator, State {
 interface IERC20 {
     function allowance(address _owner, address _spender) external view returns (uint256);
     function approve(address _spender, uint256 _amount) external returns (bool);
+    function transfer(address _to, uint256 _value) external returns (bool);
     function transferFrom(address _from, address _to, uint256 _amount) external returns (bool);
     function balanceOf(address _owner) external view returns (uint256);
 }
 
-interface IConduit {
-    function ITransfer(address _token, address _to, uint256 _value) external returns (bool);
-
-}
-
-contract Conduit is IConduit, Authenticator {
-    // approve all transaction then send from **only admin can call
-    function ITransfer(address _token, address _to, uint256 _value) public onlyAdmin retruns (bool) {
-        require(
-            _token != address(0) &&
-            _to != address(0) &&
-            IERC20(_token).approve(msg.sender, _value);
-            ERC20(_token).allowance(msg.sender, address(this)) >= _value &&
-            ERC20(_token).transferFrom(msg.sender, _to, _value)
-        );
-        return true;
-    }
-}
-
-contract Vault is Conduit {
+contract Vault is Authenticator {
     /**
     Pre Seed Funding    $0.035
     Seed Funding        $0.05
@@ -90,8 +78,17 @@ contract Vault is Conduit {
     Series B            $0.50
     ICO                 $1.00
      */
-    constructor() {
+    constructor(address _dev) {
+        admin[msg.sender] = true;
+        meta.vault = _dev;
+        grantPermissionAdmin(_dev);
+    }
 
+    function IBalanceOf(address _tokenContract) external returns (uint256) {
+        IERC20 _token = IERC20(_tokenContract);
+        address _owner = meta.vault;
+        uint256 _value = _token.balanceOf(_owner);
+        return _value;
     }
 
     function ITransferFromVault(address _tokenContract, address _to, uint256 _value) payable external onlyAdmin returns (bool) {
