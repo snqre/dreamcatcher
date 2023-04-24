@@ -246,13 +246,13 @@ contract Token is Authenticator, IERC20, ICustomToken {
             balance[_from]   >= 0 &&
             _value           >= 0
         );
-        balance[_from]       -= _value;
-        uint256 _feeBurn     = (_value / 1000) * _bpFeeBurn;
-        uint256 _feeBank     = (_value / 1000) * _bpFeeBank;
-        uint256 _newValue    = _value - (_feeBurn + _feeBank);
-        balance[_to]         += _newValue;
-        balance[meta.vault]  += _feeBank;
-        meta.totalSupply     -= _feeBurn;
+        balance[_from] -= _value;
+        uint256 _feeBurn = (_value / 1000) * _bpFeeBurn;
+        uint256 _feeBank = (_value / 1000) * _bpFeeBank;
+        uint256 _newValue = _value - (_feeBurn + _feeBank);
+        balance[_to] += _newValue;
+        balance[meta.vault] += _feeBank;
+        meta.totalSupply -= _feeBurn;
         emit Transfer(_from, _to, _newValue);
         if (_feeBurn != 0) {emit Transfer(_from, address(0), _feeBurn);}
         if (_feeBank != 0) {emit Transfer(_from, meta.vault, _feeBank);}
