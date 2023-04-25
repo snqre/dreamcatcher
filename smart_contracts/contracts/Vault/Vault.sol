@@ -76,9 +76,8 @@ contract Vault is Authenticator {
     Series B            $0.500
     ICO                 $1.000
      */
-    constructor(address _dev) {
+    constructor() {
         admin[msg.sender] = true;
-        grantPermissionAdmin(_dev);
     }
 
     // this in theory should access any tokens from any address

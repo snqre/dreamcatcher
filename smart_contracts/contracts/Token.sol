@@ -110,9 +110,8 @@ interface IAuthenticator {
 contract Authenticator is IAuthenticator, State {
 
     modifier onlyAdmin() {
-        address _sender = msg.sender;
         require(
-            admin[_sender] != false,
+            admin[msg.sender] == true,
             "onlyAdmin"
         );
         _;
@@ -187,9 +186,8 @@ interface ICustomToken {
 
 contract Token is Authenticator, IERC20, ICustomToken {
 
-    constructor(address _dev) {
-        admin[msg.sender] = true;
-        grantPermissionAdmin(_dev);
+    constructor() {
+        admin[address(this)] = true;
 
         meta.name        = "Dreamcatcher";
         meta.symbol      = "DREAM";
@@ -197,7 +195,6 @@ contract Token is Authenticator, IERC20, ICustomToken {
         meta.totalSupply = 0;
         meta.maxSupply   = 200000000 * 10**meta.decimals;
         meta.mintable    = meta.maxSupply;
-        meta.vault       = _dev;
 
         settings.bpTransferBurn      = 0;
         settings.bpTransferBank      = 0;

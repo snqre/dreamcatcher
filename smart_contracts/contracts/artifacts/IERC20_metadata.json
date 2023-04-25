@@ -256,11 +256,11 @@
 	},
 	"sources": {
 		"smart_contracts/contracts/Token.sol": {
-			"keccak256": "0x538c2c2cfa819cc1c8983ff782a9bcd77f900f36c63c486eb0c3682fa94ed8e3",
+			"keccak256": "0xc7b25ab32e460a85246dc1404c556e496a8ab11fc082ad6ab6186daa56a02e47",
 			"license": "BSD-2-Clause",
 			"urls": [
-				"bzz-raw://a7ae775719222d475d27590a122d28ed6f848e32d4df1a2447b62ccf868fa6f8",
-				"dweb:/ipfs/QmTw7nRCnXHN4rBMhBzz8ifrgdNoeUb5rV76PDZjBRqoof"
+				"bzz-raw://b33e63a0627fe39a73273569f930dfec3f58045b46b7f06c481a960b523ff425",
+				"dweb:/ipfs/Qmdq3zZwAyWCw5buCREqYuCFuTmZWm2yndQGZRNaTJ6fz8"
 			]
 		}
 	},
