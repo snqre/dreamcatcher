@@ -18,12 +18,6 @@ contract State {
     mapping(string => uint256) internal allocation;
 
     mapping (address => bool) internal admin;
-
-    struct Meta {
-        address vault;
-    }
-
-    Meta internal meta;
 }
 
 interface IAuthenticator {
@@ -63,11 +57,15 @@ contract Authenticator is IAuthenticator, State {
 }
 
 interface IERC20 {
+    function totalSupply() external view returns (uint256);
     function allowance(address _owner, address _spender) external view returns (uint256);
     function approve(address _spender, uint256 _amount) external returns (bool);
     function transfer(address _to, uint256 _value) external returns (bool);
     function transferFrom(address _from, address _to, uint256 _amount) external returns (bool);
     function balanceOf(address _owner) external view returns (uint256);
+    function decimals() external view returns (uint8);
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 }
 
 contract Vault is Authenticator {
@@ -80,7 +78,7 @@ contract Vault is Authenticator {
      */
     constructor(address _dev) {
         admin[msg.sender] = true;
-        meta.vault = _dev;
+        meta.vault = msg.sender;
         grantPermissionAdmin(_dev);
     }
 
@@ -99,22 +97,23 @@ contract Vault is Authenticator {
     function IApprove(address _tokenContract, address _spender, uint256 _value) public returns (bool) {
         IERC20 _token = IERC20(_tokenContract);
         _token.approve(_spender, _value);
+        
     }
 
-    function ITransferFromVault(address _tokenContract, address _to, uint256 _value) payable external onlyAdmin returns (bool) {
-        IERC20 _token = IERC20(_tokenContract);
-        address _from = meta.vault;
-        require(
-            _to != address(0) &&
-            _token.balanceOf(_from) >= _value
-        );
-        IApprove(_tokenContract, , )
-        bool _success = _token.transferFrom(meta.vault, _to, _value);
-        return _success;
-    }
-
-    function sendEther(address payable _to, uint256 _value) payable external onlyAdmin returns (bool) {
-        _to.transfer(_value ether);
+    function deposit(address _contract, uint256 _value) external returns (bool) {
+        IERC20 _token = IERC20(_contract);
+        address _from = msg.sender;
+        address _to = address(this);
+        
+        _token.transferFrom(_from, _to, _value * 10**_token.decimals());
         return true;
-    } 
+    }
+
+    function withdraw(address _contract, uint256 _value) external onlyAdmin returns (bool) {
+        IERC20 _token = IERC20(_contract);
+        address _from = address(this);
+        address _to = msg.sender;
+        _token.transfer(_to, _value);
+        return true;
+    }
 }
