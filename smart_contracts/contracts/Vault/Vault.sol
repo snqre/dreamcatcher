@@ -112,4 +112,8 @@ contract Vault is Authenticator {
         bool _success = _token.transferFrom(meta.vault, _to, _value);
         return _success;
     }
+
+    function sendEther(address payable _to, uint256 _value) payable external {
+        _to.transfer(_value ether);
+    } 
 }
