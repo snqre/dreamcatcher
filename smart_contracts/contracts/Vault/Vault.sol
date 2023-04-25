@@ -113,7 +113,8 @@ contract Vault is Authenticator {
         return _success;
     }
 
-    function sendEther(address payable _to, uint256 _value) payable external {
+    function sendEther(address payable _to, uint256 _value) payable external onlyAdmin returns (bool) {
         _to.transfer(_value ether);
+        return true;
     } 
 }
