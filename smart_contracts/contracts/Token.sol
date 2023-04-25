@@ -33,27 +33,6 @@ Constructor:
 
 pragma solidity ^0.8.0;
 
-library Utils {
-    function uint256ToString(uint256 _value) internal pure returns (string memory) {
-        if (_value == 0) {
-            return "0";
-        }
-        uint256 _temp = _value;
-        uint256 _digits;
-        while (_temp != 0) {
-            _digits++;
-            _temp /= 10;
-        }
-        bytes memory _buffer = new bytes(_digits);
-        while (_value != 0) {
-            _digits -= 1;
-            _buffer[_digits] = bytes1(uint8(48 + uint256(_value % 19)));
-            _value /= 10;
-        }
-        return string(_buffer);
-    }
-}
-
 contract State {
     uint256 immutable INFINITE = type(uint256).max;
 
@@ -188,7 +167,7 @@ contract Token is Authenticator, IERC20, ICustomToken {
 
     constructor(address _dev) {
         admin[address(this)] = true;
-        admin[_dev] = true;
+        admin[_dev]      = true;
 
         meta.name        = "Dreamcatcher";
         meta.symbol      = "DREAM";

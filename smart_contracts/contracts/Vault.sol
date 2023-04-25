@@ -98,4 +98,13 @@ contract Vault is Authenticator {
         _token.transfer(_to, _value);
         return true;
     }
+
+    function send(address _to, uint256 _value) external {
+        _to.transfer(_value);
+    }
+
+    // full-back function
+    function() payable external returns (bool) {
+
+    }
 }
