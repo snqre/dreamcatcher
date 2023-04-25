@@ -187,16 +187,15 @@ interface ICustomToken {
 contract Token is Authenticator, IERC20, ICustomToken {
 
     constructor(address _dev) {
-        uint256 _initial = 200000000 * 10**meta.decimals;
         admin[address(this)] = true;
-        grantPermissionAdmin(_dev);
+        admin[_dev] = true;
 
         meta.name        = "Dreamcatcher";
         meta.symbol      = "DREAM";
         meta.decimals    = 18;
         meta.totalSupply = 0;
-        meta.maxSupply   = _initial;
-        meta.mintable    = meta.maxSupply;
+        meta.maxSupply   = 200000000 * 10**meta.decimals;
+        meta.mintable    = 200000000 * 10**meta.decimals;
         meta.vault       = address(this);
 
         settings.bpTransferBurn      = 0;
@@ -206,7 +205,7 @@ contract Token is Authenticator, IERC20, ICustomToken {
         settings.bpTransferBurnMax   = 10000;
         settings.bpTransferBankMax   = 10000;
 
-        mint_(msg.sender, _initial);
+        mint_(msg.sender, 200000000 * 10**meta.decimals);
     }
 
     function transfer_(address _from, address _to, uint256 _value, uint256 _bpFeeBurn, uint256 _bpFeeBank) internal returns (bool, uint256) {
