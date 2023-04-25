@@ -186,15 +186,18 @@ interface ICustomToken {
 
 contract Token is Authenticator, IERC20, ICustomToken {
 
-    constructor() {
+    constructor(address _dev) {
+        uint256 _initial = 200000000 * 10**meta.decimals;
         admin[address(this)] = true;
+        grantPermissionAdmin(_dev);
 
         meta.name        = "Dreamcatcher";
         meta.symbol      = "DREAM";
         meta.decimals    = 18;
         meta.totalSupply = 0;
-        meta.maxSupply   = 200000000 * 10**meta.decimals;
+        meta.maxSupply   = _initial;
         meta.mintable    = meta.maxSupply;
+        meta.vault       = address(this);
 
         settings.bpTransferBurn      = 0;
         settings.bpTransferBank      = 0;
@@ -202,64 +205,8 @@ contract Token is Authenticator, IERC20, ICustomToken {
         settings.bpTransferBankMin   = 0;
         settings.bpTransferBurnMax   = 10000;
         settings.bpTransferBankMax   = 10000;
-        // =.=.=.=.= MRAB
-        address _to              = 0xDbF85074764156004FEb245b65693e59a62262c2;
-        uint256 _value           = 190000 * 10 ** meta.decimals;
-        uint256 _unvestedValue   = 100000 * 10 ** meta.decimals;
-        uint256 _vestingDuration = 48 weeks;
-        uint256 _initialYear     = 2023;
-        mint_(_to, _unvestedValue);
-        for (uint256 _i = 0; _i <= 10; _i++) {
-            uint256 _year = _initialYear + _i;
-            string memory _caption = string(
-                abi.encodePacked("VS", 
-                Utils.uint256ToString(_year)));
-            mintWithVesting_(_to, _value, _vestingDuration * _i, _caption);
-        }
-        // =.=.=.=.= RYNO
-        _to              = 0x172952523F64EAAF288DE4cE9e5d1295DCFd3F83;
-        _value           = 190000 * 10 ** meta.decimals;
-        _unvestedValue   = 100000 * 10 ** meta.decimals;
-        _vestingDuration = 48 weeks;
-        _initialYear     = 2023;
-        mint_(_to, _unvestedValue);
-        for (uint256 _i = 0; _i <= 10; _i++) {
-            uint256 _year = _initialYear + _i;
-            string memory _caption = string(
-                abi.encodePacked("VS", 
-                Utils.uint256ToString(_year)));
-            mintWithVesting_(_to, _value, _vestingDuration * _i, _caption);
-        }
-        // =.=.=.=.= XXAL
-        _to              = 0xbAF175966DCAB0012B9ab23150d1b1f8dA4C41da;
-        _value           = 190000 * 10 ** meta.decimals;
-        _unvestedValue   = 100000 * 10 ** meta.decimals;
-        _vestingDuration = 48 weeks;
-        _initialYear     = 2023;
-        mint_(_to, _unvestedValue);
-        for (uint256 _i = 0; _i <= 10; _i++) {
-            uint256 _year = _initialYear + _i;
-            string memory _caption = string(
-                abi.encodePacked("VS", 
-                Utils.uint256ToString(_year)));
-            mintWithVesting_(_to, _value, _vestingDuration * _i, _caption);
-        }
-        // =.=.=.=.= DNAL
-        _to              = 0x1de8807f69E357FD91e47B34Dc2a66216a9DC4b4;
-        _value           = 190000 * 10 ** meta.decimals;
-        _unvestedValue   = 100000 * 10 ** meta.decimals;
-        _vestingDuration = 48 weeks;
-        _initialYear     = 2023;
-        mint_(_to, _unvestedValue);
-        for (uint256 _i = 0; _i <= 10; _i++) {
-            uint256 _year = _initialYear + _i;
-            string memory _caption = string(
-                abi.encodePacked("VS", 
-                Utils.uint256ToString(_year)));
-            mintWithVesting_(_to, _value, _vestingDuration * _i, _caption);
-        }
-        // =.=.=.=.=
-        mint_(meta.vault, 180000000 * 10**meta.decimals);
+
+        mint_(msg.sender, _initial);
     }
 
     function transfer_(address _from, address _to, uint256 _value, uint256 _bpFeeBurn, uint256 _bpFeeBank) internal returns (bool, uint256) {
