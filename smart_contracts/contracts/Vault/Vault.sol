@@ -71,35 +71,17 @@ interface IERC20 {
 contract Vault is Authenticator {
     /**
     Pre Seed Funding    $0.035
-    Seed Funding        $0.05
-    Series A            $0.25
-    Series B            $0.50
-    ICO                 $1.00
+    Seed Funding        $0.050
+    Series A            $0.250
+    Series B            $0.500
+    ICO                 $1.000
      */
     constructor(address _dev) {
         admin[msg.sender] = true;
-        meta.vault = msg.sender;
         grantPermissionAdmin(_dev);
     }
 
-    function IBalanceOf(address _tokenContract) external returns (uint256) {
-        IERC20 _token = IERC20(_tokenContract);
-        address _owner = meta.vault;
-        uint256 _value = _token.balanceOf(_owner);
-        return _value;
-    }
-
-
-    // need to find a way to get the contract to send this
-    // for approve to work the contract itself must call the approve function
-    // msg.sender must be = to meta.vault
-    //?? address.call && address.delegatecall
-    function IApprove(address _tokenContract, address _spender, uint256 _value) public returns (bool) {
-        IERC20 _token = IERC20(_tokenContract);
-        _token.approve(_spender, _value);
-        
-    }
-
+    // this in theory should access any tokens from any address
     function deposit(address _contract, uint256 _value) external returns (bool) {
         IERC20 _token = IERC20(_contract);
         address _from = msg.sender;
@@ -109,7 +91,8 @@ contract Vault is Authenticator {
         return true;
     }
 
-    function withdraw(address _contract, uint256 _value) external onlyAdmin returns (bool) {
+    // this should allow withdrawal
+    function withdraw(address _contract, uint256 _value) external returns (bool) {
         IERC20 _token = IERC20(_contract);
         address _from = address(this);
         address _to = msg.sender;
