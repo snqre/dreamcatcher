@@ -76,17 +76,26 @@ contract Conduit is Authenticator {
         IERC20 _token = IERC20(_contract);
         address _from = msg.sender;
         address _to = address(this);
-        
+        require(
+            _value <= _token.balanceOf(_from) &&
+            _to != address(0) &&
+            _from != address(0)
+        );
         _token.transferFrom(_from, _to, _value * 10**_token.decimals());
         return true;
     }
 
     // this should allow withdrawal
-    function withdraw(address _contract, uint256 _value) public onlyAdmin returns (bool) {
+    function withdraw(address _contract, uint256 _value) external onlyAdmin returns (bool) {
         IERC20 _token = IERC20(_contract);
         address _from = address(this);
         address _to = msg.sender;
-        _token.transfer(_to, _value);
+        require(
+            _value <= _token.balanceOf(_from) &&
+            _to != address(0) &&
+            _from != address(0)
+        );
+        IERC20(_contract).transfer(_to, _value * 10**_token.decimals());
         return true;
     }
 
