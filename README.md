@@ -9,3 +9,6 @@
 
 # Pool
     State.sol > Authenticator.sol > ERC20 > Pool
+
+FQ
+1) The reason we are giving the original launcher admin permission to allow us to connect the contracts together
