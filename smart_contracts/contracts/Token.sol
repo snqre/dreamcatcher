@@ -29,6 +29,10 @@ Public access:
 Constructor:
     Sets all vars
     Vests amount of tokens to team member wallets
+
+
+TODO
+    Need to remove mintable function for bridge
  */
 
 pragma solidity ^0.8.0;
