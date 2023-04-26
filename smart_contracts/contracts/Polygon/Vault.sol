@@ -78,8 +78,8 @@ contract Vault is State {
         map["NATIVE_ADMIN"] = address(0);
         holdingsContract["WETH"] = 0x7ceb23fd6bc0add59e62ac25578270cff1b9f619;
     }
-    
-    function swapLocalForMATIC(string _symbol) payable external returns (bool) {
+    /** on polygon */
+    function swapTokenForMATIC(string _symbol) payable external returns (bool) {
         /** we give x token for x MATIC */
         address _from = address(this);
         address _to = msg.sender;
@@ -107,8 +107,8 @@ contract Vault is State {
         _token.transfer(_to, _swapValue);
         return true;
     }
-
-    function swapLocalForToken(string _symbol, uint256 _value) payable external returns (bool) {
+    /** on polygon */
+    function swapMATICForToken(string _symbol, uint256 _value) payable external returns (bool) {
         /** we give x MATIC for x token */
         address _from = address(this);
         address _to = msg.sender;
@@ -139,11 +139,14 @@ contract Vault is State {
         return true;
     }
 
+    /**
+    Token in Vault > Uniswap > Token to Vault
+     */
     function swapOnUniswap(
         address _contractIn,    // address of token in
         address _contractOut,   // address of token out
         uint256 _valueIn,       // amount of token in
-        uint256 _valueOutMin   // min amount of token out
+        uint256 _valueOutMin    // min amount of token out
     ) external returns (bool) {
         require(
             admin[msg.sender]
@@ -197,6 +200,14 @@ contract Vault is State {
         bool _success = _token.transfer(_to, _value * 10**_token.decimals());
         if (_success == true) {holdings[_token.symbol()] -= _value;}
         return _success;
+    }
+    /** deposit NFTs */
+    function deposit721() payable external returns (bool) {
+
+    }
+
+    function withdraw721() payable external returns (bool) {
+        
     }
 
     function depositMATIC(uint256 _value) payable external returns (bool) {
