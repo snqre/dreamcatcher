@@ -10,12 +10,10 @@ contract State {
     /** map */
     mapping(string=>address) internal map;
     /** accounting */
-    mapping(string=>address) internal holdings_contract;
-    mapping(string=>uint256) internal holdings;
-    mapping(string=>uint256) internal ask;
-    mapping(string=>uint256) internal bid;
-    mapping(string=>uint256) internal available;
-    mapping(string=>bool) internal swappable;
+    mapping(address=>uint256) internal ask;
+    mapping(address=>uint256) internal bid;
+    mapping(address=>uint256) internal available;
+    mapping(address=>bool)    internal swappable;
     /** authenticator 0, 1, 2, 3*/
     mapping(address=>uint256) internal tier;
 }
@@ -69,6 +67,7 @@ contract Authenticator is State {
     function fetch_map(string _name) public tier_1 returns (address) {
         return map[_name];
     }
+}
 
 interface IERC20 {
 
@@ -119,6 +118,30 @@ interface ITreasury {
 }
 
 contract Treasury is Authenticator {
+
+    constructor(address _native_token) {
+        map["NATIVE_TOKEN"] = _native_token;
+    }
+
+    function update_holdings_(
+        address _contract,
+        uint256 _ask,
+        uint256 _bid,
+        uint256 _required,
+        bool _swappable
+    ) internal returns (bool) {
+        
+    }
+
+    function update_holdings(
+        address _contract,
+        uint256 _ask,
+        uint256 _bid,
+        uint256 _required,
+        bool _swappable
+    ) external tier_3 returns (bool) {
+
+    }
     /** tier 2 */
     function update_holdings(
         string _symbol,
@@ -330,5 +353,11 @@ contract Treasury is Authenticator {
     function withdraw_ERC20(address _contract) payable external tier_2 returns (bool) {
 
     }
+
+    function stake(address _contract) payable external returns (bool) {
+
+    }
+
+    function unstake(address _contract) 
 
 }
