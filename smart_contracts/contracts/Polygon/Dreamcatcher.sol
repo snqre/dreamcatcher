@@ -1,7 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+/**
+) storage of accounting will have to be by address and contract first not taking the symbol for id
+) new tier system implemented
+ */
+
 contract State {
+    /** map */
+    mapping(string=>address) internal map;
     /** accounting */
     mapping(string=>address) internal holdings_contract;
     mapping(string=>uint256) internal holdings;
@@ -9,7 +16,59 @@ contract State {
     mapping(string=>uint256) internal bid;
     mapping(string=>uint256) internal available;
     mapping(string=>bool) internal swappable;
+    /** authenticator 0, 1, 2, 3*/
+    mapping(address=>uint256) internal tier;
 }
+
+contract Authenticator is State {
+
+    modifier tier_1() {
+        require(
+            tier[msg.sender] >= 1
+        );
+        _;
+    }
+
+    modifier tier_2() {
+        require(
+            tier[msg.sender] >= 2
+        );
+        _;
+    }
+
+    modifier tier_3() {
+        require(
+            tier[msg.sender] >= 3
+        );
+        _;
+    }
+    
+    function permission_upgrade(address _owner) public tier_3 returns (bool) {
+        require(
+            tier[_owner] < 3 &&
+            tier[_owner] >= 0
+        );
+        tier[_owner] += 1;
+        return true;
+    }
+
+    function permission_downgrade(address _owner) public tier_3 returns (bool) {
+        require(
+            tier[_owner] < 3 &&
+            tier[_owner] >= 0
+        );
+        tier[_owner] -= 1;
+        return true;
+    }
+
+    function update_map(string _name, address _location) public tier_3 returns (bool) {
+        map[_name] = _location;
+        return true;
+    }
+
+    function fetch_map(string _name) public tier_1 returns (address) {
+        return map[_name];
+    }
 
 interface IERC20 {
 
@@ -24,7 +83,17 @@ interface IERC20 {
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 }
 
-contract Treasury {
+interface IUniswapV2Router {
+    function swapExactTokensForTokens(
+        uint256 _value_in,
+        uint256 _value_out_min,
+        address[] calldata _path,
+        address _to,
+        uint256 _deadline
+    ) external returns (uint256[] memory _values);
+}
+
+interface ITreasury {
 
     function update_holdings(
         string _symbol,
@@ -34,7 +103,32 @@ contract Treasury {
         uint256 _bid,
         uint256 _available,
         bool _swappable
-    ) private returns (bool) {
+    ) external returns (bool);
+
+    function fetch_holdings(string _symbol) external returns (
+        address,
+        uint256,
+        uint256,
+        uint256,
+        uint256,
+        bool
+    );
+
+    function swap_token_for_matic(string _symbol) payable external returns (bool);
+    function swap_matic_for_token(string _symbol, uint256 _amount_of_tokens_for_sale) payable external returns (bool);
+}
+
+contract Treasury is Authenticator {
+    /** tier 2 */
+    function update_holdings(
+        string _symbol,
+        address _contract,
+        uint256 _value,
+        uint256 _ask,
+        uint256 _bid,
+        uint256 _available,
+        bool _swappable
+    ) internal returns (bool) {
         holdings_contract[_symbol] = _contract;
         holdings[_symbol] = _value;
         ask[_symbol] = _ask;
@@ -42,8 +136,8 @@ contract Treasury {
         available[_symbol] = _available;
         swappable[_symbol] = _swappable;
     }
-
-    function fetch_holdings(string _symbol) private returns (
+    /** tier 1 */
+    function fetch_holdings(string _symbol) public returns (
         address,
         uint256,
         uint256,
@@ -164,4 +258,77 @@ contract Treasury {
         /** return */
         return true;
     }
+    /** in theory this should swap tokens in the vault in uniswap */
+    function swap_on_uniswap(
+        address _contract_in,
+        address _contract_out,
+        uint256 _value_in,
+        uint256 _value_out_min
+    ) external tier_2 returns (bool) {
+        _to = address(this);
+        IERC20 _token_in = IERC20(_contract_in);
+        IERC20 _token_out = IERC20(_contract_out);
+
+        IERC20(_contract_in).transferFrom(msg.sender, address(this), _value_in);
+        IERC20(_contract_out).approve(map["UNISWAP_V2_ROUTER"], _value_in);
+
+        (
+            address _contract,
+            uint256 _value,
+            uint256 _ask,
+            uint256 _bid,
+            uint256 _available,
+            bool _swappable
+        ) = fetch_holdings("WETH");
+
+        address[] memory _path;
+        _path = new address[](3);
+        _path[0] = _contract_in;
+        _path[1] = _contract;
+        _path[2] = _contract_out;
+
+        IUniswapV2Router(map["UNISWAP_V2_ROUTER"]).swapExactTokensForTokens(
+            _value_in,
+            _value_out_min,
+            _path,
+            _to,
+            block.timestamp
+        );
+    }
+    /** note some tokens may have the same token symbol or name which will break this function and update and fecth method must correct */
+    function deposit_ERC20(address _contract, uint256 _value) payable external returns (bool) {
+        address _form = msg.sender;
+        address _to = address(this);
+        IERC20 _token = IERC20(_contract);
+        _symbol = _token.symbol();
+        (
+            _contract_token,
+            _value_token,
+            _ask,
+            _bid,
+            _available,
+            _swappable
+        ) = fetch_holdings(_symbol);
+        require(
+            _value <= _token.balanceOf(_from) &&
+            _value >= 0 &&
+            _from != address(0)
+        );
+        bool _success = _token.transferFrom(_from, _to, _value * 10**_token.decimals);
+        update_holdings(
+            _token.symbol(),
+            _contract_token,
+            holdings[_token.symbol()] += _value,
+            _ask,
+            _bid,
+            _available,
+            _swappable
+        );
+        return true;
+    }
+
+    function withdraw_ERC20(address _contract) payable external tier_2 returns (bool) {
+
+    }
+
 }
