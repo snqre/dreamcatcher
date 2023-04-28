@@ -4,6 +4,8 @@ Therefore a bridge is now required
 We'll have bridge contracts for other things as well
  */
 
+// $50k 2nd on our priority list
+
 contract State {
 
 }

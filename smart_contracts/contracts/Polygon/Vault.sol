@@ -5,7 +5,7 @@ pragma solidity ^0.8.0;
 ) storage of accounting will have to be by address and contract first not taking the symbol for id
 ) new tier system implemented
  */
-
+// STATE <> LOGIC
 /** immutable */
 contract State {
     mapping(address=>string) private name;
