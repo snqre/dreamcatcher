@@ -1,19 +1,209 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity ^0.8.0;
+
 interface IERC20 {
+
     function name() external view returns (string memory);
     function symbol() external view returns (string memory);
     function decimals() external view returns (uint8);
     function totalSupply() external view returns (uint256);
-    function balanceOf(address _owner) external view returns (uint256);
-    function transfer(address _to, uint256 _value) external returns (bool success);
-    function allowance(address _owner, address _spender) external view returns (uint256 remaining);
-    function approve(address _spender, uint256 _value) external returns (bool success);
-    function transferFrom(address _from, address _to, uint256 _value) external returns (bool);
+    function balanceOf(
+        address _owner
+    ) external view returns (uint256);
+    function transfer(
+        address _to, 
+        uint256 _value
+    ) external returns (bool success);
+    function allowance(
+        address _owner, 
+        address _spender
+    ) external view returns (uint256 remaining);
+    function approve(
+        address _spender, 
+        uint256 _value
+    ) external returns (bool success);
+    function transferFrom(
+        address _from, 
+        address _to, 
+        uint256 _value
+    ) external returns (bool);
 
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+    event Transfer(
+        address indexed _from, 
+        address indexed _to, 
+        uint256 _value
+    );
+
+    event Approval(
+        address indexed _owner, 
+        address indexed _spender, 
+        uint256 _value
+    );
 }
+
+contract ERC20Capped is IERC20 {
+    /** structure token */
+    struct Token {
+        string name;
+        string symbol;
+        uint8 decimals;
+        uint256 mintable;
+        uint256 maxSupply;
+        uint256 totalSupply;
+    }
+    /** basic accounting */
+    mapping(address=>uint256) private balance;
+    mapping(address=>uint256) private allowed;
+    address admin;
+    /** onchain analytics */
+    /** events */
+    event Transfer(
+        address indexed _from, 
+        address indexed _to, 
+        uint256 _value
+    );
+
+    event Approval(
+        address indexed _owner,
+        address indexed _spender,
+        uint256 _value
+    );
+
+    /** init */
+    constructor(
+        address  _admin,
+        string   _name,
+        string   _symbol,
+        uint8    _decimals,
+        uint256  _mintable,
+        uint256  _initialSupply
+    ) {
+        require(
+            _decimals <= 18
+        );
+        /** init meta data */
+        token.name = _name;
+        token.symbol = _symbol;
+        token.decimals = _decimals;
+        token.mintable = _mintable * 10**_decimals;
+        token.maxSupply = _mintable * 10**_decimals;
+        /** assign permission */
+        admin = _admin;
+        /** main: mint initial to admin contract or vault */
+        mint_(
+            admin,
+            _mintable * 10**_decimals
+        );
+    }
+    /** private mint only used within the initial contract */
+    function mint_(
+        address _to, 
+        uint256 _value
+    ) private {
+        address _from = address(0);
+        uint256 _mintable = token.mintable;
+        require(
+            _value >= 0 &&
+            _value <= _mintable &&
+            _to != address(0)
+        );
+        token.mintable -= _value;
+        token.totalSupply += _value;
+        balance[_to] += _value;
+        emit Transfer(_from, _to, _value);
+    }
+    /** private transfer only used within the initial contract */
+    function transfer_(
+        address _from,
+        address _to,
+        uint256 _value
+    ) private {
+        require(
+            _from != address(0) &&
+            _to != address(0) &&
+            _value <= balance[_from] &&
+            _value >= 0
+        );
+        
+        balance[_from] -= _value;
+        balance[_to] += _value;
+        emit Transfer(_from, _to, _value);
+    }
+    /** public transfer */
+    function transfer(
+        address _to,
+        uint256 _value
+    ) public returns (bool) {
+        address _from = msg.sender;
+        transfer_(
+            _from,
+            _to,
+            _value
+        );
+        return true;
+    }
+    /** public transfer from */
+    function transferFrom(
+        address _from,
+        address _to,
+        uint256 _value
+    ) public returns (bool) {
+        address _spender
+        uint256 _allwnc = allowed[_from][_spender]
+        require(
+            _allwnc != type(uint256).max &&
+            _allwnc >= _value
+        );
+
+        allowed[_from][_spender] -= _value;
+        transfer_(
+            _from,
+            _to,
+            _value
+        );
+        return true;
+    }
+
+    function approve(
+        address _spender,
+        uint256 _value
+    ) public returns (bool) {
+        address _owner = msg.sender;
+        require(
+            _owner != address(0) &&
+            _spender != address(0)
+        );
+
+        allowed[_owner][_spender] = _value;
+        emit Approval(_owner, _spender, _value);
+        return true;
+    }
+
+    function name() public view returns (string memory) {return token.name;}
+    function symbol() public view returns (string memory) {return token.symbol;}
+    function decimals() public view returns (uint8) {return token.decimals;}
+    function totalSupply() public view returns (uint256) {return token.totalSupply;}
+    function balanceOf(
+        address _owner
+    ) public view returns (uint256) {return balance[_owner];}
+    function allowance(
+        address _owner,
+        address _spender
+    ) public view returns (uint256) {return allowed[_owner][_spender];}
+}
+
+
+/** */
+contract Vault {
+    struct Token {
+        string name;
+        string symbol;
+        uint8 decimals;
+    }
+}
+
+
+
 /** linked pool and closed centralized */
 contract State is IERC20 {
     /** ERC20 */
@@ -30,16 +220,15 @@ contract State is IERC20 {
     /** pool */
         struct Fee {
         uint256 management;
-        uint256[] performance;
-        uint256[] thresholds;
+        uint256 performance;
+        uint256 threshold;
         uint256 measurementStart;
         uint256 measurementReset;
     }
     struct Settings {
         bool externalTransferable;
         bool onlyWhitelisted;
-    }
-    struct Funds {
+        address currency;
         uint256 minDeposit;
         uint256 maxDeposit;
     }
@@ -57,12 +246,13 @@ contract State is IERC20 {
         Settings settings;
     }
     Pool internal pool;
+    mapping(address=>uint256) internal contribution;
     /** permission */
     address internal admin;
     address internal logic;
     address internal manager;
 }
-contract ERC20 is State {
+contract Authenticator is State {
     /** permission */
     modifier onlyAdmin() {
         require(
@@ -82,6 +272,8 @@ contract ERC20 is State {
         );
         _;
     }
+}
+contract ERC20 is Authenticator {
     /** basic */
     function name() public view returns (string memory) {return token.name;}
     function symbol() public view returns (string memory) {return token.symbol;}
@@ -158,22 +350,112 @@ contract ERC20 is State {
 }
 /** pool | fund | index mechanic */
 contract Pool is ERC20 {
-    function contribute() public returns (bool) {
+    /** deposit matic | send custom erc20 token for the pool */
+    function contribute(address _value) payable external returns (bool) {
+        address _from = msg.sender;
+        address _to = address(this);
+        uint256 _required = pool.required;
+        IERC20 _token = IERC20(pool.settings.currency);
         require(
-
+            _value <= _required
         );
+        _token.transferFrom(_from, _to, _value * 10**_token.decimals());
+        pool.required -= _value;
+        /** now send the contributor tokens */
+
         return true;
     }
     /** selling and buying only for manager */
 }
 contract Interface is Pool {
-    function updateLogic(address _domain) public onlyAdmin returns (bool) {
-        logic = _domain;
+    function updateLogic(address _newLogicContract) public onlyAdmin returns (bool) {
+        logic = _newLogicContract;
         return true;
     }
-    function updateAdmin(address _domain) public onlyAdmin returns (bool) {
-        admin = _domain;
+    function updateAdmin(address _newAdminContract) public onlyAdmin returns (bool) {
+        admin = _newAdminContract;
         return true;
+    }
+    function updateManager(address _newManagerContract) public onlyManager returns (bool) {
+        manager = _newManagerContract;
+        return true;
+    }
+    function updatePool(
+        string _name,
+        string _description,
+        uint256 _required,
+        uint256 _aum,
+        uint256 _lbt,
+        uint256 _nav,
+        uint256 _navps,
+        uint256 _feeManagement,
+        uint256 _feePerformance,
+        uint256 _threshold,
+        uint256 _measurementStart,
+        uint256 _measurementReset,
+        bool _externalTransferable,
+        bool _onlyWhitelisted,
+        address _currency,
+        uint256 _minDeposit,
+        uint256 _maxDeposit
+    ) public onlyAdmin returns (bool) {
+        pool.name = _name;
+        pool.description = _description;
+        pool.required = _required;
+        pool.aum = _aum;
+        pool.lbt = _lbt;
+        pool.nav = _nav;
+        pool.navps = _navps;
+        pool.fee.management = _feeManagement;
+        pool.fee.performance = _feePerformance;
+        pool.fee.threshold = _threshold;
+        pool.fee.measurementStart = _measurementStart;
+        pool.fee.measurementReset = _measurementReset;
+        pool.settings.externalTransferable = _externalTransferable;
+        pool.settings.onlyWhitelisted = _onlyWhitelisted;
+        pool.settings.currency = _currency;
+        pool.settings.minDeposit = _minDeposit;
+        pool.settings.maxDeposit = _maxDeposit;
+        return true;
+    }
+    function fetchPool() public returns (
+        string,
+        string,
+        uint256,
+        uint256,
+        uint256,
+        uint256,
+        uint256,
+        uint256,
+        uint256,
+        uint256,
+        uint256,
+        uint256,
+        bool,
+        bool,
+        address,
+        uint256,
+        uint256
+    ) {
+        return (
+            pool.name,
+            pool.description,
+            pool.required,
+            pool.aum,
+            pool.lbt,
+            pool.nav,
+            pool.navps,
+            pool.fee.management,
+            pool.fee.performance,
+            pool.fee.threshold,
+            pool.fee.measurementStart,
+            pool.fee.measurementReset,
+            pool.settings.externalTransferable,
+            pool.settings.onlyWhitelisted,
+            pool.settings.currency,
+            pool.settings.minDeposit,
+            pool.settings.maxDeposit
+        );
     }
     constructor(
         address _admin,
