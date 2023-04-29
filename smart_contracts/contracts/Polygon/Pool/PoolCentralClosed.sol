@@ -356,14 +356,44 @@ contract ERC20Capped {
 
 
 contract PoolClosedCentalv1 {
+
+    struct Funding {
+        uint256 requested;
+        uint256 required;
+        uint256 start;
+        uint256 end;
+        uint256 duration;
+        uint256 ask;
+    }
+
+    struct Conditions {
+        bool canTransferOutOfWallet;    // creator can transfer from wallet and connect to their own contract
+        bool onlyWhitelist;             // creator can choose who can contribute
+    }
+
+    struct Pool {
+        Funding funding;
+        Conditions conditions;
+        uint256 assetsUnderManagement;
+        uint256 liabilities;
+        uint256 netAssetValue;
+        uint256 bpManagementFee;
+    }
+    Pool private pool;
+    mapping(address=>bool) private whitelist;
+
     ERC20Capped token;
+    mapping(string=>address) private map;
     address nativeToken;
     constructor(
         string _tokenName,
         string _tokenSymbol,
         uint8 _decimals,
         uint256 _mintable,
-        uint256 _initialSupply
+        uint256 _initialSupply,
+        address _manager,
+        uint256 _duration,
+        uint256 _start
     ) {
         token = new ERC20Capped(
             address(this),
@@ -373,7 +403,50 @@ contract PoolClosedCentalv1 {
             _mintable,
             _initialSupply
         );
-        nativeToken = address(token)
+        map["native_token"] = address(token);
+        map["manager"] = _manager;
+
+        pool.funding.requested;
+        pool.funding.required;
+        pool.funding.start = _start;
+        pool.funding.duration = _duration;
+        pool.funding.end = _start + _duration;
+        pool.conditions.canTransferOutOfWallet;
+        pool.conditions.onlyWhitelist;
+        pool.assetsUnderManagement;
+        pool.liabiltiies;
+        pool.netAssetValue;
+        pool.bpManagementFee;
+        pool.funding.ask = pool.funding.requested / token.totalSupply;
+    }
+    /** contribute matic to this pool */
+    function contribute() payable public {
+        uint256 _value = msg.value;
+        if (pool.conditions.onlyWhitelist) {
+            _balance = token.balanceOf(address(this));
+            _shares = pool.funding.requested / _token.totalSupply();
+            _endOfFundingRound = pool.funding.end;
+            require(
+                whitelist[msg.sender] &&
+                _balance >= 0 &&
+                _endOfFundingRound <= block.timestamp
+                // time amount
+            );
+
+        } else {
+            _balance = token.balanceOf(address(this));
+            _ask = pool.funding.ask;
+            _tokensToSend = msg.value / _ask;
+            _endOfFundingRound = pool.funding.end;
+            require(
+                msg.value >= 0 &&
+                _balance >= _tokensToSend &&
+                endOfFundingRound <= block.timestamp
+            );
+            /** accept matic */
+            
+            /** send tokens */
+        }
     }
 }
 
