@@ -61,8 +61,8 @@ contract ERC20 is IERC20 {
 
     constructor(
         address _admin,
-        string _name,
-        string _symbol,
+        string memory _name,
+        string memory _symbol,
         uint256 _initialSupply
     ) {
         require(
@@ -88,10 +88,10 @@ contract ERC20 is IERC20 {
     function decimals() public view returns (uint8) {return my.decimals;}
     function totalSupply() public view returns (uint256) {return my.totalSupply;}
     function balanceOf(address _owner) public view returns (uint256) {return balance[_owner];}
-    function allowance(
-        address _owner,
-        address _spender
-    ) public view returns (uint256) {return allowed[_owner][_spender];}
+
+    function allowance(address _owner, address _spender) public view returns (uint256) {
+        uint256 allowed[_owner][_spender];
+    }
     
     function mint(
         address _to,
@@ -233,15 +233,11 @@ contract Pool {
 
     constructor(
         address _manager,
-        string _name,
-        string _tknName,
-        string _tknSymbol,
+        string memory _name,
+        string memory _tknName,
+        string memory _tknSymbol,
         uint256 _tknSupply
     ) {
-        require(
-            _tknSupply <= _tknMaxSupply &&
-            _tknSupply >= 1
-        );
         creator = msg.sender;
         manager = _manager;
         name = _name;
@@ -264,7 +260,7 @@ contract Pool {
             _value > 0 &&
             _balance > 0 &&
             _supply > 0 &&
-            _amountOfTokensToMint <= nativeToken.balanceOf(address(this));
+            _amountOfTokensToMint <= nativeToken.balanceOf(address(this))
         );
         nativeToken.transfer(msg.sender, _amountOfTokensToMint);
         return true;
