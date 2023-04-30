@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 interface IERC20 {
-
+    
     function name() external view returns (string memory);
     function symbol() external view returns (string memory);
     function decimals() external view returns (uint8);
@@ -449,6 +449,72 @@ contract Poolv1 {
     }
 }
 
+/**
+* 
+*
+*
+*
+*
+ */
+contract Pool {
+    address admin;
+    address creator;
+    address manager;
+    uint256 balance;
+
+    ERC20 nativeToken;
+
+    modifier onlyAdmin() {
+        require(
+            admin == msg.sender
+        );
+        _;
+    }
+
+    modifier onlyCreator() {
+        require(
+            creator == msg.sender
+        );
+        _;
+    }
+
+    modifier onlyManager() {
+        require(
+            manager == msg.sender
+        );
+        _;
+    }
+
+    constructor(
+        address _admin,
+        address _creator,
+        address _manager
+    ) {
+        admin = _admin;
+        creator = _creator;
+        manager = _manager;
+
+        nativeToken = new ERC20(
+
+        );
+
+    }
+
+    /**
+    * EQUATION
+    * Deposit * Balance / totalSupply
+    * 
+    *
+    *
+     */
+    function contribute() payable public returns (bool) {
+        uint256 _deposit = msg.value;
+        uint256 _balance = balance;
+        uint256 _supply = nativeToken.totalSupply();
+        
+    }
+
+}
 
 
 /** linked pool and closed centralized */
