@@ -355,7 +355,10 @@ contract ERC20Capped {
 }
 
 
-contract PoolClosedCentalv1 {
+contract Poolv1 {
+
+    string name;
+    string description;
 
     struct Funding {
         uint256 requested;
@@ -366,58 +369,54 @@ contract PoolClosedCentalv1 {
         uint256 ask;
     }
 
-    struct Conditions {
-        bool canTransferOutOfWallet;    // creator can transfer from wallet and connect to their own contract
-        bool onlyWhitelist;             // creator can choose who can contribute
+    struct Fee {
+        uint256 streaming;
     }
 
-    struct Pool {
-        Funding funding;
-        Conditions conditions;
-        uint256 assetsUnderManagement;
-        uint256 liabilities;
-        uint256 netAssetValue;
-        uint256 bpManagementFee;
+    struct State {
+        bool transferable;
+        bool whitelisted;
     }
-    Pool private pool;
+
+    Funding  private funding;
+    Fee      private fee;
+    State    private state;
+
     mapping(address=>bool) private whitelist;
-
-    ERC20Capped token;
     mapping(string=>address) private map;
-    address nativeToken;
+    ERC20Capped nativeToken;
+
+    address nativeTokenContract;
+    address manager;
+    address admin;
+
     constructor(
-        string _tokenName,
-        string _tokenSymbol,
-        uint8 _decimals,
-        uint256 _mintable,
-        uint256 _initialSupply,
-        address _manager,
-        uint256 _duration,
-        uint256 _start
+        string   _name,
+        string   _symbol,
+        uint8    _decimals,
+        uint256  _mintable,
+        uint256  _initialSupply,
+        /** pool set up */
+        uint256  _fundingRequested,
+        uint256  _fundingRequired,
+        uint256  _fundingStart,
+        uint256  _fundingDuration,
+        uint256  _conditionsCanTransferOutOfWallet,
+        uint256  _conditionsOnlyWhitelist,
+        uint256  _basisStreamingFee
     ) {
-        token = new ERC20Capped(
+        nativeToken = new ERC20Capped(
             address(this),
-            _tokenName,
-            _tokenSymbol,
+            _name,
+            _symbol,
             _decimals,
             _mintable,
             _initialSupply
         );
-        map["native_token"] = address(token);
-        map["manager"] = _manager;
 
-        pool.funding.requested;
-        pool.funding.required;
-        pool.funding.start = _start;
-        pool.funding.duration = _duration;
-        pool.funding.end = _start + _duration;
-        pool.conditions.canTransferOutOfWallet;
-        pool.conditions.onlyWhitelist;
-        pool.assetsUnderManagement;
-        pool.liabiltiies;
-        pool.netAssetValue;
-        pool.bpManagementFee;
-        pool.funding.ask = pool.funding.requested / token.totalSupply;
+        map["manager"] = _manager;
+        map["creator"] = _creator;
+        map["admin"] = _admin;
     }
     /** contribute matic to this pool */
     function contribute() payable public {
