@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity ^0.8.0;
 
-contract IERC20 {
+interface IERC20 {
     function name() external view returns (string memory);
     function symbol() external view returns (string memory);
     function decimals() external view returns (uint8);
@@ -52,8 +52,8 @@ contract Pool is IERC20 {
     }
 
     constructor(
-        string _name,
-        string _symbol,
+        string memory _name,
+        string memory _symbol,
         uint8 _decimals,
         uint256 _maxSupply
     ) {
@@ -152,6 +152,7 @@ contract Pool is IERC20 {
     function symbol() public view returns (string memory) {return token.symbol;}
     function decimals() public view returns (uint8) {return token.decimals;}
     function maxSupply() public view returns (uint256) {return token.maxSupply;}
+    function totalSupply() public view returns (uint256) {return token.totalSupply;}
     function balanceOf(address _owner) public view returns (uint256) {return balance[_owner];}
     function allowance(address _owner, address _spender) public view returns (uint256) {return allowed[_owner][_spender];}
 
@@ -188,7 +189,7 @@ contract Pool is IERC20 {
         return _exchangeRate;
     }
 
-    function contribute() public returns (bool) {
+    function contribute() payable public returns (bool) {
         address _buyers = msg.sender;
         address _seller = address(this);
         uint256 _value = msg.value;
