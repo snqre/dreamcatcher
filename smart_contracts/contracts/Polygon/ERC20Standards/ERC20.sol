@@ -1,11 +1,36 @@
+/**
+In this version only admin can mint and burnFrom
+ */
+
 pragma solidity ^0.8.0;
 import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/extensions/ERC20Burnable.sol";
-import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/extensions/ERC20Pausable.sol";
 
 contract Token is ERC20Burnable {
-    address internal admin;
-    modifier onlyAdmin() {
-        require(msg.sender == admin, "msg.sender != admin");
+    mapping(address => bool) internal isAdmin;
+    modifier admin() {
+        require(isAdmin[msg.sender], "ERC20: msg.sender != admin");
+    }
+
+    constructor(
+        address _admin,
+        string _name,
+        string _symbol
+    ) ERC20(_name, _symbol) {
+        isAdmin[address(this)] = true;
+        setAdmin(_admin, true);
+    }
+
+    function setAdmin(address _account, bool _state)
+        public
+        admin
+        returns (bool)
+    {
+        isAdmin[_account] = _state;
+        return true;
+    }
+
+    function adminOf(address _account) public returns (bool) {
+        return isAdmin[_account];
     }
 
     function name() public view override returns (string memory) {
@@ -82,7 +107,7 @@ contract Token is ERC20Burnable {
         super.decreaseAllowance;
     }
 
-    function mint(address _to, uint256 _amount) public override onlyAdmin {
+    function mint(address _to, uint256 _amount) public override admin {
         super._mint(_to, _amount);
     }
 
@@ -90,11 +115,7 @@ contract Token is ERC20Burnable {
         super.burn(_amount);
     }
 
-    function burnFrom(address _from, uint256 _amount)
-        public
-        override
-        onlyAdmin
-    {
+    function burnFrom(address _from, uint256 _amount) public override admin {
         super.burnFrom(_from, _amount);
     }
 }
