@@ -25,10 +25,12 @@ contract State {
 
     modifier manager() {
         require(isManager[msg.sender], "State: msg.sender != manager");
+        _;
     }
 
     modifier admin() {
         require(isAdmin[msg.sender], "State: msg.sender != admin");
+        _;
     }
 
     constructor(address _admin) {

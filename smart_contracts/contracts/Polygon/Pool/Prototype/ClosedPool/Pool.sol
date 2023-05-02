@@ -1,11 +1,10 @@
 pragma solidity ^0.8.0;
 import "smart_contracts/contracts/Polygon/Pool/Prototype/ClosedPool/State.sol";
 import "smart_contracts/contracts/Polygon/ERC20Standards/ERC20.sol";
-import "smart_contracts/contracts/Polygon/Pool/Prototype/ClosedPool/Logic.sol";
 
 contract Pool {
+    string name;
     State immutable state;
-    Logic logic;
     Token token;
     mapping(address => bool) private isAdmin;
     mapping(address => bool) private isManager;
@@ -28,20 +27,21 @@ contract Pool {
         _;
     }
 
+    // TODO -- When constructor init (State: msg.sender != admin)?
     constructor(
+        string memory _name,
         address _manager,
         string memory _tknName,
         string memory _symbol,
         uint256 _initialSupply,
-        uint256 _start,
         uint256 _duration,
         uint256 _required
     ) {
+        name = _name;
         uint256 _now = block.timestamp;
         address _admin = address(this);
         require(
             _initialSupply >= 1 &&
-            _start >= _now &&
             _duration >= 1 weeks &&
             _required >= 1
         );
@@ -50,11 +50,11 @@ contract Pool {
             _admin
         );
 
-        state.setInitialFunding(_start, _duration, _required);
+        state.setInitialFunding(_now, _duration, _required);
 
-        token = new ERC20(
+        token = new Token(
             _admin,
-            _name,
+            _tknName,
             _symbol
         );
     }
@@ -79,7 +79,7 @@ contract Pool {
             uint256 _start,
             uint256 _duration,
             uint256 _required
-        ) = state.getInitialFunding;
+        ) = state.getInitialFunding();
         uint256 _end = _start + _duration;
         uint256 _now = block.timestamp;
         require(

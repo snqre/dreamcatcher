@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 /**
 In this version only admin can mint and burnFrom
  */
@@ -9,12 +10,13 @@ contract Token is ERC20Burnable {
     mapping(address => bool) internal isAdmin;
     modifier admin() {
         require(isAdmin[msg.sender], "ERC20: msg.sender != admin");
+        _;
     }
 
     constructor(
         address _admin,
-        string _name,
-        string _symbol
+        string memory _name,
+        string memory _symbol
     ) ERC20(_name, _symbol) {
         isAdmin[address(this)] = true;
         setAdmin(_admin, true);
@@ -107,11 +109,11 @@ contract Token is ERC20Burnable {
         super.decreaseAllowance;
     }
 
-    function mint(address _to, uint256 _amount) public override admin {
+    function mint(address _to, uint256 _amount) public admin {
         super._mint(_to, _amount);
     }
 
-    function burn(uint256 _amount) public override returns (bool) {
+    function burn(uint256 _amount) public override {
         super.burn(_amount);
     }
 
