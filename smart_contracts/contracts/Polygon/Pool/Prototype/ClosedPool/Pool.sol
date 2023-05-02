@@ -7,32 +7,92 @@ contract Pool {
     State immutable state;
     Logic logic;
     Token token;
+    mapping(address => bool) private isAdmin;
+    mapping(address => bool) private isManager;
+    modifier admin() {
+        require(isAdmin[msg.sender], "Pool: msg.sender != admin");
+        _;
+    }
+
+    modifier manager() {
+        require(isManager[msg.sender], "Pool: msg.sender != manager");
+        _;
+    }
+
+    modifier any() {
+        require(
+            isAdmin[msg.sender] ||
+            isManager[msg.sender],
+            "Pool: msg.sender != any"
+        );
+        _;
+    }
 
     constructor(
         address _manager,
         string memory _tknName,
         string memory _symbol,
-        uint256 _initialSupply
+        uint256 _initialSupply,
+        uint256 _start,
+        uint256 _duration,
+        uint256 _required
     ) {
-        State = new State(
-
+        uint256 _now = block.timestamp;
+        address _admin = address(this);
+        require(
+            _initialSupply >= 1 &&
+            _start >= _now &&
+            _duration >= 1 weeks &&
+            _required >= 1
         );
-        Token = new ERC20(
+
+        state = new State(
+            _admin
+        );
+
+        state.setInitialFunding(_start, _duration, _required);
+
+        token = new ERC20(
             _admin,
             _name,
             _symbol
         );
     }
 
-    function mint() private {
-
+    function setToggles(bool _extensions, bool _whitelist) public manager returns (bool) {
+        state.setToggles(_extensions, _whitelist);
+        return true;
+    }
+    
+    function setWhitelist(address _account, bool _state) public manager returns (bool) {
+        state.setWhitelist(_account, _state);
+        return true;
     }
 
-    function burn() private {
-        
-    }
+    function contribute() public payable returns (bool) {
+        uint256 _amount = msg.value;
+        uint256 _supply = token.totalSupply();
+        uint256 _balance = address(this).balance;
+        uint256 _amountToMint = (_amount * _supply) / _balance;
+        address _to = msg.sender;
+        (
+            uint256 _start,
+            uint256 _duration,
+            uint256 _required
+        ) = state.getInitialFunding;
+        uint256 _end = _start + _duration;
+        uint256 _now = block.timestamp;
+        require(
+            _amount  >= 0 &&             // need >= 0 deposit
+            _supply  >= 1 &&             // need more than 1 token
+            _balance >= 1 &&             // need more than 1 matic
+            _balance <= _required &&     // check if the required amount is met
+            _end     >= _now             // check funding is still ongoing
+        );
 
-    function contribute() public returns (bool) {
-        // value * supply / balance
+        // mint tokens for contributor
+        token.mint(_to, _amountToMint);
+        state.setContribution(_to, _amount);
+        return true;
     }
 }

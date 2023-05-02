@@ -18,7 +18,7 @@ contract State {
     struct InitialFunding {
         uint256 start;
         uint256 duration;
-        uint256 required;   // wei
+        uint256 required;   // wei **if this is not met, anyone who contributed will be entitled to get their matic back
     }
 
     InitialFunding internal initialFunding;
