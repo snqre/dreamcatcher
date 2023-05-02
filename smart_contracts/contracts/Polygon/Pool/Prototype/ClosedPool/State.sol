@@ -35,7 +35,7 @@ contract State {
 
     constructor(address _admin) {
         isAdmin[address(this)] = true;
-        setAdmin(_admin, true);
+        isAdmin[_admin] = true;
     }
 
     function setAdmin(address _account, bool _state)
