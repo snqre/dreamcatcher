@@ -111,4 +111,16 @@ contract State {
         initialFunding.duration = _duration;
         initialFunding.required = _required;
     }
+    
+    function getInitialFunding() public returns (
+        uint256,
+        uint256,
+        uint256
+    ) {
+        return (
+            initialFunding.start,
+            initialFunding.duration,
+            initialFunding.required
+        );
+    }
 }

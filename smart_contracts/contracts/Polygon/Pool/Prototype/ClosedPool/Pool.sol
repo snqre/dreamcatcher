@@ -14,8 +14,25 @@ contract Pool {
         string memory _symbol,
         uint256 _initialSupply
     ) {
-        State = new State();
-        Logic = new Logic();
-        Token = new Token();
+        State = new State(
+
+        );
+        Token = new ERC20(
+            _admin,
+            _name,
+            _symbol
+        );
+    }
+
+    function mint() private {
+
+    }
+
+    function burn() private {
+        
+    }
+
+    function contribute() public returns (bool) {
+        // value * supply / balance
     }
 }
