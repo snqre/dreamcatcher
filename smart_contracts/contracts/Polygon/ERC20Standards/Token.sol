@@ -5,7 +5,9 @@ import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contr
 contract Token is ERC20 {
     address private owner;
 
-    constructor(string memory _name, string memory _symbol) ERC20(_name, _symbol) {}
+    constructor(string memory _name, string memory _symbol) ERC20(_name, _symbol) {
+        owner = msg.sender;
+    }
 
     function mint(address _to, uint256 _value) public returns (bool) {
         require(

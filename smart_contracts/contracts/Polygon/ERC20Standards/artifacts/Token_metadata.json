@@ -8,11 +8,6 @@
 			{
 				"inputs": [
 					{
-						"internalType": "address",
-						"name": "_admin",
-						"type": "address"
-					},
-					{
 						"internalType": "string",
 						"name": "_name",
 						"type": "string"
@@ -80,31 +75,12 @@
 				"inputs": [
 					{
 						"internalType": "address",
-						"name": "_account",
-						"type": "address"
-					}
-				],
-				"name": "adminOf",
-				"outputs": [
-					{
-						"internalType": "bool",
-						"name": "",
-						"type": "bool"
-					}
-				],
-				"stateMutability": "nonpayable",
-				"type": "function"
-			},
-			{
-				"inputs": [
-					{
-						"internalType": "address",
-						"name": "_owner",
+						"name": "owner",
 						"type": "address"
 					},
 					{
 						"internalType": "address",
-						"name": "_spender",
+						"name": "spender",
 						"type": "address"
 					}
 				],
@@ -123,12 +99,12 @@
 				"inputs": [
 					{
 						"internalType": "address",
-						"name": "_spender",
+						"name": "spender",
 						"type": "address"
 					},
 					{
 						"internalType": "uint256",
-						"name": "_amount",
+						"name": "amount",
 						"type": "uint256"
 					}
 				],
@@ -147,7 +123,7 @@
 				"inputs": [
 					{
 						"internalType": "address",
-						"name": "_account",
+						"name": "account",
 						"type": "address"
 					}
 				],
@@ -165,31 +141,24 @@
 			{
 				"inputs": [
 					{
-						"internalType": "uint256",
-						"name": "_amount",
-						"type": "uint256"
-					}
-				],
-				"name": "burn",
-				"outputs": [],
-				"stateMutability": "nonpayable",
-				"type": "function"
-			},
-			{
-				"inputs": [
-					{
 						"internalType": "address",
 						"name": "_from",
 						"type": "address"
 					},
 					{
 						"internalType": "uint256",
-						"name": "_amount",
+						"name": "_value",
 						"type": "uint256"
 					}
 				],
-				"name": "burnFrom",
-				"outputs": [],
+				"name": "burn",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "",
+						"type": "bool"
+					}
+				],
 				"stateMutability": "nonpayable",
 				"type": "function"
 			},
@@ -210,12 +179,12 @@
 				"inputs": [
 					{
 						"internalType": "address",
-						"name": "_spender",
+						"name": "spender",
 						"type": "address"
 					},
 					{
 						"internalType": "uint256",
-						"name": "_amount",
+						"name": "subtractedValue",
 						"type": "uint256"
 					}
 				],
@@ -234,12 +203,12 @@
 				"inputs": [
 					{
 						"internalType": "address",
-						"name": "_spender",
+						"name": "spender",
 						"type": "address"
 					},
 					{
 						"internalType": "uint256",
-						"name": "_amount",
+						"name": "addedValue",
 						"type": "uint256"
 					}
 				],
@@ -263,12 +232,18 @@
 					},
 					{
 						"internalType": "uint256",
-						"name": "_amount",
+						"name": "_value",
 						"type": "uint256"
 					}
 				],
 				"name": "mint",
-				"outputs": [],
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "",
+						"type": "bool"
+					}
+				],
 				"stateMutability": "nonpayable",
 				"type": "function"
 			},
@@ -283,30 +258,6 @@
 					}
 				],
 				"stateMutability": "view",
-				"type": "function"
-			},
-			{
-				"inputs": [
-					{
-						"internalType": "address",
-						"name": "_account",
-						"type": "address"
-					},
-					{
-						"internalType": "bool",
-						"name": "_state",
-						"type": "bool"
-					}
-				],
-				"name": "setAdmin",
-				"outputs": [
-					{
-						"internalType": "bool",
-						"name": "",
-						"type": "bool"
-					}
-				],
-				"stateMutability": "nonpayable",
 				"type": "function"
 			},
 			{
@@ -339,12 +290,12 @@
 				"inputs": [
 					{
 						"internalType": "address",
-						"name": "_to",
+						"name": "to",
 						"type": "address"
 					},
 					{
 						"internalType": "uint256",
-						"name": "_amount",
+						"name": "amount",
 						"type": "uint256"
 					}
 				],
@@ -363,17 +314,17 @@
 				"inputs": [
 					{
 						"internalType": "address",
-						"name": "_from",
+						"name": "from",
 						"type": "address"
 					},
 					{
 						"internalType": "address",
-						"name": "_to",
+						"name": "to",
 						"type": "address"
 					},
 					{
 						"internalType": "uint256",
-						"name": "_amount",
+						"name": "amount",
 						"type": "uint256"
 					}
 				],
@@ -400,8 +351,23 @@
 			},
 			"kind": "dev",
 			"methods": {
+				"allowance(address,address)": {
+					"details": "See {IERC20-allowance}."
+				},
+				"approve(address,uint256)": {
+					"details": "See {IERC20-approve}. NOTE: If `amount` is the maximum `uint256`, the allowance is not updated on `transferFrom`. This is semantically equivalent to an infinite approval. Requirements: - `spender` cannot be the zero address."
+				},
+				"balanceOf(address)": {
+					"details": "See {IERC20-balanceOf}."
+				},
 				"decimals()": {
 					"details": "Returns the number of decimals used to get its user representation. For example, if `decimals` equals `2`, a balance of `505` tokens should be displayed to a user as `5.05` (`505 / 10 ** 2`). Tokens usually opt for a value of 18, imitating the relationship between Ether and Wei. This is the default value returned by this function, unless it's overridden. NOTE: This information is only used for _display_ purposes: it in no way affects any of the arithmetic of the contract, including {IERC20-balanceOf} and {IERC20-transfer}."
+				},
+				"decreaseAllowance(address,uint256)": {
+					"details": "Atomically decreases the allowance granted to `spender` by the caller. This is an alternative to {approve} that can be used as a mitigation for problems described in {IERC20-approve}. Emits an {Approval} event indicating the updated allowance. Requirements: - `spender` cannot be the zero address. - `spender` must have allowance for the caller of at least `subtractedValue`."
+				},
+				"increaseAllowance(address,uint256)": {
+					"details": "Atomically increases the allowance granted to `spender` by the caller. This is an alternative to {approve} that can be used as a mitigation for problems described in {IERC20-approve}. Emits an {Approval} event indicating the updated allowance. Requirements: - `spender` cannot be the zero address."
 				},
 				"name()": {
 					"details": "Returns the name of the token."
@@ -411,6 +377,12 @@
 				},
 				"totalSupply()": {
 					"details": "See {IERC20-totalSupply}."
+				},
+				"transfer(address,uint256)": {
+					"details": "See {IERC20-transfer}. Requirements: - `to` cannot be the zero address. - the caller must have a balance of at least `amount`."
+				},
+				"transferFrom(address,address,uint256)": {
+					"details": "See {IERC20-transferFrom}. Emits an {Approval} event indicating the updated allowance. This is not required by the EIP. See the note at the beginning of {ERC20}. NOTE: Does not update the allowance if the current allowance is the maximum `uint256`. Requirements: - `from` and `to` cannot be the zero address. - `from` must have a balance of at least `amount`. - the caller must have allowance for ``from``'s tokens of at least `amount`."
 				}
 			},
 			"version": 1
@@ -423,7 +395,7 @@
 	},
 	"settings": {
 		"compilationTarget": {
-			"smart_contracts/contracts/Polygon/ERC20Standards/ERC20.sol": "Token"
+			"smart_contracts/contracts/Polygon/ERC20Standards/Token.sol": "Token"
 		},
 		"evmVersion": "paris",
 		"libraries": {},
@@ -453,14 +425,6 @@
 				"dweb:/ipfs/QmP9axjgZv4cezAhALoTemM62sdLtMDJ9MGTxECnNwHgSJ"
 			]
 		},
-		"https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/extensions/ERC20Burnable.sol": {
-			"keccak256": "0x0d19410453cda55960a818e02bd7c18952a5c8fe7a3036e81f0d599f34487a7b",
-			"license": "MIT",
-			"urls": [
-				"bzz-raw://4c0f62d3d5bef22b5ca00cc3903e7de6152cb68d2d22401a463f373cda54c00f",
-				"dweb:/ipfs/QmSfzjZux7LC7NW2f7rjCXTHeFMUCWERqDkhpCTBy7kxTe"
-			]
-		},
 		"https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/extensions/IERC20Metadata.sol": {
 			"keccak256": "0x8de418a5503946cabe331f35fe242d3201a73f67f77aaeb7110acb1f30423aca",
 			"license": "MIT",
@@ -477,12 +441,12 @@
 				"dweb:/ipfs/QmRK2Y5Yc6BK7tGKkgsgn3aJEQGi5aakeSPZvS65PV8Xp3"
 			]
 		},
-		"smart_contracts/contracts/Polygon/ERC20Standards/ERC20.sol": {
-			"keccak256": "0xdac1c747982acdb8e2a0a8f2dbffe54d448db69ad992a2b30ca70e18324c42ab",
+		"smart_contracts/contracts/Polygon/ERC20Standards/Token.sol": {
+			"keccak256": "0xfe44e82f3af0ff12e9c38db1f2f3dce964c755d4414537094e6ba4ab1c907c61",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://6233a376fa9a2cbfd896b75f00d6ff866ce6472bebc92af3d8fb04527167c524",
-				"dweb:/ipfs/QmbXpFGmtcJm8v1tzfxn9Fbw3iGnkEys4jh1kEt3YpAEHC"
+				"bzz-raw://293a900bc3e069c3de40e002a48a2f725889e7141448834a05084a5324247766",
+				"dweb:/ipfs/QmQ5sPGRCFTzbrAXSWyFRrjWXkApsbXnJ5pD8YNSdxTCfB"
 			]
 		}
 	},

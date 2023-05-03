@@ -9,41 +9,21 @@
 				"inputs": [
 					{
 						"internalType": "string",
-						"name": "_name",
-						"type": "string"
-					},
-					{
-						"internalType": "address",
-						"name": "_manager",
-						"type": "address"
-					},
-					{
-						"internalType": "string",
 						"name": "_tknName",
 						"type": "string"
 					},
 					{
 						"internalType": "string",
-						"name": "_symbol",
+						"name": "_tknSymbol",
 						"type": "string"
 					},
 					{
 						"internalType": "uint256",
-						"name": "_initialSupply",
-						"type": "uint256"
-					},
-					{
-						"internalType": "uint256",
-						"name": "_duration",
-						"type": "uint256"
-					},
-					{
-						"internalType": "uint256",
-						"name": "_required",
+						"name": "_tknInitialSupply",
 						"type": "uint256"
 					}
 				],
-				"stateMutability": "nonpayable",
+				"stateMutability": "payable",
 				"type": "constructor"
 			},
 			{
@@ -62,41 +42,12 @@
 			{
 				"inputs": [
 					{
-						"internalType": "bool",
-						"name": "_extensions",
-						"type": "bool"
-					},
-					{
-						"internalType": "bool",
-						"name": "_whitelist",
-						"type": "bool"
+						"internalType": "uint256",
+						"name": "_tknValue",
+						"type": "uint256"
 					}
 				],
-				"name": "setToggles",
-				"outputs": [
-					{
-						"internalType": "bool",
-						"name": "",
-						"type": "bool"
-					}
-				],
-				"stateMutability": "nonpayable",
-				"type": "function"
-			},
-			{
-				"inputs": [
-					{
-						"internalType": "address",
-						"name": "_account",
-						"type": "address"
-					},
-					{
-						"internalType": "bool",
-						"name": "_state",
-						"type": "bool"
-					}
-				],
-				"name": "setWhitelist",
+				"name": "withdraw",
 				"outputs": [
 					{
 						"internalType": "bool",
@@ -116,6 +67,7 @@
 		"userdoc": {
 			"kind": "user",
 			"methods": {},
+			"notice": "seams like the main errors encountered on testnet are permissions",
 			"version": 1
 		}
 	},
@@ -151,14 +103,6 @@
 				"dweb:/ipfs/QmP9axjgZv4cezAhALoTemM62sdLtMDJ9MGTxECnNwHgSJ"
 			]
 		},
-		"https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/extensions/ERC20Burnable.sol": {
-			"keccak256": "0x0d19410453cda55960a818e02bd7c18952a5c8fe7a3036e81f0d599f34487a7b",
-			"license": "MIT",
-			"urls": [
-				"bzz-raw://4c0f62d3d5bef22b5ca00cc3903e7de6152cb68d2d22401a463f373cda54c00f",
-				"dweb:/ipfs/QmSfzjZux7LC7NW2f7rjCXTHeFMUCWERqDkhpCTBy7kxTe"
-			]
-		},
 		"https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/extensions/IERC20Metadata.sol": {
 			"keccak256": "0x8de418a5503946cabe331f35fe242d3201a73f67f77aaeb7110acb1f30423aca",
 			"license": "MIT",
@@ -175,27 +119,19 @@
 				"dweb:/ipfs/QmRK2Y5Yc6BK7tGKkgsgn3aJEQGi5aakeSPZvS65PV8Xp3"
 			]
 		},
-		"smart_contracts/contracts/Polygon/ERC20Standards/ERC20.sol": {
-			"keccak256": "0x06ab1ea96249f6402d799e0bf0fde34c5b2d402756f18babba91566f7012e6dd",
+		"smart_contracts/contracts/Polygon/ERC20Standards/Token.sol": {
+			"keccak256": "0xfe44e82f3af0ff12e9c38db1f2f3dce964c755d4414537094e6ba4ab1c907c61",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://9d060e15fdc346bda4b9c4bda5c33bad7f7ad4c24cdf6229669cec527b7d48db",
-				"dweb:/ipfs/QmVUz8fYrMCwVWGgDKquATD1z8nUWbLAfzib4PmgRBnqj9"
+				"bzz-raw://293a900bc3e069c3de40e002a48a2f725889e7141448834a05084a5324247766",
+				"dweb:/ipfs/QmQ5sPGRCFTzbrAXSWyFRrjWXkApsbXnJ5pD8YNSdxTCfB"
 			]
 		},
 		"smart_contracts/contracts/Polygon/Pool/Prototype/ClosedPool/Pool.sol": {
-			"keccak256": "0x48536cc068606b96ed35e3af65552539c0f548945615d98f1ba14bcfa9f795a8",
+			"keccak256": "0x4a899d7160743e340ec151b6d7cf0ab4eb985cf22b4102e31e197a642210efe2",
 			"urls": [
-				"bzz-raw://d56b85629bd3c592048911c10288f1bd2dd86bd6336c22e0a63706a3e2a75729",
-				"dweb:/ipfs/QmeDRr82ibHJf1F7docj3ZzJV78nQDAQ9Eq91vWyrANxW8"
-			]
-		},
-		"smart_contracts/contracts/Polygon/Pool/Prototype/ClosedPool/State.sol": {
-			"keccak256": "0xde1012cbb2833b2150ca8331de24d8cb201d8473284d98433f99f8eca6a46adf",
-			"license": "GPL-2.0-or-later",
-			"urls": [
-				"bzz-raw://fd871fa536d5f0e9b29697ac02a0b9d9c40dbd63e5865a9df1bebe2b5b96e566",
-				"dweb:/ipfs/QmTfKeVz6gsmjSjSJypHBpjnbvL3b3i5Yhfr73x4XdafxV"
+				"bzz-raw://8426448a6551fe98e567e9ca91fe1ee66e16b197839bde6c260003eb2c230ef9",
+				"dweb:/ipfs/QmaYCoSeDN7QoH75hbwN9nmaFLSe5ES7EfFzm6Dsc1iMN2"
 			]
 		}
 	},
