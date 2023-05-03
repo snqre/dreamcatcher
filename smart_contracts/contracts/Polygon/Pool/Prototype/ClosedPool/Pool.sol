@@ -59,15 +59,15 @@ contract Pool {
 
         state.setInitialFunding(_now, _duration, _required);
 
-        token = new Token(
-            _admin,
+        token = new PoolToken(
             _tknName,
-            _symbol
+            _symbol,
+            _initialSupply * 10**18
         );
 
         token.mint(msg.sender, _initialSupply);
         // update accounting
-        
+
     }
 
     function setToggles(bool _extensions, bool _whitelist) public manager returns (bool) {
