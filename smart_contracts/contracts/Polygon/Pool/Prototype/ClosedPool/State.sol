@@ -3,126 +3,102 @@ pragma solidity ^0.8.0;
 import "smart_contracts/contracts/Polygon/ERC20Standards/ERC20.sol";
 
 contract State {
-    mapping(address => uint256) internal contribution;
-    mapping(address => bool) internal isManager;
-    mapping(address => bool) internal isAdmin;
-    mapping(address => bool) internal whitelisted;
+    uint256 INF = type(uint256).max;
+    mapping(address=>uint256) private contribution;
+    mapping(address=>bool) private white;
+    address admin;
+
+    Protocol private protocol;
+
+    struct Protocol {
+        Settings settings;
+        Funding funding;
+    }
+
+    struct Settings {
+        Toggles toggles;
+    }
 
     struct Toggles {
-        bool extensions; // allow matic to be transfered to external contracts
-        bool whitelist;  // only whitelisted addresses can contribute to the pool
+        bool extension;
+        bool whitelist;
     }
 
-    Toggles internal toggles;
+    struct Funding {
+        Launch launch;
+        Distribution distribution;
+    }
 
-    struct InitialFunding {
-        uint256 start;
+    struct Launch {
+        uint256 begin;
         uint256 duration;
-        uint256 required;   // wei **if this is not met, anyone who contributed will be entitled to get their matic back
+        uint256 minimum;
+        uint256 maximum;
+        uint256 balance;
     }
 
-    InitialFunding internal initialFunding;
-
-    modifier manager() {
-        require(isManager[msg.sender], "State: msg.sender != manager");
-        _;
+    struct Distribution {
+        uint256 begin;
+        uint256 duration;
+        uint256 balance;
     }
 
-    modifier admin() {
-        require(isAdmin[msg.sender], "State: msg.sender != admin");
-        _;
-    }
+    event Whitelist(address indexed _owner, bool _new_value);
+    event AdminSwap(address indexed _new_admin);
 
-    constructor(address _admin) {
-        isAdmin[address(this)] = true;
-        isAdmin[_admin] = true;
-    }
-
-    function setAdmin(address _account, bool _state)
-        public
-        admin
-        returns (bool)
-    {
-        isAdmin[_account] = _state;
-        return true;
-    }
-
-    function adminOf(address _account) public returns (bool) {
-        return isAdmin[_account];
-    }
-
-    function setManager(address _account, bool _state)
-        public
-        admin
-        returns (bool)
-    {
-        isManager[_account] = _state;
-        return true;
-    }
-
-    function managerOf(address _account) public returns (bool) {
-        return isManager[_account];
-    }
-
-    function setContribution(address _account, uint256 _amount)
-        public
-        admin
-        returns (bool)
-    {
-        contribution[_account] = _amount;
-        return true;
-    }
-
-    function contributionOf(address _account) public returns (uint256) {
-        return contribution[_account];
-    }
-
-    function setWhitelist(address _account, bool _state) public admin returns (bool) {
-        whitelisted[_account] = _state;
-        return true;
-    }
-
-    function whitelistedOf(address _account) public returns (bool) {
-        return whitelisted[_account];
-    }
-
-    function setToggles(
-        bool _extensions,
-        bool _whitelist
-    ) public admin returns (bool) {
-        toggles.extensions = _extensions;
-        toggles.whitelist = _whitelist;
-    }
-
-    function getToggles() public returns (
-        bool,
-        bool
+    constructor(
+        address _admin = msg.sender,
+        uint256 _start = block.timestamp,
+        bool _extension = false,
+        bool _whitelist = false,
+        uint256 _duration_launch = 12 weeks,
+        uint256 _min_deposit = 1,
+        uint256 _max_deposit = INF,
+        uint256 _duration_until_distribution = 480 weeks,
+        uint256 _duration_distribution = 12 weeks
     ) {
-        return (
-            toggles.extensions,
-            toggles.whitelist
+        require(
+            _admin != address(0) &&
+            _start >= block.timestamp &&
+            _duration_launch >= 1 weeks &&
+            _duration_launch <= 24 weeks &&
+            _min_deposit >= 0 &&
+            _max_deposit <= INF &&
+            _duration_until_distribution >= _start + _duration_launch + 48 weeks,
+            _duration_distribution >= 1 weeks &&
+            _duration_distribution <= 48 weeks
         );
+        admin = _admin;
+        // default toggles state
+        protocol.settings.toggles.extension = _extension;
+        protocol.settings.toggles.whitelist = _whitelist;
+        // default funding launch
+        protocol.funding.launch.begin = _start;
+        protocol.funding.launch.duration = _duration_launch;
+        protocol.funding.launch.minimum = _min_deposit;
+        protocol.funding.launch.maximum = _max_deposit;
+        // default funding distribution
+        protocol.funding.distribution.begin = _duration_until_distribution;
+        protocol.funding.distribution.duration = _duration_distribution;
     }
 
-    function setInitialFunding(
-        uint256 _start,
-        uint256 _duration,
-        uint256 _required
-    ) public admin returns (bool) {
-        initialFunding.start = _start;
-        initialFunding.duration = _duration;
-        initialFunding.required = _required;
+    function whitelist(address _owner, bool _new_value = true) public returns (bool) {
+        require(msg.sender == admin, "State: msg.sender != admin");
+        white[_owner] = true;
+        emit Whitelist(_owner, _new_value);
+        return true;
     }
-    
-    function getInitialFunding() public returns (
-        uint256,
-        uint256,
-        uint256
-    ) {
-        return (
-            initialFunding.start,
-            initialFunding.duration,
-            initialFunding.required
-        );
+
+    function swap_admin(address _new_admin) public returns (bool) {
+        require(msg.sender == admin, "State: msg.sender != admin");
+        admin = _new_admin;
+        emit AdminSwap(_new_admin);
     }
+
+    function extension() public view returns (bool) {return protocol.settings.toggles.extension;}
+    function whitelist() public view returns (bool) {return protocol.settings.toggles.whitelist;}
+    function launch_begin() public view returns (uint256) {return protocol.settings.launch.begin;}
+    function launch_duration() public view returns (uint256) {return protocol.settings.launch.duration;}
+    function launch_minimum() public view returns (uint256) {return protocol.settings.launch.minimum;}
+    function launch_maximum() public view returns (uint256) {return protocol.settings.launch.maximum;}
 }

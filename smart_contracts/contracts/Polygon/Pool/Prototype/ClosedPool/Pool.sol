@@ -2,43 +2,46 @@ pragma solidity ^0.8.0;
 import "smart_contracts/contracts/Polygon/Pool/Prototype/ClosedPool/State.sol";
 import "smart_contracts/contracts/Polygon/ERC20Standards/ERC20.sol";
 
+/**
+* seams like the main errors encountered on testnet are permissions
+ */
 contract Pool {
+    // investment pool meta data
     string name;
-    State immutable state;
+    string description;
+    string investmentStrategy;
+    uint256 streamingFee;
+    string investmentProfile;
+    uint256 minimumDeposit;
+    uint256 maximumDeposit;
+    State state;
     Token token;
-    mapping(address => bool) private isAdmin;
-    mapping(address => bool) private isManager;
-    modifier admin() {
-        require(isAdmin[msg.sender], "Pool: msg.sender != admin");
-        _;
-    }
+    mapping(address => bool) private adminOf;
+    mapping(address => bool) private managerOf;
 
-    modifier manager() {
-        require(isManager[msg.sender], "Pool: msg.sender != manager");
-        _;
-    }
-
-    modifier any() {
-        require(
-            isAdmin[msg.sender] ||
-            isManager[msg.sender],
-            "Pool: msg.sender != any"
-        );
-        _;
-    }
-
-    // TODO -- When constructor init (State: msg.sender != admin)?
     constructor(
         string memory _name,
-        address _manager,
+        string memory _description,
+        string memory _investmentStrategy,
+        uint256 _streamingFee,
+        string _investmentProfile,
+        uint256 _minimumDeposit,
+        uint256 _maximumDeposit,
+        address _poolManager,
         string memory _tknName,
-        string memory _symbol,
-        uint256 _duration,
-        uint256 _required
+        string memory _tknsymbol,
+        uint256 _fundingDuration,
+        uint256 _fundingRequired
     ) {
         name = _name;
+        description = _description;
+        investmentStrategy = _investmentStrategy;
+        streamingFee = _streamingFee;
+        investmentProfile = _investmentProfile;
+        minimumDeposit = _minimumDeposit;
+        maximumDeposit = _maximumDeposit;
         uint256 _now = block.timestamp;
-        address _admin = address(this);
+
         require(
             _duration >= 1 weeks &&
             _required >= 1
