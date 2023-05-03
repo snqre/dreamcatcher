@@ -19,6 +19,8 @@ contract Pool {
     mapping(address => bool) private adminOf;
     mapping(address => bool) private managerOf;
 
+    uint256 lockedLiquidity;
+
     constructor(
         string memory _name,
         string memory _description,
@@ -31,7 +33,8 @@ contract Pool {
         string memory _tknName,
         string memory _tknsymbol,
         uint256 _fundingDuration,
-        uint256 _fundingRequired
+        uint256 _fundingRequired,
+        uint256 _initialSupply
     ) {
         name = _name;
         description = _description;
@@ -47,6 +50,9 @@ contract Pool {
             _required >= 1
         );
 
+        require(msg.value >= 0.1 * 10**18, "Insufficient wei");
+        require(_initialSupply >= 1 * 10**18, "Insufficient initial supply");
+
         state = new State(
             _admin
         );
@@ -58,6 +64,10 @@ contract Pool {
             _tknName,
             _symbol
         );
+
+        token.mint(msg.sender, _initialSupply);
+        // update accounting
+        
     }
 
     function setToggles(bool _extensions, bool _whitelist) public manager returns (bool) {
@@ -70,7 +80,7 @@ contract Pool {
         return true;
     }
 
-    function contribute(uint256 _amount) public payable returns (bool) {
+    function contribute() public payable returns (bool) {
         uint256 _supply = token.totalSupply();
         uint256 _balance = address(this).balance;
         uint256 _amountToMint = (_amount * _supply) / _balance;
