@@ -19,7 +19,7 @@ contract Token is ERC20Burnable {
         string memory _symbol
     ) ERC20(_name, _symbol) {
         isAdmin[address(this)] = true;
-        setAdmin(_admin, true);
+        isAdmin[_admin] = true;
     }
 
     function setAdmin(address _account, bool _state)

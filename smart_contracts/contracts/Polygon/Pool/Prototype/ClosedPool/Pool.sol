@@ -33,7 +33,6 @@ contract Pool {
         address _manager,
         string memory _tknName,
         string memory _symbol,
-        uint256 _initialSupply,
         uint256 _duration,
         uint256 _required
     ) {
@@ -41,7 +40,6 @@ contract Pool {
         uint256 _now = block.timestamp;
         address _admin = address(this);
         require(
-            _initialSupply >= 1 &&
             _duration >= 1 weeks &&
             _required >= 1
         );
@@ -69,8 +67,7 @@ contract Pool {
         return true;
     }
 
-    function contribute() public payable returns (bool) {
-        uint256 _amount = msg.value;
+    function contribute(uint256 _amount) public payable returns (bool) {
         uint256 _supply = token.totalSupply();
         uint256 _balance = address(this).balance;
         uint256 _amountToMint = (_amount * _supply) / _balance;
@@ -82,14 +79,12 @@ contract Pool {
         ) = state.getInitialFunding();
         uint256 _end = _start + _duration;
         uint256 _now = block.timestamp;
-        require(
-            _amount  >= 0 &&             // need >= 0 deposit
-            _supply  >= 1 &&             // need more than 1 token
-            _balance >= 1 &&             // need more than 1 matic
-            _balance <= _required &&     // check if the required amount is met
-            _end     >= _now             // check funding is still ongoing
-        );
-
+        require(_amount >= 0, "Pool: _amount < 0");
+        require(_supply >= 1, "Pool: _supply < 1");
+        require(_balance >= 1, "Pool: _balance < 1");
+        require(_balance <= _required, "Pool: _balance > _required");
+        require(_end >= _now, "Pool: _end < _now");
+        
         // mint tokens for contributor
         token.mint(_to, _amountToMint);
         state.setContribution(_to, _amount);
