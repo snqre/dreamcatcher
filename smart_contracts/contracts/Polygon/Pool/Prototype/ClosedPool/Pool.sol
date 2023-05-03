@@ -6,101 +6,35 @@ import "smart_contracts/contracts/Polygon/ERC20Standards/ERC20.sol";
 * seams like the main errors encountered on testnet are permissions
  */
 contract Pool {
-    // investment pool meta data
-    string name;
-    string description;
-    string investmentStrategy;
-    uint256 streamingFee;
-    string investmentProfile;
-    uint256 minimumDeposit;
-    uint256 maximumDeposit;
+    
     State state;
-    Token token;
-    mapping(address => bool) private adminOf;
-    mapping(address => bool) private managerOf;
-
-    uint256 lockedLiquidity;
+    Token nativeToken;
 
     constructor(
-        string memory _name,
-        string memory _description,
-        string memory _investmentStrategy,
-        uint256 _streamingFee,
-        string _investmentProfile,
-        uint256 _minimumDeposit,
-        uint256 _maximumDeposit,
-        address _poolManager,
         string memory _tknName,
-        string memory _tknsymbol,
-        uint256 _fundingDuration,
-        uint256 _fundingRequired,
-        uint256 _initialSupply
+        string memory _tknSymbol,
+        uint256 _tknInitialSupply,
     ) {
-        name = _name;
-        description = _description;
-        investmentStrategy = _investmentStrategy;
-        streamingFee = _streamingFee;
-        investmentProfile = _investmentProfile;
-        minimumDeposit = _minimumDeposit;
-        maximumDeposit = _maximumDeposit;
-        uint256 _now = block.timestamp;
-
-        require(
-            _duration >= 1 weeks &&
-            _required >= 1
-        );
-
-        require(msg.value >= 0.1 * 10**18, "Insufficient wei");
-        require(_initialSupply >= 1 * 10**18, "Insufficient initial supply");
-
-        state = new State(
-            _admin
-        );
-
-        state.setInitialFunding(_now, _duration, _required);
-
-        token = new PoolToken(
-            _tknName,
-            _symbol,
-            _initialSupply * 10**18
-        );
-
-        token.mint(msg.sender, _initialSupply);
-        // update accounting
-
-    }
-
-    function setToggles(bool _extensions, bool _whitelist) public manager returns (bool) {
-        state.setToggles(_extensions, _whitelist);
-        return true;
-    }
-    
-    function setWhitelist(address _account, bool _state) public manager returns (bool) {
-        state.setWhitelist(_account, _state);
-        return true;
+        require(msg.value >= 1 * 10**18, "Pool: msg.value < 1 * 10**18");
+        require(_tknInitialSupply >= 1 * 10**18, "Pool: _tknInitialSupply < 1 * 10**18");
+        address _creator = msg.sender;
+        nativeToken = new Token(_tknName, _tknSymbol);
+        nativeToken.mint(_creator, _tknInitialSupply);
     }
 
     function contribute() public payable returns (bool) {
-        uint256 _supply = token.totalSupply();
-        uint256 _balance = address(this).balance;
+        uint256 _valueWei = msg.value;
+        uint256 _supplyWei = nativeToken.totalSupply() / 10**18;
+        uint256 _balanceWei = address(this).balance;
         uint256 _amountToMint = (_amount * _supply) / _balance;
-        address _to = msg.sender;
-        (
-            uint256 _start,
-            uint256 _duration,
-            uint256 _required
-        ) = state.getInitialFunding();
-        uint256 _end = _start + _duration;
-        uint256 _now = block.timestamp;
-        require(_amount >= 0, "Pool: _amount < 0");
-        require(_supply >= 1, "Pool: _supply < 1");
-        require(_balance >= 1, "Pool: _balance < 1");
-        require(_balance <= _required, "Pool: _balance > _required");
-        require(_end >= _now, "Pool: _end < _now");
-        
-        // mint tokens for contributor
-        token.mint(_to, _amountToMint);
-        state.setContribution(_to, _amount);
+
+        require(
+            _valueWei > 0 * 10**18 &&
+            _supplyWei > 0 * 10**18 &&
+            _balanceWei > 0 * 10**18
+        );
+
+        nativeToken.mint(msg.sender, _amountToMint * 10**18);
         return true;
     }
 }
