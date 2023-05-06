@@ -1,5 +1,5 @@
 pragma solidity ^0.8.0;
-import "smart_contracts/contracts/Polygon/ERC20Standards/Token.sol";
+import "blockchain/contracts/Polygon/ERC20Standards/Token.sol";
 
 contract Pool {
     struct Funding {
@@ -17,6 +17,7 @@ contract Pool {
 
     address creator;
     
+    Settings private settings;
     Funding private funding;
     mapping(address => bool) private whitelisted;
 
@@ -24,8 +25,8 @@ contract Pool {
 
     modifier wht() {
         require(
-            funding.onlyVerified &&
-            verified[msg.sender],
+            funding.onlyWhitelist &&
+            whitelisted[msg.sender],
             "funding.onlyVerified != true || msg.sender != verified"
         );
         _;
@@ -44,34 +45,27 @@ contract Pool {
         uint256 _tknInitialSupply,
         uint256 _fundingDuration,
         uint256 _fundingMin,
-        uint256 _fundingMax,
         bool _onlyWhitelist,
         bool _creatorCanTransfer
     ) payable {
         uint256 _start = block.timestamp;
         uint256 _end = _start + _fundingDuration;
-        uint256 _minMaticDeployment = 0.01 * 10**18;
-        uint256 _minInitialSupply = 1 * 10**18;
-        uint256 _minFundingDuration = 1 weeks;
-        uint256 _maxFundingDuration = 1 years;
         address _creator = msg.sender;
 
-        require(
-            msg.value >= _minMaticDeployment &&
-            _tknInitialSupply >= _minInitialSupply &&
-            _fundingDuration >= _minFundingDuration &&
-            _fundingDuration <= _maxFundingDuration &&
-            _fundingMin >= 0 &&
-            _creator != address(0)
-        );
+        require(msg.value >= 0.01 * 10**18, "Pool: msg.value < 0.01 * 10**18");
+        require(_tknInitialSupply >= 1, "Pool: _tknInitialSupply < 1");
+        require(_fundingDuration >= 1 weeks, "Pool: _fundingDuration < 1 weeks");
+        require(_fundingDuration <= 48 weeks, "Pool: _fundingDuration > 48 weeks");
+        require(_fundingMin >= 0, "Pool: _fundingMin < 0");
+        require(_creator != address(0), "Pool: _creator == address(0)");
 
         creator = _creator;
         funding.start = _start;
-        funding.end = _start + _fundingDuration;
+        funding.end = _end;
         funding.duration = _fundingDuration;
         funding.min = _fundingMin;
-        funding.max = _fundingMax;
         funding.onlyWhitelist = _onlyWhitelist;
+        settings.creatorCanTransfer = _creatorCanTransfer;
 
 
         /** create token contract & deploy intial supply to creator for their initial contribution */
@@ -113,14 +107,14 @@ contract Pool {
         return true;
     }
 
-    function whitelistOf(address _account) public view {
-        return whitelisted[_accoun];
+    function whitelistOf(address _account) public view returns (bool) {
+        return whitelisted[_account];
     }
 
     function transfer(address _account, uint256 _value) public crt returns (bool) {
         address payable _recipient = payable(_account);
         require(
-            creatorCanTransfer &&
+            settings.creatorCanTransfer &&
             _recipient != address(0) &&
             _value >= 0
         );

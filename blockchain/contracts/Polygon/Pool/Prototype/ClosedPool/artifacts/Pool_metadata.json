@@ -21,6 +21,26 @@
 						"internalType": "uint256",
 						"name": "_tknInitialSupply",
 						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "_fundingDuration",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "_fundingMin",
+						"type": "uint256"
+					},
+					{
+						"internalType": "bool",
+						"name": "_onlyWhitelist",
+						"type": "bool"
+					},
+					{
+						"internalType": "bool",
+						"name": "_creatorCanTransfer",
+						"type": "bool"
 					}
 				],
 				"stateMutability": "payable",
@@ -37,6 +57,86 @@
 					}
 				],
 				"stateMutability": "payable",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "recieve",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "",
+						"type": "bool"
+					}
+				],
+				"stateMutability": "payable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "_account",
+						"type": "address"
+					},
+					{
+						"internalType": "bool",
+						"name": "_state",
+						"type": "bool"
+					}
+				],
+				"name": "setWhitelistOf",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "",
+						"type": "bool"
+					}
+				],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "_account",
+						"type": "address"
+					},
+					{
+						"internalType": "uint256",
+						"name": "_value",
+						"type": "uint256"
+					}
+				],
+				"name": "transfer",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "",
+						"type": "bool"
+					}
+				],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "_account",
+						"type": "address"
+					}
+				],
+				"name": "whitelistOf",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "",
+						"type": "bool"
+					}
+				],
+				"stateMutability": "view",
 				"type": "function"
 			},
 			{
@@ -66,14 +166,20 @@
 		},
 		"userdoc": {
 			"kind": "user",
-			"methods": {},
-			"notice": "seams like the main errors encountered on testnet are permissions",
+			"methods": {
+				"recieve()": {
+					"notice": "recieve matic but will not mint tokens "
+				},
+				"setWhitelistOf(address,bool)": {
+					"notice": "can set white list but will only work if whitelisted only settings is true "
+				}
+			},
 			"version": 1
 		}
 	},
 	"settings": {
 		"compilationTarget": {
-			"smart_contracts/contracts/Polygon/Pool/Prototype/ClosedPool/Pool.sol": "Pool"
+			"blockchain/contracts/Polygon/Pool/Prototype/ClosedPool/Pool.sol": "Pool"
 		},
 		"evmVersion": "paris",
 		"libraries": {},
@@ -87,6 +193,21 @@
 		"remappings": []
 	},
 	"sources": {
+		"blockchain/contracts/Polygon/ERC20Standards/Token.sol": {
+			"keccak256": "0xfe44e82f3af0ff12e9c38db1f2f3dce964c755d4414537094e6ba4ab1c907c61",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://293a900bc3e069c3de40e002a48a2f725889e7141448834a05084a5324247766",
+				"dweb:/ipfs/QmQ5sPGRCFTzbrAXSWyFRrjWXkApsbXnJ5pD8YNSdxTCfB"
+			]
+		},
+		"blockchain/contracts/Polygon/Pool/Prototype/ClosedPool/Pool.sol": {
+			"keccak256": "0x71ae38cc2450afe0d7b8269c8546c51aea81ee0dc35698de1a507aafbfdfc72b",
+			"urls": [
+				"bzz-raw://9d93763ea65c93ed5a7550073f381b5fe425bb15a1cc80a2e71daaedc8ce4a36",
+				"dweb:/ipfs/QmRNtXC8BfqZrxnNKwBZK8i1x4LTWAzRCmKiWVmimNfHqz"
+			]
+		},
 		"https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/ERC20.sol": {
 			"keccak256": "0xb62681ccbf84aef125665cfdfc0bf13b532925b1a520d6c935913560f539a31b",
 			"license": "MIT",
@@ -117,21 +238,6 @@
 			"urls": [
 				"bzz-raw://6df0ddf21ce9f58271bdfaa85cde98b200ef242a05a3f85c2bc10a8294800a92",
 				"dweb:/ipfs/QmRK2Y5Yc6BK7tGKkgsgn3aJEQGi5aakeSPZvS65PV8Xp3"
-			]
-		},
-		"smart_contracts/contracts/Polygon/ERC20Standards/Token.sol": {
-			"keccak256": "0xfe44e82f3af0ff12e9c38db1f2f3dce964c755d4414537094e6ba4ab1c907c61",
-			"license": "MIT",
-			"urls": [
-				"bzz-raw://293a900bc3e069c3de40e002a48a2f725889e7141448834a05084a5324247766",
-				"dweb:/ipfs/QmQ5sPGRCFTzbrAXSWyFRrjWXkApsbXnJ5pD8YNSdxTCfB"
-			]
-		},
-		"smart_contracts/contracts/Polygon/Pool/Prototype/ClosedPool/Pool.sol": {
-			"keccak256": "0x4a899d7160743e340ec151b6d7cf0ab4eb985cf22b4102e31e197a642210efe2",
-			"urls": [
-				"bzz-raw://8426448a6551fe98e567e9ca91fe1ee66e16b197839bde6c260003eb2c230ef9",
-				"dweb:/ipfs/QmaYCoSeDN7QoH75hbwN9nmaFLSe5ES7EfFzm6Dsc1iMN2"
 			]
 		}
 	},

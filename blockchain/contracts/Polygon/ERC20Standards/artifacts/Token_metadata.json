@@ -395,7 +395,7 @@
 	},
 	"settings": {
 		"compilationTarget": {
-			"smart_contracts/contracts/Polygon/ERC20Standards/Token.sol": "Token"
+			"blockchain/contracts/Polygon/ERC20Standards/Token.sol": "Token"
 		},
 		"evmVersion": "paris",
 		"libraries": {},
@@ -409,6 +409,14 @@
 		"remappings": []
 	},
 	"sources": {
+		"blockchain/contracts/Polygon/ERC20Standards/Token.sol": {
+			"keccak256": "0xfe44e82f3af0ff12e9c38db1f2f3dce964c755d4414537094e6ba4ab1c907c61",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://293a900bc3e069c3de40e002a48a2f725889e7141448834a05084a5324247766",
+				"dweb:/ipfs/QmQ5sPGRCFTzbrAXSWyFRrjWXkApsbXnJ5pD8YNSdxTCfB"
+			]
+		},
 		"https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/ERC20.sol": {
 			"keccak256": "0xb62681ccbf84aef125665cfdfc0bf13b532925b1a520d6c935913560f539a31b",
 			"license": "MIT",
@@ -439,14 +447,6 @@
 			"urls": [
 				"bzz-raw://6df0ddf21ce9f58271bdfaa85cde98b200ef242a05a3f85c2bc10a8294800a92",
 				"dweb:/ipfs/QmRK2Y5Yc6BK7tGKkgsgn3aJEQGi5aakeSPZvS65PV8Xp3"
-			]
-		},
-		"smart_contracts/contracts/Polygon/ERC20Standards/Token.sol": {
-			"keccak256": "0xfe44e82f3af0ff12e9c38db1f2f3dce964c755d4414537094e6ba4ab1c907c61",
-			"license": "MIT",
-			"urls": [
-				"bzz-raw://293a900bc3e069c3de40e002a48a2f725889e7141448834a05084a5324247766",
-				"dweb:/ipfs/QmQ5sPGRCFTzbrAXSWyFRrjWXkApsbXnJ5pD8YNSdxTCfB"
 			]
 		}
 	},
