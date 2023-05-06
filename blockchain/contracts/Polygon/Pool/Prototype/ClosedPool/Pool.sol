@@ -2,75 +2,92 @@ pragma solidity ^0.8.0;
 import "blockchain/contracts/Polygon/ERC20Standards/Token.sol";
 
 contract Pool {
-    struct Funding {
-        uint256 start;
-        uint256 duration;
-        uint256 end;
-        uint256 min;
-        uint256 max;
-        bool onlyWhitelist;
-    }
+    bool fundingRoundIsSetUp;
+    uint256 durationOfFundingRound;
+    uint256 startOfFundingRound;
+    uint256 endOfFundingRound;
+    uint256 requiredFromFundingRound;
+    bool onlyWhitelistedAccountsCanContribute;
+    bool creatorCanTransferOutOfContract;
 
-    struct Settings {
-        bool creatorCanTransfer;
-    }
+    string name;
 
     address creator;
     
-    Settings private settings;
-    Funding private funding;
     mapping(address => bool) private whitelisted;
 
     Token nativeToken;
 
+    event FundingRoundSetUp(
+        uint256 _durationOfFundingRound,
+        uint256 _startOfFundingRound,
+        uint256 _endOfFundingRound,
+        uint256 _requiredFromFundingRound,
+        bool _onlyWhitelistedAccountsCanContribute,
+        bool _creatorCanTransferOutOfContract
+    );
+
+    event Contribution(
+        address indexed _contributor,
+        uint256 _valueRecieved,
+        uint256 _amountMintedToContributor
+    );
+
+    event Withdrawal(
+        address indexed _withdrawer,
+        uint256 _amountBurntFromWithdrawer,
+        uint256 _valueSent
+    );
+
+    event WhitelistUpdated(address indexed _account, bool _newState);
+
+    event TransferOut(address indexed _account, uint256 _value);
+    event TransferIn(uint256 _value);
+
+    event PoolFounded(
+        address indexed _creator,
+        string _name,
+        string _tokenName,
+        string _tokenSymbol,
+        uint256 _tokenInitialSupply
+    );
+
     modifier wht() {
-        require(
-            funding.onlyWhitelist &&
-            whitelisted[msg.sender],
-            "funding.onlyVerified != true || msg.sender != verified"
-        );
+        require(onlyWhitelistedAccountsCanContribute, "Pool: onlyWhitelistedAccountsCanContribute setting must be enabled");
+        require(whitelisted[msg.sender], "Pool: msg.sender is not whitelisted");
         _;
     }
 
     modifier crt() {
-        require(
-            msg.sender == creator
-        );
+        require(msg.sender == creator, "Pool: msg.sender is not then contract creator");
         _;
     }
 
     constructor (
-        string memory _tknName,
-        string memory _tknSymbol,
-        uint256 _tknInitialSupply,
-        uint256 _fundingDuration,
-        uint256 _fundingMin,
-        bool _onlyWhitelist,
-        bool _creatorCanTransfer
+        string memory _name,
+        string memory _tokenName,
+        string memory _tokenSymbol,
+        uint256 _tokenInitialSupply
     ) payable {
-        uint256 _start = block.timestamp;
-        uint256 _end = _start + _fundingDuration;
         address _creator = msg.sender;
 
-        require(msg.value >= 0.01 * 10**18, "Pool: msg.value < 0.01 * 10**18");
-        require(_tknInitialSupply >= 1, "Pool: _tknInitialSupply < 1");
-        require(_fundingDuration >= 1 weeks, "Pool: _fundingDuration < 1 weeks");
-        require(_fundingDuration <= 48 weeks, "Pool: _fundingDuration > 48 weeks");
-        require(_fundingMin >= 0, "Pool: _fundingMin < 0");
-        require(_creator != address(0), "Pool: _creator == address(0)");
+        require(msg.value >= 0.01 * 10**18, "Pool: msg.value insufficient");
+        require(_tokenInitialSupply >= 1, "Pool: _tokenInitialSupply insufficient");
+        require(_creator != address(0), "Pool: _creator is zero address");
 
         creator = _creator;
-        funding.start = _start;
-        funding.end = _end;
-        funding.duration = _fundingDuration;
-        funding.min = _fundingMin;
-        funding.onlyWhitelist = _onlyWhitelist;
-        settings.creatorCanTransfer = _creatorCanTransfer;
-
 
         /** create token contract & deploy intial supply to creator for their initial contribution */
-        nativeToken = new Token(_tknName, _tknSymbol);
-        nativeToken.mint(creator, _tknInitialSupply);
+        nativeToken = new Token(_tokenName, _tokenSymbol);
+        nativeToken.mint(_creator, _tokenInitialSupply);
+
+        emit PoolFounded(
+            _creator,
+            _name,
+            _tokenName,
+            _tokenSymbol,
+            _tokenInitialSupply
+        );
     }
     
     // ** are we adding value before checking balance?
@@ -87,6 +104,11 @@ contract Pool {
         );
 
         nativeToken.mint(msg.sender, _amountToMint);
+        emit Contribution(
+            msg.sender,
+            _valueWei * 10**18,
+            _amountToMint
+        );
         return true;
     }
 
@@ -98,12 +120,18 @@ contract Pool {
         address payable _withdrawer = payable(msg.sender);
         nativeToken.burn(msg.sender, _tknValue);
         _withdrawer.transfer(_amountToSend);
+        emit Withdrawal(
+            _withdrawer,
+            _tknValue,
+            _amountToSend
+        );
         return true;
     }
 
     /** can set white list but will only work if whitelisted only settings is true */
     function setWhitelistOf(address _account, bool _state) public crt returns (bool) {
         whitelisted[_account] = _state;
+        emit WhitelistUpdated(_account, _state);
         return true;
     }
 
@@ -120,11 +148,37 @@ contract Pool {
         );
 
         _recipient.transfer(_value);
+        emit TransferOut(_account, _value);
         return true;
     }
 
     /** recieve matic but will not mint tokens */
     function recieve() public payable crt returns (bool) {
+        emit TransferIn(_value);
+        return true;
+    }
+
+    function setUpFundingRound(
+        uint256 _durationOfFundingRound,
+        uint256 _requiredFromFundingRound,
+        bool _onlyWhitelistedAccountsCanContribute,
+        bool _creatorCanTransferOutOfContract
+    ) public crt returns (bool) {
+        durationOfFundingRound = _durationOfFundingRound;
+        startOfFundingRound = block.timestamp;
+        endOfFundingRound = startOfFundingRound + durationOfFundingRound;
+        requiredFromFundingRound = _requiredFromFundingRound;
+        onlyWhitelistedAccountsCanContribute = _onlyWhitelistedAccountsCanContribute;
+        creatorCanTransferOutOfContract = _creatorCanTransferOutOfContract;
+        emit FundingRoundSetUp(
+            _durationOfFundingRound,
+            _startOfFundingRound,
+            _endOfFundingRound,
+            _requiredFromFundingRound,
+            _onlyWhitelistedAccountsCanContribute,
+            _creatorCanTransferOutOfContract
+        );
+        fundingRoundIsSetUp = true;
         return true;
     }
 }
