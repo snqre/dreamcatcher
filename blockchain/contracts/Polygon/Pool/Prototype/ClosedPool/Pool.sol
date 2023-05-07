@@ -16,7 +16,7 @@ interface IPool {
     ) public returns (bool);
 }
 
-contract Pool {
+contract Pool is IPool {
     bool fundingRoundIsSetUp;
     uint256 durationOfFundingRound;
     uint256 startOfFundingRound;
