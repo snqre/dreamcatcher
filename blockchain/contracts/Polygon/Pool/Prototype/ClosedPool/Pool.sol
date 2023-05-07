@@ -1,29 +1,44 @@
 pragma solidity ^0.8.0;
 import "blockchain/contracts/Polygon/ERC20Standards/Token.sol";
 
-interface IPool {
-    function contribute() public payable returns (bool);
-    function withdraw(uint256 _tokenValue) public returns (bool);
-    function setWhitelistOf(address _account, bool _state) public returns (bool);
-    function withlistOf(address _account) public view returns (bool);
-    function transfer(address _account, uint256 _value) public returns (bool);
-    function recieve() public payable returns (bool);
-    function setUpFundingRound(
-        uint256 _durationOfFundingRound,
-        uint256 _requiredFromFundingRound,
-        bool _onlyWhitelistedAccountsCanContribute,
-        bool _creatorCanTransferOutOfContract
-    ) public returns (bool);
-}
+/**
+* Every pool has an initial funding round
+* They can choose if they want it to be public or for only whitelisted addresses
+* Anyone can withdraw even if they are no longer whitelisted
+* Creators can choose to allow themselves to transfer value out of the pool this comes with some risk and external checks and due diligence must be made
+* The contract must be deployed with some matic
+* The first initial supply will be mineted to the creator for that contribution, setting the bassline net asset value per token
+* The creator can set a required amount of matic for the pool to be successful, if it isnt passed, contributors can withdraw their contributions
+* Contributors can withdraw their contributions regardless at any time before the funding round is complete and passed
+* Some settings are immutable and others can be changed
+* Changed settings will only start working after the time delay
+* We try to leave room for regulatory compliance
+* The creator can be another smart contract which operates in a decentralized manner
+* A locked fund can only take in matic contributions at the start
+* Any funding rounds will be for a set price
+* We are unable to have further funding rounds after because we cant calculate balance onchain after matic has been swapped for other assets
+* Creators can designate matic to be distributed to contributors based on the % of ownership of the pool
+* Pools with a distribution date will forcefully approve withdrawals of the underlying assets if the creator does not distribute the pool in matic
+* Built in swaps are designated to our Market code, are can be called through string to interact with our other contracts
+* Again external contracts can be added but risk warnings will be put up, ideally these are run by KYC verified institutions or investors and require legal backing
+ */
 
-contract Pool is IPool {
-    bool fundingRoundIsSetUp;
-    uint256 durationOfFundingRound;
-    uint256 startOfFundingRound;
-    uint256 endOfFundingRound;
-    uint256 requiredFromFundingRound;
-    bool onlyWhitelistedAccountsCanContribute;
-    bool creatorCanTransferOutOfContract;
+contract Pool {
+    struct Funding {
+        uint256 duration;
+        uint256 start;
+        uint256 end;
+        uint256 required;
+        bool whitelisted;
+        bool transferable;
+    } Funding private funding;
+
+    struct Pool {
+        string name;
+        address creator;
+        Token nativeToken;
+    } Pool private pool;
+
 
     string name;
 
@@ -34,25 +49,16 @@ contract Pool is IPool {
     Token nativeToken;
 
     event FundingRoundSetUp(
-        uint256 _durationOfFundingRound,
-        uint256 _startOfFundingRound,
-        uint256 _endOfFundingRound,
-        uint256 _requiredFromFundingRound,
-        bool _onlyWhitelistedAccountsCanContribute,
-        bool _creatorCanTransferOutOfContract
+        uint256 _duration,
+        uint256 _start,
+        uint256 _end,
+        uint256 _required,
+        bool _whitelisted,
+        bool _transferable
     );
 
-    event Contribution(
-        address indexed _contributor,
-        uint256 _valueRecieved,
-        uint256 _amountMintedToContributor
-    );
-
-    event Withdrawal(
-        address indexed _withdrawer,
-        uint256 _amountBurntFromWithdrawer,
-        uint256 _valueSent
-    );
+    event Contribution(address indexed _from, uint256 _value, uint256 _mint);
+    event Withdrawal(address indexed _from, uint256 _burn, uint256 _value);
 
     event WhitelistUpdated(address indexed _account, bool _newState);
 
@@ -105,7 +111,6 @@ contract Pool is IPool {
         );
     }
     
-    // ** are we adding value before checking balance?
     function contribute() wht public payable returns (bool) {
         uint256 _valueWei = msg.value;
         uint256 _supplyWei = nativeToken.totalSupply() / 10**18;
@@ -175,20 +180,24 @@ contract Pool is IPool {
 
     /** can only be done once */
     function setUpFundingRound(
-        uint256 _durationOfFundingRound,
-        uint256 _requiredFromFundingRound,
-        bool _onlyWhitelistedAccountsCanContribute,
-        bool _creatorCanTransferOutOfContract
+        /** duration of funding round */
+        uint256 _duration,
+        /** required amount of value for the pool to continue */
+        uint256 _required,
+        /** only whitelisted accounts can contribute to the pool */
+        bool _whitelisted,
+        /** the creator can transfer value out of the contract */
+        bool _transferable
     ) public crt returns (bool) {
         require(fundingRoundIsSetUp == false, "Pool: initial funding round has already been set up");
-        require(_durationOfFundingRound >= 1 weeks, "Pool: duration of funding round is insufficient");
-        require(_requiredFromFundingRound >= 0, "Pool: required value from funding round is less than 0");
-        durationOfFundingRound = _durationOfFundingRound;
-        startOfFundingRound = block.timestamp;
-        endOfFundingRound = startOfFundingRound + durationOfFundingRound;
-        requiredFromFundingRound = _requiredFromFundingRound;
-        onlyWhitelistedAccountsCanContribute = _onlyWhitelistedAccountsCanContribute;
-        creatorCanTransferOutOfContract = _creatorCanTransferOutOfContract;
+        require(_duration >= 1 weeks, "Pool: duration of funding round is insufficient");
+        require(_required >= 0, "Pool: required value from funding round is less than 0");
+        funding.duration = _duration;
+        funding.start = block.timestamp;
+        funding.end = funding.start + _duration;
+        funding.required = _required;
+        funding.whitelisted = _whitelisted;
+        funding.transferable = _transferable;
         emit FundingRoundSetUp(
             _durationOfFundingRound,
             _startOfFundingRound,
@@ -199,5 +208,10 @@ contract Pool is IPool {
         );
         fundingRoundIsSetUp = true;
         return true;
+    }
+
+    /** our pools can interact directly with us and our extensions */
+    interactWithDreamcatcher(string memory _commands) public crt returns (bool) {
+        /** interfact with dreamcatcher */
     }
 }
