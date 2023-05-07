@@ -213,5 +213,7 @@ contract Pool {
     /** our pools can interact directly with us and our extensions */
     interactWithDreamcatcher(string memory _commands) public crt returns (bool) {
         /** interfact with dreamcatcher */
+        /** in dreamcatcher will read the commands and then perform a swap, the contract will approve any transfers */
+        /** our contracts are guarded by our DAO community and changes to them will only take effect after the period of timelock */
     }
 }
