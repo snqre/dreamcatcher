@@ -1,6 +1,21 @@
 pragma solidity ^0.8.0;
 import "blockchain/contracts/Polygon/ERC20Standards/Token.sol";
 
+interface IPool {
+    function contribute() public payable returns (bool);
+    function withdraw(uint256 _tokenValue) public returns (bool);
+    function setWhitelistOf(address _account, bool _state) public returns (bool);
+    function withlistOf(address _account) public view returns (bool);
+    function transfer(address _account, uint256 _value) public returns (bool);
+    function recieve() public payable returns (bool);
+    function setUpFundingRound(
+        uint256 _durationOfFundingRound,
+        uint256 _requiredFromFundingRound,
+        bool _onlyWhitelistedAccountsCanContribute,
+        bool _creatorCanTransferOutOfContract
+    ) public returns (bool);
+}
+
 contract Pool {
     bool fundingRoundIsSetUp;
     uint256 durationOfFundingRound;
@@ -158,12 +173,16 @@ contract Pool {
         return true;
     }
 
+    /** can only be done once */
     function setUpFundingRound(
         uint256 _durationOfFundingRound,
         uint256 _requiredFromFundingRound,
         bool _onlyWhitelistedAccountsCanContribute,
         bool _creatorCanTransferOutOfContract
     ) public crt returns (bool) {
+        require(fundingRoundIsSetUp == false, "Pool: initial funding round has already been set up");
+        require(_durationOfFundingRound >= 1 weeks, "Pool: duration of funding round is insufficient");
+        require(_requiredFromFundingRound >= 0, "Pool: required value from funding round is less than 0");
         durationOfFundingRound = _durationOfFundingRound;
         startOfFundingRound = block.timestamp;
         endOfFundingRound = startOfFundingRound + durationOfFundingRound;
