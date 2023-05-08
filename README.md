@@ -1,14 +1,7 @@
-# Token
-    State.sol > Authenticator.sol > Token.sol
-
-# Vault
-    State.sol > Authenticator.sol > Conduit.sol > Vault.sol
-
 # Dreamcatcher
-    State.sol > Authenticator.sol > Proposal > Dreamcatcher.sol
-
-# Pool
-    State.sol > Authenticator.sol > ERC20 > Pool
-
-FQ
-1) The reason we are giving the original launcher admin permission to allow us to connect the contracts together
+Terminal
+Authenticator
+State
+PoolFactory **for in built pools allows us to place them on our platform **non inbuilt dont get displayed on our platform**
+Treasury **main treasury for dreamcatcher this is where staking and votes are exchanged etc**
+PoolsState
