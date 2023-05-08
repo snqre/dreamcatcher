@@ -1,18 +1,28 @@
 pragma solidity ^0.8.0;
-import "blockchain/contracts/Polygon/Dreamcatcher/State.sol";
+import "blockchain/contracts/Polygon/Dreamcatcher/Authenticator.sol";
+import "blockchain/contracts/Polygon/Dreamcatcher/Treasury.sol";
 contract Logic {
-    State private state;
+    struct ElectionSchedule {
+        uint256 start;
+        uint256 duration;
+        uint256 reset;
+    } ElectionSchedule private electionSchedule;
+
+    Treasury private treasury;
+    Authenticator private authenticator;
     constructor() {
-        state = new State();
+        treasury = new Treasury();
+        authenticator = new Authenticator();
+
+        /** set up election schedule */
+        electionSchedule.start = block.timestamp;
+        electionSchedule.duration = 48 weeks;
     }
-    /** deposit matic */
-    function deposit_(uint256 _value) private payable returns (bool) {
-        address payable _recipient = payable(address(state));
-        _recipient.transfer(_value * 10**18);
-        return true;
+
+    function election() public returns (bool) {
+        require(
+            
+        );
     }
-    /** withdraw matic */
-    function withdraw_(address _to, uint256 _value) private returns (bool) {
-        state.withdraw(_to, _value);
-    }
+
 }
