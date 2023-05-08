@@ -1,7 +1,7 @@
 pragma solidity ^0.8.0;
 
 interface IState {
-
+    function feeToFoundNewPool() public view returns (uint256);
 }
 
 contract State {
@@ -15,5 +15,11 @@ contract State {
         uint256 reset;
     } ElectionSchedule private electionSchedule;
 
-    function updateElectionSchedule() main public
+    struct Fee {
+        uint256 toFoundNewPool;
+    } Fee private fee;
+
+    function feeToFoundNewPool() public view returns (uint256) {
+        return fee.toFoundNewPool;
+    }
 }
