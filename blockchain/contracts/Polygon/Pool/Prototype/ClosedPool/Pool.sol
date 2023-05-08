@@ -24,6 +24,7 @@ import "blockchain/contracts/Polygon/ERC20Standards/Token.sol";
  */
 
 contract Pool {
+    bool fundingRoundIsSetUp;
     /**
     * duration: amount the funding round will go on for in seconds
     * start: when the initial funding round is starting
@@ -96,14 +97,14 @@ contract Pool {
         uint256 _tokenInitialSupply
     );
 
-    modifier wht() {
-        require(onlyWhitelistedAccountsCanContribute, "Pool: onlyWhitelistedAccountsCanContribute setting must be enabled");
-        require(whitelisted[msg.sender], "Pool: msg.sender is not whitelisted");
+    modifier onlyWhitelisted() {
+        require(funding.isWhitelisted == true);
+        require(whitelistOf[msg.sender] == true);
         _;
     }
 
-    modifier crt() {
-        require(msg.sender == creator, "Pool: msg.sender is not then contract creator");
+    modifier onlyCreator() {
+        require(msg.sender == meta.creator);
         _;
     }
 
@@ -119,11 +120,11 @@ contract Pool {
         require(_tokenInitialSupply >= 1, "Pool: _tokenInitialSupply insufficient");
         require(_creator != address(0), "Pool: _creator is zero address");
 
-        creator = _creator;
+        meta.creator = _creator;
 
         /** create token contract & deploy intial supply to creator for their initial contribution */
-        nativeToken = new Token(_tokenName, _tokenSymbol);
-        nativeToken.mint(_creator, _tokenInitialSupply);
+        meta.nativeToken = new Token(_tokenName, _tokenSymbol);
+        meta.nativeToken.mint(_creator, _tokenInitialSupply);
 
         emit PoolFounded(
             _creator,
@@ -134,9 +135,9 @@ contract Pool {
         );
     }
     
-    function contribute() wht public payable returns (bool) {
+    function contribute() onlyWhitelisted public payable returns (bool) {
         uint256 _valueWei = msg.value;
-        uint256 _supplyWei = nativeToken.totalSupply() / 10**18;
+        uint256 _supplyWei = meta.nativeToken.totalSupply() / 10**18;
         uint256 _balanceWei = address(this).balance - _valueWei;
         uint256 _amountToMint = (_valueWei * _supplyWei) / _balanceWei;
 
@@ -146,7 +147,7 @@ contract Pool {
             _balanceWei > 0 * 10**18
         );
 
-        nativeToken.mint(msg.sender, _amountToMint);
+        meta.nativeToken.mint(msg.sender, _amountToMint);
         emit Contribution(
             msg.sender,
             _valueWei * 10**18,
@@ -156,12 +157,12 @@ contract Pool {
     }
 
     function withdraw(uint256 _tknValue) public returns (bool) {
-        uint256 _supplyWei = nativeToken.totalSupply() / 10**18;
+        uint256 _supplyWei = meta.nativeToken.totalSupply() / 10**18;
         uint256 _balanceWei = address(this).balance;
         uint256 _amountToSend = (_tknValue * _balanceWei) / _supplyWei;
 
         address payable _withdrawer = payable(msg.sender);
-        nativeToken.burn(msg.sender, _tknValue);
+        meta.nativeToken.burn(msg.sender, _tknValue);
         _withdrawer.transfer(_amountToSend);
         emit Withdrawal(
             _withdrawer,
@@ -172,17 +173,17 @@ contract Pool {
     }
 
     /** can set white list but will only work if whitelisted only settings is true */
-    function setWhitelistOf(address _account, bool _state) public crt returns (bool) {
-        whitelisted[_account] = _state;
+    function setWhitelistOf(address _account, bool _state) public onlyCreator returns (bool) {
+        whitelistOf[_account] = _state;
         emit WhitelistUpdated(_account, _state);
         return true;
     }
 
-    function whitelistOf(address _account) public view returns (bool) {
-        return whitelisted[_account];
+    function whitelist(address _account) public view returns (bool) {
+        return whitelistOf[_account];
     }
 
-    function transfer(address _account, uint256 _value) public crt returns (bool) {
+    function transfer(address _account, uint256 _value) public onlyCreator returns (bool) {
         address payable _recipient = payable(_account);
         require(
             settings.creatorCanTransfer &&
@@ -196,8 +197,8 @@ contract Pool {
     }
 
     /** recieve matic but will not mint tokens */
-    function recieve() public payable crt returns (bool) {
-        emit TransferIn(_value);
+    function recieve() public payable onlyCreator returns (bool) {
+        emit TransferIn(msg.value);
         return true;
     }
 
@@ -211,30 +212,32 @@ contract Pool {
         bool _whitelisted,
         /** the creator can transfer value out of the contract */
         bool _transferable
-    ) public crt returns (bool) {
+    ) public onlyCreator returns (bool) {
         require(fundingRoundIsSetUp == false, "Pool: initial funding round has already been set up");
         require(_duration >= 1 weeks, "Pool: duration of funding round is insufficient");
         require(_required >= 0, "Pool: required value from funding round is less than 0");
+        uint256 _start = block.timestamp;
+        uint256 _end = _start + _duration;
         funding.duration = _duration;
-        funding.start = block.timestamp;
+        funding.start = _start;
         funding.end = funding.start + _duration;
         funding.required = _required;
         funding.whitelisted = _whitelisted;
         funding.transferable = _transferable;
         emit FundingRoundSetUp(
-            _durationOfFundingRound,
-            _startOfFundingRound,
-            _endOfFundingRound,
-            _requiredFromFundingRound,
-            _onlyWhitelistedAccountsCanContribute,
-            _creatorCanTransferOutOfContract
+            _duration,
+            _start,
+            _end,
+            _required,
+            _whitelisted,
+            _transferable
         );
         fundingRoundIsSetUp = true;
         return true;
     }
 
     /** our pools can interact directly with us and our extensions */
-    function interactWithDreamcatcher(string memory _commands) public crt returns (bool) {
+    function interactWithDreamcatcher(string memory _commands) public onlyCreator returns (bool) {
         /** interfact with dreamcatcher */
         /** in dreamcatcher will read the commands and then perform a swap, the contract will approve any transfers */
         /** our contracts are guarded by our DAO community and changes to them will only take effect after the period of timelock */
