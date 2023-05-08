@@ -24,29 +24,52 @@ import "blockchain/contracts/Polygon/ERC20Standards/Token.sol";
  */
 
 contract Pool {
+    /**
+    * duration: amount the funding round will go on for in seconds
+    * start: when the initial funding round is starting
+    * end: when does the initial funding round end
+    * required: what is the minimum required for this pool to successfully run 
+    * isWhitelisted: only whitelisted accounts can contribute and participate to initial funding round
+    * isTransferable: the creator of the pool can transfer value out of the pool
+     */
     struct Funding {
         uint256 duration;
         uint256 start;
         uint256 end;
         uint256 required;
-        bool whitelisted;
-        bool transferable;
+        bool isWhitelisted;
+        bool isTransferable;
     } Funding private funding;
 
-    struct Pool {
+    struct Meta {
         string name;
         address creator;
         Token nativeToken;
-    } Pool private pool;
+    } Meta private meta;
 
+    /**
+    * hasGovernance: members of this pool can propose to do swap or do something with the value in the vault
+    *
+    *
+     */
 
-    string name;
+    struct Settings {
+        bool hasGovernance;
+    } Settings private settings;
 
-    address creator;
+    struct Proposal {
+        uint256 id;
+        address proposer;
+        string caption;
+        string description;
+        uint256 yes;
+        uint256 no;
+        uint256 abstain;
+        bool passed;
+        bool executed;
+    } mapping(uint256 => Proposal) private proposals;
     
-    mapping(address => bool) private whitelisted;
-
-    Token nativeToken;
+    mapping(address => bool) private whitelistOf;
 
     event FundingRoundSetUp(
         uint256 _duration,
@@ -211,9 +234,13 @@ contract Pool {
     }
 
     /** our pools can interact directly with us and our extensions */
-    interactWithDreamcatcher(string memory _commands) public crt returns (bool) {
+    function interactWithDreamcatcher(string memory _commands) public crt returns (bool) {
         /** interfact with dreamcatcher */
         /** in dreamcatcher will read the commands and then perform a swap, the contract will approve any transfers */
         /** our contracts are guarded by our DAO community and changes to them will only take effect after the period of timelock */
+    }
+
+    function vote(uint256 _id, bool _support) public {
+        
     }
 }
