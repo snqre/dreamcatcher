@@ -1,5 +1,9 @@
 pragma solidity ^0.8.0;
 
+interface IState {
+
+}
+
 contract State {
     struct Code {
         address main;
@@ -11,5 +15,5 @@ contract State {
         uint256 reset;
     } ElectionSchedule private electionSchedule;
 
-    function updateElectionSchedule() public
+    function updateElectionSchedule() main public
 }
