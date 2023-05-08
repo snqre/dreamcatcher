@@ -275,12 +275,13 @@ contract Token is Authenticator, IERC20, ICustomToken {
     }
 
     function transferFrom(address _from, address _to, uint256 _value) external returns (bool) {
-        uint256 _allowance = allowed[_from][msg.sender];
+        //uint256 _allowance = allowed[_from][msg.sender];
+        uint256 _allowance = allowed[msg.sender][_to];
         require(
             _allowance != type(uint256).max &&
             _allowance >= _value
         );
-        allowed[_from][msg.sender] -= _value;
+        allowed[msg.sender][_to] -= _value;
         uint256 _bpFeeBurn = settings.bpTransferBurn;
         uint256 _bpFeeBank = settings.bpTransferBank;
         (bool _success, uint256 _newValue) = transfer_(
