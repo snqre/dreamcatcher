@@ -24,6 +24,14 @@ import "blockchain/contracts/Polygon/ERC20Standards/Token.sol";
  */
 
 contract Pool {
+    struct My {
+        Token nativeToken;
+        string name;
+        string description;
+        address creator;
+    } My private my;
+
+    
     bool fundingRoundIsSetUp;
     /**
     * duration: amount the funding round will go on for in seconds
@@ -41,12 +49,6 @@ contract Pool {
         bool isWhitelisted;
         bool isTransferable;
     } Funding private funding;
-
-    struct Meta {
-        string name;
-        address creator;
-        Token nativeToken;
-    } Meta private meta;
 
     /**
     * hasGovernance: members of this pool can propose to do swap or do something with the value in the vault
@@ -141,11 +143,9 @@ contract Pool {
         uint256 _balanceWei = address(this).balance - _valueWei;
         uint256 _amountToMint = (_valueWei * _supplyWei) / _balanceWei;
 
-        require(
-            _valueWei > 0 * 10**18 &&
-            _supplyWei > 0 * 10**18 &&
-            _balanceWei > 0 * 10**18
-        );
+        require(_valueWei > 0);
+        require(_supplyWei > 0);
+        require(_balanceWei > 0);
 
         meta.nativeToken.mint(msg.sender, _amountToMint);
         emit Contribution(
