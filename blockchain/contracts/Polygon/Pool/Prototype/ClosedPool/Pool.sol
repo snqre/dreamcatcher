@@ -1,5 +1,6 @@
 pragma solidity ^0.8.0;
 import "blockchain/contracts/Polygon/ERC20Standards/Token.sol";
+import "blockchain/contracts/Polygon/Pool/Prototype/ClosedPool/State.sol";
 
 /**
 * Every pool has an initial funding round
@@ -25,6 +26,13 @@ import "blockchain/contracts/Polygon/ERC20Standards/Token.sol";
 
 contract Pool {
     State state;
+    Token nativeToken;
+
+    struct Map {
+        address state;
+        address nativeToken;
+    } Map private map;
+    
     constructor (
         string memory _name,
         string memory _tokenName,
@@ -36,22 +44,16 @@ contract Pool {
         require(msg.value >= 0.01 * 10**18, "Pool: msg.value insufficient");
         require(_tokenInitialSupply >= 1, "Pool: _tokenInitialSupply insufficient");
         require(_creator != address(0), "Pool: _creator is zero address");
-
-        meta.creator = _creator;
-
+        
         /** create token contract & deploy intial supply to creator for their initial contribution */
         meta.nativeToken = new Token(_tokenName, _tokenSymbol);
         meta.nativeToken.mint(_creator, _tokenInitialSupply);
 
-        emit PoolFounded(
-            _creator,
-            _name,
-            _tokenName,
-            _tokenSymbol,
-            _tokenInitialSupply
-        );
-
         state = new State();
+        state._setUp_(_name, _description, _creator);
+
+        map.state = address(state);
+        map.nativeToken = address(nativeToken);
     }
     
     function contribute() onlyWhitelisted public payable returns (bool) {
@@ -87,6 +89,19 @@ contract Pool {
             _amountToSend
         );
         return true;
+    }
+
+    function getPoolMetaData() public view returns (string, string, address) {
+        (
+            string _name,
+            string _description,
+            address _creator
+        ) = state.get();
+        return (
+            _name,
+            _description,
+            _creator
+        );
     }
 
     /** can set white list but will only work if whitelisted only settings is true */

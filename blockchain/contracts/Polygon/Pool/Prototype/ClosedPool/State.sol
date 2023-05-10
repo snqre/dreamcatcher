@@ -1,107 +1,80 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity ^0.8.0;
-import "smart_contracts/contracts/Polygon/ERC20Standards/ERC20.sol";
 
 contract State {
-    /** basic authenticator */
     address logic;
+    address creator;
     address governor;
-    
-    modifier onlyLogic() {
-        require(msg.sender == logic);
-        _;
-    }
 
-    modifier onlyGovernor() {
-        require(msg.sender == governor);
-        _;
-    }
+    uint256 duration;
+    uint256 minDuration;
+    uint256 maxDuration;
+    uint256 start;
+    uint256 end;
+    uint256 required;
+    bool whitelisted;
+    bool transferable;
+    uint256 target;
+    uint256 finish;
 
-    /** initial funding round */
-    struct InitialFundingRound {
-        uint256 duration;
-        uint256 minDuration;
-        uint256 maxDuration;
-        uint256 start;
-        uint256 end;
-        uint256 required;
-        bool whitelisted;
-        bool transferable;
-        bool set;
-    } InitialFundingRound private initialFundingRound;
-
-    function _setUpInitialFundingRound_(
-        uint256 _duration,
-        uint256 _required,
-        bool _whitelisted,
-        bool _transferable
-    ) public onlyLogic returns (bool) {
-
-        if (initialFundingRound.minDuration != 0) {
-            require(_duration >= initialFundingRound.minDuration);
-        }
-        
-        if (initialFundingRound.maxDuration != 0) {
-            require(_duration <= initialFundingRound.maxDuration);
-        }
-
-        require(initialFundingRound.set == false);
-        uint256 _now = block.timestamp;
-        initialFundingRound.duration = _duration;
-        initialFundingRound.start = _now;
-        initialFundingRound.end = _now + _duration;
-        initialFundingRound.required = _required;
-        initialFundingRound.whitelisted = _whitelisted;
-        initialFundingRound.transferable = _transferable;
-        initialFundingRound.set = true;
-        return true;
-    }
-
-    function __updateInitialFundingRoundParam__(
-        uint256 _minDuration,
-        uint256 _maxDuration
-    ) onlyGovernor returns (bool) {
-        require(_minDuration >= 0);
-        require(_maxDuration >= _minDuration);
-        initialFundingRound.minDuration = _minDuration;
-        initialFundingRound.maxDuration = _maxDuration;
-        return true;
-    }
-
-    /** fund meta data  */
-    struct My {
-        Token nativeToken;
-        string name;
-        string description;
-    } My private my;
-
-    function _setUp_(
-        Token _nativeToken,
-        string memory _name,
-        string memory _description
-    ) public onlyLogic returns (bool) {
-        my.nativeToken = _nativeToken;
-        my.name = _name;
-        my.description = _description;
-        return true;
-    }
-
-    function _update_(
-        string memory _name,
-        string memory _description
-    ) public onlyLogic returns (bool) {
-        my.name = _name;
-        my.description = _description;
-        return true;
-    }
-
-    /** whitelist */
     mapping(address => bool) private whitelist;
-    
-    function _whitelist_(address _domain, bool _newState) public onlyLogic returns (bool) {
-        whitelist[_domain] = _newState;
+
+    constructor(
+        address _logic,         // logic contract
+        address _creator,       // creator of the pool
+        address _governor,      // dreamcatcher governor contract
+        string memory _name,    // name of the pool
+        uint256 _duration,      // duration of the initial funding round
+        uint256 _required,      // amount of matic required to pass the pool if applicable
+        bool _whitelisted,      // only whitelisted domains can participate
+        bool _transferable,     // can be transfered to external domains note you cant transfer until the funding round is officially over
+        uint256 _target,        // target amount the pool wants to reach if applicable
+        uint256 _finish         // target date the pool will end if applicable
+    ) {
+        minDuration = 0;
+        maxDuration = 0;
+
+        require(_logic != address(0));
+        require(_creator != address(0));
+        require(_governor != address(0));
+        require(_duration >= 0);
+        require(_required >= 0);
+        require(_target >= 0);
+        require(_finish >= 0);
+
+        if (_minDuration != 0) {
+            require(_duration >= _minDuration);
+            require(_minDuration <= _maxDuration);
+        }
+
+        if (_maxDuration != 0) {
+            require(_duration <= _maxDuration);
+        }
+
+        uint256 _now     = block.timestamp;
+        duration         = _duration;
+        start            = _now;
+        end              = _now + _duration;
+        required         = _required;
+        whitelisted      = _whitelisted;
+        transferable     = _transferable;
+        target           = _target;
+        finish           = _finish;
+
+        logic            = _logic;
+        creator          = _creator;
+        governor         = _governor;
+    }
+
+    function setWhitelist(address _domain, bool _state) public returns (bool) {
+        require(
+            msg.sender == logic ||
+            msg.sender == creator
+        );
+        require(_domain != address(0));
+        whitelist[_domain] = _state;
         return true;
     }
 
-    constructor() {}
+    function getWhitelist(address _domain) public view returns (bool) {return whitelist[_domain];}
 }
