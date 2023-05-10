@@ -35,6 +35,7 @@ contract Pool {
     
     constructor (
         string memory _name,
+        string memory _description,
         string memory _tokenName,
         string memory _tokenSymbol,
         uint256 _tokenInitialSupply
