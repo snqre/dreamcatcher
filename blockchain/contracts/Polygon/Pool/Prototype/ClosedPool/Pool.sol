@@ -24,92 +24,7 @@ import "blockchain/contracts/Polygon/ERC20Standards/Token.sol";
  */
 
 contract Pool {
-    struct My {
-        Token nativeToken;
-        string name;
-        string description;
-        address creator;
-    } My private my;
-
-    
-    bool fundingRoundIsSetUp;
-    /**
-    * duration: amount the funding round will go on for in seconds
-    * start: when the initial funding round is starting
-    * end: when does the initial funding round end
-    * required: what is the minimum required for this pool to successfully run 
-    * isWhitelisted: only whitelisted accounts can contribute and participate to initial funding round
-    * isTransferable: the creator of the pool can transfer value out of the pool
-     */
-    struct Funding {
-        uint256 duration;
-        uint256 start;
-        uint256 end;
-        uint256 required;
-        bool isWhitelisted;
-        bool isTransferable;
-    } Funding private funding;
-
-    /**
-    * hasGovernance: members of this pool can propose to do swap or do something with the value in the vault
-    *
-    *
-     */
-
-    struct Settings {
-        bool hasGovernance;
-    } Settings private settings;
-
-    struct Proposal {
-        uint256 id;
-        address proposer;
-        string caption;
-        string description;
-        uint256 yes;
-        uint256 no;
-        uint256 abstain;
-        bool passed;
-        bool executed;
-    } mapping(uint256 => Proposal) private proposals;
-    
-    mapping(address => bool) private whitelistOf;
-
-    event FundingRoundSetUp(
-        uint256 _duration,
-        uint256 _start,
-        uint256 _end,
-        uint256 _required,
-        bool _whitelisted,
-        bool _transferable
-    );
-
-    event Contribution(address indexed _from, uint256 _value, uint256 _mint);
-    event Withdrawal(address indexed _from, uint256 _burn, uint256 _value);
-
-    event WhitelistUpdated(address indexed _account, bool _newState);
-
-    event TransferOut(address indexed _account, uint256 _value);
-    event TransferIn(uint256 _value);
-
-    event PoolFounded(
-        address indexed _creator,
-        string _name,
-        string _tokenName,
-        string _tokenSymbol,
-        uint256 _tokenInitialSupply
-    );
-
-    modifier onlyWhitelisted() {
-        require(funding.isWhitelisted == true);
-        require(whitelistOf[msg.sender] == true);
-        _;
-    }
-
-    modifier onlyCreator() {
-        require(msg.sender == meta.creator);
-        _;
-    }
-
+    State state;
     constructor (
         string memory _name,
         string memory _tokenName,
@@ -135,6 +50,8 @@ contract Pool {
             _tokenSymbol,
             _tokenInitialSupply
         );
+
+        state = new State();
     }
     
     function contribute() onlyWhitelisted public payable returns (bool) {

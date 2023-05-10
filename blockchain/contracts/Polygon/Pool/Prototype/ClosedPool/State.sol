@@ -2,55 +2,106 @@
 pragma solidity ^0.8.0;
 import "smart_contracts/contracts/Polygon/ERC20Standards/ERC20.sol";
 
-contract State00 {
+contract State {
+    /** basic authenticator */
+    address logic;
+    address governor;
+    
+    modifier onlyLogic() {
+        require(msg.sender == logic);
+        _;
+    }
+
+    modifier onlyGovernor() {
+        require(msg.sender == governor);
+        _;
+    }
+
+    /** initial funding round */
     struct InitialFundingRound {
         uint256 duration;
+        uint256 minDuration;
+        uint256 maxDuration;
         uint256 start;
         uint256 end;
         uint256 required;
         bool whitelisted;
         bool transferable;
-    } InitialFundingRound internal initialFundingRound;
-}
+        bool set;
+    } InitialFundingRound private initialFundingRound;
 
-contract State01 {
+    function _setUpInitialFundingRound_(
+        uint256 _duration,
+        uint256 _required,
+        bool _whitelisted,
+        bool _transferable
+    ) public onlyLogic returns (bool) {
+
+        if (initialFundingRound.minDuration != 0) {
+            require(_duration >= initialFundingRound.minDuration);
+        }
+        
+        if (initialFundingRound.maxDuration != 0) {
+            require(_duration <= initialFundingRound.maxDuration);
+        }
+
+        require(initialFundingRound.set == false);
+        uint256 _now = block.timestamp;
+        initialFundingRound.duration = _duration;
+        initialFundingRound.start = _now;
+        initialFundingRound.end = _now + _duration;
+        initialFundingRound.required = _required;
+        initialFundingRound.whitelisted = _whitelisted;
+        initialFundingRound.transferable = _transferable;
+        initialFundingRound.set = true;
+        return true;
+    }
+
+    function __updateInitialFundingRoundParam__(
+        uint256 _minDuration,
+        uint256 _maxDuration
+    ) onlyGovernor returns (bool) {
+        require(_minDuration >= 0);
+        require(_maxDuration >= _minDuration);
+        initialFundingRound.minDuration = _minDuration;
+        initialFundingRound.maxDuration = _maxDuration;
+        return true;
+    }
+
+    /** fund meta data  */
     struct My {
         Token nativeToken;
         string name;
         string description;
-        address creator;
-    } My internal my;
-}
+    } My private my;
 
-contract State02 {
-    struct Settings {
-        bool governance;
-    } Settings internal settings;
-}
+    function _setUp_(
+        Token _nativeToken,
+        string memory _name,
+        string memory _description
+    ) public onlyLogic returns (bool) {
+        my.nativeToken = _nativeToken;
+        my.name = _name;
+        my.description = _description;
+        return true;
+    }
 
-contract State03 {
-    struct Proposal {
-        uint256 id;
-        address proposer;
-        string caption;
-        string description;
-        uint256 yes;
-        uint256 no;
-        uint256 abstain;
-        bool successful;
-        bool executed;
-    } mapping(uint256 =>  Proposal) internal proposal;
-}
+    function _update_(
+        string memory _name,
+        string memory _description
+    ) public onlyLogic returns (bool) {
+        my.name = _name;
+        my.description = _description;
+        return true;
+    }
 
-contract State04 {
-    mapping(address => bool) internal whitelist;
-}
+    /** whitelist */
+    mapping(address => bool) private whitelist;
+    
+    function _whitelist_(address _domain, bool _newState) public onlyLogic returns (bool) {
+        whitelist[_domain] = _newState;
+        return true;
+    }
 
-contract State05 {
-    event Contribution(address indexed _from, uint256 _value, uint256 _mint);
-    event Withdrawal(address indexed _from, uint256 _burn, uint256 _value);
-}
-
-contract State is State00, State01, State02, State03, State04, State05 {
- 
+    constructor() {}
 }
