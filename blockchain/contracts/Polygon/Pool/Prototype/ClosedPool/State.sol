@@ -1,6 +1,12 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity ^0.8.0;
 
+/** transferable collateral
+hold 2000 matic then 2000 matic worth can be transfered out and used for the transaction
+the rest will then be unloceked once the assets are present and transaction is complete
+
+ */
+
 interface IState {
     event PoolCreated(
         string _name,
@@ -78,9 +84,9 @@ contract State is IState {
             require(_duration <= _maxDuration);
         }
 
-        logic    = _logic;
-        creator  = _creator;
-        governor = _governor;
+        logic    =_logic;
+        creator  =_creator;
+        governor =_governor;
 
         uint256 _now         =block.timestamp;
         funding.begin        =_now;
