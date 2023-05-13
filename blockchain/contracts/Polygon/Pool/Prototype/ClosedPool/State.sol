@@ -8,24 +8,48 @@ the rest will then be unloceked once the assets are present and transaction is c
  */
 
 interface IState {
-    event PoolCreated(
+    event UpdateToFundingSettings(
+        uint256 _begin,
+        uint256 _duration,
+        uint256 _end,
+        uint256 _required,
+        bool _whitelisted,
+        bool _transferable,
+        bool _successful
+    );
+
+    event UpdateToHarvestSettings(
+        uint256 _secondsToHarvest,
+        uint256 _begin,
+        uint256 _duration,
+        uint256 _end
+    );
+
+    event Update(
         string _name,
-        address indexed _logic
-        address indexed _creator,
-        address indexed _governor,
-        uint256 _required
+        address _logic,
+        address _creator,
+        address _governor
+    );
+
+    event UpdateToDomain(
+        address indexed _domain,
+        bool _whitelisted,
+        bool _manager
     );
 }
 
 contract State is IState {
-    address logic;
-    address creator;
-    address governor;
-
     mapping(address => bool) private manager;
+
+    // whitelist
+    mapping(address => bool) private whitelist;
 
     struct My {
         string name;
+        address logic;
+        address creator;
+        address governor;
     }
 
     struct Funding {
@@ -60,9 +84,6 @@ contract State is IState {
 
     mapping(address => Proposal[]) private proposalsCreated;
     mapping(address => string) private proposalsVotedOn;
-
-    // whitelist
-    mapping(address => bool) private whitelist;
 
     constructor(
         address _logic,            // logic contract
@@ -138,25 +159,8 @@ contract State is IState {
         _updateWhitelist_(_logic, true);
         _updateWhitelist_(_creator, true);
 
-        emit PoolCreated(
-            _name,
-            _creator,
-            _governor,
-            _required
-        );
-    }
 
-    function _updateWhitelist_(address _domain, bool _state) public returns (bool) {
-        require(
-            msg.sender ==logic ||
-            msg.sender ==creator
-        );
-        require(_domain !=address(0));
-        whitelist[_domain] =_state;
-        return true;
     }
-
-    function whitelistOf(address _domain) public view returns (bool) {return whitelist[_domain];}
 
     receive() external payable {}
 
@@ -166,12 +170,33 @@ contract State is IState {
         _to.transfer(_valueWei);
     }
 
-    function whitelisted() public view returns (bool) {
-        funding.whitelisted;
-    }
+    function setFunding(
+        uint256 _begin,
+        uint256 _duration,
+        uint256 _end,
+        uint256 _required,
+        bool _whitelisted,
+        bool _transferable,
+        bool _successful
+    ) public {
+        require(msg.sender ==logic);
+        funding.begin        =_begin;
+        funding.duration     =_duration;
+        funding.end          =_end;
+        funding.required     =_required;
+        funding.whitelisted  =_whitelisted;
+        funding.transferable =_transferable;
+        funding.successful   =_successful;
 
-    function transferable() public view returns (bool) {
-        return funding.transferable;
+        emit UpdateToFundingSettings(
+            _begin,
+            _duration,
+            _end,
+            _required,
+            _whitelisted,
+            _transferable,
+            _successful
+        );
     }
 
     function getFunding() public view returns (
@@ -198,6 +223,26 @@ contract State is IState {
         );
     }
 
+    function setHarvest(
+        uint256 _secondsToHarvest,
+        uint256 _begin,
+        uint256 _duration,
+        uint256 _end
+    ) public {
+        require(msg.sender ==logic);
+        harvest.secondsToHarvest =_secondsToHarvest;
+        harvest.begin            =_begin;
+        harvest.duration         =_duration;
+        harvest.end              =_end;
+
+        emit UpdateToHarvestSettings(
+            _secondsToHarvest,
+            _begin,
+            _duration,
+            _end
+        );
+    }
+
     function getHarvest() public view returns (
         uint256,
         uint256,
@@ -212,45 +257,61 @@ contract State is IState {
         );
     }
 
-    function name() public view returns (string memory) {
-        return my.name;
+    function get() public view returns (
+        string,
+        address,
+        address,
+        address
+    ) {
+        return (
+            my.name,
+            my.logic,
+            my.creator,
+            my.governor
+        );
     }
 
-    function logic() public view returns (address) {
-        return logic;
+    function set(
+        string _name,
+        address _logic,
+        address _creator,
+        address _governor
+    ) public returns () {
+        my.name     =_name;
+        my.logic    =_logic;
+        my.creator  =_creator;
+        my.governor =_governor;
+
+        emit Update(
+            _name,
+            _logic,
+            _creator,
+            _governor
+        );
     }
 
-    function creator() public view returns (address) {
-        return creator;
+    function getOf() public returns (
+        bool,
+        bool
+    ) {
+        return (
+            whitelist[_domain],
+            manager[_domain]
+        );
     }
 
-    function governor() public view returns (address) {
-        return governor;
-    }
-
-    function managerOf(address _domain) public view returns (bool) {
-        return manager[_domain];
-    }
-
-    function _setLogic_(address _newAddress) public {
-        require(msg.sender ==logic);
-        logic =_newAddress;
-    }
-
-    function _setGovernor_(address _newAddress) public {
-        require(msg.sender ==governor);
-        governor =_newAddress;
-    }
-
-    function _setManager_(address _domain, bool _newBool) public {
-        require(msg.sender ==logic);
-        manager[_domain] =_newBool;
-    }
-
-    function _propose_(
-        uint256 _domain,
-        uint256 _balance
+    function setOf(
+        address _domain,
+        bool _whitelisted,
+        bool _manager
     ) public {
-        require();
+        whitelist[_domain]   =_whitelisted;
+        manager[_domain]     =_manager;
+
+        emit UpdateToDomain(
+            _domain,
+            _whitelisted,
+            _manager
+        );
     }
 }

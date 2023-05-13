@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity ^0.8.0;
 import "blockchain/contracts/Polygon/ERC20Standards/Token.sol";
 import "blockchain/contracts/Polygon/Pool/Prototype/ClosedPool/State.sol";
