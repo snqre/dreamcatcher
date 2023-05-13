@@ -253,5 +253,4 @@ contract State is IState {
     ) public {
         require();
     }
-
 }
