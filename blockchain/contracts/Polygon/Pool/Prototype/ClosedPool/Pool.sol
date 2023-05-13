@@ -6,12 +6,20 @@ contract Pool {
     State state;
     Token nativeToken;
 
+    address creator;
+
     constructor (
         string memory _name,
         string memory _description,
         string memory _tokenName,
         string memory _tokenSymbol,
-        uint256 _tokenInitialSupply
+        uint256 _tokenInitialSupply,
+        uint256 _duration,
+        uint256 _required,
+        bool _whitelisted,
+        bool _transferable,
+        uint256 _secondsToHarvest,
+        uint256 _durationHarvest
     ) payable {
         address _creator =msg.sender;
 
@@ -22,7 +30,24 @@ contract Pool {
         nativeToken =new Token(_tokenName, _tokenSymbol);
         nativeToken.mint(_creator, _tokenInitialSupply);
 
-        state =new State();
+        address _logic =address(this);
+        address _creator =msg.sender;
+        address _governor;
+
+        state =new State(
+            _logic,
+            _creator,
+            _governor,
+            _name,
+            _duration,
+            _required,
+            _whitelisted,
+            _transferable,
+            _secondsToHarvest,
+            _durationHarvest
+        );
+
+        creator =_creator;
     }
     
     function contribute() onlyWhitelisted public payable returns (bool) {
@@ -67,5 +92,29 @@ contract Pool {
         emit Withdrawal(_sender, _tokenValue, _amountToSend);
 
         return true;
+    }
+
+    function setWhitelist(address _domain, bool _state) public returns (bool) {
+        require(state.whitelisted() ==true);
+        state._updateWhitelist_(_domain, _state);
+        return true;
+    }
+
+    function getWhitelist(address _domain) public view returns (bool) {
+        require(state.whitelisted() == true);
+        return state.whitelistOf(_domain);
+    }
+
+    function transfer(address _to, uint256 _valueWei) public returns (bool) {
+        require(state.transferable() ==true);
+        require(msg.sender ==creator);
+        address payable _recipient =payable(_to);
+        _recipient.transfer(_valueWei);
+        return true;
+    }
+
+    function swap() public returns (bool) {
+        require(managerOf(msg.sender));
+        // perform swap
     }
 }

@@ -22,6 +22,8 @@ contract State is IState {
     address creator;
     address governor;
 
+    mapping(address => bool) private manager;
+
     struct My {
         string name;
     }
@@ -44,6 +46,20 @@ contract State is IState {
         uint256 duration;
         uint256 end;
     } Harvest private harvest;
+
+    struct Settings {
+        bool decentralized; // anyone can vote to where to swap or transfer funds
+        bool veto;          // managers can veto bad proposals
+    } Settings private settings;
+
+    struct Proposal {
+        string caption;
+        string description;
+        uint256 duration;
+    } Proposal private proposal;
+
+    mapping(address => Proposal[]) private proposalsCreated;
+    mapping(address => string) private proposalsVotedOn;
 
     // whitelist
     mapping(address => bool) private whitelist;
@@ -96,7 +112,7 @@ contract State is IState {
         funding.whitelisted  =_whitelisted;
         funding.transferable =_transferable;
 
-        my.name = _name;
+        my.name =_name;
 
         // -closed -no_end
         if (_secondsToHarvest ==0) {
@@ -132,20 +148,110 @@ contract State is IState {
 
     function _updateWhitelist_(address _domain, bool _state) public returns (bool) {
         require(
-            msg.sender == logic ||
-            msg.sender == creator
+            msg.sender ==logic ||
+            msg.sender ==creator
         );
-        require(_domain != address(0));
-        whitelist[_domain] = _state;
+        require(_domain !=address(0));
+        whitelist[_domain] =_state;
         return true;
     }
 
     function whitelistOf(address _domain) public view returns (bool) {return whitelist[_domain];}
 
-    function _deposit_() public payable returns (bool) {}
+    receive() external payable {}
+
     function _withdraw_(uint256 _valueWei) public {
-        require(msg.sender == logic);
-        address payable _to = payable(logic);
+        require(msg.sender ==logic);
+        address payable _to =payable(logic);
         _to.transfer(_valueWei);
     }
+
+    function whitelisted() public view returns (bool) {
+        funding.whitelisted;
+    }
+
+    function transferable() public view returns (bool) {
+        return funding.transferable;
+    }
+
+    function getFunding() public view returns (
+        uint256,
+        uint256,
+        uint256,
+        uint256,
+        uint256,
+        uint256,
+        bool,
+        bool,
+        bool
+    ) {
+        return (
+            funding.begin,
+            funding.minDuration,
+            funding.maxDuration,
+            funding.duration,
+            funding.end,
+            funding.required,
+            funding.whitelisted,
+            funding.transferable,
+            funding.successful
+        );
+    }
+
+    function getHarvest() public view returns (
+        uint256,
+        uint256,
+        uint256,
+        uint256
+    ) {
+        return (
+            harvest.secondsToHarvest,
+            harvest.begin,
+            harvest.duration,
+            harvest.end
+        );
+    }
+
+    function name() public view returns (string memory) {
+        return my.name;
+    }
+
+    function logic() public view returns (address) {
+        return logic;
+    }
+
+    function creator() public view returns (address) {
+        return creator;
+    }
+
+    function governor() public view returns (address) {
+        return governor;
+    }
+
+    function managerOf(address _domain) public view returns (bool) {
+        return manager[_domain];
+    }
+
+    function _setLogic_(address _newAddress) public {
+        require(msg.sender ==logic);
+        logic =_newAddress;
+    }
+
+    function _setGovernor_(address _newAddress) public {
+        require(msg.sender ==governor);
+        governor =_newAddress;
+    }
+
+    function _setManager_(address _domain, bool _newBool) public {
+        require(msg.sender ==logic);
+        manager[_domain] =_newBool;
+    }
+
+    function _propose_(
+        uint256 _domain,
+        uint256 _balance
+    ) public {
+        require();
+    }
+
 }
