@@ -128,7 +128,6 @@ contract State is IState {
             _governor,
             _required
         );
-        
     }
 
     function _updateWhitelist_(address _domain, bool _state) public returns (bool) {
