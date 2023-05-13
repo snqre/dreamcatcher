@@ -60,11 +60,11 @@ contract State is IState {
         uint256 _secondsToHarvest  // time in seconds until harvest period if applicable
         uint256 _durationHarvest   // duration of the harvest period
     ) {
-        require(_logic != address(0));
-        require(_creator != address(0));
-        require(_governor != address(0));
-        require(_duration >= 0);
-        require(_required >= 0);
+        require(_logic !=address(0));
+        require(_creator !=address(0));
+        require(_governor !=address(0));
+        require(_duration >=0);
+        require(_required >=0);
 
         if (_required ==0) {funding.successful =true;}
 
@@ -142,4 +142,11 @@ contract State is IState {
     }
 
     function whitelistOf(address _domain) public view returns (bool) {return whitelist[_domain];}
+
+    function _deposit_() public payable returns (bool) {}
+    function _withdraw_(uint256 _valueWei) public {
+        require(msg.sender == logic);
+        address payable _to = payable(logic);
+        _to.transfer(_valueWei);
+    }
 }
