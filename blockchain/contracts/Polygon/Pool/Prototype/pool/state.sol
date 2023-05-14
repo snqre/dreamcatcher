@@ -105,7 +105,7 @@ contract State is IState, Safety, Authenticator {
         address  _logic,
         address  _creator,
         address  _governor,
-        string   _name,
+        string   memory _name,
         uint256  _duration,
         uint256  _required,
         bool     _whitelisted
@@ -113,7 +113,7 @@ contract State is IState, Safety, Authenticator {
         require(_duration >= 0);
         require(_required >= 0);
         require(_duration >=1 weeks);
-        require(_duration <=1 years);
+        require(_duration <=9 weeks);
 
         uint256 _now         =block.timestamp;
         launch.start         =_now;
@@ -212,5 +212,4 @@ contract State is IState, Safety, Authenticator {
             governor
         );
     }
-    
 }
