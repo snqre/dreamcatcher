@@ -1,13 +1,72 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity ^0.8.0;
 
-/** transferable collateral
-hold 2000 matic then 2000 matic worth can be transfered out and used for the transaction
-the rest will then be unloceked once the assets are present and transaction is complete
-
- */
-
 interface IState {
+    /** although set functions are public they can only changed by the logic contract */
+    function withdraw(uint256 _valueWei) external;
+    function setFunding(
+        uint256 _begin,
+        uint256 _duration,
+        uint256 _end,
+        uint256 _required,
+        bool _whitelisted,
+        bool _transferable,
+        bool _successful
+    ) external;
+
+    function getFunding() external view returns (
+        uint256,
+        uint256,
+        uint256,
+        uint256,
+        uint256,
+        uint256,
+        bool,
+        bool,
+        bool
+    );
+
+    function setHarvest(
+        uint256 _secondsToHarvest,
+        uint256 _begin,
+        uint256 _duration,
+        uint256 _end
+    ) external;
+
+    function getHarvest() external view returns (
+        uint256,
+        uint256,
+        uint256,
+        uint256
+    );
+
+    function set(
+        string _name,
+        address _logic,
+        address _creator,
+        address _governor
+    ) external;
+
+    function get() external view returns (
+        string,
+        address,
+        address,
+        address
+    );
+
+    function setOf(
+        address _domain,
+        bool _isOnWhitelist,
+        bool _isManager,
+        uint256 _contribution
+    ) external;
+
+    function getOf(address _domain) external returns (
+        bool,
+        bool,
+        uint256
+    );
+
     event UpdateToFundingSettings(
         uint256 _begin,
         uint256 _duration,
@@ -32,98 +91,114 @@ interface IState {
         address _governor
     );
 
-    event UpdateToDomain(
+    event UpdateOf(
         address indexed _domain,
-        bool _whitelisted,
-        bool _manager
+        bool _isLogic,
+        bool _isCreator,
+        bool _isManager,
+        bool _isGovernor,
+        bool _isOnWhitelist,
+        uint256 _flux,
+        uint256 _guarantee,
+        uint256 _pending
+    );
+
+    event PoolCreated(
+        address  indexed _logic,
+        address  indexed _creator,
+        address  indexed _governor,
+        string   _nameOfPool,
+        uint256  _fundingRoundDuration,
+        uint256  _maticRequired,
+        bool     _onlyForWhitelisted,
+        bool     _transferable,
+        uint256  _timeUntilHarvest,
+        uint256  _durationOfHarvest
     );
 }
 
 contract State is IState {
-    mapping(address => bool) private manager;
+    string name;
+    
+    /** Profile */
+    mapping(address =>bool)      private isLogic;
+    mapping(address =>bool)      private isCreator;
+    mapping(address =>bool)      private isManager;
+    mapping(address =>bool)      private isGovernor;
+    mapping(address =>bool)      private isOnWhitelist;
+    mapping(address =>uint256)   private flux;
+    mapping(address =>uint256)   private guarantee;
+    mapping(address =>uint256)   private pending;
 
-    // whitelist
-    mapping(address => bool) private whitelist;
-
-    struct My {
-        string name;
-        address logic;
-        address creator;
-        address governor;
-    }
+    struct InitialFunding {
+        uint256 start;
+        uint256 duration;
+        uint256 end;
+        uint256 required;
+        uint256 current;
+        bool onlyWhitelisted;
+        bool managerCanTransfer;
+        bool managerCanSwap;
+        bool onlyTransferOnGuarantee;
+        bool successful;
+    } InitialFunding private initialFunding;
 
     struct Funding {
+        uint256 begin;
+        uint256 duration;
+        uint256 end;
+        uint256 required;
+        bool isWhitelisted;
+        bool allowTransfer;
+        bool allowTransferOnlyOnGuarantee;
+        bool isSuccessful;
+    } Funding private funding;
+
+    struct Harvest {
+        uint256 minSecondsToHarvest;
+        uint256 maxSecondsToHarvest;
+        uint256 secondsToHarvest;
         uint256 begin;
         uint256 minDuration;
         uint256 maxDuration;
         uint256 duration;
         uint256 end;
-        uint256 required;
-        bool whitelisted;
-        bool transferable;
-        bool successful;
-    } Funding private funding;
-
-    struct Harvest {
-        uint256 secondsToHarvest;
-        uint256 begin;
-        uint256 duration;
-        uint256 end;
     } Harvest private harvest;
 
-    struct Settings {
-        bool decentralized; // anyone can vote to where to swap or transfer funds
-        bool veto;          // managers can veto bad proposals
-    } Settings private settings;
-
-    struct Proposal {
-        string caption;
-        string description;
+    struct Yield {
+        uint256 start;
         uint256 duration;
-    } Proposal private proposal;
-
-    mapping(address => Proposal[]) private proposalsCreated;
-    mapping(address => string) private proposalsVotedOn;
+        uint256 end;
+    }
 
     constructor(
-        address _logic,            // logic contract
-        address _creator,          // creator of the pool
-        address _governor,         // dreamcatcher governor contract
-        string memory _name,       // name of the pool
-        uint256 _duration,         // duration of the initial funding round
-        uint256 _required,         // amount of matic required to pass the pool if applicable
-        bool _whitelisted,         // only whitelisted domains can participate
-        bool _transferable         // can be transfered to external domains note you cant transfer until the funding round is officially over
-        uint256 _secondsToHarvest  // time in seconds until harvest period if applicable
-        uint256 _durationHarvest   // duration of the harvest period
+        
     ) {
         require(_logic !=address(0));
         require(_creator !=address(0));
         require(_governor !=address(0));
         require(_duration >=0);
         require(_required >=0);
+        require(_secondsToHarvest >= 0);
+        require(_durationHarvest >= 0);
 
         if (_required ==0) {funding.successful =true;}
 
-        // get minDuration && maxDuration from governor
-        uint256 _minDuration;
-        uint256 _maxDuration;
+        uint256 _minDuration =1 weeks;
+        uint256 _maxDuration =48 weeks;
 
-        funding.minDuration =;
-        funding.maxDuration =;
+        require(_minDuration >= 0);
+        require(_maxDuration >= _minDuration);
 
-        if (_minDuration !=0) {
-            require(_duration >= _minDuration);
-            require(_minDuration <= _maxDuration);
-        }
+        funding.minDuration =_minDuration;
+        funding.maxDuration =_maxDuration;
 
-        if (_maxDuration !=0) {
-            require(_duration <= _maxDuration);
-        }
+        require(_duration <= _maxDuration);
+        require(_duration >= _minDuration);
 
-        logic    =_logic;
-        creator  =_creator;
-        governor =_governor;
+        my.logic    =_logic;
+        my.creator  =_creator;
+        my.governor =_governor;
 
         uint256 _now         =block.timestamp;
         funding.begin        =_now;
@@ -135,68 +210,70 @@ contract State is IState {
 
         my.name =_name;
 
-        // -closed -no_end
-        if (_secondsToHarvest ==0) {
+        harvest.minDuration =_minDuration;
+        harvest.maxDuration =_maxDuration;
 
-            harvest.secondsToHarvest =0;
-            harvest.begin =0;
-            harvest.duration =0;
-            harvest.end =0;
-        }
+        require(_durationHarvest <=_minDuration);
+        require(_durationHarvest >=_maxDuration);
 
-        // -closed -w_end
-        if (_secondsToHarvest !=0) {
+        uint256 _minSecondsToHarvest =1 weeks;
+        uint256 _maxSecondsToHarvest =480 weeks;
 
-            require(_secondsToHarvest >=_now +_duration);
+        require(_minSecondsToHarvest >=0);
+        require(_maxSecondsToHarvest >=_minSecondsToHarvest);
 
-            harvest.secondsToHarvest =_secondsToHarvest;
-            harvest.begin =_now +_secondsToHarvest;
-            harvest.duration =_durationHarvest;
-            harvest.end =_now +_secondsToHarvest +_durationHarvest;
-        }
+        require(_secondsToHarvest >=_minSecondsToHarvest);
+        require(_secondsToHarvest <=_maxSecondsToHarvest);
 
-        // the creator needs to be able to contribute if the pool is whitelisted as well as the logic contract to move funds from logic to state
-        _updateWhitelist_(_logic, true);
-        _updateWhitelist_(_creator, true);
+        harvest.secondsToHarvest =_secondsToHarvest;
+        harvest.begin =funding.end +_secondsToHarvest;
+        harvest.duration =_durationHarvest;
+        harvest.end =harvest.begin +_durationHarvest;
 
-
+        emit PoolCreated(
+            _logic,
+            _creator,
+            _governor,
+            _name,
+            _duration,
+            _required,
+            _whitelisted,
+            _transferable,
+            _secondsToHarvest,
+            _durationHarvest
+        );
     }
 
-    receive() external payable {}
-
-    function _withdraw_(uint256 _valueWei) public {
+    function withdraw(uint256 _valueWei) public {
         require(msg.sender ==logic);
         address payable _to =payable(logic);
         _to.transfer(_valueWei);
     }
 
     function setFunding(
-        uint256 _begin,
-        uint256 _duration,
-        uint256 _end,
-        uint256 _required,
-        bool _whitelisted,
-        bool _transferable,
-        bool _successful
-    ) public {
-        require(msg.sender ==logic);
-        funding.begin        =_begin;
-        funding.duration     =_duration;
-        funding.end          =_end;
-        funding.required     =_required;
-        funding.whitelisted  =_whitelisted;
-        funding.transferable =_transferable;
-        funding.successful   =_successful;
+        uint256  _begin,
+        uint256  _duration,
+        uint256  _end,
+        uint256  _required,
+        bool     _isWhitelisted,
+        bool     _allowTransfer,
+        bool     _allowTransferOnlyOnGUarantee,
+        bool     _isSuccessful
 
-        emit UpdateToFundingSettings(
-            _begin,
-            _duration,
-            _end,
-            _required,
-            _whitelisted,
-            _transferable,
-            _successful
-        );
+    ) public {
+        require(isLogic[msg.sender]);
+        Funding memory _newFundingSettings =Funding({
+            begin:                           _begin,
+            duration:                        _duration,
+            end:                             _end,
+            required:                        _required,
+            isWhitelisted:                   _isWhitelisted,
+            allowTransfer:                   _allowTransfer,
+            allowTransferOnlyOnGuarantee:    _allowTransferOnlyOnGuarantee,
+            isSuccessful:                    _isSuccessful
+        });
+        
+        funding =_newFundingSettings;
     }
 
     function getFunding() public view returns (
@@ -204,114 +281,79 @@ contract State is IState {
         uint256,
         uint256,
         uint256,
-        uint256,
-        uint256,
+        bool,
         bool,
         bool,
         bool
+
     ) {
         return (
             funding.begin,
-            funding.minDuration,
-            funding.maxDuration,
             funding.duration,
             funding.end,
             funding.required,
-            funding.whitelisted,
-            funding.transferable,
-            funding.successful
-        );
-    }
-
-    function setHarvest(
-        uint256 _secondsToHarvest,
-        uint256 _begin,
-        uint256 _duration,
-        uint256 _end
-    ) public {
-        require(msg.sender ==logic);
-        harvest.secondsToHarvest =_secondsToHarvest;
-        harvest.begin            =_begin;
-        harvest.duration         =_duration;
-        harvest.end              =_end;
-
-        emit UpdateToHarvestSettings(
-            _secondsToHarvest,
-            _begin,
-            _duration,
-            _end
-        );
-    }
-
-    function getHarvest() public view returns (
-        uint256,
-        uint256,
-        uint256,
-        uint256
-    ) {
-        return (
-            harvest.secondsToHarvest,
-            harvest.begin,
-            harvest.duration,
-            harvest.end
-        );
-    }
-
-    function get() public view returns (
-        string,
-        address,
-        address,
-        address
-    ) {
-        return (
-            my.name,
-            my.logic,
-            my.creator,
-            my.governor
-        );
-    }
-
-    function set(
-        string _name,
-        address _logic,
-        address _creator,
-        address _governor
-    ) public returns () {
-        my.name     =_name;
-        my.logic    =_logic;
-        my.creator  =_creator;
-        my.governor =_governor;
-
-        emit Update(
-            _name,
-            _logic,
-            _creator,
-            _governor
-        );
-    }
-
-    function getOf() public returns (
-        bool,
-        bool
-    ) {
-        return (
-            whitelist[_domain],
-            manager[_domain]
+            funding.isWhitelisted,
+            funding.allowTransfer,
+            funding.allowTransferOnlyOnGuarantee,
+            funding.isSuccessful
         );
     }
 
     function setOf(
-        address _domain,
-        bool _whitelisted,
-        bool _manager
-    ) public {
-        whitelist[_domain]   =_whitelisted;
-        manager[_domain]     =_manager;
+        address  _domain,
+        bool     _isLogic,
+        bool     _isCreator,
+        bool     _isManager,
+        bool     _isGovernor,
+        bool     _isOnWhitelist,
+        uint256  _flux,
+        uint256  _guarantee,
+        uint256  _pending
 
-        emit UpdateToDomain(
+    ) public {
+        require(isLogic[msg.sender]);
+        isLogic         [_domain] =_isLogic;
+        isCreator       [_domain] =_isCreator;
+        isManager       [_domain] =_isManager;
+        isGovernor      [_domain] =_isGovernor;
+        isOnWhitelist   [_domain] =_isOnWhitelist;
+        flux            [_domain] =_flux;
+        guarantee       [_domain] =_guagantee;
+        pending         [_domain] =_pending;
+
+        emit UpdateOf(
             _domain,
-            _whitelisted,
-            _manager
+            _isLogic,
+            _isCreator,
+            _isManager,
+            _isGovernor,
+            _isOnWhitelist,
+            _flux,
+            _guarantee,
+            _pending
+        );
+    }
+
+    function getOf(address _domain) public view returns (
+        bool     _isLogic,
+        bool     _isCreator,
+        bool     _isManager,
+        bool     _isGovernor,
+        bool     _isOnWhitelist,
+        uint256  _flux,
+        uint256  _guarantee,
+        uint256  _pending
+
+    ) {
+        return (
+            isLogic         [_domain],
+            isCreator       [_domain],
+            isManager       [_domain],
+            isGovernor      [_domain],
+            isOnWhitelist   [_domain],
+            flux            [_domain],
+            guarantee       [_domain],
+            pending         [_domain]
         );
     }
 }
