@@ -5,18 +5,8 @@ import "blockchain/contracts/Polygon/Pool/Prototype/pool/token.sol";
 import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/IERC20.sol";
 
 interface ILogic {
-    function contribute() public payable returns (bool);
-    function withdraw(uint256 _tokens_to_burn) public returns (bool);
-}
-
-contract Safety {
-    bool locked;
-    modifier one_at_a_time() {
-        require(locked ==false);
-        locked =true;
-        _;
-        locked =false;
-    }
+    function contribute() external payable returns (bool);
+    function withdraw(uint256 _tokens_to_burn) external returns (bool);
 }
 
 contract Logic is ILogic, Safety {

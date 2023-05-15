@@ -1,0 +1,45 @@
+{
+	"compiler": {
+		"version": "0.8.18+commit.87f61d96"
+	},
+	"language": "Solidity",
+	"output": {
+		"abi": [],
+		"devdoc": {
+			"kind": "dev",
+			"methods": {},
+			"version": 1
+		},
+		"userdoc": {
+			"kind": "user",
+			"methods": {},
+			"version": 1
+		}
+	},
+	"settings": {
+		"compilationTarget": {
+			"blockchain/contracts/Polygon/Pool/Prototype/pool/state.sol": "Safety"
+		},
+		"evmVersion": "paris",
+		"libraries": {},
+		"metadata": {
+			"bytecodeHash": "ipfs"
+		},
+		"optimizer": {
+			"enabled": false,
+			"runs": 200
+		},
+		"remappings": []
+	},
+	"sources": {
+		"blockchain/contracts/Polygon/Pool/Prototype/pool/state.sol": {
+			"keccak256": "0xb52880f02cc85dfea8152f22d21e58684c7adb129bb971f1400c58ec3fc2851b",
+			"license": "GPL-2.0-or-later",
+			"urls": [
+				"bzz-raw://d0cba21713aa782e18fe19c3e32f491cd0332b77e70beef1e3ffacff2e6d7a7c",
+				"dweb:/ipfs/QmUV99JrSCcgfAmgxQBYgcU9zng9kY3C4TbB6CxcQJ4apK"
+			]
+		}
+	},
+	"version": 1
+}
