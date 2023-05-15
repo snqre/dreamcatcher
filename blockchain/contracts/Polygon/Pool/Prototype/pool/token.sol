@@ -25,8 +25,6 @@ contract Token is IERC20, ERC20 {
             _to,
             _value_in_wei *10 **18
         );
-
-        return true;
     }
 
     function burn(

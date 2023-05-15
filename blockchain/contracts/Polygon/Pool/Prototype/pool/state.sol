@@ -230,6 +230,8 @@ contract State is IState, Safety, Authenticator {
     }
 
     function deposit() external payable {
+        address _from =msg.sender;
+        uint256 _value_of_matic =msg.value;
         emit Deposit(
             _from,
             _value_of_matic
@@ -237,6 +239,8 @@ contract State is IState, Safety, Authenticator {
     }
 
     fallback() external payable {
+        address _from =msg.sender;
+        uint256 _value_of_matic =msg.value;
         emit Deposit(
             _from,
             _value_of_matic
