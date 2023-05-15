@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 import "blockchain/contracts/Polygon/Pool/Prototype/pool/state.sol";
 import "blockchain/contracts/Polygon/Pool/Prototype/pool/token.sol";
 import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/IERC20.sol";
+import "blockchain/contracts/Polygon/Pool/Prototype/pool/lib.sol";
 
 interface ILogic {
     function contribute() external payable returns (bool);
@@ -45,6 +46,8 @@ contract Logic is ILogic, Safety {
             _token_symbol
         );
 
+        send_matic_to_state_(msg.value);
+
         native_token.mint(
             _creator,
             _token_initial_supply
@@ -64,6 +67,26 @@ contract Logic is ILogic, Safety {
             _new_flux_value
         );
     }
+    // private
+    function deposit_matic_(uint256 _value_in_wei) private payable {
+        // route deposit to state
+        address payable _recipient = payable(address(state));
+        _recipient.transfer(_value_in_wei);
+    }
+
+    function withdraw_matic_(address _to, uint256 _value_in_wei) private {
+            // route from state to address
+            state.withdraw(_value_in_wei);
+            address payable _recipient = payable(_to);
+    }
+
+    function mint_(address _to, uint256 _value_in_wei) private {
+        native_token.mint(_to, _value_in_wei);
+    }
+
+    function burn_(address _from, uint256 _value_in_wei) private {
+        native_token.burn(_from, _value_in_wei);
+    }
 
     function contribute() public payable one_at_a_time returns (bool) {
         (
@@ -74,10 +97,17 @@ contract Logic is ILogic, Safety {
             bool     _success
         ) =state.pull_launch();
 
-        uint256 _now             =block.timestamp;
-        uint256 _value_in_wei    =msg.value;
-        uint256 _supply_in_wei   =native_token.totalSupply() /10 **18;
-        uint256 _balance_in_wei  =address(this).balance -_value_in_wei;
+        uint256 _now =block.timestamp;
+        uint256 _value_in_wei =msg.value;
+        uint256 _supply_in_wei =Lib._convert_to_int(native_token.totalSupply());
+        uint256 _balance_in_wei =address(this).balance -_value_in_wei;
+        
+        uint256 _amount_to_mint =Lib._how_much_to_mint(
+            _value_in_wei, 
+            _supply_in_wei, 
+            _balance_in_wei
+        );
+
         uint256 _amount_to_mint  =(_value_in_wei *_supply_in_wei) /_balance_in_wei;
 
         require(_value_in_wei >0, "logic: invalid math");
@@ -94,8 +124,7 @@ contract Logic is ILogic, Safety {
 
         if (_whitelisted) {require(_is_on_whitelist);}
 
-        address payable _to =payable(address(state));
-        _to.transfer(_value_in_wei);
+        send_matic_to_state_(_value_in_wei);
         
         native_token.mint(
             msg.sender,
@@ -135,8 +164,9 @@ contract Logic is ILogic, Safety {
             msg.sender,
             _tokens_to_burn
         );
-
-        state.withdraw(_amount_to_send);
+        // state > logic > withdrawer
+        receive_matic_from_state_(_amount_to_send);
+        _burner.transfer(_amount_to_send);
 
         (
             bool _is_manager,

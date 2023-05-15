@@ -197,7 +197,7 @@ contract State is IState, Safety, Authenticator {
             _whitelisted
         );
     }
-
+    
     function push_profile(
         address  _address,
         bool     _is_manager,
