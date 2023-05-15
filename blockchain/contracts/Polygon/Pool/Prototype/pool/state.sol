@@ -55,6 +55,16 @@ interface IState {
         uint256
     );
 
+    event Deposit(
+        address indexed _from,
+        uint256 _value_of_matic
+    );
+
+    event Withdraw(
+        address indexed _to,
+        uint256 _value_of_matic
+    );
+
     event UpdateToYield(
         uint256  _start,
         uint256  _end
@@ -216,6 +226,20 @@ contract State is IState, Safety, Authenticator {
             is_manager      [_address],
             is_on_Whitelist [_address],
             flux            [_address]
+        );
+    }
+
+    function deposit() external payable {
+        emit Deposit(
+            _from,
+            _value_of_matic
+        );
+    }
+
+    fallback() external payable {
+        emit Deposit(
+            _from,
+            _value_of_matic
         );
     }
 
