@@ -96,7 +96,7 @@ interface IState {
 contract Safety {
     bool locked;
     modifier one_at_a_time() {
-        require(locked ==false);
+        require(locked ==false, "state: locked ==false");
         locked =true;
         _;
         locked =false;
@@ -106,19 +106,19 @@ contract Safety {
 contract Authenticator {
     address logic;
     modifier only_logic() {
-        require(msg.sender ==logic);
+        require(msg.sender ==logic, "state: msg.sender !=logic");
         _;
     }
 
     address creator;
     modifier only_creator() {
-        require(msg.sender ==creator);
+        require(msg.sender ==creator, "state: msg.sender !=creator");
         _;
     }
 
     address governor;
     modifier only_governor() {
-        require(msg.sender ==governor);
+        require(msg.sender ==governor, "state: msg.sender !=governor");
         _;
     }
 }
@@ -156,10 +156,9 @@ contract State is IState, Safety, Authenticator {
         uint256  _required,
         bool     _whitelisted
     ) {
-        require(_duration >= 0);
-        require(_required >= 0);
-        require(_duration >=1 weeks);
-        require(_duration <=9 weeks);
+        require(_required >= 0, "state: _required !>=0");
+        require(_duration >=1 weeks, "state: _duration !>=1 weeks");
+        require(_duration <=9 weeks, "state: _duration !<=9 weeks");
 
         uint256 _now         =block.timestamp;
         launch.start         =_now;
@@ -169,8 +168,8 @@ contract State is IState, Safety, Authenticator {
         
         if (_required ==0) {launch.success =true;}
 
-        require(_logic !=address(0));
-        require(_creator !=address(0));
+        require(_logic !=address(0), "state: _logic ==address(0)");
+        require(_creator !=address(0), "state: _creator ==address(0)");
 
         logic    =_logic;
         creator  =_creator;
@@ -231,9 +230,9 @@ contract State is IState, Safety, Authenticator {
         address _governor
         
     ) public only_logic one_at_a_time {
-        require(_logic !=address(0));
-        require(_creator !=address(0));
-        require(_governor !=address(0));
+        require(_logic !=address(0), "state: _logic ==address(0)");
+        require(_creator !=address(0), "state: _creator ==address(0)");
+        require(_governor !=address(0), "state: _governor ==address(0)");
 
         logic =_logic;
         creator =_creator;
@@ -304,8 +303,8 @@ contract State is IState, Safety, Authenticator {
         uint256 _end
 
     ) public only_logic one_at_a_time {
-        require(_start >=launch.end +1 weeks);
-        require(_end >=_start +1 weeks);
+        require(_start >=launch.end +1 weeks, "state: _start !>=launch.end");
+        require(_end >=_start +1 weeks, "state: _end !>=_start");
         yield.start  =_start;
         yield.end    =_end;
 

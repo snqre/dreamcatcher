@@ -7,7 +7,8 @@ contract Token is IERC20, ERC20 {
     address private owner;
 
     modifier only_owner() {
-        require(msg.sender ==owner);
+        address _operator =msg.sender;
+        require(_operator ==owner);
         _;
     }
 
@@ -23,15 +24,16 @@ contract Token is IERC20, ERC20 {
 
     function mint(
         address _to,
-        uint256 _tokens_to_mint
+        uint256 _value_in_wei
 
     ) public only_owner returns (bool) {
         require(_to !=address(0));
-        require(_tokens_to_mint >=0);
+        require(_value_in_wei >=0);
+        uint256 _value =_value_in_wei *10 **18;
 
         super._mint(
             _to,
-            _tokens_to_mint *10 **18
+            _value
         );
 
         return true;
