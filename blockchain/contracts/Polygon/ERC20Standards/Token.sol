@@ -28,6 +28,7 @@ contract Token is ERC20 {
             "Token: msg.sender != owner || _from == address(0) || _value < 0"
         );
         _burn(_from, _value * 10**18);
+        
         return true;
     }
 }

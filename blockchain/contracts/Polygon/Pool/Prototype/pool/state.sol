@@ -2,14 +2,14 @@
 pragma solidity ^0.8.0;
 
 interface IState {
-    function update_profile(
+    function push_profile(
         address  _address,
         bool     _is_manager,
         bool     _is_on_whitelist,
         uint256  _flux
     ) external;
 
-    function get_profile(address _address) external view returns (
+    function pull_profile(address _address) external view returns (
         bool,
         bool,
         uint256
@@ -17,16 +17,55 @@ interface IState {
 
     function withdraw(uint256 _value_in_wei) external;
 
-    function update_authenticator(
+    function push_authenticator(
         address _logic,
         address _creator,
         address _governor
     ) external;
 
-    function get_authenticator() external view returns (
+    function pull_authenticator() external view returns (
         address,
         address,
         address
+    );
+
+    function push_launch(
+        uint256 _start,
+        uint256 _end,
+        uint256 _required,
+        bool _whitelisted,
+        bool _success
+    ) external;
+
+    function pull_launch() external view returns (
+        uint256,
+        uint256,
+        uint256,
+        bool,
+        bool
+    );
+
+    function push_yield(
+        uint256 _start,
+        uint256 _end
+    ) external; 
+
+    function pull_yield() external view returns (
+        uint256,
+        uint256
+    );
+
+    event UpdateToYield(
+        uint256  _start,
+        uint256  _end
+    );
+
+    event UpdateToLaunch(
+        uint256  _start,
+        uint256  _end,
+        uint256  _required,
+        bool     _whitelisted,
+        bool     _success
     );
 
     event UpdateToAuthenticator(
@@ -101,6 +140,13 @@ contract State is IState, Safety, Authenticator {
 
     Launch launch;
 
+    struct Yield {
+        uint256 start;
+        uint256 end;
+    }
+
+    Yield yield;
+
     constructor(
         address  _logic,
         address  _creator,
@@ -143,7 +189,7 @@ contract State is IState, Safety, Authenticator {
         );
     }
 
-    function update_profile(
+    function push_profile(
         address  _address,
         bool     _is_manager,
         bool     _is_on_whitelist,
@@ -162,7 +208,7 @@ contract State is IState, Safety, Authenticator {
         );
     }
 
-    function get_profile(address _address) public view returns (
+    function pull_profile(address _address) public view returns (
         bool,
         bool,
         uint256
@@ -179,7 +225,7 @@ contract State is IState, Safety, Authenticator {
         _to.transfer(_value_in_wei);
     }
 
-    function update_authenticator(
+    function push_authenticator(
         address _logic,
         address _creator,
         address _governor
@@ -200,7 +246,7 @@ contract State is IState, Safety, Authenticator {
         );
     }
 
-    function get_authenticator() public view returns (
+    function pull_authenticator() public view returns (
         address,
         address,
         address
@@ -210,6 +256,73 @@ contract State is IState, Safety, Authenticator {
             logic,
             creator,
             governor
+        );
+    }
+
+    function push_launch(
+        uint256 _start,
+        uint256 _end,
+        uint256 _required,
+        bool _whitelisted,
+        bool _success
+
+    ) public only_logic one_at_a_time {
+        launch.start         =_start;
+        launch.end           =_end;
+        launch.required      =_required;
+        launch.whitelisted   =_whitelisted;
+        launch.success       =_success;
+
+        emit UpdateToLaunch(
+            _start,
+            _end,
+            _required,
+            _whitelisted,
+            _success
+        );
+    }
+
+    function pull_launch() public view returns (
+        uint256,
+        uint256,
+        uint256,
+        bool,
+        bool
+
+    ) {
+        return (
+            launch.start,
+            launch.end,
+            launch.required,
+            launch.whitelisted,
+            launch.success
+        );
+    }
+
+    function push_yield(
+        uint256 _start,
+        uint256 _end
+
+    ) public only_logic one_at_a_time {
+        require(_start >=launch.end +1 weeks);
+        require(_end >=_start +1 weeks);
+        yield.start  =_start;
+        yield.end    =_end;
+
+        emit UpdateToYield(
+            _start,
+            _end
+        );
+    }
+
+    function pull_yield() public view returns (
+        uint256,
+        uint256
+
+    ) {
+        return (
+            yield.start,
+            yield.end
         );
     }
 }
