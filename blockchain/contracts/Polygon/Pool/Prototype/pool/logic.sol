@@ -5,189 +5,214 @@ import "blockchain/contracts/Polygon/Pool/Prototype/pool/token.sol";
 import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/IERC20.sol";
 import "blockchain/contracts/Polygon/Pool/Prototype/pool/lib.sol";
 
-interface ILogic {
-    function contribute() external payable returns (bool);
-    function withdraw(uint256 _tokens_to_burn) external returns (bool);
-}
+contract Logic {
 
-contract Logic is ILogic, Safety {
     State state;
     Token native_token;
 
+    struct My {
+
+        address state;
+        address native_token;
+        address creator;
+        address manager;
+
+    }
+
+    struct Funding {
+
+        uint256 start;
+        uint256 end;
+        uint256 required;
+        bool whitelisted;
+        bool success;
+
+    }
+
+    struct Persona {
+
+        bool is_on_whitelist;
+
+    }
+
     constructor(
+
+        address _admin,
+        address _manager,
         string memory _name,
-        uint256 _duration,
-        uint256 _required,
+        string memory _description,
+        uint256 _funding_start,
+        uint256 _funding_end,
+        uint256 _funding_required,
         bool _whitelisted,
         string memory _token_name,
         string memory _token_symbol,
-        uint256 _token_initial_supply
+        uint8 _token_decimals,
+        uint256 _initial_supply
 
     ) payable {
-        require(msg.value >0.01 *10 **18);
-        require(_token_initial_supply >=1);
 
-        address _logic       =address(this);
-        address _creator     =msg.sender;
-        address _governor    =msg.sender;
+        uint256 _min_duration = 1 weeks;
 
-        state =new State(
-            _logic,
-            _creator,
-            _governor,
+        require( _funding_start >= 0 );
+        require( _funding_end >= _funding_start + _min_duration );
+        require( _funding_required >= 0 );
+        require( msg.value >= 1 );
+        require( _initial_supply >= 1 );
+
+        state = new State(
+
+            address( this ),
+            msg.sender,
             _name,
-            _duration,
-            _required,
+            _description,
+            _funding_start,
+            _funding_end,
+            _funding_required,
             _whitelisted
+
         );
 
-        native_token =new Token(
+        require( _token_decimals <= 18 );
+        require( _token_decimals >= 0 );
+
+        native_token = new Token(
+
             _token_name,
-            _token_symbol
+            _token_symbol,
+            _token_decimals
+
         );
 
-        send_matic_to_state_(msg.value);
+        mint_( _initial_supply );
 
-        native_token.mint(
-            _creator,
-            _token_initial_supply
-        );
+        my.state = address( state );
+        my.native_token = address( native_token );
 
-        (
-            bool     _is_manager,
-            bool     _is_on_whitelist,
-            uint256  _flux
-        ) =state.pull_profile(_creator);
-
-        uint256 _new_flux_value =_flux +msg.value;
-        state.push_profile(
-            _creator, 
-            true, 
-            true, 
-            _new_flux_value
-        );
-    }
-    // private
-    function deposit_matic_(uint256 _value_in_wei) private payable {
-        // route deposit to state
-        address payable _recipient = payable(address(state));
-        _recipient.transfer(_value_in_wei);
     }
 
-    function withdraw_matic_(address _to, uint256 _value_in_wei) private {
-            // route from state to address
-            state.withdraw(_value_in_wei);
-            address payable _recipient = payable(_to);
+    function deposit_( uint256 _value ) private payable {
+
+        address payable _to = payable( address( state ));
+
+        _to.transfer( _value );
+
     }
 
-    function mint_(address _to, uint256 _value_in_wei) private {
-        native_token.mint(_to, _value_in_wei);
+    function withdraw_( address _to, uint256 _value ) private {
+        // get matic from the state contract
+        state.withdraw( _value );
+
+        address payable _recipient = payable( _to );
+        // send the matic to the address
+        _recipient.transfer( _value );
+
     }
 
-    function burn_(address _from, uint256 _value_in_wei) private {
-        native_token.burn(_from, _value_in_wei);
+    function deposit_erc20_( address _contract, uint256 _value ) private {
+        // ask for the token from the caller
+        address _from = msg.sender;
+        address _to = address( state );
+        // send the token to the state state address
+        IERC20 _token = IERC20( _contract );
+        _token.transferFrom( _from,  _to, _value);
+
     }
 
-    function contribute() public payable one_at_a_time returns (bool) {
-        (
-            uint256  _start,
-            uint256  _end,
-            uint256  _required,
-            bool     _whitelisted,
-            bool     _success
-        ) =state.pull_launch();
+    function withdraw_erc20_( address _contract, uint256 _value ) private {
 
-        uint256 _now =block.timestamp;
-        uint256 _value_in_wei =msg.value;
-        uint256 _supply_in_wei =Lib._convert_to_int(native_token.totalSupply());
-        uint256 _balance_in_wei =address(this).balance -_value_in_wei;
-        
-        uint256 _amount_to_mint =Lib._how_much_to_mint(
-            _value_in_wei, 
-            _supply_in_wei, 
-            _balance_in_wei
-        );
+        address _to = msg.sender;
+        // grab the token from the state contract
+        state.withdraw_erc20( _contract, _value );
+        // re route the token transfer to the caller
+        IERC20 _token = IERC20( _contract );
+        _token.transfer( _to, _value );
 
-        uint256 _amount_to_mint  =(_value_in_wei *_supply_in_wei) /_balance_in_wei;
+    }
 
-        require(_value_in_wei >0, "logic: invalid math");
-        require(_supply_in_wei >0, "logic: invalid math");
-        require(_balance_in_wei >0, "logic: invalid math");
+    function mint_( uint256 _value ) private {
 
-        require(_now <=_end, "logic: launch funding period has expired");
+        address _to = msg.sender;
+        // mint and transfer to caller
+        native_token.mint( _value );
+        native_token.transfer( _to, _value );
 
-        (
-           bool  _is_manager,
-           bool  _is_on_whitelist,
-           uint256   _flux 
-        ) =state.pull_profile(msg.sender);  
+    }
 
-        if (_whitelisted) {require(_is_on_whitelist);}
+    function burn_( uint256 _value ) private {
 
-        send_matic_to_state_(_value_in_wei);
-        
-        native_token.mint(
-            msg.sender,
-            _amount_to_mint
-        );
+        address _from = msg.sender;
+        address _to = address( this );
+        // transfer from caller and burn
+        native_token.transferFrom( _from, _to, _value );
+        native_token.burn( _value );
 
-        uint256 _new_flux_value =_flux +_value_in_wei;
-        state.push_profile(
-            msg.sender, 
-            _is_manager, 
-            _is_on_whitelist, 
-            _new_flux_value
-        );
+    }
+
+    function contribute( uint256 _id ) public payable returns ( bool ) {
+        // request funding data from state
+        Funding _funding = state.funding( _id );
+        /**
+        * _v: value
+        * _s: supply
+        * _b: balance
+        * _m: amount to mint
+         */
+        uint256 _v = msg.value;
+        uint256 _s = native_token.totalSupply();
+        uint256 _b = address( this ).balance - _v;
+        uint256 _m = Lib._how_much_to_mint( _v, _s, _b );
+
+        require( _v > 0 );
+        require( _s > 0 );
+        require( _b > 0 );
+        // funding round is still ongoing
+        require( now <= _funding.end );
+
+        Persona _persona = state.persona_of( msg.sender );
+
+        if ( _funding.whitelisted ) { require( _persona.is_on_whitelist ); }
+        // re route matic to state contract
+        deposit_( _v );
+        // mint & transger token to caller
+        mint_( _m );
 
         return true;
+
     }
 
-    function withdraw(uint256 _tokens_to_burn) public one_at_a_time returns (bool) {
-        (
-            uint256  _start,
-            uint256  _end,
-            uint256  _required,
-            bool     _whitelisted,
-            bool     _success
-        ) =state.pull_launch();
+    function withdraw( uint256 _value ) public returns ( bool ) {
+        /**
+        * _a: amount to burn
+        * _s: supply
+        * _b: balance
+        * _v: value
+         */
+        uint256 _a = _value;
+        uint256 _s = native_token.totalSupply();
+        uint256 _b = address( this ).balance;
+        uint256 _v = Lib._how_much_to_send( _a, _s, _b );
 
-        uint256 _now             =block.timestamp;
-        uint256 _supply_in_wei   =native_token.totalSupply() /10 **18;
-        uint256 _balance_in_wei  =address(this).balance;
-        uint256 _amount_to_send  =(_tokens_to_burn *_balance_in_wei) /_supply_in_wei;
-        
-        if (_required ==0) {require(_now <=_end);}
-        else {require(_success ==false);}
-
-        address payable _burner =payable(msg.sender);
-        native_token.burn(
-            msg.sender,
-            _tokens_to_burn
-        );
-        // state > logic > withdrawer
-        receive_matic_from_state_(_amount_to_send);
-        _burner.transfer(_amount_to_send);
-
-        (
-            bool _is_manager,
-            bool _is_on_whitelist,
-            uint256 _flux
-        ) =state.pull_profile(msg.sender);
-
-        uint256 _new_flux_value =_flux -_amount_to_send;
-        state.push_profile(
-            msg.sender, 
-            _is_manager, 
-            _is_on_whitelist, 
-            _new_flux_value
-        );
+        address payable _to = payable( msg.sender );
+        // transfer & burn
+        burn_( _a );
+        // send back matic
+        withdraw_( _to, _v );
 
         return true;
+
     }
-}
+    
+    function reveal_state() public view returns ( address ) {
+        // reveal the address of the state contract
+        return my.state;
 
-contract Logic {
+    }
 
-    Token 
+    function reveal_native_token() public view returns ( address ) {
+        // reveal the address of the native token contract
+        return my.native_token;
+
+    }
 
 }

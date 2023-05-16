@@ -1,433 +1,175 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity ^0.8.0;
-
 import "blockchain/contracts/Polygon/Pool/Prototype/pool/safety.sol";
+import "blockchain/contracts/Polygon/Pool/Prototype/pool/authenticator.sol";
+import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/IERC20.sol";
 
 interface IState {
-    function push_profile(
-        address  _address,
-        bool     _is_manager,
-        bool     _is_on_whitelist,
-        uint256  _flux
-    ) external;
 
-    function pull_profile(address _address) external view returns (
-        bool,
-        bool,
-        uint256
-    );
+    event PoolFounded(
 
-    function withdraw(uint256 _value_in_wei) external;
+        address indexed _admin,
+        address indexed _manager,
+        string _name,
+        string _description,
+        uint256 _inception,
+        uint256 _funding_start,
+        uint256 _funding_end,
+        uint256 _funding_required,
+        bool _whitelisted
 
-    function push_authenticator(
-        address _logic,
-        address _creator,
-        address _governor
-    ) external;
+    )
 
-    function pull_authenticator() external view returns (
-        address,
-        address,
-        address
-    );
+    event Deposit( address _from, uint256 _value );
 
-    function push_launch(
-        uint256 _start,
-        uint256 _end,
-        uint256 _required,
-        bool _whitelisted,
-        bool _success
-    ) external;
+    event Withdraw( address _to, uint256 _value );
 
-    function pull_launch() external view returns (
-        uint256,
-        uint256,
-        uint256,
-        bool,
-        bool
-    );
+    event DepositERC20( address _contract, address _from, uint256 _value );
 
-    function push_yield(
-        uint256 _start,
-        uint256 _end
-    ) external; 
-
-    function pull_yield() external view returns (
-        uint256,
-        uint256
-    );
-
-    event Deposit(
-        address indexed _from,
-        uint256 _value_of_matic
-    );
-
-    event Withdraw(
-        address indexed _to,
-        uint256 _value_of_matic
-    );
-
-    event UpdateToYield(
-        uint256  _start,
-        uint256  _end
-    );
-
-    event UpdateToLaunch(
-        uint256  _start,
-        uint256  _end,
-        uint256  _required,
-        bool     _whitelisted,
-        bool     _success
-    );
-
-    event UpdateToAuthenticator(
-        address  indexed _new_logic,
-        address  indexed _new_creator,
-        address  indexed _new_governor
-    );
-
-    event UpdateToProfile(
-        address  indexed _address,
-        bool     _is_manager,
-        bool     _is_on_whitelist,
-        uint256  _flux
-    );
-
-    event PoolCreated(
-        address  indexed _logic,
-        address  indexed _creator,
-        address  indexed _governor,
-        string   _name,
-        uint256  _inception,
-        uint256  _funding_round_end,
-        uint256  _required,
-        bool     _whitelisted
-    );
-}
+    event WithdrawERC20( address _contract, address _to, uint256 _value );
 
 
-
-contract Authenticator {
-    address logic;
-    modifier only_logic() {
-        require(msg.sender ==logic, "state: msg.sender !=logic");
-        _;
-    }
-
-    address creator;
-    modifier only_creator() {
-        require(msg.sender ==creator, "state: msg.sender !=creator");
-        _;
-    }
-
-    address governor;
-    modifier only_governor() {
-        require(msg.sender ==governor, "state: msg.sender !=governor");
-        _;
-    }
-}
-
-
-contract State is Safety {
-    struct Token {
-
-        string name;
-        string symbol;
-        uint8 decimals;
-        uint256 total_supply;
-        
-    }
-
-    mapping( address => Token ) private token;
-
-    string name;
-    
-    struct Profile {
-
-        bool is_on_whitelist;
-        bool is_manager;
-        uint256 contribution;
-        uint256 balance;
-
-    }
-
-    mapping( address => Profile ) private profile;
-    // user => pool => balance in tokens
-    mapping( address => mapping( address => uint256 )) private balance;
-    mapping( address => mapping( address => mapping ( address => uint256 ))) private allowed;
-
-    function transfer_(
-        
-        address _contract,
-        address _from,
-        address _to,
-        uint256 _value,
-
-    ) private {
-
-        require( _from != address(0) );
-        require( _to != address(0) );
-        require( balance[_from][_contract] >= _value );
-        require( balance[_from][_contract] >= 0 );
-        require( _value >= 0 );
-
-        balance[_from][_contract] -= _value;
-        balance[_to][_contract] += _value;
-
-    }
-
-    function mint_(
-
-        address _contract,
-        address _to,
-        uint256 _value
-
-    ) private {
-
-        address _from = address(0);
-        
-        require( _value >= 0 );
-        require( _to != address(0) );
-
-        balance[_to][_contract] += _value;
-        token[_contract].total_supply += _value;
-
-    }
-
-    function burn_(
-
-        address _contract,
-        address _from,
-        uint256 _value
-
-    ) private {
-
-        require( _value >= 0 );
-        require( _value <= balance[_from][_contract] );
-
-        balance[_from][_contract] -= _value;
-        token[_contract].total_supply -= _value;
-
-    }
 }
 
 contract State is IState, Safety, Authenticator {
-    string name;
 
-    mapping(address =>bool)      private is_manager;
-    mapping(address =>bool)      private is_on_Whitelist;
-    mapping(address =>uint256)   private flux;
+    string private name;
+    string private description;
+    uint256 private inception;
+    
+    struct Persona {
 
-    struct Launch {
-        uint256  start;
-        uint256  end;
-        uint256  required;
-        bool     whitelisted;
-        bool     success;
+        bool is_on_whitelist;
+
     }
 
-    Launch launch;
+    mapping( address => Persona ) private persona;
 
-    struct Yield {
+    struct Funding {
+
         uint256 start;
         uint256 end;
-    }
+        uint256 required;
+        bool whitelisted;
+        bool success;
 
-    Yield yield;
-
-    constructor(
-        address  _logic,
-        address  _creator,
-        address  _governor,
-        string   memory _name,
-        uint256  _duration,
-        uint256  _required,
-        bool     _whitelisted
-    ) {
-        require( _required >= 0, "state: _required !>=0" );
-        require( _duration >=1 weeks, "state: _duration !>=1 weeks" );
-        require( _duration <=9 weeks, "state: _duration !<=9 weeks" );
-
-        uint256 _now         =block.timestamp;
-        launch.start         =_now;
-        launch.end           =_now +_duration;
-        launch.required      =_required;
-        launch.whitelisted   =_whitelisted;
-        
-        if (_required ==0) {launch.success =true;}
-
-        require(_logic !=address(0), "state: _logic ==address(0)");
-        require(_creator !=address(0), "state: _creator ==address(0)");
-
-        logic    =_logic;
-        creator  =_creator;
-
-        name     =_name;
-
-        emit PoolCreated(
-            _logic,
-            _creator,
-            _governor,
-            _name,
-            _now,
-            launch.end,
-            _required,
-            _whitelisted
-        );
     }
     
-    function push_profile(
-        address  _address,
-        bool     _is_manager,
-        bool     _is_on_whitelist,
-        uint256  _flux
+    mapping( uint256 => Funding ) private funding;
 
-    ) public only_logic one_at_a_time {
-        is_manager      [_address] =_is_manager;
-        is_on_Whitelist [_address] =_is_on_whitelist;
-        flux            [_address] =_flux;
+    constructor(
 
-        emit UpdateToProfile(
-            _address,
-            _is_manager,
-            _is_on_whitelist,
-            _flux
-        );
-    }
-
-    function pull_profile(address _address) public view returns (
-        bool,
-        bool,
-        uint256
-    ) {
-        return (
-            is_manager      [_address],
-            is_on_Whitelist [_address],
-            flux            [_address]
-        );
-    }
-
-    function deposit() external payable {
-        address _from =msg.sender;
-        uint256 _value_of_matic =msg.value;
-        emit Deposit(
-            _from,
-            _value_of_matic
-        );
-    }
-
-    fallback() external payable {
-        address _from =msg.sender;
-        uint256 _value_of_matic =msg.value;
-        emit Deposit(
-            _from,
-            _value_of_matic
-        );
-    }
-
-    function withdraw(uint256 _value_in_wei) public only_logic one_at_a_time {
-        address payable _to =payable(logic);
-        _to.transfer(_value_in_wei);
-    }
-
-    function push_authenticator(
-        address _logic,
-        address _creator,
-        address _governor
-        
-    ) public only_logic one_at_a_time {
-        require(_logic !=address(0), "state: _logic ==address(0)");
-        require(_creator !=address(0), "state: _creator ==address(0)");
-        require(_governor !=address(0), "state: _governor ==address(0)");
-
-        logic =_logic;
-        creator =_creator;
-        governor =_governor;
-
-        emit UpdateToAuthenticator(
-            _logic,
-            _creator,
-            _governor
-        );
-    }
-
-    function pull_authenticator() public view returns (
-        address,
-        address,
-        address
+        address _admin,
+        address _manager,
+        string memory _name,
+        string memory _description,
+        uint256 _funding_start,
+        uint256 _funding_end,
+        uint256 _funding_required,
+        bool _whitelisted
 
     ) {
-        return (
-            logic,
-            creator,
-            governor
-        );
-    }
 
-    function push_launch(
-        uint256 _start,
-        uint256 _end,
-        uint256 _required,
-        bool _whitelisted,
-        bool _success
+        uint256 _funding_duration = _funding_end - _funding_start;
+        uint256 _funding_min_duration = 1 weeks;
+        uint256 _funding_max_duration = 9 weeks;
 
-    ) public only_logic one_at_a_time {
-        launch.start         =_start;
-        launch.end           =_end;
-        launch.required      =_required;
-        launch.whitelisted   =_whitelisted;
-        launch.success       =_success;
+        require( _funding_required >= _funding_min_duration );
+        require( _funding_duration >= _funding_max_duration );
 
-        emit UpdateToLaunch(
-            _start,
-            _end,
-            _required,
+        funding[ 0 ] = Funding({
+
+            _funding_start,
+            _funding_end,
+            _funding_required,
             _whitelisted,
-            _success
+            false
+
+        })
+
+        if ( _funding_required == 0 ) { funding[ 0 ].success = true; }
+
+        require( _admin != address( 0 ));
+        require( _manager != address( 0 ));
+
+        admin = _admin;
+        manager = _manager;
+        name = _name;
+        description = _description;
+        inception = now;
+
+        emit PoolFounded(
+
+            _admin,
+            _manager,
+            _name,
+            _description,
+            inception,
+            _funding_start,
+            _funding_end,
+            _funding_required,
+            _whitelisted
+
         );
+
     }
 
-    function pull_launch() public view returns (
-        uint256,
-        uint256,
-        uint256,
-        bool,
-        bool
+    function fallback() external payable only_admin {
 
-    ) {
-        return (
-            launch.start,
-            launch.end,
-            launch.required,
-            launch.whitelisted,
-            launch.success
-        );
+        address _from = msg.sender;
+        uint256 _value = msg.value;
+
+        emit Deposit( _from, _value );
+
     }
 
-    function push_yield(
-        uint256 _start,
-        uint256 _end
+    function withdraw( uint256 _value ) public only_admin {
 
-    ) public only_logic one_at_a_time {
-        require(_start >=launch.end +1 weeks, "state: _start !>=launch.end");
-        require(_end >=_start +1 weeks, "state: _end !>=_start");
-        yield.start  =_start;
-        yield.end    =_end;
+        address payable _to = payable( admin );
 
-        emit UpdateToYield(
-            _start,
-            _end
-        );
+        _to.transfer( _value );
+
+        emit Withdraw( _to, _value );
+
     }
 
-    function pull_yield() public view returns (
-        uint256,
-        uint256
+    function withdraw_erc20( address _contract, uint256 _value ) public only_admin {
 
-    ) {
-        return (
-            yield.start,
-            yield.end
-        );
+        address payable _to = payable( admin );
+
+        IERC20 _token = IERC20( _contract );
+        _token.transfer( _to, _value );
+
     }
+
+    function persona_of( address _address ) public view returns ( Persona ) {
+
+        return ( persona[ _address ] );
+
+    }
+
+    function set_persona_of( address _address, Persona _new ) public only_admin returns ( bool ) {
+
+        persona[ _address ] = _new;
+
+        return true;
+
+    }
+
+    function funding( uint256 _id ) public view returns ( Funding ) {
+
+        return ( funding[ _id ] );
+
+    }
+
+    function set_funding( uint256 _id, Funding _new ) public only_admin returns ( bool ) {
+
+        require( funding[ _id ].start >= now );
+
+        funding[ _id ] = _new;
+
+        return true;
+
+    }
+
 }
