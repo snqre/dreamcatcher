@@ -1,7 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity ^0.8.0;
-import "blockchain/contracts/Polygon/Pool/Prototype/pool/safety.sol";
-import "blockchain/contracts/Polygon/Pool/Prototype/pool/authenticator.sol";
 import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/IERC20.sol";
 
 interface IState {
@@ -31,7 +29,15 @@ interface IState {
 
 }
 
-contract State is IState, Safety, Authenticator {
+contract State is IState {
+
+    struct Lock {
+
+        bool is_unlocked;
+
+    }
+
+    Lock lock;
 
     string private name;
     string private description;
@@ -39,6 +45,8 @@ contract State is IState, Safety, Authenticator {
     
     struct Persona {
 
+        bool is_admin;
+        bool is_manager;
         bool is_on_whitelist;
 
     }
@@ -69,6 +77,8 @@ contract State is IState, Safety, Authenticator {
         bool _whitelisted
 
     ) {
+
+        lock.is_unlocked = true;
 
         uint256 _funding_duration = _funding_end - _funding_start;
         uint256 _funding_min_duration = 1 weeks;
@@ -123,8 +133,15 @@ contract State is IState, Safety, Authenticator {
         emit Deposit( _from, _value );
 
     }
-
+    
     function withdraw( uint256 _value ) public only_admin {
+
+        Persona memory _persona = persona_of(msg.sender);
+
+        require( _persona.is_admin, "State: _person.is_admin == false" );
+        require( lock.is_unlocked, "State: lock.is_unlocked == false" );
+        
+        lock.is_unlocked = false;
 
         address payable _to = payable( admin );
 
@@ -132,14 +149,22 @@ contract State is IState, Safety, Authenticator {
 
         emit Withdraw( _to, _value );
 
+        lock.is_unlocked = true;
+
     }
 
     function withdraw_erc20( address _contract, uint256 _value ) public only_admin {
+
+        require( lock.is_unlocked, "State: lock.is_unlocked == false" );
+
+        lock.is_unlocked = false;
 
         address payable _to = payable( admin );
 
         IERC20 _token = IERC20( _contract );
         _token.transfer( _to, _value );
+
+        lock.is_unlocked = true;
 
     }
 
