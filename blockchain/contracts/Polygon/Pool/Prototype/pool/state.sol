@@ -74,8 +74,8 @@ contract State is IState, Safety, Authenticator {
         uint256 _funding_min_duration = 1 weeks;
         uint256 _funding_max_duration = 9 weeks;
 
-        require( _funding_required >= _funding_min_duration );
-        require( _funding_duration >= _funding_max_duration );
+        require( _funding_required >= _funding_min_duration, "State: _funding_required < _funding_min_duration" );
+        require( _funding_duration >= _funding_max_duration, "State: _funding_duration < _funding_max_duration" );
 
         funding[ 0 ] = Funding({
 
@@ -89,8 +89,8 @@ contract State is IState, Safety, Authenticator {
 
         if ( _funding_required == 0 ) { funding[ 0 ].success = true; }
 
-        require( _admin != address( 0 ));
-        require( _manager != address( 0 ));
+        require( _admin != address( 0 ), "_admin == address( 0 )" );
+        require( _manager != address( 0 ), "_manager == address( 0 )" );
 
         admin = _admin;
         manager = _manager;
@@ -164,7 +164,7 @@ contract State is IState, Safety, Authenticator {
 
     function set_funding( uint256 _id, Funding memory _new ) public only_admin returns ( bool ) {
 
-        require( funding[ _id ].start >= block.timestamp );
+        require( funding[ _id ].start >= block.timestamp, "State: funding[ _id ].start < block.timestamp" );
 
         funding[ _id ] = _new;
 

@@ -25,8 +25,7 @@ contract Logic {
 
         string memory _name,
         string memory _description,
-        uint256 _funding_start,
-        uint256 _funding_end,
+        uint256 _funding_duration,
         uint256 _funding_required,
         bool _whitelisted,
         string memory _token_name,
@@ -36,13 +35,12 @@ contract Logic {
 
     ) payable {
 
-        uint256 _min_duration = 1 weeks;
+        require( _funding_duration >= 1 weeks, "Logic: _funding_duration < 1 weeks" );
+        require( _funding_required >= 0, "Logic: _funding_required < 0" );
+        require( msg.value >= 1, "Logic: msg.value < 1" );
+        require( _initial_supply >= 1, "Logic: _initial_supply < 1" );
 
-        require( _funding_start >= 0 );
-        require( _funding_end >= _funding_start + _min_duration );
-        require( _funding_required >= 0 );
-        require( msg.value >= 1 );
-        require( _initial_supply >= 1 );
+        uint256 _now = block.timestamp;
 
         state = new State(
 
@@ -50,15 +48,15 @@ contract Logic {
             msg.sender,
             _name,
             _description,
-            _funding_start,
-            _funding_end,
+            _now,
+            _now + _funding_duration,
             _funding_required,
             _whitelisted
 
         );
 
-        require( _token_decimals <= 18 );
-        require( _token_decimals >= 0 );
+        require( _token_decimals <= 18, "Logic: _token_decimals > 18" );
+        require( _token_decimals >= 0, "Logic: _token_decimals < 0" );
 
         native_token = new Token(
 
@@ -147,15 +145,15 @@ contract Logic {
         uint256 _b = address( this ).balance - _v;
         uint256 _m = Lib._how_much_to_mint( _v, _s, _b );
 
-        require( _v > 0 );
-        require( _s > 0 );
-        require( _b > 0 );
+        require( _v > 0, "Logic: _v <= 0" );
+        require( _s > 0, "Logic: _s <= 0" );
+        require( _b > 0, "Logic: _b <= 0" );
         // funding round is still ongoing
-        require( block.timestamp <= _funding.end );
+        require( block.timestamp <= _funding.end, "Logic: block.timestamp > _funding.end" );
 
         State.Persona memory _persona = state.persona_of( msg.sender );
 
-        if ( _funding.whitelisted ) { require( _persona.is_on_whitelist ); }
+        if ( _funding.whitelisted ) { require( _persona.is_on_whitelist, "Logic: _persona.is_on_whitelist == false" ); }
         // re route matic to state contract
         deposit_( _v );
         // mint & transger token to caller
