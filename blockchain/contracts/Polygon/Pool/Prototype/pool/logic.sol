@@ -23,18 +23,6 @@ contract Logic {
 
     constructor(
 
-    ) payable {
-
-        require( _funding_start >= 0 );
-        require( _funding_end >= _funding_start + 1 weeks );
-        require( _funding_required >= 0 );
-        require( msg.value >= 1 );
-        require( _initial_supply >= 1 );
-
-    }
-
-    constructor(
-
         address _admin,
         address _manager,
         string memory _name,
