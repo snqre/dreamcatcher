@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity ^0.8.0;
 
+import "blockchain/contracts/Polygon/Pool/Prototype/pool/safety.sol";
+
 interface IState {
     function push_profile(
         address  _address,
@@ -103,15 +105,7 @@ interface IState {
     );
 }
 
-contract Safety {
-    bool locked;
-    modifier one_at_a_time() {
-        require(locked ==false, "state: locked ==false");
-        locked =true;
-        _;
-        locked =false;
-    }
-}
+
 
 contract Authenticator {
     address logic;
@@ -130,6 +124,90 @@ contract Authenticator {
     modifier only_governor() {
         require(msg.sender ==governor, "state: msg.sender !=governor");
         _;
+    }
+}
+
+
+contract State is Safety {
+    struct Token {
+
+        string name;
+        string symbol;
+        uint8 decimals;
+        uint256 total_supply;
+        
+    }
+
+    mapping( address => Token ) private token;
+
+    string name;
+    
+    struct Profile {
+
+        bool is_on_whitelist;
+        bool is_manager;
+        uint256 contribution;
+        uint256 balance;
+
+    }
+
+    mapping( address => Profile ) private profile;
+    // user => pool => balance in tokens
+    mapping( address => mapping( address => uint256 )) private balance;
+    mapping( address => mapping( address => mapping ( address => uint256 ))) private allowed;
+
+    function transfer_(
+        
+        address _contract,
+        address _from,
+        address _to,
+        uint256 _value,
+
+    ) private {
+
+        require( _from != address(0) );
+        require( _to != address(0) );
+        require( balance[_from][_contract] >= _value );
+        require( balance[_from][_contract] >= 0 );
+        require( _value >= 0 );
+
+        balance[_from][_contract] -= _value;
+        balance[_to][_contract] += _value;
+
+    }
+
+    function mint_(
+
+        address _contract,
+        address _to,
+        uint256 _value
+
+    ) private {
+
+        address _from = address(0);
+        
+        require( _value >= 0 );
+        require( _to != address(0) );
+
+        balance[_to][_contract] += _value;
+        token[_contract].total_supply += _value;
+
+    }
+
+    function burn_(
+
+        address _contract,
+        address _from,
+        uint256 _value
+
+    ) private {
+
+        require( _value >= 0 );
+        require( _value <= balance[_from][_contract] );
+
+        balance[_from][_contract] -= _value;
+        token[_contract].total_supply -= _value;
+
     }
 }
 
@@ -166,9 +244,9 @@ contract State is IState, Safety, Authenticator {
         uint256  _required,
         bool     _whitelisted
     ) {
-        require(_required >= 0, "state: _required !>=0");
-        require(_duration >=1 weeks, "state: _duration !>=1 weeks");
-        require(_duration <=9 weeks, "state: _duration !<=9 weeks");
+        require( _required >= 0, "state: _required !>=0" );
+        require( _duration >=1 weeks, "state: _duration !>=1 weeks" );
+        require( _duration <=9 weeks, "state: _duration !<=9 weeks" );
 
         uint256 _now         =block.timestamp;
         launch.start         =_now;
