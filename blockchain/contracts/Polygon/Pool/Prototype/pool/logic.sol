@@ -185,3 +185,9 @@ contract Logic is ILogic, Safety {
         return true;
     }
 }
+
+contract Logic {
+
+    Token 
+
+}
