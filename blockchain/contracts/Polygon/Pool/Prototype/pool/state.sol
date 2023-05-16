@@ -18,7 +18,7 @@ interface IState {
         uint256 _funding_required,
         bool _whitelisted
 
-    )
+    );
 
     event Deposit( address _from, uint256 _value );
 
@@ -79,13 +79,13 @@ contract State is IState, Safety, Authenticator {
 
         funding[ 0 ] = Funding({
 
-            _funding_start,
-            _funding_end,
-            _funding_required,
-            _whitelisted,
-            false
+            start: _funding_start,
+            end: _funding_end,
+            required: _funding_required,
+            whitelisted: _whitelisted,
+            success: false
 
-        })
+        });
 
         if ( _funding_required == 0 ) { funding[ 0 ].success = true; }
 
@@ -96,7 +96,7 @@ contract State is IState, Safety, Authenticator {
         manager = _manager;
         name = _name;
         description = _description;
-        inception = now;
+        inception = block.timestamp;
 
         emit PoolFounded(
 
@@ -114,7 +114,7 @@ contract State is IState, Safety, Authenticator {
 
     }
 
-    function fallback() external payable only_admin {
+    receive() external payable only_admin {
 
         address _from = msg.sender;
         uint256 _value = msg.value;
@@ -142,13 +142,13 @@ contract State is IState, Safety, Authenticator {
 
     }
 
-    function persona_of( address _address ) public view returns ( Persona ) {
+    function persona_of( address _address ) public view returns ( Persona memory ) {
 
         return ( persona[ _address ] );
 
     }
 
-    function set_persona_of( address _address, Persona _new ) public only_admin returns ( bool ) {
+    function set_persona_of( address _address, Persona memory _new ) public only_admin returns ( bool ) {
 
         persona[ _address ] = _new;
 
@@ -156,15 +156,15 @@ contract State is IState, Safety, Authenticator {
 
     }
 
-    function funding( uint256 _id ) public view returns ( Funding ) {
+    function view_funding( uint256 _id ) public view returns ( Funding memory ) {
 
         return ( funding[ _id ] );
 
     }
 
-    function set_funding( uint256 _id, Funding _new ) public only_admin returns ( bool ) {
+    function set_funding( uint256 _id, Funding memory _new ) public only_admin returns ( bool ) {
 
-        require( funding[ _id ].start >= now );
+        require( funding[ _id ].start >= block.timestamp );
 
         funding[ _id ] = _new;
 

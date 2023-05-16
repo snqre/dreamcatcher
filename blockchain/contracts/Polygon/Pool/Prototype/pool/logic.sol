@@ -19,21 +19,7 @@ contract Logic {
 
     }
 
-    struct Funding {
-
-        uint256 start;
-        uint256 end;
-        uint256 required;
-        bool whitelisted;
-        bool success;
-
-    }
-
-    struct Persona {
-
-        bool is_on_whitelist;
-
-    }
+    My my;
 
     constructor(
 
@@ -91,7 +77,7 @@ contract Logic {
 
     }
 
-    function deposit_( uint256 _value ) private payable {
+    function deposit_( uint256 _value ) private {
 
         address payable _to = payable( address( state ));
 
@@ -151,7 +137,7 @@ contract Logic {
 
     function contribute( uint256 _id ) public payable returns ( bool ) {
         // request funding data from state
-        Funding _funding = state.funding( _id );
+        State.Funding memory _funding = state.view_funding( _id );
         /**
         * _v: value
         * _s: supply
@@ -167,9 +153,9 @@ contract Logic {
         require( _s > 0 );
         require( _b > 0 );
         // funding round is still ongoing
-        require( now <= _funding.end );
+        require( block.timestamp <= _funding.end );
 
-        Persona _persona = state.persona_of( msg.sender );
+        State.Persona memory _persona = state.persona_of( msg.sender );
 
         if ( _funding.whitelisted ) { require( _persona.is_on_whitelist ); }
         // re route matic to state contract

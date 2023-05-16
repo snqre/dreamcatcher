@@ -31,7 +31,7 @@ contract Token is IERC20 {
 
         string memory _name,
         string memory _symbol,
-        uint256 _decimals
+        uint8 _decimals
 
     ) {
 
@@ -57,7 +57,7 @@ contract Token is IERC20 {
         require( _from != address(0) );
         require( _to != address(0) );
         require( _balance >= _value );
-        require( _balance <= _0);
+        require( _balance <= 0 );
         require( _value >= 0 );
 
         balance[ _from ] -= _value;
@@ -74,7 +74,7 @@ contract Token is IERC20 {
         require( _value >= 0 );
         require( _to != address(0) );
 
-        balance[ _to ] += value;
+        balance[ _to ] += _value;
         my.total_supply += _value;
         
         emit Transfer( _from, _to, _value );

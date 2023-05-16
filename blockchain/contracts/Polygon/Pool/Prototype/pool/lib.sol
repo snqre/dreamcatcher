@@ -8,25 +8,25 @@ library Lib {
     * _s: supply
     * _b: balance
      */
-    function _how_much_to_mint( uint256 _v, uint256 _s, uint256 _b ) public pure {
+    function _how_much_to_mint( uint256 _v, uint256 _s, uint256 _b ) public pure returns ( uint256 ) {
 
         return (( _v * _s ) / _b );
 
     }
 
-    function _how_much_to_send( uint256 _v, uint256 _s, uint256 _b ) public pure {
+    function _how_much_to_send( uint256 _v, uint256 _s, uint256 _b ) public pure returns ( uint256 ) {
 
         return (( _v * _b ) / _s );
 
     }
 
-    function _convert_to_wei( uint256 _value ) public pure {
+    function _convert_to_wei( uint256 _value ) public pure returns ( uint256 ) {
 
         return ( _value * 10**18 );
 
     }
 
-    function _convert_to_int( uint256 _value ) public pure {
+    function _convert_to_int( uint256 _value ) public pure returns ( uint256 ) {
 
         return ( _value / 10**18 );
 
