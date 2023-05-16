@@ -103,8 +103,6 @@ contract State is IState {
         require( _admin != address( 0 ), "_admin == address( 0 )" );
         require( _manager != address( 0 ), "_manager == address( 0 )" );
 
-        admin = _admin;
-        manager = _manager;
         name = _name;
         description = _description;
         inception = block.timestamp;
@@ -125,7 +123,11 @@ contract State is IState {
 
     }
 
-    receive() external payable only_admin {
+    receive() external payable {
+
+        Persona memory _caller = persona_of( msg.sender );
+
+        require( _caller.is_admin );
 
         address _from = msg.sender;
         uint256 _value = msg.value;
@@ -133,36 +135,53 @@ contract State is IState {
         emit Deposit( _from, _value );
 
     }
+
+    function send( address _to, uint256 _value ) public  {
+        // checks
+        Persona memory _caller = persona_of( msg.sender );
+        require( _caller.is_admin, "State: _caller.is_admin == false" );
+
+        address payable _recipient = payable( _to );
+
+        // getting infinite gas when i use transfer
+
+
+        emit Withdraw( _recipient, _value );
+
+    }
     
-    function withdraw( uint256 _value ) public only_admin {
+    function withdraw( address _to, uint256 _value ) public {
 
-        Persona memory _persona = persona_of(msg.sender);
+        Persona memory _caller = persona_of( msg.sender );
 
-        require( _persona.is_admin, "State: _person.is_admin == false" );
+        require( _caller.is_admin, "State: _person.is_admin == false" );
         require( lock.is_unlocked, "State: lock.is_unlocked == false" );
         
         lock.is_unlocked = false;
 
-        address payable _to = payable( admin );
+        address payable _recipient = payable( _to );
 
-        _to.transfer( _value );
+        _recipient.transfer( _value );
 
-        emit Withdraw( _to, _value );
+        emit Withdraw( _recipient, _value );
 
         lock.is_unlocked = true;
 
     }
 
-    function withdraw_erc20( address _contract, uint256 _value ) public only_admin {
+    function withdraw_erc20( address _contract, address _to, uint256 _value ) public {
 
+        Persona memory _caller = persona_of( msg.sender );
+        
+        require( _caller.is_admin );
         require( lock.is_unlocked, "State: lock.is_unlocked == false" );
 
         lock.is_unlocked = false;
 
-        address payable _to = payable( admin );
+        address payable _recipient = payable( _to );
 
         IERC20 _token = IERC20( _contract );
-        _token.transfer( _to, _value );
+        _token.transfer( _recipient, _value );
 
         lock.is_unlocked = true;
 
@@ -174,7 +193,11 @@ contract State is IState {
 
     }
 
-    function set_persona_of( address _address, Persona memory _new ) public only_admin returns ( bool ) {
+    function set_persona_of( address _address, Persona memory _new ) public returns ( bool ) {
+
+        Persona memory _caller = persona_of( msg.sender );
+
+        require( _caller.is_admin );
 
         persona[ _address ] = _new;
 
@@ -188,8 +211,11 @@ contract State is IState {
 
     }
 
-    function set_funding( uint256 _id, Funding memory _new ) public only_admin returns ( bool ) {
+    function set_funding( uint256 _id, Funding memory _new ) public returns ( bool ) {
 
+        Persona memory _caller = persona_of( msg.sender );
+
+        require( _caller.is_admin );
         require( funding[ _id ].start >= block.timestamp, "State: funding[ _id ].start < block.timestamp" );
 
         funding[ _id ] = _new;
