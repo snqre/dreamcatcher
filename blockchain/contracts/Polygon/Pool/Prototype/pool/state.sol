@@ -74,8 +74,9 @@ contract State is IState, Safety, Authenticator {
         uint256 _funding_min_duration = 1 weeks;
         uint256 _funding_max_duration = 9 weeks;
 
-        require( _funding_required >= _funding_min_duration, "State: _funding_required < _funding_min_duration" );
-        require( _funding_duration >= _funding_max_duration, "State: _funding_duration < _funding_max_duration" );
+        require( _funding_duration >= _funding_min_duration, "State: _funding_duration < _funding_min_duration" );
+        require( _funding_duration <= _funding_max_duration, "State: _funding_duration < _funding_max_duration" );
+        require( _funding_required >= 0, "State: _funding_required < 0" );
 
         funding[ 0 ] = Funding({
 
