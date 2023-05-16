@@ -23,8 +23,6 @@ contract Logic {
 
     constructor(
 
-        address _admin,
-        address _manager,
         string memory _name,
         string memory _description,
         uint256 _funding_start,
