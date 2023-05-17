@@ -2,6 +2,12 @@
 pragma solidity ^0.8.0;
 import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/IERC20.sol";
 
+/**
+* The idea is to consolidate various project's base utility into once contract which means new project wont require spending on contract deployment
+* Cheaper
+* And expandable if required
+ */
+
 interface IState {
 
     event PoolFounded(
@@ -42,10 +48,23 @@ contract State is IState {
     string private name;
     string private description;
     uint256 private inception;
+
+    struct Pool {
+
+        string name;
+        address creator;
+        address[] managers;
+        uint256 inception;
+        uint256 class;
+
+    }
+
+    mapping( address => Pool ) private pools;
     
     struct Persona {
 
         bool is_admin;
+        bool is_creator;
         bool is_manager;
         bool is_on_whitelist;
 
@@ -53,7 +72,7 @@ contract State is IState {
 
     mapping( address => Persona ) private persona;
 
-    struct Funding {
+    struct FundingSchedule {
 
         uint256 start;
         uint256 end;
@@ -63,7 +82,7 @@ contract State is IState {
 
     }
     
-    mapping( uint256 => Funding ) private funding;
+    mapping( uint256  => FundingSchedule ) private funding;
 
     constructor(
 
