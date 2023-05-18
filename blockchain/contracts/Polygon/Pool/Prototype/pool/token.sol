@@ -41,6 +41,7 @@ contract Token is IERC20 {
         my.name = _name;
         my.symbol = _symbol;
         my.decimals = _decimals;
+        my.admin = msg.sender;
 
     }
 

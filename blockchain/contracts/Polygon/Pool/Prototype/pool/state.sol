@@ -18,6 +18,8 @@ contract State {
 
     struct Pool {
         uint256 ref;
+        string name;
+        string description;
         uint256 balance;
         Token token;
         FundingSchedule fundingSchedule;
@@ -60,9 +62,10 @@ contract State {
     Safe safe;
 
     constructor() {
-        priceTo.createNewPool = Utils.convertToWei(10_000);
+        priceTo.createNewPool = Utils.convertToWei(0);
         feeTo.contribute = Utils.convertToWei(0);
         feeTo.withdraw = Utils.convertToWei(0);
+        lock.isUnlocked = true;
     }
 
     function createNewPool(
@@ -75,7 +78,7 @@ contract State {
         uint256 _required,
         bool _whitelisted
     ) public payable returns (bool) {
-        require(lock.isUnlocked);
+        require(lock.isUnlocked, "lock.isUnlocked == false");
         lock.isUnlocked = false;
 
         require(_duration >= 1 days, "funding phase must last more than 24 hours");
@@ -90,11 +93,11 @@ contract State {
             );
         }
 
-        require(tracker.numberOfPools < type(uint256).max);
+        require(tracker.numberOfPools < type(uint256).max, "number of pools at capacity");
 
         tracker.numberOfPools += 1;
         uint256 _ref = tracker.numberOfPools;
-
+        // known issue when creating Token contract it reverts at some point but when launched token contract by itself, token.sol works
         Token _token = new Token(_nameOfToken, _symbolOfToken, 18);
 
         uint256 _now = block.timestamp;
@@ -108,10 +111,19 @@ contract State {
 
         pools[_ref] = Pool({
             ref: _ref,
+            name: _name,
+            description: _description,
             balance: msg.value,
             token: _token,
             fundingSchedule: _fundingSchedule
         });
+
+        for (uint256 _i = 0; _i < _managers.length; _i++) {
+            Account memory _manager = accounts[_managers[_i]];
+            _manager.isManager[_ref] = true;
+            _manager.isOnWhitelist[_ref] = true;
+            accounts[_managers[_i]] = _manager;
+        }
 
         lock.isUnlocked = true;
         return true;
@@ -158,7 +170,6 @@ contract State {
     function withdraw(uint256 _ref, uint256 _value) public returns (bool) {
         require(_value > 0, "_value <= 0");
 
-        Account memory _caller = accounts[msg.sender];
         Pool memory _pool = pools[_ref];
 
         uint256 _a = _value;
