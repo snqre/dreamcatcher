@@ -6,6 +6,154 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "blockchain/contracts/Polygon/Pool/Prototype/pool/utils.sol";
 
 contract State {
+
+    struct Lock { bool isUnlocked; } Lock private lock;
+    struct Tracker { uint256 numberOfPools; } Tracker private tracker;
+    struct FundingSchedule {
+
+        uint256 start;
+        uint256 end;
+        uint256 required;
+        bool isWhitelisted;
+        bool success;
+
+    }
+
+    struct Fund {
+
+        uint256 no;
+        string name;
+        string description;
+        uint256 balanceInMatic;
+        FundingSchedule fundingSchedule;
+
+    }
+
+    struct Account {
+
+        bool[] isAdmin;
+        bool[] isCreator;
+        bool[] isManager;
+        bool[] isOnWhitelist;
+
+    }
+
+    mapping( address => Account ) private accounts;
+    mapping( address => uint256 ) private fundsHoldings;
+    mapping( uint256 => Fund ) private funds;
+
+    address nativeToken;
+
+    struct PriceTo {
+
+        uint256 createNewFund;
+
+    }
+
+    struct FeeTo {
+
+        uint256 contribute;
+        uint256 withdraw;
+
+    }
+
+    PriceTo private priceTo;
+    FeeTo private feeTo;
+
+    struct Safe {
+
+        uint256 balanceInMatic;
+
+    }
+
+    mapping( address => uint256 ) private safeHoldings;
+    Safe private safe;
+
+    constructor() {
+
+        lock.isUnlocked = true;
+
+    }
+
+    function createNewFund(
+
+        string memory _nameOfFund,
+        string memory _descriptionOfFund,
+        address memory _managers,
+        string memory _nameOfToken,
+        string memory _symbolOfToken,
+        uint256 _durationOfFundingPhase,
+        uint256 _requiredMaticFromFundingPhaseForSuccess,
+        bool _isWhitelisted
+
+    ) public payable returns ( bool ) {
+
+        require( lock.isUnlocked, "lock.isUnlocked == false" );
+
+        lock.isUnlocked = false;
+
+        require( _durationOfFundingPhase >= 1 days, "funding phase must last more than 24 hours" );
+        require( _requiredMaticFromFundingPhaseForSuccess >= 0 );
+
+        if (priceTo.createNewFund > 0) {
+
+            IERC20( nativeToken ).transferFrom(
+
+                msg.sender,
+                address( this ),
+                priceTo.createNewFund
+
+            );
+
+        }
+
+        require( tracker.numberOfPools < type( uint256 ).max, "number of pools at capacity" );
+
+        tracker.numberOfPools += 1;
+
+        uint256 _no = tracker.numberOfPools;
+
+        Token _token = new Token( _nameOfToken, _symbolOfToken );
+
+        uint256 _now = block.timestamp;
+
+        FundingSchedule memory _fundingSchedule = FundingSchedule({
+
+            start: _now,
+            end: _now + _duration,
+            required: _requried,
+            isWhitelisted: _isWhitelisted,
+            success: false
+
+        });
+
+        funds[ _no ] = Pool({
+
+            no: _no,
+            name: _nameOfFund,
+            description: _descriptionOfFund,
+            balanceInMatic: msg.value,
+            fundingSchedule: _fundingSchedule
+
+        });
+
+        for ( uint256 _i = 0; _i < _managers.length; _i++ ) {
+
+            Account memory _manager = accounts[ _managers[ _i ] ];
+            _manager.isManager[ _no ] = true;
+            _manager.isOnWhitelist[ _no ] = true;
+            accounts[ _managers[ _i ] ] = _manager;
+
+        }
+
+        lock.isUnlocked = true;
+
+        return true;
+        
+    }
+}
+
+contract State {
     struct Lock {bool isUnlocked;} Lock private lock;
     struct Tracker {uint256 numberOfPools;} Tracker private tracker;
     struct FundingSchedule {

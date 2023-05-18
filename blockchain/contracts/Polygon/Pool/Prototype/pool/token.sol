@@ -8,16 +8,15 @@ contract Token is IERC20 {
         
         string name;
         string symbol;
-        uint8 decimals;
-        uint256 total_supply;
+        uint256 totalSupply;
         address admin;
 
     }
 
-    My my;
+    My private my;
 
     mapping( address => uint256 ) private balance;
-    mapping( address => mapping( address => uint256 )) private allowed;
+    mapping( address => mapping(address => uint256) ) private allowed;
 
     modifier only_admin() {
 
@@ -29,18 +28,13 @@ contract Token is IERC20 {
 
     constructor(
 
-        string memory _name,
-        string memory _symbol,
-        uint8 _decimals
+        string memory _nameOfToken,
+        string memory _symbolOfToken
 
     ) {
 
-        require( _decimals <= 18 );
-        require( _decimals >= 0 );
-
-        my.name = _name;
-        my.symbol = _symbol;
-        my.decimals = _decimals;
+        my.name = _nameOfToken;
+        my.symbol = _symbolOfToken;
         my.admin = msg.sender;
 
     }
@@ -76,7 +70,7 @@ contract Token is IERC20 {
         require( _to != address(0) );
 
         balance[ _to ] += _value;
-        my.total_supply += _value;
+        my.totalSupply += _value;
         
         emit Transfer( _from, _to, _value );
 
@@ -91,7 +85,7 @@ contract Token is IERC20 {
         require( _value <= _balance );
 
         balance[ _from ] -= _value;
-        my.total_supply -= _value;
+        my.totalSupply -= _value;
 
         emit Transfer( _from, _to, _value );
 
@@ -166,13 +160,13 @@ contract Token is IERC20 {
 
     function decimals() public view returns (uint8) {
 
-        return my.decimals;
+        return 18;
 
     }
 
     function totalSupply() public view returns (uint256) {
 
-        return my.total_supply;
+        return my.totalSupply;
 
     }
 
