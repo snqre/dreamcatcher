@@ -83,6 +83,7 @@ contract State {
     }
 
     function contribute(uint256 _reference) public payable returns (bool) {
+        // matic > contract > token
         Account _caller = accounts[msg.sender];
         Pool _pool = pools[_reference];
         
@@ -105,9 +106,28 @@ contract State {
         require(block.timestamp <= _pool.fundingSchedule.end);
 
         _pool.token.mint(msg.sender, _m);
+        // accounting
+        _pool.balance += msg.value;
+
+        return true;   
+    }
+
+    function withdraw(uint256 _reference, uint256 _value) public returns (bool) {
+        // token > contract > matic
+        Account _caller = accounts[msg.sender];
+        Pool _pool = pools[_reference];
+        
+        // require that funding is still ongoing
+        require(block.timestamp <= _pool.fundingSchedule.end);
+        
+        // burn token supply
+        _pool.token.burn(msg.sender, _value);
+
+        // transfer matic to them
+        address payable _to = payable(msg.sender);
+        _to.transfer(_value);
 
         return true;
-        
     }
 
 }
