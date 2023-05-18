@@ -22,6 +22,8 @@ contract State {
         Token token;
         FundingSchedule fundingSchedule;
     }
+    
+    
 
     struct Account {
         bool[] isAdmin;
@@ -32,6 +34,7 @@ contract State {
     }
 
     mapping(address => Account) private accounts;
+    mapping(address => uint256) private poolsHoldings;
     mapping(uint256 => Pool) private pools;
 
     address nativeToken;
@@ -49,7 +52,18 @@ contract State {
 
     FeeTo feeTo;
 
-    constructor() {}
+    struct Safe {
+        uint256 balance;
+    }
+
+    mapping(address => uint256) private safeHoldings;
+    Safe safe;
+
+    constructor() {
+        priceTo.createNewPool = Utils.convertToWei(10_000);
+        feeTo.contribute = Utils.convertToWei(0);
+        feeTo.withdraw = Utils.convertToWei(0);
+    }
 
     function createNewPool(
         string memory _name,
@@ -75,6 +89,8 @@ contract State {
                 Utils.convertToWei(priceTo.createNewPool)
             );
         }
+
+        require(tracker.numberOfPools < type(uint256).max);
 
         tracker.numberOfPools += 1;
         uint256 _ref = tracker.numberOfPools;
@@ -122,6 +138,12 @@ contract State {
 
         require(block.timestamp <= _pool.fundingSchedule.end, "the contribution period for this pool has expired");
 
+        if (feeTo.contribute > 0) {
+            uint256 _fee = (_m / 10000) * feeTo.contribute;
+            _m -= _fee;
+            safeHoldings[address(_pool.token)] += _fee;
+        }
+
         _pool.balance += msg.value;
         
         _pool.token.mint(_m);
@@ -145,6 +167,12 @@ contract State {
         uint256 _v = Utils.howMuchToSend(_a, _s, _b);
 
         require(_pool.balance >= _v, "insufficient balance to send to withdrawer");
+
+        if (feeTo.withdraw > 0) {
+            uint256 _fee = (_v / 10000) * feeTo.withdraw;
+            _v -= _fee;
+            safe.balance += _fee;
+        }
 
         _pool.token.transferFrom(msg.sender, address(this), _value);
         _pool.token.burn(_value);
