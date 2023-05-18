@@ -6,267 +6,73 @@
 	"output": {
 		"abi": [
 			{
-				"inputs": [
-					{
-						"internalType": "address",
-						"name": "_admin",
-						"type": "address"
-					},
-					{
-						"internalType": "address",
-						"name": "_manager",
-						"type": "address"
-					},
-					{
-						"internalType": "string",
-						"name": "_name",
-						"type": "string"
-					},
-					{
-						"internalType": "string",
-						"name": "_description",
-						"type": "string"
-					},
-					{
-						"internalType": "uint256",
-						"name": "_funding_start",
-						"type": "uint256"
-					},
-					{
-						"internalType": "uint256",
-						"name": "_funding_end",
-						"type": "uint256"
-					},
-					{
-						"internalType": "uint256",
-						"name": "_funding_required",
-						"type": "uint256"
-					},
-					{
-						"internalType": "bool",
-						"name": "_whitelisted",
-						"type": "bool"
-					}
-				],
+				"inputs": [],
 				"stateMutability": "nonpayable",
 				"type": "constructor"
 			},
 			{
-				"anonymous": false,
 				"inputs": [
 					{
-						"indexed": false,
-						"internalType": "address",
-						"name": "_from",
-						"type": "address"
-					},
-					{
-						"indexed": false,
 						"internalType": "uint256",
-						"name": "_value",
+						"name": "_ref",
 						"type": "uint256"
 					}
 				],
-				"name": "Deposit",
-				"type": "event"
-			},
-			{
-				"anonymous": false,
-				"inputs": [
+				"name": "contribute",
+				"outputs": [
 					{
-						"indexed": false,
-						"internalType": "address",
-						"name": "_contract",
-						"type": "address"
-					},
-					{
-						"indexed": false,
-						"internalType": "address",
-						"name": "_from",
-						"type": "address"
-					},
-					{
-						"indexed": false,
-						"internalType": "uint256",
-						"name": "_value",
-						"type": "uint256"
+						"internalType": "bool",
+						"name": "",
+						"type": "bool"
 					}
 				],
-				"name": "DepositERC20",
-				"type": "event"
+				"stateMutability": "payable",
+				"type": "function"
 			},
 			{
-				"anonymous": false,
 				"inputs": [
 					{
-						"indexed": true,
-						"internalType": "address",
-						"name": "_admin",
-						"type": "address"
-					},
-					{
-						"indexed": true,
-						"internalType": "address",
-						"name": "_manager",
-						"type": "address"
-					},
-					{
-						"indexed": false,
 						"internalType": "string",
 						"name": "_name",
 						"type": "string"
 					},
 					{
-						"indexed": false,
 						"internalType": "string",
 						"name": "_description",
 						"type": "string"
 					},
 					{
-						"indexed": false,
+						"internalType": "address[]",
+						"name": "_managers",
+						"type": "address[]"
+					},
+					{
+						"internalType": "string",
+						"name": "_nameOfToken",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "_symbolOfToken",
+						"type": "string"
+					},
+					{
 						"internalType": "uint256",
-						"name": "_inception",
+						"name": "_duration",
 						"type": "uint256"
 					},
 					{
-						"indexed": false,
 						"internalType": "uint256",
-						"name": "_funding_start",
+						"name": "_required",
 						"type": "uint256"
 					},
 					{
-						"indexed": false,
-						"internalType": "uint256",
-						"name": "_funding_end",
-						"type": "uint256"
-					},
-					{
-						"indexed": false,
-						"internalType": "uint256",
-						"name": "_funding_required",
-						"type": "uint256"
-					},
-					{
-						"indexed": false,
 						"internalType": "bool",
 						"name": "_whitelisted",
 						"type": "bool"
 					}
 				],
-				"name": "PoolFounded",
-				"type": "event"
-			},
-			{
-				"anonymous": false,
-				"inputs": [
-					{
-						"indexed": false,
-						"internalType": "address",
-						"name": "_to",
-						"type": "address"
-					},
-					{
-						"indexed": false,
-						"internalType": "uint256",
-						"name": "_value",
-						"type": "uint256"
-					}
-				],
-				"name": "Withdraw",
-				"type": "event"
-			},
-			{
-				"anonymous": false,
-				"inputs": [
-					{
-						"indexed": false,
-						"internalType": "address",
-						"name": "_contract",
-						"type": "address"
-					},
-					{
-						"indexed": false,
-						"internalType": "address",
-						"name": "_to",
-						"type": "address"
-					},
-					{
-						"indexed": false,
-						"internalType": "uint256",
-						"name": "_value",
-						"type": "uint256"
-					}
-				],
-				"name": "WithdrawERC20",
-				"type": "event"
-			},
-			{
-				"inputs": [
-					{
-						"internalType": "address",
-						"name": "_address",
-						"type": "address"
-					}
-				],
-				"name": "persona_of",
-				"outputs": [
-					{
-						"components": [
-							{
-								"internalType": "bool",
-								"name": "is_on_whitelist",
-								"type": "bool"
-							}
-						],
-						"internalType": "struct State.Persona",
-						"name": "",
-						"type": "tuple"
-					}
-				],
-				"stateMutability": "view",
-				"type": "function"
-			},
-			{
-				"inputs": [
-					{
-						"internalType": "uint256",
-						"name": "_id",
-						"type": "uint256"
-					},
-					{
-						"components": [
-							{
-								"internalType": "uint256",
-								"name": "start",
-								"type": "uint256"
-							},
-							{
-								"internalType": "uint256",
-								"name": "end",
-								"type": "uint256"
-							},
-							{
-								"internalType": "uint256",
-								"name": "required",
-								"type": "uint256"
-							},
-							{
-								"internalType": "bool",
-								"name": "whitelisted",
-								"type": "bool"
-							},
-							{
-								"internalType": "bool",
-								"name": "success",
-								"type": "bool"
-							}
-						],
-						"internalType": "struct State.Funding",
-						"name": "_new",
-						"type": "tuple"
-					}
-				],
-				"name": "set_funding",
+				"name": "createNewPool",
 				"outputs": [
 					{
 						"internalType": "bool",
@@ -274,88 +80,16 @@
 						"type": "bool"
 					}
 				],
-				"stateMutability": "nonpayable",
-				"type": "function"
-			},
-			{
-				"inputs": [
-					{
-						"internalType": "address",
-						"name": "_address",
-						"type": "address"
-					},
-					{
-						"components": [
-							{
-								"internalType": "bool",
-								"name": "is_on_whitelist",
-								"type": "bool"
-							}
-						],
-						"internalType": "struct State.Persona",
-						"name": "_new",
-						"type": "tuple"
-					}
-				],
-				"name": "set_persona_of",
-				"outputs": [
-					{
-						"internalType": "bool",
-						"name": "",
-						"type": "bool"
-					}
-				],
-				"stateMutability": "nonpayable",
+				"stateMutability": "payable",
 				"type": "function"
 			},
 			{
 				"inputs": [
 					{
 						"internalType": "uint256",
-						"name": "_id",
+						"name": "_ref",
 						"type": "uint256"
-					}
-				],
-				"name": "view_funding",
-				"outputs": [
-					{
-						"components": [
-							{
-								"internalType": "uint256",
-								"name": "start",
-								"type": "uint256"
-							},
-							{
-								"internalType": "uint256",
-								"name": "end",
-								"type": "uint256"
-							},
-							{
-								"internalType": "uint256",
-								"name": "required",
-								"type": "uint256"
-							},
-							{
-								"internalType": "bool",
-								"name": "whitelisted",
-								"type": "bool"
-							},
-							{
-								"internalType": "bool",
-								"name": "success",
-								"type": "bool"
-							}
-						],
-						"internalType": "struct State.Funding",
-						"name": "",
-						"type": "tuple"
-					}
-				],
-				"stateMutability": "view",
-				"type": "function"
-			},
-			{
-				"inputs": [
+					},
 					{
 						"internalType": "uint256",
 						"name": "_value",
@@ -363,31 +97,15 @@
 					}
 				],
 				"name": "withdraw",
-				"outputs": [],
-				"stateMutability": "nonpayable",
-				"type": "function"
-			},
-			{
-				"inputs": [
+				"outputs": [
 					{
-						"internalType": "address",
-						"name": "_contract",
-						"type": "address"
-					},
-					{
-						"internalType": "uint256",
-						"name": "_value",
-						"type": "uint256"
+						"internalType": "bool",
+						"name": "",
+						"type": "bool"
 					}
 				],
-				"name": "withdraw_erc20",
-				"outputs": [],
 				"stateMutability": "nonpayable",
 				"type": "function"
-			},
-			{
-				"stateMutability": "payable",
-				"type": "receive"
 			}
 		],
 		"devdoc": {
@@ -411,34 +129,50 @@
 			"bytecodeHash": "ipfs"
 		},
 		"optimizer": {
-			"enabled": true,
+			"enabled": false,
 			"runs": 200
 		},
 		"remappings": []
 	},
 	"sources": {
-		"blockchain/contracts/Polygon/Pool/Prototype/pool/authenticator.sol": {
-			"keccak256": "0xd56e3f783f296746bc39c400435bad18dbd6265dbfd477a8834026d405af5d60",
+		"@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol": {
+			"keccak256": "0x037c334add4b033ad3493038c25be1682d78c00992e1acb0e2795caff3925271",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://183450d5f99d40b0cb79fb93ccccb96b757e9862d0c3416eea605fac37299bc9",
-				"dweb:/ipfs/Qma6JXgpkd6P5Ep9uBjYHf4HR8m8YknijdTKAkQ6KwBQ3r"
+				"bzz-raw://8a313cf42389440e2706837c91370323b85971c06afd6d056d21e2bc86459618",
+				"dweb:/ipfs/QmT8XUrUvQ9aZaPKrqgRU2JVGWnaxBcUYJA7Q7K5KcLBSZ"
 			]
 		},
-		"blockchain/contracts/Polygon/Pool/Prototype/pool/safety.sol": {
-			"keccak256": "0xd8ebc13eb77d48be4163bc13e45d8f72f21e96c8882e3aad8a431e74156b32fb",
+		"@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol": {
+			"keccak256": "0x2edcb41c121abc510932e8d83ff8b82cf9cdde35e7c297622f5c29ef0af25183",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://cbd353b01d1ac68a964685d5ce7e9f476066dfc0b6a8cfb5dfe7d1de98a64dad",
-				"dweb:/ipfs/Qmamx1UW73WEgKn8rUieWjWozJCzmJ8rGaZ3pzWg9NkPSH"
+				"bzz-raw://72460c66cd1c3b1c11b863e0d8df0a1c56f37743019e468dc312c754f43e3b06",
+				"dweb:/ipfs/QmPExYKiNb9PUsgktQBupPaM33kzDHxaYoVeJdLhv8s879"
 			]
 		},
 		"blockchain/contracts/Polygon/Pool/Prototype/pool/state.sol": {
-			"keccak256": "0x2dfdd7cc1d2786a50f886ef3e06ce3951756bfcc86b53f42a7c59763a1cd62d6",
+			"keccak256": "0x905ac6a348413e9504d1e615424bf31d2d7f52f17fa97c2358c0f9f9cc518be7",
 			"license": "GPL-2.0-or-later",
 			"urls": [
-				"bzz-raw://d0b73a4d67f5f40903922582b46b8ac974e6bb9375b4641d5a61f5096782cbf0",
-				"dweb:/ipfs/QmchRsEkiwEjW4Jft4AJncE9fCADXAgLEiAXGbxvi2Cam1"
+				"bzz-raw://c8bb304301a5f0b1a58fb48e258ed5ded3071464ba15de2742c3d143776986be",
+				"dweb:/ipfs/QmXhMZupfgbd3WDeaHjyfxYwqyD6tvpzRyrN2WEjTSvFe7"
+			]
+		},
+		"blockchain/contracts/Polygon/Pool/Prototype/pool/token.sol": {
+			"keccak256": "0x4f63906707fc57fc87c3583e80b06a784104a8d3e6c2efcb03fe685fc85fa06c",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://29be0673255654dfa2bcb7ebc0ae3f8c951e55c6155d9e15d046cffa9c25d83b",
+				"dweb:/ipfs/QmTqGU8px3RuVs7pR2miiDWqEP5WLCrMiGKRJiwgDX5vMP"
+			]
+		},
+		"blockchain/contracts/Polygon/Pool/Prototype/pool/utils.sol": {
+			"keccak256": "0xadeadf1ab34d91f4851e7329fef00884a9c6f30704e44afde63e5526746d6062",
+			"license": "GPL-2.0-or-later",
+			"urls": [
+				"bzz-raw://69a7fb0eebc7e34c3c61110498949db729059256640042ac4292099c307ee19d",
+				"dweb:/ipfs/QmXLyXq9YTL3NtZpuzd2wpeiE8zvViePjLdjTXaxEL9EaV"
 			]
 		},
 		"https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/IERC20.sol": {
