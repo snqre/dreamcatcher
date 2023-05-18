@@ -61,6 +61,9 @@ contract State {
         uint256 _required,
         bool _whitelisted
     ) public payable returns (bool) {
+        require(lock.isUnlocked);
+        lock.isUnlocked = false;
+
         require(_duration >= 1 days, "funding phase must last more than 24 hours");
         require(_required >= 0, "_required < 0");
         
@@ -94,6 +97,7 @@ contract State {
             fundingSchedule: _fundingSchedule
         });
 
+        lock.isUnlocked = true;
         return true;
     }
 
