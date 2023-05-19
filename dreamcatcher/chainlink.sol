@@ -7,9 +7,24 @@ import "@chainlink/contracts/src/v0.8/interfaces/ChainlinkInterface.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/ChainlinkRequestInterface.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/ChainlinkRegistryInterface.sol";
 
-import "dreamcatcher/dream_standard.sol";
+import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/access/Ownable.sol";
+import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/Address.sol";
 
-contract Terminal is DreamStandard {
+contract ProxyTerminal is Ownable, Address {
+    mapping(address => address) private contractToFeedUSD;
+    mapping(string => address) private symbolToFeedUSD;
+
+    constructor() {}
+
+
+    
+}
+
+contract ImplementationTerminal {
+    // no constructors
+}
+
+contract Terminal is Ownable, Address {
 
     /**
     * owner: dreamcatcher
@@ -31,21 +46,11 @@ contract Terminal is DreamStandard {
     mapping(address => address) private contractOfTokenToPriceFeedOfTokenInETH;
 
 
-    modifier onlyOwner() {
-        accounts
-        require(msg.sender == owner);
-        _;
+    constructor() {
+        _transferOwnership(_msgSender());
+
+        
     }
-
-
-    modifier monetize() {
-        if (msg.sender != owner) {
-            IERC20(nativeToken).transferFrom(msg.sender, dreamcatcher, gas);
-        }
-        _;
-    }
-
-    constructor() {}
 
 
     /** get price from price feed  */
@@ -61,7 +66,7 @@ contract Terminal is DreamStandard {
     function setContractsToPriceFeedsForUSD(
         address[] _tokens,
         address[] _priceFeeds
-    ) public onlyOwner returns (bool _success) {
+    ) public returns (bool _success) {
         require(_tokens.length == _priceFeeds.length, "array lengths not matching");
         for (uint256 _i = 0; _i < _tokens.length; _i++) {contractOfTokenToPriceFeedOfTokenInUSD[_tokens[_i]] = _priceFeeds[_i];}
         return true;
@@ -69,7 +74,7 @@ contract Terminal is DreamStandard {
 
 
     /** get price from erc20 contract in usd pair */
-    function getPriceFromERC20ContractInUSD(address _ERC20Contract) private view monetize returns (uint256) {
+    function getPriceFromERC20ContractInUSD(address _ERC20Contract) private view returns (uint256) {
         address _priceFeed = contractOfTokenToPriceFeedOfTokenInUSD[_ERC20Contract];
         require(_priceFeed != 0, "unable to locate price feed");
         require(_priceFeed >= 0, "unexpected reading");
