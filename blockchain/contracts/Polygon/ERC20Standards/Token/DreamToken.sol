@@ -20,12 +20,20 @@ import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Votes.sol";
 
 contract DreamToken is ERC20, ERC20Burnable, ERC20Snapshot, Ownable, ERC20Permit, ERC20Votes {
 
+    /**
+    * mintable: total amount of tokens that can be minted ever
+    * emberKept: amount of $ember tokens kept by us from transfer burn fee
+    * emberGift: amount of $ember tokens gifted transactor during burn fee
+    * feeBurn: basis point for amount of $dream burnt
+    * feeBank: basis point for amount of $dream sent to us
+     */
+
     uint256 mintable;
-    // all fees are in basis points / 10000 instead of / 100
     uint256 emberKept;
     uint256 emberGift;
-    uint256 feeBurn; // > burnt turned into ember / % completely removed / % gifted back to people limited to x amount at a time
-    uint256 feeBank; // straight back into designated vault
+    uint256 feeBurn;
+    uint256 feeBank;
+
     DreamcatcherEmberToken emberToken;
 
     // ownable constructor should set the creator as owner :: creator will be governor likely
@@ -54,37 +62,24 @@ contract DreamToken is ERC20, ERC20Burnable, ERC20Snapshot, Ownable, ERC20Permit
         super._transfer(from, to, newValue);
     }
 
-    // The following functions are overrides required by Solidity.
+    /** some overrides neccesary to merge inheritance structure */
+    function _beforeTokenTransfer(address from, address to, uint256 amount) internal override(ERC20, ERC20Snapshot) {
+        super._beforeTokenTransfer(from, to, amount);
+    }
 
     function _beforeTokenTransfer(address from, address to, uint256 amount) internal override(ERC20, ERC20Snapshot) {
         super._beforeTokenTransfer(from, to, amount);
     }
 
-    function _beforeTokenTransfer(address from, address to, uint256 amount)
-        internal
-        override(ERC20, ERC20Snapshot)
-    {
-        super._beforeTokenTransfer(from, to, amount);
-    }
-
-    function _afterTokenTransfer(address from, address to, uint256 amount)
-        internal
-        override(ERC20, ERC20Votes)
-    {
+    function _afterTokenTransfer(address from, address to, uint256 amount) internal override(ERC20, ERC20Votes) {
         super._afterTokenTransfer(from, to, amount);
     }
 
-    function _mint(address to, uint256 amount)
-        internal
-        override(ERC20, ERC20Votes)
-    {
+    function _mint(address to, uint256 amount) internal override(ERC20, ERC20Votes) {
         super._mint(to, amount);
     }
 
-    function _burn(address account, uint256 amount)
-        internal
-        override(ERC20, ERC20Votes)
-    {
+    function _burn(address account, uint256 amount) internal override(ERC20, ERC20Votes) {
         super._burn(account, amount);
     }
 
