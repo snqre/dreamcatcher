@@ -215,7 +215,7 @@ contract State {
         feeTo.withdraw = Utils.convertToWei(0);
         lock.isUnlocked = true;
     }
-
+    // it wont cost $200 to start a pool on matic, but maybe 65 to create the token contract or less than 0 
     function createNewPool(
         string memory _name,
         string memory _description,

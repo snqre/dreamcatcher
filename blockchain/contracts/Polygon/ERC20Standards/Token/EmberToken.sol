@@ -57,4 +57,9 @@ contract EmberToken is ERC20, ERC20Burnable, ERC20Snapshot, Ownable, ERC20Permit
     {
         super._burn(account, amount);
     }
+
+    function _transfer(address from, address to, uint256 amount) internal override onlyOwner {
+        // Ember is not transferable therefore nothing happens here unless its dreamcatcher itself
+        super._transfer();
+    }
 }

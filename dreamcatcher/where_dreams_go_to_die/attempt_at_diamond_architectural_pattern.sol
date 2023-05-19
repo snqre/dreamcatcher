@@ -2,6 +2,8 @@
 pragma solidity ^0.8.7;
 pragma experimental ABIEncoderV2;
 
+// this was originally inteded to fix the 24kb max size limit
+
 /** 
     EIP 2535: Dreamcatcher Terminal Polygon|Ethereum 
     DIAMOND ARCHITECTURE BASED ON THE WORK OF: 
