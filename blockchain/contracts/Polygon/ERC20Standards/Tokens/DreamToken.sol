@@ -8,7 +8,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/draft-ERC20Permit.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Votes.sol";
 import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/IERC20.sol";
-import "blockchain/contracts/Polygon/ERC20Standards/Token/Wallet.sol";
+import "blockchain/contracts/Polygon/Finance/Wallet.sol";
 
 // not implemented yet, the idea is once testing is done on the Token, i'll merge what we've done there into the
 // sister tokens concept ... maybe
@@ -85,38 +85,27 @@ contract DreamToken is ERC20, ERC20Burnable, ERC20Snapshot, Ownable, ERC20Permit
         return value * 10**decimals();
     }
 
-    /**
-    * overriden to allow for burn and native gas fees on transfer
-     */
+    /** burn and gas on transfer */
     function _transfer(address from, address to, uint256 amount) internal override {
-        uint256[] sum;
-        uint256 maxFee = 300; // 3% max fee
-        bool isNotOverMaxFee = feeBurn + feeBank <= maxFee;
+        if (defaultBurnTransferFee != 0 || defaultBankTransferFee != 0) {
+            uint256[] sum;
 
-        delete maxFee;
+            if (defaultBurnTransferFee != 0) {
+                sum[0] = (amount / 10000) * defaultBurnTransferFee;
+                _burn(from, sum[0]);
+            }
 
-        if (feeBurn != 0) {
-            require(isNotOverMaxFee);
-            sum[0] = (amount / 10000) * feeBurn;
-            _burn(from, sum[0]);
+            if (defaultBankTransferFee != 0) {
+                sum[1] = (amount / 10000) * defaultBankTransferFee;
+                super._transfer(from, book.safe, sum[1]);
+            }
+
+            uint256 newValue = amount - (sum[0] + sum[1]);
+
+            super._transfer(from, to, newValue);
+        } else {
+            super._transfer(from, to, newValue);
         }
-
-        if (feeBank != 0) {
-            require(isNotOverMaxFee);
-            sum[1] = (amount / 10000) * feeBank;
-            super._transfer(from, safe, sum[0]);
-        }
-
-        delete isNotOverMaxFee;
-
-        // fees cannot be more than the amount being sent
-        require(sum[0] + sum[1] < amount);
-
-        uint256 newValue = amount - (sum[0] + sum[1]);
-
-        delete sum;
-        // and finally use the _transfer stuff
-        super._transfer(from, to, newValue);
     }
 
     /** required overrides to merge inheritance conflicts */
