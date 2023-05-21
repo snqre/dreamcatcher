@@ -15,8 +15,8 @@ interface ITerminal {
     
     event ConnectionEstablished(
         address indexed obj,
-        string memory signature,
-        bytes memory args
+        string signature,
+        bytes args
     );
 
     event ObjWhitelistEdit(address indexed obj, bool isWhitelisted);

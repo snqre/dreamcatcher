@@ -3,20 +3,20 @@ pragma solidity ^0.8.7;
 
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/LinkTokenInterface.sol";
-import "@chainlink/contracts/src/v0.8/interfaces/ChainlinkInterface.sol";
+//import "@chainlink/contracts/src/v0.8/interfaces/ChainlinkInterface.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/ChainlinkRequestInterface.sol";
-import "@chainlink/contracts/src/v0.8/interfaces/ChainlinkRegistryInterface.sol";
+//import "@chainlink/contracts/src/v0.8/interfaces/ChainlinkRegistryInterface.sol";
 
 import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/access/Ownable.sol";
 import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/Address.sol";
 
 interface IOracle {
-    function setContractsToFeedsUSD(bytes memory args) public returns (bool);
-    function setContractsToFeedsETH(bytes memory args) public returns (bool);
+    function setContractsToFeedsUSD(bytes memory args) external  returns (bool);
+    function setContractsToFeedsETH(bytes memory args) external  returns (bool);
 
 }
 
-contract Oracle is Ownable, Address {
+contract Oracle is Ownable {
     /** storage */
     mapping(address => address) public contractToFeedUSD;
     mapping(address => address) public contractToFeedETH;
@@ -24,12 +24,12 @@ contract Oracle is Ownable, Address {
     constructor() {}
     /*---------------------------------------------------------------- PRIVATE **/
     /** address[] == address[] ??? */
-    function _checkAddressArrLenMatch(address[] x, address[] y) internal returns (bool) {
+    function _checkAddressArrLenMatch(address[] memory x, address[] memory y) internal pure returns (bool) {
         if (x.length == y.length) {return true;}
         return false;
     }
     /** token contracts > chainlink feeds usd */
-    function _setContractsToFeedsUSD(address[] contracts, address[] feeds) internal returns (bool) {
+    function _setContractsToFeedsUSD(address[] memory contracts, address[] memory feeds) internal returns (bool) {
         /** address[] == address[] length ??? */
         require(
             _checkAddressArrLenMatch(contracts, feeds),
@@ -45,7 +45,7 @@ contract Oracle is Ownable, Address {
         return true;
     }
     /** token contracts > chainlink feeds eth */
-    function _setContractsToFeedsETH(address[] contracts, address[] feeds) internal {
+    function _setContractsToFeedsETH(address[] memory contracts, address[] memory feeds) internal returns (bool) {
         require(
             _checkAddressArrLenMatch(contracts, feeds),
             "Oracle::setContractsToFeedsUSD: number of contracts do not match number of feeds"
@@ -60,8 +60,8 @@ contract Oracle is Ownable, Address {
         return true;
     }
     /** token contracts > chainlink feeds usd */
-    function _getContractsToFeedsUSD(address[] contracts) internal pure returns (address[]) {
-        address[] feeds;
+    function _getContractsToFeedsUSD(address[] memory contracts) internal view returns (address[] memory) {
+        address[] memory feeds;
         for (uint256 i = 0; i < contracts.length; i++) {
             feeds[i] = contractToFeedUSD[contracts[i]];
         }
@@ -69,48 +69,46 @@ contract Oracle is Ownable, Address {
         return feeds;
     }
     /** token contracts > chainlink feeds eth */
-    function _getContractsToFeedsETH(address[] contracts) internal pure returns (address[]) {
-        address[] results;
+    function _getContractsToFeedsETH(address[] memory contracts) internal view returns (address[] memory) {
+        address[] memory feeds;
         for (uint256 i = 0; i < contracts.length; i++) {
-            results[i] = contractToFeedETH[contracts[i]];
+            feeds[i] = contractToFeedETH[contracts[i]];
         }
 
-        return results;
+        return feeds;
     }
 
     /** chainlink feeds > prices usd */
-    function _getFeedsToValuesUSD(address[] feeds) internal pure returns (uint256[]) {
-        uint256[] results;
-        uint256 price;
+    function _getFeedsToValuesUSD(address[] memory feeds) internal view returns (uint256[] memory) {
+        uint256[] memory values;
         for (uint256 i = 0; i < feeds.length; i++) {
             AggregatorV3Interface aggregator = AggregatorV3Interface(feeds[i]);
-            (, price, , , ) = aggregator.latestRoundData();
+            (, int256 price, , , ) = aggregator.latestRoundData();
             
-            results[i] = price;
+            values[i] = uint256(price);
         }
 
-        return results;
+        return values;
     }
     /** chainlink feeds > prices eth */
-    function _getFeedsToValuesETH(address[] feeds) internal pure returns (uint256[]) {
-        uint256[] results;
-        uint256 price;
+    function _getFeedsToValuesETH(address[] memory feeds) internal view returns (uint256[] memory) {
+        uint256[] memory values;
         for (uint256 i = 0; i < feeds.length; i++) {
             AggregatorV3Interface aggregator = AggregatorV3Interface(feeds[i]);
-            (, price, , , ) = aggregator.latestRoundData();
+            (, int256 price, , , ) = aggregator.latestRoundData();
 
-            results[i] = price;
+            values[i] = uint256(price);
         }
 
-        return results;
+        return values;
     }
 
     /*---------------------------------------------------------------- OWNER COMMANDS **/
     /** token contracts > chainlink feeds usd */
     function setContractsToFeedsUSD(bytes memory args) public onlyOwner returns (bool) {
         (
-            address[] contracts,
-            address[] feeds
+            address[] memory contracts,
+            address[] memory feeds
         ) = abi.decode(
             args,
             (
@@ -126,8 +124,8 @@ contract Oracle is Ownable, Address {
     /** token contracts > chainlink feeds eth */
     function setContractsToFeedsETH(bytes memory args) public onlyOwner returns (bool) {
         (
-            address[] contracts,
-            address[] feeds
+            address[] memory contracts,
+            address[] memory feeds
         ) = abi.decode(
             args,
             (
@@ -143,40 +141,40 @@ contract Oracle is Ownable, Address {
 
     /*---------------------------------------------------------------- PUBLIC **/
     /** token contracts to chainlink feeds usd */
-    function getContractsToFeedsUSD(bytes memory args) public view returns (address[]) {
-        address[] contracts = abi.decode(args, address[]);
-        address[] feeds = _getContractsToFeedsUSD(contracts);
+    function getContractsToFeedsUSD(bytes memory args) public view returns (address[] memory) {
+        address[] memory contracts = abi.decode(args, (address[]));
+        address[] memory feeds = _getContractsToFeedsUSD(contracts);
         return feeds;
     }
     /** token contracts to chainlink feeds eth */
-    function getContractsToFeedsETH(bytes memory args) public view returns (address[]) {
-        address[] contracts = abi.decode(args, address[]);
-        address[] feeds = _getContractsToFeedsETH(contracts);
+    function getContractsToFeedsETH(bytes memory args) public view returns (address[] memory) {
+        address[] memory contracts = abi.decode(args, (address[]));
+        address[] memory feeds = _getContractsToFeedsETH(contracts);
         return feeds;
     }
     /** token contracts > token prices in usd */
-    function getContractsToValuesUSD(bytes memory args) public view returns (uint256[]) {
-        address[] contracts = abi.decode(args, address[]);
-        address[] feeds = _getContractsToFeedsUSD(contracts);
+    function getContractsToValuesUSD(bytes memory args) public view returns (uint256[] memory) {
+        address[] memory contracts = abi.decode(args, (address[]));
+        address[] memory feeds = _getContractsToFeedsUSD(contracts);
         return  _getFeedsToValuesUSD(feeds);
     }
     /** token contracts > token prices in eth */
-    function getContractsToValuesETH(bytes memory args) public view returns (uint256[]) {
-        address[] contracts = abi.decode(args, address[]);
-        address[] feeds = _getContractsToFeedsETH(contracts);
+    function getContractsToValuesETH(bytes memory args) public view returns (uint256[] memory) {
+        address[] memory contracts = abi.decode(args, (address[]));
+        address[] memory feeds = _getContractsToFeedsETH(contracts);
         return _getFeedsToValuesETH(feeds);
     }
 
     function isVerifiedInUSD(bytes memory args) public view returns (bool) {
-        address contract_ = abi.decode(args, address);
+        address contract_ = abi.decode(args, (address));
         address feed = contractToFeedUSD[contract_];
 
-        if (feed != 0 || feed != address(0)) {
+        if (feed != address(0)) {
             /** check for abnormal price */
-            address[] feeds;
+            address[] memory feeds;
             feeds[0] = feed;
-            uint256 price = _getFeedsToValuesUSD(feeds);
-            if (price <= 0) {return false;}
+            uint256[] memory prices = _getFeedsToValuesUSD(feeds);
+            if (prices[0] <= 0) {return false;}
 
             return true;
         }
@@ -185,15 +183,15 @@ contract Oracle is Ownable, Address {
     }
 
     function isVerifiedInETH(bytes memory args) public view returns (bool) {
-        address contract_ = abi.decode(args, address);
+        address contract_ = abi.decode(args, (address));
         address feed = contractToFeedETH[contract_];
         
-        if (feed != 0 || feed != address(0)) {
+        if (feed != address(0)) {
             /** check for abnormal price */
-            address[] feeds;
+            address[] memory feeds;
             feeds[0] = feed;
-            uint256 price = _getContractsToFeedsETH(feeds);
-            if (price <= 0) {return false;}
+            uint256[] memory prices = _getFeedsToValuesETH(feeds);
+            if (prices[0] <= 0) {return false;}
             
             return true;
         }

@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.9;
 
 import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/IERC20.sol";
 import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/access/Ownable.sol";
 import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/security/ReentrancyGuard.sol";
 import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/Address.sol";
-import "blockchain/contracts/Polygon/Pool/Prototype/Pools/Utils.sol";
+import "blockchain/contracts/Polygon/Pools/Prototype/Utils.sol";
+//import "blockchain/contracts/Polygon/ERC20Standards/Tokens/SimplePoolToken.sol";
 
 interface ISingleState {
     /** proxy compatible . anyone can still call without proxy */
@@ -17,8 +18,8 @@ interface ISingleState {
         address indexed creator,
         string name,
         address[] managers,
-        string memory nameToken,
-        string memory symbolToken,
+        string nameToken,
+        string symbolToken,
         uint256 durationSeconds,
         uint256 requiredInMatic,
         bool isWhitelisted
@@ -102,7 +103,7 @@ contract SingleState is Ownable, Address, ReentrancyGuard {
     constructor() Ownable() {}
 
     /*---------------------------------------------------------------- PRIVATE **/
-    function _connect(address obj, string memory signature, bytes memory args) internal 
+    function _connect(address obj, string memory signature, bytes memory args) internal {}
 
     function _checkIsManagerOf(uint256 id) internal returns (bool) {
         Account caller = accounts[msg.sender];
@@ -206,7 +207,7 @@ contract SingleState is Ownable, Address, ReentrancyGuard {
             name: name,
             balanceInMatic: msg.value,
             initialFundingSchedule: initialFundingSchedule,
-            simpleToken: simpleToken
+            SimpleToken: simpleToken
         });
         /** set managers and give whitelist permission */
         for (uint256 i = 0; i < managers.length; i++) {
