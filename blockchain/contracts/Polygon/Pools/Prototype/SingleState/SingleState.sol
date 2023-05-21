@@ -66,7 +66,7 @@ contract SingleState is ISingleState, Ownable, ReentrancyGuard {
         address contractToken;
         uint256 balanceOf;
     }
-
+    
     struct Pool {
         uint256 id;
         string name;
@@ -196,25 +196,23 @@ contract SingleState is ISingleState, Ownable, ReentrancyGuard {
         SimpleTokenContract.SimpleToken simpleToken = new SimpleTokenContract.SimpleToken(nameToken, symbolToken);
         uint256 now_ = block.timestamp;
         /** generate initial funding schedule */
-        InitialFundingSchedule memory initialFundingSchedule = InitialFundingSchedule({
-            startTimestamp: now_,
-            durationSeconds: durationSeconds,
-            requiredInMatic: requiredInMatic,
-            isWhitelisted: isWhitelisted,
-            success: false
-        });
+        InitialFundingSchedule memory newInitialFundingSchedule;
+        newInitialFundingSchedule.startTimestamp = now_;
+        newInitialFundingSchedule.durationSeconds = durationSeconds;
+        newInitialFundingSchedule.requiredInMatic = requiredInMatic;
+        newInitialFundingSchedule.isWhitelisted = isWhitelisted;
+        newInitialFundingSchedule.success = false;
         /** generate new pool */
-        pools[id] = Pool({
-            id: id,
-            name: name,
-            balanceInMatic: msg.value,
-            initialFundingSchedule: initialFundingSchedule,
-            simpleToken: simpleToken,
-            poolTracker: ,
-            callatTSchedules: ,
-            assets: ,
-            nav: 
-        });
+        Pool memory newPool;
+        newPool.id = id;
+        newPool.name = name;
+        newPool.balanceInMatic = msg.value;
+        newPool.initialFundingSchedule = initialFundingSchedule;
+        newPool.simpleToken = simpleToken;
+        newPool.nav = 0;
+
+        pools[id] = newPool;
+
         /** set managers and give whitelist permission */
         for (uint256 i = 0; i < managers.length; i++) {
             Account memory manager = accounts[managers[i]];
