@@ -7,6 +7,38 @@ import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contr
 import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/Address.sol";
 import "blockchain/contracts/Polygon/Pool/Prototype/Pools/Utils.sol";
 
+interface ISingleState {
+    /** proxy compatible . anyone can still call without proxy */
+    function createNewPool(bytes memory args) public payable returns (bool);
+    function contribute(bytes memory args) public payable returns (bool);
+    function withdraw(bytes memory args) public returns (bool);
+
+    event NewPoolCreated(
+        address indexed creator,
+        string name,
+        address[] managers,
+        string memory nameToken,
+        string memory symbolToken,
+        uint256 durationSeconds,
+        uint256 requiredInMatic,
+        bool isWhitelisted
+    );
+
+    event Contribution(
+        address indexed contributor,
+        string name,
+        uint256 contribution,
+        uint256 amountMinted
+    );
+
+    event Withdrawal(
+        address indexed withdrawer,
+        string name,
+        uint256 amountBurnt,
+        uint256 withdraw
+    );
+}
+
 contract SingleState is Ownable, Address, ReentrancyGuard {
     struct Tracker {uint256 numberOfPools;} Tracker public tracker;
     struct InitialFundingSchedule {
@@ -49,17 +81,39 @@ contract SingleState is Ownable, Address, ReentrancyGuard {
 
     constructor() Ownable() {}
 
-    function createNewPool(
-        string memory name,
-        address[] managers,
-        string memory nameToken,
-        string memory symbolToken,
-        uint256 durationSeconds,
-        uint256 requiredInMatic,
-        bool isWhitelisted
-    ) public payable nonReentrant returns (bool) {
-        require(durationSeconds >= 604800 seconds);
-        require(requiredInMatic >= 0);
+    /*---------------------------------------------------------------- PRIVATE **/
+    /** proxy compatible */
+    function createNewPool(bytes memory args) public payable nonReentrant returns (bool) {
+        (
+            string memory name,
+            address[] managers,
+            string memory nameToken,
+            string memory symbolToken,
+            uint256 durationSeconds,
+            uint256 requiredInMatic,
+            bool isWhitelisted
+        ) = abi.decode(
+            args,
+            (
+                string,
+                address[],
+                string,
+                string,
+                uint256,
+                uint256,
+                bool
+            )
+        );
+
+        require(
+            durationSeconds >= 604800 seconds,
+            "SingleState::createNewPool: durationSeconds < 604800 seconds"
+        );
+
+        require(
+            requiredInMatic >= 0,
+            "SingleState::createNewPool: requiredInMatic < 0"
+        );
         /** if there is a cost then execute */
         if (settings.priceToCreateNewPool > 0) {
             IERC20(settings.dreamToken).transferFrom(
@@ -69,8 +123,13 @@ contract SingleState is Ownable, Address, ReentrancyGuard {
             );
         }
         /** generate new id and deploy new token contract */
-        require(tracker.numberOfPools < type(uint256).max);
-        tracker.numberOfPools += 1;
+        require(
+            tracker.numberOfPools < type(uint256).max,
+            "SingleState::createNewPool: tracker.numberOfPools >= type(uint256).max"
+        );
+
+        tracker.numberOfPools ++;
+
         uint256 id = tracker.numberOfPools;
         SimpleToken simpleToken = new SimpleToken(nameToken, symbolToken);
         uint256 now_ = block.timestamp;
@@ -98,27 +157,50 @@ contract SingleState is Ownable, Address, ReentrancyGuard {
             accounts[managers[i]] = manager;
         }
 
+        emit NewPoolCreated(
+            msg.sender,
+            name,
+            managers,
+            nameToken,
+            symbolToken,
+            durationSeconds,
+            requiredInMatic,
+            isWhitelisted
+        );
+
         return true;
     }
-
-    function contribute(uint256 id) public payable nonReentrant returns (bool) {
+    /** proxy compatible */
+    function contribute(bytes memory args) public payable nonReentrant returns (bool) {
+        uint256 id = abi.decode(args, uint256);
         uint256 value = msg.value;
-        require(value > 0);
+        require(value > 0, "SingleState::contribute: value <= 0");
         /** get pool and caller meta data */
         Account memory caller = accounts[msg.sender];
         Pool memory pool = pools[id];
         /** check if pool is whitelisted and if caller is whitelisted */
         if (pool.initialFundingSchedule.isWhitelisted) {
-            require(caller.isOnWhitelist[id]);
+            require(caller.isOnWhitelist[id], "SingleState::contribute: caller is on whitelist for this pool");
         }
-        /** required for math */
+
         uint256 supply = pool.simpleToken.totalSupply();
         uint256 balance = pool.balanceInMatic;
-        uint256 amountToMint = Utils.valueToMint(value, supply, balance);
-        
-        require(amountToMint > 0);
 
-        require(block.timestamp <= pool.initialFundingSchedule.startTimestamp + pool.initialFundingSchedule.durationSeconds);
+        require(supply > 0, "SingleState::contribute: supply <= 0");
+        require(balance > 0, "SingleState::contribute: balance <= 0");
+
+        uint256 amountToMint = Utils.valueToMint(
+            value,
+            supply,
+            balance
+        );
+
+        require(
+            block.timestamp
+            <= pool.initialFundingSchedule.startTimestamp
+            + pool.initialFundingSchedule.durationSeconds,
+            "SingleState::contribute: initial funding period for this pool has expired"
+        );
 
         if (settings.feeToContribute > 0) {
             uint256 fee = (amountToMint * settings.feeToContribute) / 10000;
@@ -126,35 +208,72 @@ contract SingleState is Ownable, Address, ReentrancyGuard {
             /** mint fee of tokens to safe */
             pool.simpleToken.mint(settings.safe, fee);
         }
+
         /** update */
         pool.balanceInMatic += value;
         pool.simpleToken.mint(msg.sender, amountToMint);
         pools[id] = pool;
         accounts[msg.sender] = caller;
 
+        emit Contribution(
+            msg.sender,
+            pool.name,
+            value,
+            amountToMint
+        );
+
         return true;
     }
+    /** proxy compatible */
+    function withdraw(bytes memory args) public nonReentrant returns (bool) {
+        (
+            uint256 id,
+            uint256 amount
+        ) = abi.decode(
+            args,
+            (
+                uint256,
+                uint256
+            )
+        );
 
-    function withdraw(uint256 id, uint256 amount) public nonReentrant returns (bool) {
-        require(value > 0);
+        require(amount > 0, "SingleState::withdraw: value <= 0");
         Pool memory pool = pools[id];
 
         uint256 supply = pool.simpleToken.totalSupply();
         uint256 balance = pool.balanceInMatic;
-        uint256 valueToSend = Utils.burnToValue(amount, supply, balance);
         
-        require(pool.balanceInMatic >= valueToSend);
+        require(supply > 0, "SingleState::withdraw: supply <= 0");
+        require(balance > 0, "SingleState::withdraw: balance <= 0");
+        
+        uint256 valueToSend = Utils.burnToValue(
+            amount,
+            supply,
+            balance
+        );
+        /** note this should never happen but if it does we return the tokens back and we can identify who we need to payout */
+        require(
+            pool.balanceInMatic >= valueToSend,
+            "SingleState::withdraw: insufficient balance on contract to make withdrawal"
+        );
         /** fees */
         if (settings.feeToWithdraw > 0) {
             uint256 fee = (amount * settings.feeToWithdraw) / 10000;
             valueToSend -= fee;
             sendValue(settings.safe, fee);
         }
-        /** burn and send value */
+        /** burn, send value, and update */
         pool.simpleToken.burn(msg.sender, amount);
         sendValue(msg.sender, valueToSend);
         pool.balanceInMatic -= valueToSend;
         
+        emit Withdrawal(
+            msg.sender,
+            pool.name,
+            amount,
+            valueToSend
+        );
+
         return true;
     }
 

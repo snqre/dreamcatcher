@@ -10,31 +10,21 @@ import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Votes.sol";
 import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/IERC20.sol";
 import "blockchain/contracts/Polygon/Finance/Wallet.sol";
 
-// not implemented yet, the idea is once testing is done on the Token, i'll merge what we've done there into the
-// sister tokens concept ... maybe
-
 /**
-* $DREAM
-* Meaning: Desire or Aspiration
-* serve as a reminder of the power of imagination and the importance of chasing one's passion
-* required to use our products, vote, and more
+* Dream Token
+* desire or aspiration
+* a reminder of the power of imagination and important of chasing one's passion
+* native | gas | vote | governance | wild hunts*
  */
 
 contract DreamToken is ERC20, ERC20Burnable, ERC20Snapshot, Ownable, ERC20Permit, ERC20Votes {
 
-    /**
-    * mintable: total amount of tokens that can be minted ever
-    * emberKept: amount of $ember tokens kept by us from transfer burn fee
-    * emberGift: amount of $ember tokens gifted transactor during burn fee
-    * feeBurn: basis point for amount of $dream burnt
-    * feeBank: basis point for amount of $dream sent to us
-     */
-
     /** no need for basic meta data as that is covered by @openzeppelin */
-    struct Book {
-        address safe;
-        address emberToken;
-    }
+
+    address public safe;
+    uint256 public mintable;
+    uint256 public maxSupply_;
+    EmberToken emberToken;
 
     struct Settings {
         uint256 minimumBurnTranferFee;
@@ -45,21 +35,17 @@ contract DreamToken is ERC20, ERC20Burnable, ERC20Snapshot, Ownable, ERC20Permit
         uint256 defaultBankTransferFee;
     }
 
-    struct Tracker {
-        uint256 mintable;
-        uint256 maxSupply;
-    }
-
     uint256 immutable maxSupply;
 
-    Book internal book;
-    Settings internal settings;
-    Tracker internal tracker;
+    Book public book;
+    Settings public settings;
+    Tracker public tracker;
 
     /** owner set to msg.sender in Ownable() */
     constructor() ERC20("Dreamcatcher", "DREAM") ERC20Permit("Dreamcatcher") Ownable() {
-        tracker.mintable = _convertToWei(200000000);
-        maxSupply = _convertToWei(200000000);
+        /** burnt tokens cannot be minted again */
+        mintable = _convertToWei(200000000);
+        maxSupply_ = _convertToWei(200000000);
 
         /** for transparency reasons */
         enum team {weaver_}
@@ -74,13 +60,14 @@ contract DreamToken is ERC20, ERC20Burnable, ERC20Snapshot, Ownable, ERC20Permit
         /** ... others ... */
 
 
-        // deploy Ember contract? again do we need sister token?
+        /** deploy ember token contract */
         emberToken = new EmberToken();
+
+        nonce = 0;
         
     }
 
     /*---------------------------------------------------------------- PRIVATE **/
-
     function _convertToWei(uint256 value) internal pure returns (uint256) {
         return value * 10**decimals();
     }
@@ -97,14 +84,15 @@ contract DreamToken is ERC20, ERC20Burnable, ERC20Snapshot, Ownable, ERC20Permit
 
             if (defaultBankTransferFee != 0) {
                 sum[1] = (amount / 10000) * defaultBankTransferFee;
-                super._transfer(from, book.safe, sum[1]);
+                super._transfer(from, safe, sum[1]);
             }
+            /** x + 0 or 0 + x if one of the fees are not present */
+            uint256 newAmount = amount - (sum[0] + sum[1]);
 
-            uint256 newValue = amount - (sum[0] + sum[1]);
-
-            super._transfer(from, to, newValue);
+            super._transfer(from, to, newAmount);
         } else {
-            super._transfer(from, to, newValue);
+            /** standard */
+            super._transfer(from, to, amount);
         }
     }
 
@@ -126,11 +114,9 @@ contract DreamToken is ERC20, ERC20Burnable, ERC20Snapshot, Ownable, ERC20Permit
 
     function _burn(address account, uint256 amount) internal override(ERC20, ERC20Votes) {
         super._burn(account, amount);
-        /** if we want to produce $ember on burn we need to do it here which we wont be able to change again */
     }
 
     /*---------------------------------------------------------------- OWNER COMMANDS **/
-
     function snapshot() public onlyOwner {
         _snapshot();
     }
@@ -148,4 +134,7 @@ contract DreamToken is ERC20, ERC20Burnable, ERC20Snapshot, Ownable, ERC20Permit
     }
 
     /*---------------------------------------------------------------- PUBLIC **/
+    function maxSupply() public view returns (uint256) {
+        return maxSupply_;
+    }
 }

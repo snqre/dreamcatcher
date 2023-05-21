@@ -1,0 +1,3 @@
+# StandAlone
+
+StandAlone is designed for those who'd like more features and flexibility on their contract, they have not in built connection to our platform so they dont benefit from the features we can give them. There are no fees, but there is a creation cost within the StandAlone factory. It's upgradable so once bought they can change it as they see fit. The ERC20 that comes with this comes with all the features, the option is between a standard ERC20, and a governance compatible token

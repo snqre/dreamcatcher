@@ -31,6 +31,9 @@ Constructor:
     Vests amount of tokens to team member wallets
 
 
+    does not look like a token on etherscan but okay on polygon
+
+
 TODO
     Need to remove mintable function for bridge
  */

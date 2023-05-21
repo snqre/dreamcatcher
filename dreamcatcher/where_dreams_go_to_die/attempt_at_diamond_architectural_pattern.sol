@@ -65,7 +65,6 @@ import "https://github.com/mudgen/diamond-3/blob/master/contracts/libraries/LibD
  */
 import "https://github.com/mudgen/diamond-3/blob/master/contracts/Diamond.sol";
 
-
 library LibDreamcatcher {
     using LibDiamond for LibDiamond.DiamondStorage;
 
