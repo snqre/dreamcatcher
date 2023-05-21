@@ -74,13 +74,12 @@ contract SingleState is ISingleState, Ownable, ReentrancyGuard {
         InitialFundingSchedule initialFundingSchedule;
         SimpleTokenContract.SimpleToken simpleToken;
         PoolTracker poolTracker;
-        CollatTSchedule[] collatTSchedules;
-        Asset[] assets;
         uint256 nav;
     }
 
     mapping(uint256 => Pool) public pools;
-    mapping(uint256 => mapping(address => uint256)) public poolsHoldings;
+    mapping(uint256 => mapping(address => Asset)) public poolsHoldings;
+    mapping(uint256 => mapping(uint256 => CollatTSchedule)) public collatTSchedules;
     /** roles */
     struct Account {
         bool[] isAdmin;
@@ -207,7 +206,7 @@ contract SingleState is ISingleState, Ownable, ReentrancyGuard {
         newPool.id = id;
         newPool.name = name;
         newPool.balanceInMatic = msg.value;
-        newPool.initialFundingSchedule = initialFundingSchedule;
+        newPool.initialFundingSchedule = newInitialFundingSchedule;
         newPool.simpleToken = simpleToken;
         newPool.nav = 0;
 
@@ -236,7 +235,7 @@ contract SingleState is ISingleState, Ownable, ReentrancyGuard {
     }
     /** proxy compatible */
     function contribute(bytes memory args) public payable nonReentrant returns (bool) {
-        uint256 id = abi.decode(args, uint256);
+        uint256 id = abi.decode(args, (uint256));
         uint256 value = msg.value;
         require(value > 0, "SingleState::contribute: value <= 0");
         /** get pool and caller meta data */
@@ -324,11 +323,11 @@ contract SingleState is ISingleState, Ownable, ReentrancyGuard {
         if (settings.feeToWithdraw > 0) {
             uint256 fee = (amount * settings.feeToWithdraw) / 10000;
             valueToSend -= fee;
-            Address.sendValue(settings.safe, fee);
+            Address.sendValue(payable(settings.safe), fee);
         }
         /** burn, send value, and update */
-        pool.simpleToken.burn(msg.sender, amount);
-        Address.sendValue(msg.sender, valueToSend);
+        pool.simpleToken.burnFrom(msg.sender, amount);
+        Address.sendValue(payable(msg.sender), valueToSend);
         pool.balanceInMatic -= valueToSend;
         
         emit Withdrawal(
