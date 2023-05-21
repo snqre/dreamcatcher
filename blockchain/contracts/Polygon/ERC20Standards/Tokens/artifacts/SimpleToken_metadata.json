@@ -614,7 +614,7 @@
 	},
 	"settings": {
 		"compilationTarget": {
-			"blockchain/contracts/Polygon/ERC20Standards/Tokens/SimplePoolToken.sol": "SimpleToken"
+			"blockchain/contracts/Polygon/ERC20Standards/Tokens/SimpleToken.sol": "SimpleToken"
 		},
 		"evmVersion": "paris",
 		"libraries": {},
@@ -740,7 +740,7 @@
 				"dweb:/ipfs/Qmct36zWXv3j7LZB83uwbg7TXwnZSN1fqHNDZ93GG98bGz"
 			]
 		},
-		"blockchain/contracts/Polygon/ERC20Standards/Tokens/SimplePoolToken.sol": {
+		"blockchain/contracts/Polygon/ERC20Standards/Tokens/SimpleToken.sol": {
 			"keccak256": "0xc9ba522db929f72724804db6d134f488ff84f946ac5a3ef38f501b688a2c9726",
 			"license": "MIT",
 			"urls": [

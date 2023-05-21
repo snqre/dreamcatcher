@@ -6,13 +6,14 @@ import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contr
 import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/security/ReentrancyGuard.sol";
 import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/Address.sol";
 import "blockchain/contracts/Polygon/Pools/Prototype/Utils.sol";
-//import "blockchain/contracts/Polygon/ERC20Standards/Tokens/SimplePoolToken.sol";
+import "blockchain/contracts/Polygon/ERC20Standards/Tokens/SimpleToken.sol" as SimpleTokenContract;
+import "blockchain/contracts/Polygon/Finance/Oracle.sol";
 
 interface ISingleState {
     /** proxy compatible . anyone can still call without proxy */
-    function createNewPool(bytes memory args) public payable returns (bool);
-    function contribute(bytes memory args) public payable returns (bool);
-    function withdraw(bytes memory args) public returns (bool);
+    function createNewPool(bytes memory args) external payable returns (bool);
+    function contribute(bytes memory args) external payable returns (bool);
+    function withdraw(bytes memory args) external returns (bool);
 
     event NewPoolCreated(
         address indexed creator,
@@ -40,7 +41,7 @@ interface ISingleState {
     );
 }
 
-contract SingleState is Ownable, Address, ReentrancyGuard {
+contract SingleState is ISingleState, Ownable, ReentrancyGuard {
     struct Tracker {uint256 numberOfPools;} Tracker public tracker;
     struct InitialFundingSchedule {
         uint256 startTimestamp;
@@ -71,7 +72,7 @@ contract SingleState is Ownable, Address, ReentrancyGuard {
         string name;
         uint256 balanceInMatic;
         InitialFundingSchedule initialFundingSchedule;
-        SimpleToken simpleToken;
+        SimpleTokenContract.SimpleToken simpleToken;
         PoolTracker poolTracker;
         CollatTSchedule[] collatTSchedules;
         Asset[] assets;
@@ -88,7 +89,7 @@ contract SingleState is Ownable, Address, ReentrancyGuard {
         bool[] isOnWhitelist;
     }
 
-    mapping(address => Account) public accounts;
+    mapping(address => Account) internal accounts;
 
     struct Settings {
         uint256 priceToCreateNewPool;
@@ -106,8 +107,8 @@ contract SingleState is Ownable, Address, ReentrancyGuard {
     function _connect(address obj, string memory signature, bytes memory args) internal {}
 
     function _checkIsManagerOf(uint256 id) internal returns (bool) {
-        Account caller = accounts[msg.sender];
-        if (caller.isManager(id)) {
+        Account memory caller = accounts[msg.sender];
+        if (caller.isManager[id]) {
             return true;
         } 
         
@@ -116,11 +117,11 @@ contract SingleState is Ownable, Address, ReentrancyGuard {
     /** key issues what happens if a contracts is not found */
     function _getNetAssetValueOf(bytes memory args) internal returns (uint256) {
         (address oracle, uint256 id) = abi.decode(args, (address, uint256));
-        Pool pool = pools[id];
+        Pool memory pool = pools[id];
         uint256 sum;
         uint256 price;
         uint256 amount;
-        for (i = 0; i < pool.assets.length; i++) {
+        for (uint256 i = 0; i < pool.assets.length; i++) {
             address contract_ = pool.assets[i].contractToken;
             args = abi.encode(contract_);
             bool isVerified = IOracle(oracle).isVerifiedInUSD(args);
@@ -146,7 +147,7 @@ contract SingleState is Ownable, Address, ReentrancyGuard {
     function createNewPool(bytes memory args) public payable nonReentrant returns (bool) {
         (
             string memory name,
-            address[] managers,
+            address[] memory managers,
             string memory nameToken,
             string memory symbolToken,
             uint256 durationSeconds,
@@ -191,7 +192,7 @@ contract SingleState is Ownable, Address, ReentrancyGuard {
         tracker.numberOfPools ++;
 
         uint256 id = tracker.numberOfPools;
-        SimpleToken simpleToken = new SimpleToken(nameToken, symbolToken);
+        SimpleTokenContract.SimpleToken simpleToken = new SimpleTokenContract.SimpleToken(nameToken, symbolToken);
         uint256 now_ = block.timestamp;
         /** generate initial funding schedule */
         InitialFundingSchedule memory initialFundingSchedule = InitialFundingSchedule({
@@ -240,7 +241,7 @@ contract SingleState is Ownable, Address, ReentrancyGuard {
         Pool memory pool = pools[id];
         /** check if pool is whitelisted and if caller is whitelisted */
         if (pool.initialFundingSchedule.isWhitelisted) {
-            require(caller.isOnWhitelist[id], "SingleState::contribute: caller is on whitelist for this pool");
+            require(caller.isOnWhitelist[id], "SingleState::contribute: caller is not on whitelist for this pool");
         }
 
         uint256 supply = pool.simpleToken.totalSupply();
@@ -320,11 +321,11 @@ contract SingleState is Ownable, Address, ReentrancyGuard {
         if (settings.feeToWithdraw > 0) {
             uint256 fee = (amount * settings.feeToWithdraw) / 10000;
             valueToSend -= fee;
-            sendValue(settings.safe, fee);
+            Address.sendValue(settings.safe, fee);
         }
         /** burn, send value, and update */
         pool.simpleToken.burn(msg.sender, amount);
-        sendValue(msg.sender, valueToSend);
+        Address.sendValue(msg.sender, valueToSend);
         pool.balanceInMatic -= valueToSend;
         
         emit Withdrawal(
