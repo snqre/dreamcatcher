@@ -49,6 +49,12 @@
 		},
 		"gasEstimates": null,
 		"methodIdentifiers": {
+			"getContractSToFeedsUSD(bytes)": "e06e7cd6",
+			"getContractsToFeedsETH(bytes)": "9d16f3dc",
+			"getContractsToValuesETH(bytes)": "51d13d4b",
+			"getContractsToValuesUSD(bytes)": "2bb279c2",
+			"isVerifiedInETH(bytes)": "66634b76",
+			"isVerifiedInUSD(bytes)": "d973d4f9",
 			"setContractsToFeedsETH(bytes)": "72e959a9",
 			"setContractsToFeedsUSD(bytes)": "933ad8e9"
 		}
@@ -62,11 +68,125 @@
 					"type": "bytes"
 				}
 			],
+			"name": "getContractSToFeedsUSD",
+			"outputs": [
+				{
+					"internalType": "address[]",
+					"name": "feeds",
+					"type": "address[]"
+				}
+			],
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "bytes",
+					"name": "args",
+					"type": "bytes"
+				}
+			],
+			"name": "getContractsToFeedsETH",
+			"outputs": [
+				{
+					"internalType": "address[]",
+					"name": "feeds",
+					"type": "address[]"
+				}
+			],
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "bytes",
+					"name": "args",
+					"type": "bytes"
+				}
+			],
+			"name": "getContractsToValuesETH",
+			"outputs": [
+				{
+					"internalType": "uint256[]",
+					"name": "values",
+					"type": "uint256[]"
+				}
+			],
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "bytes",
+					"name": "args",
+					"type": "bytes"
+				}
+			],
+			"name": "getContractsToValuesUSD",
+			"outputs": [
+				{
+					"internalType": "uint256[]",
+					"name": "values",
+					"type": "uint256[]"
+				}
+			],
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "bytes",
+					"name": "args",
+					"type": "bytes"
+				}
+			],
+			"name": "isVerifiedInETH",
+			"outputs": [
+				{
+					"internalType": "bool",
+					"name": "isVerified",
+					"type": "bool"
+				}
+			],
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "bytes",
+					"name": "args",
+					"type": "bytes"
+				}
+			],
+			"name": "isVerifiedInUSD",
+			"outputs": [
+				{
+					"internalType": "bool",
+					"name": "isVerified",
+					"type": "bool"
+				}
+			],
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "bytes",
+					"name": "args",
+					"type": "bytes"
+				}
+			],
 			"name": "setContractsToFeedsETH",
 			"outputs": [
 				{
 					"internalType": "bool",
-					"name": "",
+					"name": "success",
 					"type": "bool"
 				}
 			],
@@ -85,7 +205,7 @@
 			"outputs": [
 				{
 					"internalType": "bool",
-					"name": "",
+					"name": "success",
 					"type": "bool"
 				}
 			],

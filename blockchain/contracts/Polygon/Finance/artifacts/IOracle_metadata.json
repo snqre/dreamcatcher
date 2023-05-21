@@ -13,11 +13,125 @@
 						"type": "bytes"
 					}
 				],
+				"name": "getContractSToFeedsUSD",
+				"outputs": [
+					{
+						"internalType": "address[]",
+						"name": "feeds",
+						"type": "address[]"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "bytes",
+						"name": "args",
+						"type": "bytes"
+					}
+				],
+				"name": "getContractsToFeedsETH",
+				"outputs": [
+					{
+						"internalType": "address[]",
+						"name": "feeds",
+						"type": "address[]"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "bytes",
+						"name": "args",
+						"type": "bytes"
+					}
+				],
+				"name": "getContractsToValuesETH",
+				"outputs": [
+					{
+						"internalType": "uint256[]",
+						"name": "values",
+						"type": "uint256[]"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "bytes",
+						"name": "args",
+						"type": "bytes"
+					}
+				],
+				"name": "getContractsToValuesUSD",
+				"outputs": [
+					{
+						"internalType": "uint256[]",
+						"name": "values",
+						"type": "uint256[]"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "bytes",
+						"name": "args",
+						"type": "bytes"
+					}
+				],
+				"name": "isVerifiedInETH",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "isVerified",
+						"type": "bool"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "bytes",
+						"name": "args",
+						"type": "bytes"
+					}
+				],
+				"name": "isVerifiedInUSD",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "isVerified",
+						"type": "bool"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "bytes",
+						"name": "args",
+						"type": "bytes"
+					}
+				],
 				"name": "setContractsToFeedsETH",
 				"outputs": [
 					{
 						"internalType": "bool",
-						"name": "",
+						"name": "success",
 						"type": "bool"
 					}
 				],
@@ -36,7 +150,7 @@
 				"outputs": [
 					{
 						"internalType": "bool",
-						"name": "",
+						"name": "success",
 						"type": "bool"
 					}
 				],
@@ -96,11 +210,11 @@
 			]
 		},
 		"blockchain/contracts/Polygon/Finance/Oracle.sol": {
-			"keccak256": "0x5aae37b4a6e3e56ab751793becffc1092998e1ba6f61e78c939f8b52c69392f1",
+			"keccak256": "0x2b4bbd86d0b30f731de89508a209bbbb43556a75d57d56377d7f15557fd4440e",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://0352e3a401a9b47033eab8dc27741b4c541ef69dd6522f3b8dc07ef46d3196fe",
-				"dweb:/ipfs/QmcqrLoQHk6dQwMuZum8PKE1CtS4jBHNiYZEVdcMNSssnt"
+				"bzz-raw://a231bf52828b416c877aac45c47d2147ae9cffda36f18531ac9a9f50528d19dc",
+				"dweb:/ipfs/QmZ1667uLfcXAy1LQEfMYoBA4HLnYYqSY75gD88ctkWSVx"
 			]
 		},
 		"https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/access/Ownable.sol": {

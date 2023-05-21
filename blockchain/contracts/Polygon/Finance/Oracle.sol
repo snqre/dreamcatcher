@@ -13,13 +13,12 @@ import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contr
 interface IOracle {
     function setContractsToFeedsUSD(bytes memory args) external  returns (bool success);
     function setContractsToFeedsETH(bytes memory args) external  returns (bool success);
-    function getContractSToFeedsUSD(bytes memory args) external view returns (address[] feeds);
-    function getContractsToFeedsETH(bytes memory args) external view returns (address[] feeds);
-    function getContractsToValuesUSD(bytes memory args) external view returns (uint256[] values);
-    function getContractsToValuesETH(bytes memory args) external view returns (uint256[] values);
+    function getContractSToFeedsUSD(bytes memory args) external view returns (address[] memory feeds);
+    function getContractsToFeedsETH(bytes memory args) external view returns (address[] memory feeds);
+    function getContractsToValuesUSD(bytes memory args) external view returns (uint256[] memory values);
+    function getContractsToValuesETH(bytes memory args) external view returns (uint256[] memory values);
     function isVerifiedInUSD(bytes memory args) external view returns (bool isVerified);
     function isVerifiedInETH(bytes memory args) external view returns (bool isVerified);
-
 }
 
 contract Oracle is Ownable {
