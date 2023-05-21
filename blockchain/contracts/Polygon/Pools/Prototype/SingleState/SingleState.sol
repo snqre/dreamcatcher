@@ -116,25 +116,25 @@ contract SingleState is ISingleState, Ownable, ReentrancyGuard {
         (address oracle, uint256 id) = abi.decode(args, (address, uint256));
         Pool memory pool = pools[id];
         uint256 sum;
-        uint256 amount;
-        for (uint256 i = 0; i < pool.assets.length; i++) {
-            address contract_ = pool.assets[i].contractToken;
+        /** for each asset in the pool */
+        for (uint256 i = 0; i < pool.contracts.length; i++) {
+            address contract_ = pool.contracts[i];
+            address[] contract__;
+            contract__[0] = contract_;
+            uint256 amount = pool.amounts[i];
             args = abi.encode(contract_);
             bool isVerified = IOracle(oracle).isVerifiedInUSD(args);
             if (isVerified) {
-                
                 uint256[] memory price = IOracle(oracle).getContractsToValuesUSD(
                     abi.encode(
-                        pool.assets[i].contractToken
+                        contract__
                     )
                 );
-            
-                amount = pool.assets[i].balanceOf;
+
                 sum += amount * price[0];
             } else {
                 /** do something if not verified */
             }
-            
         }
         /** will return zero if nothing was found */
         return sum;
