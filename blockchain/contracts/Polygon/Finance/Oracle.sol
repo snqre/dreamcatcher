@@ -11,8 +11,14 @@ import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contr
 import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/Address.sol";
 
 interface IOracle {
-    function setContractsToFeedsUSD(bytes memory args) external  returns (bool);
-    function setContractsToFeedsETH(bytes memory args) external  returns (bool);
+    function setContractsToFeedsUSD(bytes memory args) external  returns (bool success);
+    function setContractsToFeedsETH(bytes memory args) external  returns (bool success);
+    function getContractSToFeedsUSD(bytes memory args) external view returns (address[] feeds);
+    function getContractsToFeedsETH(bytes memory args) external view returns (address[] feeds);
+    function getContractsToValuesUSD(bytes memory args) external view returns (uint256[] values);
+    function getContractsToValuesETH(bytes memory args) external view returns (uint256[] values);
+    function isVerifiedInUSD(bytes memory args) external view returns (bool isVerified);
+    function isVerifiedInETH(bytes memory args) external view returns (bool isVerified);
 
 }
 
