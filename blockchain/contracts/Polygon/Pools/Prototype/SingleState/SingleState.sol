@@ -58,10 +58,6 @@ contract SingleState is ISingleState, Ownable, ReentrancyGuard {
         bool complete;
     }
 
-    struct PoolTracker {
-        uint256 numberOfCollatTSchedules;
-    }
-
     struct Asset {
         address contractToken;
         uint256 balanceOf;
@@ -70,16 +66,18 @@ contract SingleState is ISingleState, Ownable, ReentrancyGuard {
     struct Pool {
         uint256 id;
         string name;
-        uint256 balanceInMatic;
         InitialFundingSchedule initialFundingSchedule;
         SimpleTokenContract.SimpleToken simpleToken;
-        PoolTracker poolTracker;
+        uint256 numberOfCollatTSchedules;
         uint256 nav;
+        /** assets */
+        uint256 balanceInMatic;
+        address[] contracts;
+        uint256[] amounts;
     }
 
     mapping(uint256 => Pool) public pools;
-    mapping(uint256 => mapping(address => Asset)) public poolsHoldings;
-    mapping(uint256 => mapping(uint256 => CollatTSchedule)) public collatTSchedules;
+    mapping(uint256 => mapping(uint256 => CollatTSchedule)) public poolsCollatTSchedules;
     /** roles */
     struct Account {
         bool[] isAdmin;
