@@ -6,6 +6,9 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/security/ReentrancyGuard.sol";
 import "blockchain/contracts/Polygon/ERC20Standards/Tokens/TokenHub.sol";
 import "blockchain/contracts/Polygon/Pools/Prototype/SingleState/SingleState.sol";
+import "blockchain/contracts/Polygon/Pools/Prototype/StandAlone/StandAlone.sol";
+import "blockchain/contracts/Polygon/Finance/Wallet.sol";
+import "blockchain/contracts/Polygon/Finance/Oracle.sol";
 
 interface ITerminal {
     function connect(address obj, string memory signature, bytes memory args) public returns (bool);
@@ -23,10 +26,14 @@ contract Terminal is Initializable, AccessControlUpgradeable, ReentrancyGuard, I
 
     TokenHub tokenHub;
     SingleState singleState;
+    Wallet[] wallets;
+    Oracle oracle;
 
     struct Book {
         address tokenHub;
         address singleState;
+        address[] wallets;
+        address oracle;
     }
 
     Book book;
@@ -37,6 +44,7 @@ contract Terminal is Initializable, AccessControlUpgradeable, ReentrancyGuard, I
     constructor() {
         tokenHub = new TokenHub();
         singleState = new SingleState();
+        oracle = new Oracle();
         book.tokenHub = address(tokenHub);
         book.singleState = address(singleState);
         _setObjWhitelist(address(tokenHub), true);
@@ -128,6 +136,25 @@ contract Terminal is Initializable, AccessControlUpgradeable, ReentrancyGuard, I
         _safeConnect(obj, signature, args);
         return true;
     }
+
+    /** finance tools */
+    function createNewVestedWallet(
+        address beneficiaryAddress,
+        uint64 startTimestamp,
+        uint64 durationSeconds
+    ) public returns (bool) {
+        bytes memory args = abi.encode(
+            beneficiaryAddress,
+            startTimestamp,
+            durationSeconds
+        );
+
+        address obj = address(book.wallets[0]);
+        string memory signature = "constructor(address,uint64,durationSeconds)";
+        _safeConnect(obj, signature, args);
+        return true;
+    }
+
     /** return address */
     function getTokenHub() public view returns (address) {
         return book.tokenHub;

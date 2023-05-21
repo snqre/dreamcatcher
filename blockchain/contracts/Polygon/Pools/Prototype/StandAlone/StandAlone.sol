@@ -7,6 +7,31 @@ import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contr
 import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/Address.sol";
 import "blockchain/contracts/Polygon/Pool/Prototype/Pools/Utils.sol";
 
+interface IStandAlone {
+    event PoolCreated(
+        address indexed creator,
+        string name,
+        addres[] managers,
+        string memory nameToken,
+        string memory symbolToken,
+        uint256 durationSeconds,
+        uint256 requiredInMatic,
+        bool isWhitelist
+    );
+
+    event Contribution(
+        address indexed contributor,
+        uint256 contribution,
+        uint256 amountMinted
+    );
+
+    event Withdrawal(
+        address indexed withdrawer,
+        uint256 amountBurnt,
+        uint256 withdraw
+    );
+}
+
 /** stand alone single contract for one pool no connection to dreamcatcher no benefits no ongoing streaming fees */
 contract StandAlone is Ownable, Address, ReentrancyGuard {
     struct InitialFundingSchedule {
@@ -91,6 +116,17 @@ contract StandAlone is Ownable, Address, ReentrancyGuard {
             manager.isOnWhitelist = true;
             accounts[managers[i]] = manager;
         }
+
+        emit PoolCreated(
+            msg.sender,
+            name,
+            managers,
+            nameToken,
+            symbolToken,
+            durationSeconds,
+            requiredInMatic,
+            isWhitelist
+        );
 
         return true;
 

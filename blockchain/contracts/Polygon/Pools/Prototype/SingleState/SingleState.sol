@@ -48,6 +48,22 @@ contract SingleState is Ownable, Address, ReentrancyGuard {
         bool isWhitelisted;
         bool success;
     }
+    /** can only do this for assets we can get the price of */
+    struct CollatTSchedule {
+        uint256 startTimestamp;
+        uint256 remainingTime;
+        uint256 collateralInMatic;
+        bool complete;
+    }
+
+    struct PoolTracker {
+        uint256 numberOfCollatTSchedules;
+    }
+
+    struct Asset {
+        address contractToken;
+        uint256 balanceOf;
+    }
 
     struct Pool {
         uint256 id;
@@ -55,10 +71,14 @@ contract SingleState is Ownable, Address, ReentrancyGuard {
         uint256 balanceInMatic;
         InitialFundingSchedule initialFundingSchedule;
         SimpleToken simpleToken;
+        PoolTracker poolTracker;
+        CollatTSchedule[] collatTSchedules;
+        Asset[] assets;
+        uint256 nav;
     }
 
     mapping(uint256 => Pool) public pools;
-
+    mapping(uint256 => mapping(address => uint256)) public poolsHoldings;
     /** roles */
     struct Account {
         bool[] isAdmin;
@@ -82,6 +102,45 @@ contract SingleState is Ownable, Address, ReentrancyGuard {
     constructor() Ownable() {}
 
     /*---------------------------------------------------------------- PRIVATE **/
+    function _connect(address obj, string memory signature, bytes memory args) internal 
+
+    function _checkIsManagerOf(uint256 id) internal returns (bool) {
+        Account caller = accounts[msg.sender];
+        if (caller.isManager(id)) {
+            return true;
+        } 
+        
+        return false;
+    }
+    /** key issues what happens if a contracts is not found */
+    function _getNetAssetValueOf(bytes memory args) internal returns (uint256) {
+        (address oracle, uint256 id) = abi.decode(args, (address, uint256));
+        Pool pool = pools[id];
+        uint256 sum;
+        uint256 price;
+        uint256 amount;
+        for (i = 0; i < pool.assets.length; i++) {
+            address contract_ = pool.assets[i].contractToken;
+            args = abi.encode(contract_);
+            bool isVerified = IOracle(oracle).isVerifiedInUSD(args);
+
+            if (isVerified) {
+                price = IOracle(oracle).getContractsToValuesUSD(
+                    pool.assets[i].contractToken
+                );
+            
+                amount = pool.assets[i].balanceOf;
+                sum += amount * price;
+            } else {
+                /** do something if not verified */
+            }
+            
+        }
+        /** will return zero if nothing was found */
+        return sum;
+    }
+
+    /*---------------------------------------------------------------- PUBLIC **/
     /** proxy compatible */
     function createNewPool(bytes memory args) public payable nonReentrant returns (bool) {
         (
@@ -275,6 +334,26 @@ contract SingleState is Ownable, Address, ReentrancyGuard {
         );
 
         return true;
+    }
+    /** use money from the pool to purchase an asset not listed */
+    function newCollatTAgreement(bytes memory args) public payable returns (bool) {
+        (
+            uint256 id,
+            address asset,
+            uint256 amount
+        ) = abi.decode(
+            args,
+            (
+                uint256,
+                address,
+                uint256
+            )
+        );
+
+        require(_checkIsManagerOf(id), "SingleState::newCollatTAgreement: caller is not manager of this pool");
+
+
+
     }
 
 }
