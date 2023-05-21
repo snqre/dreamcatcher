@@ -103,7 +103,7 @@ contract SingleState is ISingleState, Ownable, ReentrancyGuard {
     /*---------------------------------------------------------------- PRIVATE **/
     function _connect(address obj, string memory signature, bytes memory args) internal {}
 
-    function _checkIsManagerOf(uint256 id) internal returns (bool) {
+    function _checkIsManagerOf(uint256 id) internal view returns (bool) {
         Account memory caller = accounts[msg.sender];
         if (caller.isManager[id]) {
             return true;
@@ -112,14 +112,14 @@ contract SingleState is ISingleState, Ownable, ReentrancyGuard {
         return false;
     }
     /** key issues what happens if a contracts is not found */
-    function _getNetAssetValueOf(bytes memory args) internal returns (uint256) {
+    function _getNetAssetValueOf(bytes memory args) internal view returns (uint256) {
         (address oracle, uint256 id) = abi.decode(args, (address, uint256));
         Pool memory pool = pools[id];
         uint256 sum;
         /** for each asset in the pool */
         for (uint256 i = 0; i < pool.contracts.length; i++) {
             address contract_ = pool.contracts[i];
-            address[] contract__;
+            address[] memory contract__;
             contract__[0] = contract_;
             uint256 amount = pool.amounts[i];
             args = abi.encode(contract_);
