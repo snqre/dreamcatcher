@@ -164,7 +164,7 @@ contract SingleState is Initializable, PausableUpgradeable, OwnableUpgradeable {
         if (caller.isOnWhitelist[no]) {return true;}
         return false;
     }
-
+    /** wip 22|05|2023 */
     function _getNetAssetValueOf(address oracle, uint256 no) internal returns (uint256) {
         Fund memory fund = funds[no];
         uint256 sum;
