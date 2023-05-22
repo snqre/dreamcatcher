@@ -26,6 +26,13 @@ contract Oracle is Ownable {
     mapping(address => address) public contractToFeedUSD;
     mapping(address => address) public contractToFeedETH;
 
+    
+
+    enum currency {
+        USD,
+        ETH
+    }
+
     constructor() {}
     /*---------------------------------------------------------------- PRIVATE **/
     /** address[] == address[] ??? */
@@ -33,7 +40,14 @@ contract Oracle is Ownable {
         if (x.length == y.length) {return true;}
         return false;
     }
-    /** token contracts > chainlink feeds usd */
+    /** SINGLE token contract > chainlink feed usd */
+    function _setContractToFeedUSD(address contract_, address feed) internal returns (bool) {
+        require(contract_ != address(0), "Oracle::_setContractToFeedUSD: token contract is zero address");
+        require(feed != address(0), "Oracle::_setContractToFeedUSD: feed contract is zero address");
+        contractToFeedUSD[contract_] = feed;
+        return true;
+    }
+    /** MULTIPLE token contracts > chainlink feeds usd */
     function _setContractsToFeedsUSD(address[] memory contracts, address[] memory feeds) internal returns (bool) {
         /** address[] == address[] length ??? */
         require(
@@ -42,14 +56,21 @@ contract Oracle is Ownable {
         );
 
         for (uint256 i = 0; i < contracts.length; i++) {
-            require(contracts[i] != address(0), "Oracle::_setContractsToFeedsUSD: token contract in batch is zero address");
-            require(feeds[i] != address(0), "Oracle::_setContractsToFeedsUSD: feed contract in batch is zero address");
-            contractToFeedUSD[contracts[i]] = feeds[i];
+            _setContractToFeedUSD(contracts[i], feeds[i]);
+            //require(contracts[i] != address(0), "Oracle::_setContractsToFeedsUSD: token contract in batch is zero address");
+            //require(feeds[i] != address(0), "Oracle::_setContractsToFeedsUSD: feed contract in batch is zero address");
+            //contractToFeedUSD[contracts[i]] = feeds[i];
         }
 
         return true;
     }
-    /** token contracts > chainlink feeds eth */
+    /** SINGLE token contract > chainlink feed eth */
+    function _setContractToFeedETH(address contract_, address feed) internal returns (bool) {
+        require(contract_ != address(0), "Oracle::_setContractToFeedETH: token contract is zero address");
+        require(feed != address(0), "Oracle::_setContractToFeedETH: feed contract is zero address");
+        return true;
+    }
+    /** MULTIPLE token contracts > chainlink feeds eth */
     function _setContractsToFeedsETH(address[] memory contracts, address[] memory feeds) internal returns (bool) {
         require(
             _checkAddressArrLenMatch(contracts, feeds),
@@ -57,59 +78,108 @@ contract Oracle is Ownable {
         );
 
         for (uint256 i = 0; i < contracts.length; i++) {
-            require(contracts[i] != address(0), "Oracle::_setContractsToFeedsETH: token contract in batch is zero address");
-            require(feeds[i] != address(0), "Oracle::_setContractsToFeedsETH: feed contract in batch is zero address");
-            contractToFeedETH[contracts[i]] = feeds[i];
+            _setContractToFeedETH(contracts[i], feeds[i]);
+            //require(contracts[i] != address(0), "Oracle::_setContractsToFeedsETH: token contract in batch is zero address");
+            //require(feeds[i] != address(0), "Oracle::_setContractsToFeedsETH: feed contract in batch is zero address");
+            //contractToFeedETH[contracts[i]] = feeds[i];
         }
 
         return true;
     }
-    /** token contracts > chainlink feeds usd */
+    /** SINGLE token contract > chainlink feed usd */
+    function _getContractToFeedUSD(address contract_) internal view returns (address) {
+        return contractToFeedUSD[contract_];
+    }
+    /** MULTIPLE token contracts > chainlink feeds usd */
     function _getContractsToFeedsUSD(address[] memory contracts) internal view returns (address[] memory) {
         address[] memory feeds;
         for (uint256 i = 0; i < contracts.length; i++) {
-            feeds[i] = contractToFeedUSD[contracts[i]];
+            feeds[i] = _getContractsToFeedsUSD(contracts[i]);
+            //feeds[i] = contractToFeedUSD[contracts[i]];
         }
 
         return feeds;
     }
-    /** token contracts > chainlink feeds eth */
+    /** SINGLE token contract > chainlink feed eth */
+    function _getContractToFeedETH(address contract_) internal returns (address) {
+        return contractToFeedETH[contract_];
+    }
+    /** MULTIPLE token contracts > chainlink feeds eth */
     function _getContractsToFeedsETH(address[] memory contracts) internal view returns (address[] memory) {
         address[] memory feeds;
         for (uint256 i = 0; i < contracts.length; i++) {
-            feeds[i] = contractToFeedETH[contracts[i]];
+            feeds[i] = _getContractToFeedETH(contracts[i]);
+            //feeds[i] = contractToFeedETH[contracts[i]];
         }
 
         return feeds;
     }
-
-    /** chainlink feeds > prices usd */
+    /** SINGLE chainlink feed > price usd */
+    function _getFeedToValueUSD(address feed) internal returns (uint256) {
+        AggregatorV3Interface aggregator = AggregatorV3Interface(feed);
+        (, int256 price, , , ) = aggregator.latestRoundData();
+        return uint256(price);
+    }
+    /** MULTIPLE chainlink feeds > prices usd */
     function _getFeedsToValuesUSD(address[] memory feeds) internal view returns (uint256[] memory) {
         uint256[] memory values;
         for (uint256 i = 0; i < feeds.length; i++) {
-            AggregatorV3Interface aggregator = AggregatorV3Interface(feeds[i]);
-            (, int256 price, , , ) = aggregator.latestRoundData();
-            
-            values[i] = uint256(price);
+            values[i] = _getFeedToValueUSD(feeds[i]);
+            //AggregatorV3Interface aggregator = AggregatorV3Interface(feeds[i]);
+            //(, int256 price, , , ) = aggregator.latestRoundData();
+            //values[i] = uint256(price);
         }
 
         return values;
     }
-    /** chainlink feeds > prices eth */
+    /** SINGLE chainlink feed > price usd */
+    function _getFeedToValueETH(address feed) internal returns (uint256) {
+        AggregatorV3Interface aggregator = AggregatorV3Interface(feed);
+        (, int256 price, , , ) = aggregator.latestRoundData();
+        return uint256(price);
+    }
+    /** MULTIPLE chainlink feeds > prices eth */
     function _getFeedsToValuesETH(address[] memory feeds) internal view returns (uint256[] memory) {
         uint256[] memory values;
         for (uint256 i = 0; i < feeds.length; i++) {
-            AggregatorV3Interface aggregator = AggregatorV3Interface(feeds[i]);
-            (, int256 price, , , ) = aggregator.latestRoundData();
-
-            values[i] = uint256(price);
+            values[i] = _getFeedToValueETH(feeds[i]);
+            //AggregatorV3Interface aggregator = AggregatorV3Interface(feeds[i]);
+            //(, int256 price, , , ) = aggregator.latestRoundData();
+            //values[i] = uint256(price);
         }
 
         return values;
     }
 
+    function _isVerified(address contract_) internal view returns (bool, bool) {
+        
+        address feedForUSD = _getContractToFeedUSD(contract_);
+        address feedForETH = _getContractToFeedETH(contract_);
+        bool isVerifiedForUSD;
+        bool isVerifiedForETH;
+        if (feedForUSD != address(0)) {
+            /** check for abnormal pricing */
+            if (_getFeedToValueUSD(feedForUSD) <= 0) {isVerifiedForUSD = false;}
+            else {isVerifiedForUSD = true;}
+        }
+
+        if (feedForETH != address(0)) {
+            /** check for abnormal pricing */
+            if (_getFeedToValueUSD(feedForETH) <= 0) {isVerifiedForETH = false;}
+            else {isVerifiedForETH = true;}
+        }
+
+        return (isVerifiedForUSD, isVerifiedForETH);
+    }
+
     /*---------------------------------------------------------------- OWNER COMMANDS **/
-    /** token contracts > chainlink feeds usd */
+    /** SINGLE token contract > chainlink feed usd */
+    function setContractToFeedUSD(bytes memory args) public onlyOwner returns (bool) {
+        (address contract_, address feed) = abi.decode(args, (address, address));
+        _setContractToFeedUSD(contract_, feed);
+        return true;
+    }
+    /** MULTPLE token contracts > chainlink feeds usd */
     function setContractsToFeedsUSD(bytes memory args) public onlyOwner returns (bool) {
         (
             address[] memory contracts,
@@ -126,7 +196,13 @@ contract Oracle is Ownable {
 
         return true;
     }
-    /** token contracts > chainlink feeds eth */
+    /** SINGLE token contract > chainlink feed eth */
+    function setContractToFeedETH(bytes memory args) public onlyOwner returns (bool) {
+        (address contract_, address feed) = abi.decode(args, (address, address));
+        _setContractToFeedETH(contract_, feed);
+        return true;
+    }
+    /** MULTIPLE token contracts > chainlink feeds eth */
     function setContractsToFeedsETH(bytes memory args) public onlyOwner returns (bool) {
         (
             address[] memory contracts,
@@ -145,29 +221,22 @@ contract Oracle is Ownable {
     }
 
     /*---------------------------------------------------------------- PUBLIC **/
-    /** token contracts to chainlink feeds usd */
-    function getContractsToFeedsUSD(bytes memory args) public view returns (address[] memory) {
-        address[] memory contracts = abi.decode(args, (address[]));
-        address[] memory feeds = _getContractsToFeedsUSD(contracts);
-        return feeds;
+    function getContractToValueUSD(bytes memory args) public view returns (uint256) {
+        address contract_ = abi.decode(args, (address));
+        return _getFeedToValueUSD(
+            _getContractToFeedUSD(
+                contract_
+            )
+        );
     }
-    /** token contracts to chainlink feeds eth */
-    function getContractsToFeedsETH(bytes memory args) public view returns (address[] memory) {
-        address[] memory contracts = abi.decode(args, (address[]));
-        address[] memory feeds = _getContractsToFeedsETH(contracts);
-        return feeds;
-    }
-    /** token contracts > token prices in usd */
-    function getContractsToValuesUSD(bytes memory args) public view returns (uint256[] memory) {
-        address[] memory contracts = abi.decode(args, (address[]));
-        address[] memory feeds = _getContractsToFeedsUSD(contracts);
-        return  _getFeedsToValuesUSD(feeds);
-    }
-    /** token contracts > token prices in eth */
-    function getContractsToValuesETH(bytes memory args) public view returns (uint256[] memory) {
-        address[] memory contracts = abi.decode(args, (address[]));
-        address[] memory feeds = _getContractsToFeedsETH(contracts);
-        return _getFeedsToValuesETH(feeds);
+
+    function getContractToValueETH(bytes memory args) public view returns (uint256) {
+        address contract_  = abi.decode(args, (address));
+        return _getFeedToValueETH(
+            _getContractFeedETH(
+                contract_
+            )
+        );
     }
 
     function isVerifiedInUSD(bytes memory args) public view returns (bool) {

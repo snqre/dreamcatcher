@@ -175,6 +175,7 @@ contract SingleState is Initializable, PausableUpgradeable, OwnableUpgradeable {
         
     }
 
+    /*---------------------------------------------------------------- OWNER COMMANDS **/
     function pause() public onlyOwner {
         _pause();
     }
@@ -182,4 +183,39 @@ contract SingleState is Initializable, PausableUpgradeable, OwnableUpgradeable {
     function unpause() public onlyOwner {
         _unpause();
     }
+
+    /*---------------------------------------------------------------- PUBLIC **/
+    function createNewFund(bytes memory args) public payable nonReentrant returns (bool) {
+        (
+            string memory name,
+            string memory description,
+            address[] memory managers,
+            uint64 startTimestamp,
+            uint32 durationInSeconds,
+            uint256 required,
+            bool isWhitelisted,
+            bool
+        ) = abi.decode(args, (
+            string,
+            string,
+            address[]
+        ));
+
+        numberOfPools ++;
+        uint256 no = numberOfPools;
+
+        GenesisCapitalSchedule memory genesisCapitalSchedule = _newGenesisCapitalSchedule(
+            startTimestamp,
+            durationInSeconds,
+            required,
+            isWhitelisted,
+            success
+        );
+
+        Fund fund = _newFund(
+
+        );
+    }
+
+
 }
