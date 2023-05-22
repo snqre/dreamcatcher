@@ -80,7 +80,7 @@ contract Medium is IMedium {
         return uint256(price);
     }
 
-    function _getPrices(uint256 currency, address[] contracts) internal results (uint256[] memory) {
+    function _getPrices(uint256 currency, address[] contracts) internal results (uint256[]) {
         uint256[] memory prices;
         uint256 contractsSize = contracts.length;
         require(contractsSize >= 1, "Medium::_getFeeds: contractsSize < 1");
