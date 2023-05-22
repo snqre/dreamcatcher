@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-pragma solidity ^0.8.9;
+pragma solidity ^0.8.0;
 
 import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/IERC20.sol";
 import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/access/Ownable.sol";
@@ -103,7 +103,7 @@ contract SingleState is ISingleState, Ownable, ReentrancyGuard {
     /*---------------------------------------------------------------- PRIVATE **/
     function _connect(address obj, string memory signature, bytes memory args) internal {}
 
-    function _checkIsManagerOf(uint256 id) internal view returns (bool) {
+    function _checkIsManagerOf(uint256 id) internal returns (bool) {
         Account memory caller = accounts[msg.sender];
         if (caller.isManager[id]) {
             return true;
@@ -112,7 +112,7 @@ contract SingleState is ISingleState, Ownable, ReentrancyGuard {
         return false;
     }
     /** key issues what happens if a contracts is not found */
-    function _getNetAssetValueOf(bytes memory args) internal view returns (uint256) {
+    function _getNetAssetValueOf(bytes memory args) internal returns (uint256) {
         (address oracle, uint256 id) = abi.decode(args, (address, uint256));
         Pool memory pool = pools[id];
         uint256 sum;
@@ -139,6 +139,8 @@ contract SingleState is ISingleState, Ownable, ReentrancyGuard {
         /** will return zero if nothing was found */
         return sum;
     }
+
+
 
     /*---------------------------------------------------------------- PUBLIC **/
     /** proxy compatible */
