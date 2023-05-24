@@ -93,7 +93,7 @@ contract Terminal is Initializable, AccessControlUpgradeable, ReentrancyGuard, I
         return success;
     }
 
-
+    // terminal > singlestate
     function createNewFundSingleState(
         string memory identifier,
         address[] memory managers,
