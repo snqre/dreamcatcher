@@ -119,22 +119,21 @@ contract SingleState is Initializable, PausableUpgradeable, OwnableUpgradeable {
     }
 
     function _newFund(
-        uint256 no_,
         string memory name_,
         string memory description_,
         GenesisCapitalSchedule memory genesisCapitalSchedule_,
         SimpleTokenContract.SimpleToken memory simpleToken_,
-        uint256 balance_,
         address[] contractsOfTokens_,
         uint256[] amountOfTokens_
     ) internal returns (Fund) {
+        numberOfPools ++;
         return Fund({
-            no: no_,
+            no: numberOfPools,
             name: name_,
             description: description_,
             genesisCapitalSchedule: genesisCapitalSchedule_,
             simpleToken: simpleToken_,
-            balance: balance_,
+            balance: 0,
             contractsOfTokens: contractsOfTokens_,
             amountOfTokens: amountOfTokens_,
             collateralTransferSchedule: []
@@ -194,15 +193,13 @@ contract SingleState is Initializable, PausableUpgradeable, OwnableUpgradeable {
             uint32 durationInSeconds,
             uint256 required,
             bool isWhitelisted,
-            bool
+            string memory nameToken,
+            string memory symbolToken
         ) = abi.decode(args, (
             string,
             string,
             address[]
         ));
-
-        numberOfPools ++;
-        uint256 no = numberOfPools;
 
         GenesisCapitalSchedule memory genesisCapitalSchedule = _newGenesisCapitalSchedule(
             startTimestamp,
@@ -212,8 +209,30 @@ contract SingleState is Initializable, PausableUpgradeable, OwnableUpgradeable {
             success
         );
 
-        Fund fund = _newFund(
+        SimpleTokenContract.SimpleToken memory simpleToken = new SimpleTokenContract.SimpleToken(
+            nameToken,
+            symbolToken
+        );
 
+        numberOfPools ++;
+        uint256 no = numberOfPools;
+
+        uint256 balance = msg.value;
+        Fund fund = _newFund(
+            no,
+            name,
+            description,
+            genesisCapitalSchedule,
+            SimpleToken,
+            balance,
+            [],
+            []
+        );
+
+        Fund fund = _newFund(
+            no: no_,
+            name: name_,
+            description: description_
         );
     }
 

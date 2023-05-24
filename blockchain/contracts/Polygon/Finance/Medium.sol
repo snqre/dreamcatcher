@@ -20,7 +20,7 @@ contract Medium is IMedium {
     enum currency {USD, ETH, BTC, GBP, EUR}
 
     constructor() {}
-
+    
     /*----------------------------------------------------------------**/
     function _setFeed(uint256 currency, address contract_, address feed) internal {
         /** moderation */
@@ -143,10 +143,9 @@ contract Medium is IMedium {
             address contract_
         ) = abi.decode(args, (uint256, address));
 
-        return (
-            true,
-            _getPrice(currency, contract_)
-        );   
+        uint256 price = _getPrice(currency, contract_);
+        bool success = true;
+        return (success, price);
     }
 
     function getPrices(bytes memory args) public returns (bool success, uint256[] prices) {
@@ -154,11 +153,10 @@ contract Medium is IMedium {
             uint256 currency,
             address[] contracts
         ) = abi.decode(args, (uint256, address[]));
-
-        return (
-            true,
-            _getPrices(currency, contracts)
-        );
+        
+        uint256[] memory prices = _getPrices(currency, contracts);
+        bool success = true;
+        return (success, prices);
     }
 
 }
