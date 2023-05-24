@@ -5,7 +5,7 @@ import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol"
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/security/ReentrancyGuard.sol";
 import "blockchain/contracts/Polygon/ERC20Standards/Tokens/TokenHub.sol";
-import "blockchain/contracts/Polygon/Pools/Prototype/SingleState/SingleState.sol";
+import "blockchain/contracts/Polygon/Pools/Prototype/SingleState/SingleStage_v0.2.5.sol";
 import "blockchain/contracts/Polygon/Pools/Prototype/StandAlone/StandAlone.sol";
 import "blockchain/contracts/Polygon/Finance/Wallet.sol";
 import "blockchain/contracts/Polygon/Finance/Oracle.sol";
