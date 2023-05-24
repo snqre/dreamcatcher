@@ -80,11 +80,7 @@ contract Terminal is Initializable, AccessControlUpgradeable, ReentrancyGuard, I
     }
 
     /*---------------------------------------------------------------- OWNER COMMANDS **/
-    function snapshotTokenHub() public onlyOwner returns (bool) {
-        (bool success, ) = address(tokenHub).delegatecall(abi.encodeWithSignature("snapshot()", ));
-        require(success); abi.encodeWithSignature(signatureString, arg);
-        return true;
-    }
+
 
     /*---------------------------------------------------------------- PUBLIC **/
     function connect(address obj, string memory signature, bytes memory args) public returns (bool) {
@@ -103,7 +99,7 @@ contract Terminal is Initializable, AccessControlUpgradeable, ReentrancyGuard, I
         string memory nameOfToken,
         string memory symbolOfToken,
         uint256 initialSupply
-    ) public payable (bool) {
+    ) public payable returns (bool) {
         args = abi.encode(
             identifier,
             managers,
@@ -113,7 +109,7 @@ contract Terminal is Initializable, AccessControlUpgradeable, ReentrancyGuard, I
             nameOfToken,
             symbolOfToken,
             initialSupply,
-            /** native token */,
+            /** nativeToken */,
             /** safe */
         );
 

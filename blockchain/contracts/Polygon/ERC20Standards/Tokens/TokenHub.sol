@@ -89,4 +89,8 @@ contract TokenHub is Initializable, OwnableUpgradeable {
         return true;
     }
 
+    function getDreamTokenAddress() public view returns (address) {
+        return address(dreamToken);
+    }
+
 }
