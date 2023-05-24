@@ -93,30 +93,35 @@ contract Terminal is Initializable, AccessControlUpgradeable, ReentrancyGuard, I
         return success;
     }
 
-    function createNewPoolSingleState(
-        string memory name,
-        address[] managers,
-        string memory nameToken,
-        string memory symbolToken,
-        uint256 durationSeconds,
-        uint256 requiredInMatic,
-        bool isWhitelisted
-    ) public payable returns (bool) {
-        bytes memory args = abi.encode(
-            name,
+
+    function createNewFundSingleState(
+        string memory identifier,
+        address[] memory managers,
+        uint32 durationInSeconds,
+        uint256 required,
+        bool isWhitelisted,
+        string memory nameOfToken,
+        string memory symbolOfToken,
+        uint256 initialSupply
+    ) public payable (bool) {
+        args = abi.encode(
+            identifier,
             managers,
-            nameToken,
-            symbolToken,
-            durationSeconds,
-            requiredInMatic,
-            isWhitelisted
+            durationInSeconds,
+            required,
+            isWhitelisted,
+            nameOfToken,
+            symbolOfToken,
+            initialSupply,
+            /** native token */,
+            /** safe */
         );
 
-        address obj = address(singleState);
-        string memory signature = "createNewPool(bytes)";
-        /** connect . will revert if return is false */
-        _safeConnect(obj, signature, args);
-        return true;
+        _safeConnect(
+            address(singleState),
+            "createNewFund(bytes)",
+            args
+        );
     }
     
     function contributeSingleState(uint256 id) public payable nonReentrant returns (bool) {
