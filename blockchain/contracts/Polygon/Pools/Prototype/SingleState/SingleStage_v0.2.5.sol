@@ -186,6 +186,7 @@ contract SingleState is Initializable, PausableUpgradeable, OwnableUpgradeable {
     function createNewFund(bytes memory args) public payable nonReentrant onlyOwner returns (bool) {
         (
             string memory identifier,
+            address[] memory managers,
             uint32 durationInSeconds,
             uint256 required,
             bool isWhitelisted,
@@ -231,6 +232,7 @@ contract SingleState is Initializable, PausableUpgradeable, OwnableUpgradeable {
 
         funds[numberOfPools] = _newFund(
             identifier,
+            managers,
             _newSimpleToken(
                 nameOfToken,
                 symbolOfToken
