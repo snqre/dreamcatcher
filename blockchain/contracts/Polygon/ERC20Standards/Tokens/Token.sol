@@ -153,6 +153,7 @@ interface ICustomToken {
     function totalStaked() external view returns (uint256);
     function maxSupply() external view returns (uint256);
     function mintable() external view returns (uint256);
+    // when update vault not possible to stake
     function stakeOf(address _owner) external view returns (uint256);
     function votesOf(address _owner) external view returns (uint256);
     // =.=.=.=.= ADMIN ONLY

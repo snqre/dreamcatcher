@@ -121,6 +121,7 @@ contract SingleState is Initializable, PausableUpgradeable, OwnableUpgradeable {
         newFund.fundingSchedule = newFundingSchedule;
         newFund.balance = balance;
 
+        // assign managers
         for (uint256 i = 0; i < managers.length; i++) {
             Account memory caller = accounts[managers[i]];
             caller.isManager[newFund.no] = true;

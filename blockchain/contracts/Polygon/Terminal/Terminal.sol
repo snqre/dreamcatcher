@@ -28,6 +28,7 @@ contract Terminal is Initializable, AccessControlUpgradeable, ReentrancyGuard, I
     SingleState singleState;
     Wallet[] wallets;
     Oracle oracle;
+    
 
     struct Book {
         address tokenHub;
@@ -165,4 +166,10 @@ contract Terminal is Initializable, AccessControlUpgradeable, ReentrancyGuard, I
         return book.singleState;
     }
 
+    /** tokens */
+
 }
+
+
+// that we need to deploy the token contracts seply instead of together
+// you can deploy everything from one file
