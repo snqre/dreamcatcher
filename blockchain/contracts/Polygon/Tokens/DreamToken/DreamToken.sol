@@ -21,7 +21,7 @@ contract DreamToken is ERC20, ERC20Burnable, ERC20Snapshot, Ownable, ERC20Permit
     * mintable is the amount of tokens that can ever be minted
     * maxSupply_ is the maximum amount of tokens that can ever exist at once
      */
-    uint256 private mintable;
+    uint256 private mintable_;
     uint256 private maxSupply_;
 
     /**
@@ -122,7 +122,7 @@ contract DreamToken is ERC20, ERC20Burnable, ERC20Snapshot, Ownable, ERC20Permit
 
     /** required override to merge inheritance conflicts */
     function _burn(address account, uint256 amount) internal override(ERC20, ERC20Votes) {
-
+        
         /** continue with default */
         super._burn(account, amount);
 
