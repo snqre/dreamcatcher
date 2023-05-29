@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity ^0.8.9;
 
-/** openzeppelin imports */
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Snapshot.sol";
@@ -9,177 +8,296 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/draft-ERC20Permit.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Votes.sol";
 
-/** openzeppelin imports through github */
 import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/IERC20.sol";
 
-/** main dream token contract immutable */
-contract DreamToken is ERC20, ERC20Burnable, ERC20Snapshot, Ownable, ERC20Permit, ERC20Votes {
-    
-    /** essential meta data already provided by openzeppelin */
+import "blockchain/contracts/Polygon/Finance/Wallet.sol";
 
-    /**
-    * mintable is the amount of tokens that can ever be minted
-    * maxSupply_ is the maximum amount of tokens that can ever exist at once
-     */
+contract DreamToken is 
+ERC20, 
+ERC20Burnable, 
+ERC20Snapshot, 
+Ownable, 
+ERC20Permit, 
+ERC20Votes {
+    
     uint256 private mintable_;
     uint256 private maxSupply_;
 
-    /**
-    * all fees in basis points divided by 10_000 not 100
-    * burn is the amount in basis point of the transaction burnt during a transfer
-    * bank is the amount in basis point that is sent back to the dao
-     */
-    uint16 minBurnTransferFee;
-    uint16 minBankTransferFee;
-    uint16 maxBurnTransferFee;
-    uint16 maxBankTransferFee;
-    uint16 burnTransferFee;
-    uint16 bankTransferFee;
+    uint16 fee;
 
-    /** dao safe */
     address safe;
 
-    /** owner set to msg.sender in Ownable() */
-    constructor() ERC20("DreamToken", "DREAM") ERC20Permit("DreamToken") Ownable() {
-        
-        /** set mintable and maxSupply_ */
-        mintable_ = _convertToWei(200_000_000);
-        maxSupply_ = _convertToWei(200_000_000);
+    Wallet[] memory vestingWallets;
+    
+    constructor() ERC20(
+        "DreamToken",
+        "DREAM"
+    ) ERC20Permit(
+        "DreamToken"
+    ) Ownable() {
 
-        /** for transparency reasons */
-        /** enum */
-        enum team {weaver_}
+        mintable_ = _convertToWei(
+            200000000
+        );
 
-        /** vesting wallets */
-        
-        /** assign weaver_ */
+        maxSupply_ = _convertToWei(
+            200000000
+        );
 
-        /** others */
-        
+        enum team {
+
+            weaver_,
+            r,
+            a,
+            d
+
+        }
+
+        uint64 now_ = block.timestamp;
+        uint64 duration = 960 weeks;
+
+        vestingWallets[
+            team.weaver_
+        ] = new Wallet(
+            0x000007c3E0A73f06A64F057e8cfe1848B239A19B,
+            now_,
+            duration
+        );
+
+        vestingWallets[
+            team.r
+        ] = new Wallet(
+            ,
+            now_,
+            duration
+        );
+
+        /**
+
+            20,000,000 Team
+            12,000,000 $.035
+            10,000,000 $.100
+            10,000,000 $.250
+            10,000,000 $.500
+            10,000,000 $1.00
+            50,000,000 obsidian program
+            17,500,000 participation
+            50,000,000 liquidity
+            10,000,000 reserve
+            500,000 contractors
+
+         */
+
+        _mint(
+            safe,
+            _convertToWei(
+                180000000
+            )
+        );
+
     }
 
-    /** utils function to convert value into wei */
-    function _convertToWei(uint256 value) internal pure returns (uint256) {
+    /** -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.- */
+    function _convertToWei(
+        uint256 value
+    ) internal pure returns (
+        uint256
+    ) {
 
         return value * 10**decimals();
 
     }
 
-    /** override for burn and bank feature */
-    function _transfer(address from, address to, uint256 amount) internal override {
+    function _transfer(
+        address from, 
+        address to, 
+        uint256 amount
+    ) internal override {
 
-        /** sum of amount in fees */
-        uint256[] sum;
+        if (fee != 0) {
 
-        /** if burn fee is not zero */
-        if (burnTransferFee != 0) {
-            sum[0] = (amount / 10_000) * burnTransferFee;
-            _burn(from, sum[0]);
+            super._transfer(
+                from,
+                safe,
+                (
+                    amount
+                    / 10000
+                ) * fee
+            );
+
         }
 
-        /** if bank fee is not zero */
-        if (bankTransferFee != 0) {
-            sum[1] = (amount / 10_000) * bankTransferFee;
-            super._transfer(from, safe, sum[1]);
-        }
-
-        /** new amount after fee */
-        uint256 newAmount = amount - (sum[0] + sum[1]);
-
-        /** continue with default transfer function */
-        super._transfer(from, to, newAmount);
-
-    }
-
-    /** required override to merge inheritance conflicts */
-    function _beforeTokenTransfer(address from, address to, uint256 amount) internal override(ERC20, ERC20Snapshot) {
-
-        /** continue with default */
-        super._beforeTokenTransfer(from, to, amount);
+        super._transfer(
+            from,
+            to,
+            amount - (
+                (
+                    amount
+                    / 10000
+                ) * fee
+            )
+        );
 
     }
 
-    /** required override to merge inheritance conflicts */
-    function _afterTokenTransfer(address from, address to, uint256 amount) internal override(ERC20, ERC20Votes) {
+    function _beforeTokenTransfer(
+        address from,
+        address to,
+        uint256 amount
+    ) internal override(
+        ERC20,
+        ERC20Snapshot
+    ) {
 
-        /** continue with default */
-        super._afterTokenTransfer(from, to, amount);
+        super._beforeTokenTransfer(
+            from,
+            to,
+            amount
+        )
 
     }
 
-    /** override _mint with our custom implementation */
-    function _mint(address to, uint256 amount) internal override(ERC20, ERC20Votes) {
+    function _afterTokenTransfer(
+        address from,
+        address to,
+        uint256 amount
+    ) internal override(
+        ERC20,
+        ERC20Votes
+    ) {
 
-        /** check how many tokens can be minted */
-        require(mintable_ <= amount, "DreamToken::_mint: minting limit reached");
-        
+        super._afterTokenTransfer(
+            from,
+            to,
+            amount
+        );
+
+    }
+
+    function _mint(
+        address to,
+        uint256 amount
+    ) internal override(
+        ERC20,
+        ERC20Votes
+    ) {
+
+        require(
+            mintable_
+            <= amount,
+            "DreamToken::_mint: mintable_ > amount"
+        );
+
         mintable_ -= amount;
 
-        /** continue with default */
-        super._mint(to, amount);
-        
-    }
-
-    /** required override to merge inheritance conflicts */
-    function _burn(address account, uint256 amount) internal override(ERC20, ERC20Votes) {
-        
-        /** continue with default */
-        super._burn(account, amount);
+        super._mint(
+            to,
+            amount
+        );
 
     }
 
-    /** owner commands */
+    function _burn(
+        address account,
+        uint256 amount
+    ) internal override(
+        ERC20,
+        ERC20Votes
+    ) {
 
-    /** snapshot */
+        super._burn(
+            account,
+            amount
+        );
+
+    }
+
+    /** -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.- */
     function snapshot() public onlyOwner {
-        
+
         _snapshot();
 
     }
 
-    /** mint */
-    function mint(address to, uint256 amount) public onlyOwner {
-        
-        _mint(to, amount);
+    function mint(
+        address to,
+        uint256 amount
+    ) public onlyOwner {
+
+        _mint(
+            to,
+            amount
+        );
 
     }
 
-    /** renounce ownership */
     function renounceOwnership() public override onlyOwner {
 
         super.renounceOwnership();
 
     }
 
-    /** transfer ownership */
-    function transferOwnership(address newOwner) public override onlyOwner {
+    function transferOwnership(
+        address newOwner
+    ) public override onlyOwner {
 
-        super.transferOwnership(newOwner);
-
-    }
-
-    /** sets new safe address where bank fee is sent on transfer */
-    function setNewSafeAddress(address newSafeAddress) public onlyOwner {
-
-        require(newSafeAddress != address(0), "DreamToken::setNewSafeAddress: newSafeAddress is address zero");
-        safe = newSafeAddress;
+        super.transferOwnership(
+            newOwner
+        );
 
     }
 
-    /** public */
+    function setFee(
+        uint16 newFee
+    ) public onlyOwner {
 
-    /** view maxSupply */
-    function maxSupply() public view returns (uint256) {
-        
+        require(
+            newFee
+            >= 0,
+            "DreamToken::setFee(): newFee < 0"
+        );
+
+        require(
+            newFee
+            <= 10000,
+            "DreamToken::setFee(): newFee > 10000"
+        );
+
+        fee = newFee;
+
+    }
+
+    function setSafe(
+        address newSafe
+    ) public onlyOwner {
+
+        require(
+            newSafe
+            != address(
+                0x0
+            ),
+            "DreamToken::setSafe(): newSafe == address(0x0)"
+        );
+
+        safe = newSafe;
+
+    }
+
+    /** -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.- */
+    function maxSupply() public view returns (
+        uint256
+    ) {
+
         return maxSupply_;
 
     }
 
-    /** view mintable */
-    function mintable() public view returns (uint256) {
+    function mintable() public view returns (
+        uint256
+    ) {
 
         return mintable_;
 
     }
-
+    
 }

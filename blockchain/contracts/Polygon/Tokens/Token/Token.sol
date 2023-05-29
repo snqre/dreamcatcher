@@ -10,7 +10,7 @@ import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Votes.sol";
 
 import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/IERC20.sol";
 
-contract EmberToken is
+contract Token is
 ERC20,
 ERC20Burnable,
 ERC20Snapshot,
@@ -18,11 +18,14 @@ Ownable,
 ERC20Permit,
 ERC20Votes {
 
-    constructor() ERC20(
-        "EmberToken",
-        "EMBER"
+    constructor(
+        string memory name,
+        string memory symbol
+    ) ERC20(
+        name,
+        symbol
     ) ERC20Permit(
-        "EmberToken"
+        name
     ) Ownable() {}
 
     /** -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.- */

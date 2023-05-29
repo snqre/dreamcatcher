@@ -8,11 +8,19 @@ contract Terminal is ReentrancyGuard {
     DreamToken dreamToken;
     EmberToken emberToken;
 
+    mapping(string => address) private map;
+
     mapping(address => bool) private objWhitelist;
 
     constructor() {
+        
+        /** init contracts */
         dreamToken = new DreamToken();
         emberToken = new EmberToken();
+
+        /** set contracts to map */
+        map["DREAMTOKEN"] = address(dreamToken);
+        map["EMBERTOKEN"] = address(emberToken);
     }
 
     function _convertToWei(uint256 value) internal pure returns (uint256) {
