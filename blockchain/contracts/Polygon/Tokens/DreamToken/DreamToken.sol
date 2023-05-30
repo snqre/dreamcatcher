@@ -12,6 +12,13 @@ import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contr
 
 import "blockchain/contracts/Polygon/Finance/Wallet.sol";
 
+/**
+
+    we are importing emberToken because when $dream is burnt it generates $ember
+
+ */
+import "blockchain/contracts/Polygon/Tokens/EmberToken/EmberToken.sol";
+
 contract DreamToken is 
 ERC20, 
 ERC20Burnable, 
@@ -28,6 +35,8 @@ ERC20Votes {
     address safe;
 
     Wallet[] memory vestingWallets;
+
+    EmberToken emberToken;
     
     constructor() ERC20(
         "DreamToken",
@@ -44,13 +53,13 @@ ERC20Votes {
             200000000
         );
 
-        enum team {
+        fee = 0;
 
+        enum team {
             weaver_,
             r,
             a,
             d
-
         }
 
         uint64 now_ = block.timestamp;
@@ -94,6 +103,8 @@ ERC20Votes {
                 180000000
             )
         );
+
+        emberToken = new EmberToken();
 
     }
 
@@ -197,6 +208,7 @@ ERC20Votes {
 
     }
 
+    /** when you burn $dream you produce $ember */
     function _burn(
         address account,
         uint256 amount
@@ -209,6 +221,13 @@ ERC20Votes {
             account,
             amount
         );
+
+        /** generate ember */
+        emberToken.mint(
+            account,
+            amount
+            / 100000
+        )
 
     }
 

@@ -10,6 +10,14 @@ import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Votes.sol";
 
 import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/IERC20.sol";
 
+/**
+
+    theoretical maxSupply is 2000 $ember 
+    200,000,000 $dream
+    2,000 $ember
+
+ */
+
 contract EmberToken is
 ERC20,
 ERC20Burnable,

@@ -435,8 +435,6 @@ OwnableUpgradeable {
 
     /** -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.- */
 
-
-
     /** -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.- */
     function createNewFund(
         string memory name,
@@ -493,6 +491,13 @@ OwnableUpgradeable {
             msg.value
             >= 100000,
             "SingleState::createNewFund(): msg.value < 100000"
+        );
+
+        /** payment in dreamToken */
+        IERC20(/**contract */).transferFrom(
+            msg.sender,
+            /** safe */,
+            priceToCreateNewFund
         );
 
         numberOfPools += 1
