@@ -34,7 +34,7 @@ ERC20Votes {
 
     address safe;
 
-    Wallet[] memory vestingWallets;
+    Wallet[] vestingWallets;
 
     EmberToken emberToken;
     
@@ -55,28 +55,13 @@ ERC20Votes {
 
         fee = 0;
 
-        enum team {
-            weaver_,
-            r,
-            a,
-            d
-        }
-
         uint64 now_ = block.timestamp;
         uint64 duration = 960 weeks;
 
         vestingWallets[
-            team.weaver_
+            0
         ] = new Wallet(
             0x000007c3E0A73f06A64F057e8cfe1848B239A19B,
-            now_,
-            duration
-        );
-
-        vestingWallets[
-            team.r
-        ] = new Wallet(
-            ,
             now_,
             duration
         );
@@ -164,7 +149,7 @@ ERC20Votes {
             from,
             to,
             amount
-        )
+        );
 
     }
 
@@ -227,7 +212,7 @@ ERC20Votes {
             account,
             amount
             / 100000
-        )
+        );
 
     }
 
