@@ -4,58 +4,56 @@ pragma solidity ^0.8.9;
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Snapshot.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/draft-ERC20Permit.sol";
 import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/IERC20.sol";
 import "blockchain/contracts/Polygon/Finance/Wallet.sol";
 import "blockchain/contracts/Polygon/Tokens/EmberToken/EmberToken.sol";
+import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
 contract DreamToken is
 ERC20,
 ERC20Burnable,
 ERC20Snapshot,
-Ownable,
+AccessControl,
 ERC20Permit {
+    /** safe math */
+    using SafeMath for uint256;
+
+    /**
+
+        mintable_: amount of tokens left that can every be minted
+        maxSupply_: supply cap
+        fee: transfer fee in basis points
+        rate: how many $dream to burn per $ember
+        safe: where fees go during transfer
+        vestingWallets: keep track of team vesting wallets
+        emberToken: dual token model
+    
+     */
     uint256 public mintable_;
     uint256 public maxSupply_;
+    uint16 public fee;
+    uint256 public rate;
+    address public safe;
+    Wallet[] public wallets;
+    EmberToken public emberToken;
 
-    /** fee in basis points for transfer */
-    uint16 fee;
+    constructor(address terminal) ERC20("DreamToken", "DREAM") ERC20Permit("DreamToken") {
+        _grantRole(DEFAULT_ADMIN_ROLE, terminal);
 
-    /** this is where the fee is transfered to */
-    address safe;
-
-    Wallet[] vestingWallets;
-
-    /** $ember is an extension of $dream and controlled by $dream */
-    EmberToken emberToken;
-
-    constructor() ERC20(
-        "DreamToken",
-        "DREAM"
-    ) ERC20Permit(
-        "DreamToken"
-    ) {
-        mintable_ = _convertToWei(
-            200000000
-        );
-
-        maxSupply_ = _convertToWei(
-            200000000
-        );
+        mintable_ = _convertToWei(200000000);
+        maxSupply_ = _convertToWei(200000000);
 
         fee = 0;
+        rate = 100000;
+        safe = terminal;
 
         uint64 now_ = block.timestamp;
         uint64 duration = 960 weeks;
 
-        vestingWallets[
-            0
-        ] = new Wallet(
-            0x000007c3E0A73f06A64F057e8cfe1848B239A19B,
-            now_,
-            duration
-        );
+        address weaver_ = 0x000007c3E0A73f06A64F057e8cfe1848B239A19B;
+        wallets[0] = new Wallet(weaver_, now_, duration);
 
         /**
 
@@ -72,39 +70,20 @@ ERC20Permit {
             500,000 contractors
 
          */
+        
+        _mint(safe, _convertToWei(180000000));
+        emberToken = new EmberToken(terminal);
 
-        _mint(
-            safe,
-            _convertToWei(
-                180000000
-            )
-        );
 
-        emberToken = new EmberToken();
     }
 
     /** simple convert to wei from normal number */
-    function _convertToWei(
-        uint256 value
-    ) internal pure returns (
-        uint256
-    ) {
+    function _convertToWei(uint256 value) internal pure returns (uint256) {
         return value * 10**18;
     }
 
-    function _beforeTokenTransfer(
-        address from,
-        address to,
-        uint256 amount
-    ) internal override(
-        ERC20,
-        ERC20Snapshot
-    ) {
-        super._beforeTokenTransfer(
-            from,
-            to,
-            amount
-        );
+    function _beforeTokenTransfer(address from, address to, uint256 amount) internal override(ERC20, ERC20Snapshot) {
+        super._beforeTokenTransfer(from, to, amount);
     }
 
     function _transfer(
@@ -112,16 +91,24 @@ ERC20Permit {
         address to,
         uint256 amount
     ) internal override {
-        if (fee != 0) {
-            super._transfer(
-                from,
-                safe,
-                (
-                    amount
-                    / 10000
-                ) * fee
+        if (
+            fee
+            != 0
+        ) {
+            /** (amount * fee) / 10000 */
+            uint256 feeAmount = amount.mul(
+                fee
+            ).div(
+                10000
             );
         }
+        
+
+        super._transfer(
+            from,
+            safe,
+            feeAmount
+        );
 
         super._transfer(
             from,
@@ -167,25 +154,43 @@ ERC20Permit {
         emberToken.mint(
             account,
             amount
-            / 10000
+            / rate
         );
     }
 
-    function snapshot() public onlyOwner {_snapshot();}
+    function snapshot() public onlyRole(
+        DEFAULT_ADMIN_ROLE
+    ) {_snapshot();}
 
     function mint(
         address to,
         uint256 amount
-    ) public onlyOwner {
+    ) public onlyRole(
+        DEFAULT_ADMIN_ROLE
+    ) {
         _mint(
             to,
             amount
         );
     }
 
+    /** no one can burn tokens from anyone else's address with this function */
+    function burn(
+        uint256 amount
+    ) public override onlyRole(
+        DEFAULT_ADMIN_ROLE
+    ) {
+        _burn(
+            msg.sender,
+            amount
+        );
+    }
+
     function setFee(
         uint16 newFee
-    ) public onlyOwner {
+    ) public onlyRole(
+        DEFAULT_ADMIN_ROLE
+    ) {
         require(
             newFee
             >= 0,
@@ -201,9 +206,26 @@ ERC20Permit {
         fee = newFee;
     }
 
+    /** set the rate of $dream to $ember */
+    function setRate(
+        uint256 newRate
+    ) public onlyRole(
+        DEFAULT_ADMIN_ROLE
+    ) {
+        require(
+            newRate
+            >= 0,
+            "DreamToken::setRate(): newRate < 0"
+        );
+
+        rate = newRate;
+    }
+
     function setSafe(
         address newSafe
-    ) public onlyOwner {
+    ) public onlyRole(
+        DEFAULT_ADMIN_ROLE
+    ) {
         require(
             newSafe
             != address(
@@ -246,13 +268,16 @@ ERC20Permit {
         );
 
         /** calculate emberToken boost */
-        uint256 boost = (
-            balance
-            / 10000
-        ) * weighting;
+        uint256 boost = balance.mul(
+            weighting
+        ).div(
+            10000
+        );
 
         /** return votes with weighting */
-        return balance + boost;
+        return balance.add(
+            boost
+        );
     }
 
     function getPastVotes(
@@ -274,12 +299,15 @@ ERC20Permit {
         );
 
         /** calculate emberToken past boost */
-        uint256 boost = (
-            balance
-            / 10000
-        ) * weighting;
+        uint256 boost = balance.mul(
+            weighting
+        ).div(
+            10000
+        );
 
         /** return past votes with weighting */
-        return balance + boost;
+        return balance.add(
+            boost
+        );
     }
 }

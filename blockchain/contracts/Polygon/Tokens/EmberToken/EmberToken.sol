@@ -4,21 +4,35 @@ pragma solidity ^0.8.9;
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Snapshot.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/draft-ERC20Permit.sol";
 
 contract EmberToken is
 ERC20,
 ERC20Burnable,
 ERC20Snapshot,
-Ownable,
+AccessControl,
 ERC20Permit {
-    constructor() ERC20(
+    constructor(
+        address terminal
+    ) ERC20(
         "EmberToken",
         "EMBER"
     ) ERC20Permit(
         "EmberToken"
-    ) {}
+    ) {
+        /** grant default admin role to msg.sender */
+        _grantRole(
+            DEFAULT_ADMIN_ROLE, 
+            msg.sender
+        );
+
+        /** grant default admin role to our terminal */
+        _grantRole(
+            DEFAULT_ADMIN_ROLE, 
+            terminal
+        );
+    }
 
     /** non transferable */
     function _transfer() internal override {}
@@ -64,12 +78,16 @@ ERC20Permit {
         );
     }
 
-    function snapshot() public onlyOwner {_snapshot();}
+    function snapshot() public onlyRole(
+        DEFAULT_ADMIN_ROLE
+    ) {_snapshot();}
 
     function mint(
         address to,
         uint256 amount
-    ) public onlyOwner {
+    ) public onlyRole(
+        DEFAULT_ADMIN_ROLE
+    ) {
         _mint(
             to,
             amount
@@ -79,7 +97,9 @@ ERC20Permit {
     function burn(
         address account,
         uint256 amount
-    ) public override onlyOwner {
+    ) public override onlyRole(
+        DEFAULT_ADMIN_ROLE
+    ) {
         _burn(
             account,
             amount
