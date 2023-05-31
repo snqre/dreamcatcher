@@ -6,45 +6,36 @@ import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Snapshot.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/draft-ERC20Permit.sol";
-import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Votes.sol";
-
 import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/IERC20.sol";
-
 import "blockchain/contracts/Polygon/Finance/Wallet.sol";
-
-/**
-
-    we are importing emberToken because when $dream is burnt it generates $ember
-
- */
 import "blockchain/contracts/Polygon/Tokens/EmberToken/EmberToken.sol";
 
-contract DreamToken is 
-ERC20, 
-ERC20Burnable, 
-ERC20Snapshot, 
-Ownable, 
-ERC20Permit, 
-ERC20Votes {
-    
-    uint256 private mintable_;
-    uint256 private maxSupply_;
+contract DreamToken is
+ERC20,
+ERC20Burnable,
+ERC20Snapshot,
+Ownable,
+ERC20Permit {
+    uint256 public mintable_;
+    uint256 public maxSupply_;
 
+    /** fee in basis points for transfer */
     uint16 fee;
 
+    /** this is where the fee is transfered to */
     address safe;
 
     Wallet[] vestingWallets;
 
+    /** $ember is an extension of $dream and controlled by $dream */
     EmberToken emberToken;
-    
+
     constructor() ERC20(
         "DreamToken",
         "DREAM"
     ) ERC20Permit(
         "DreamToken"
-    ) Ownable() {
-
+    ) {
         mintable_ = _convertToWei(
             200000000
         );
@@ -90,28 +81,38 @@ ERC20Votes {
         );
 
         emberToken = new EmberToken();
-
     }
 
-    /** -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.- */
+    /** simple convert to wei from normal number */
     function _convertToWei(
         uint256 value
     ) internal pure returns (
         uint256
     ) {
+        return value * 10**18;
+    }
 
-        return value * 10**decimals();
-
+    function _beforeTokenTransfer(
+        address from,
+        address to,
+        uint256 amount
+    ) internal override(
+        ERC20,
+        ERC20Snapshot
+    ) {
+        super._beforeTokenTransfer(
+            from,
+            to,
+            amount
+        );
     }
 
     function _transfer(
-        address from, 
-        address to, 
+        address from,
+        address to,
         uint256 amount
     ) internal override {
-
         if (fee != 0) {
-
             super._transfer(
                 from,
                 safe,
@@ -120,7 +121,6 @@ ERC20Votes {
                     / 10000
                 ) * fee
             );
-
         }
 
         super._transfer(
@@ -133,55 +133,17 @@ ERC20Votes {
                 ) * fee
             )
         );
-
     }
 
-    function _beforeTokenTransfer(
-        address from,
-        address to,
-        uint256 amount
-    ) internal override(
-        ERC20,
-        ERC20Snapshot
-    ) {
-
-        super._beforeTokenTransfer(
-            from,
-            to,
-            amount
-        );
-
-    }
-
-    function _afterTokenTransfer(
-        address from,
-        address to,
-        uint256 amount
-    ) internal override(
-        ERC20,
-        ERC20Votes
-    ) {
-
-        super._afterTokenTransfer(
-            from,
-            to,
-            amount
-        );
-
-    }
-
+    /** implementation of mintable */
     function _mint(
         address to,
         uint256 amount
-    ) internal override(
-        ERC20,
-        ERC20Votes
-    ) {
-
+    ) internal override {
         require(
             mintable_
             <= amount,
-            "DreamToken::_mint: mintable_ > amount"
+            "DreamToken::_mint(): mintable_ > amount"
         );
 
         mintable_ -= amount;
@@ -190,71 +152,40 @@ ERC20Votes {
             to,
             amount
         );
-
     }
 
-    /** when you burn $dream you produce $ember */
     function _burn(
         address account,
         uint256 amount
-    ) internal override(
-        ERC20,
-        ERC20Votes
-    ) {
-
+    ) internal override {
         super._burn(
             account,
             amount
         );
-
-        /** generate ember */
+        
+        /** generate $ember */
         emberToken.mint(
             account,
             amount
-            / 100000
+            / 10000
         );
-
     }
 
-    /** -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.- */
-    function snapshot() public onlyOwner {
-
-        _snapshot();
-
-    }
+    function snapshot() public onlyOwner {_snapshot();}
 
     function mint(
         address to,
         uint256 amount
     ) public onlyOwner {
-
         _mint(
             to,
             amount
         );
-
-    }
-
-    function renounceOwnership() public override onlyOwner {
-
-        super.renounceOwnership();
-
-    }
-
-    function transferOwnership(
-        address newOwner
-    ) public override onlyOwner {
-
-        super.transferOwnership(
-            newOwner
-        );
-
     }
 
     function setFee(
         uint16 newFee
     ) public onlyOwner {
-
         require(
             newFee
             >= 0,
@@ -268,13 +199,11 @@ ERC20Votes {
         );
 
         fee = newFee;
-
     }
 
     function setSafe(
         address newSafe
     ) public onlyOwner {
-
         require(
             newSafe
             != address(
@@ -284,24 +213,45 @@ ERC20Votes {
         );
 
         safe = newSafe;
-
     }
 
-    /** -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.- */
+    /** return max supply */
     function maxSupply() public view returns (
         uint256
     ) {
-
         return maxSupply_;
-
     }
 
+    /** return remaining amount that can be minted ever */
     function mintable() public view returns (
         uint256
     ) {
-
         return mintable_;
-
     }
-    
+
+    function getVotes(
+        address account
+    ) public view returns (
+        uint256
+    ) {
+        /** get account balance */
+        uint256 balance = balanceOfAt(
+            account,
+            _getCurrentSnapshotId()
+        );
+
+        /** get emberToken weighting */
+        uint256 weighting = emberToken.getWeight(
+            account
+        );
+
+        /** calculate emberToken boost */
+        uint256 boost = (
+            balance
+            / 10000
+        ) * weighting;
+
+        /** return votes with weighting */
+        return balance + boost;
+    }
 }
