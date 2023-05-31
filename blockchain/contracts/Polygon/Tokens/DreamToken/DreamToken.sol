@@ -254,4 +254,32 @@ ERC20Permit {
         /** return votes with weighting */
         return balance + boost;
     }
+
+    function getPastVotes(
+        address account,
+        uint256 snapshotId
+    ) public view returns (
+        uint256
+    ) {
+        /** get past account balance */
+        uint256 balance = balanceOfAt(
+            account,
+            snapshotId
+        );
+
+        /** get past emberToken weight */
+        uint256 weighting = emberToken.getPastWeight(
+            account, 
+            snapshotId
+        );
+
+        /** calculate emberToken past boost */
+        uint256 boost = (
+            balance
+            / 10000
+        ) * weighting;
+
+        /** return past votes with weighting */
+        return balance + boost;
+    }
 }
