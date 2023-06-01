@@ -6,8 +6,6 @@ import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Snapshot.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/draft-ERC20Permit.sol";
-import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/IERC20.sol";
-import "blockchain/contracts/Polygon/Finance/Wallet.sol";
 import "blockchain/contracts/Polygon/Tokens/EmberToken/EmberToken.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
