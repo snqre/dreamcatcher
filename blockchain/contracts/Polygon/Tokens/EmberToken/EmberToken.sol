@@ -7,6 +7,8 @@ import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Snapshot.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/draft-ERC20Permit.sol";
 
+/** EMBER IS NOT MEANT TO BE BOUGHT OR TRADED IT IS USED AS A REPUTATION */
+
 contract EmberToken is
 ERC20,
 ERC20Burnable,
