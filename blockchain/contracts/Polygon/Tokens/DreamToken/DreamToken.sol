@@ -90,7 +90,6 @@ contract DreamToken is ERC20, ERC20Burnable, ERC20Snapshot, AccessControl, ERC20
         }
 
         super._transfer(from, to, amount.sub(feeAmount));
-
     }
 
     function _mint(address to, uint256 amount) internal override {
