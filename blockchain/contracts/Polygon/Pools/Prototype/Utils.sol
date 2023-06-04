@@ -6,6 +6,10 @@ library Utils {
         return value * 10**18;
     }
 
+    function convertStringToBytes32(string memory text) internal pure returns (bytes32) {
+        return keccak256(abi.encodePacked(text));
+    }
+
     function valueToMint(uint256 value, uint256 supply, uint256 balance) public pure returns (uint256) {
         require(
             value >= convertToWei(1),

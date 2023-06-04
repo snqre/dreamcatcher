@@ -12,359 +12,7 @@ import "blockchain/contracts/Polygon/Pools/Prototype/Utils.sol";
 import "blockchain/contracts/Polygon/ERC20Standards/Tokens/SimpleToken.sol" as SimpleTokenContract;
 import "blockchain/contracts/Polygon/Finance/Medium.sol";
 
-interface ISingleState {
-    /** proxy compatible . anyone can still call without proxy */
-    function createNewPool(bytes memory args) external payable returns (bool);
-    function contribute(bytes memory args) external payable returns (bool);
-    function withdraw(bytes memory args) external returns (bool);
-
-    event NewPoolCreated(
-        address indexed creator,
-        string name,
-        address[] managers,
-        string nameToken,
-        string symbolToken,
-        uint256 durationSeconds,
-        uint256 requiredInMatic,
-        bool isWhitelisted
-    );
-
-    event Contribution(
-        address indexed contributor,
-        string name,
-        uint256 contribution,
-        uint256 amountMinted
-    );
-
-    event Withdrawal(
-        address indexed withdrawer,
-        string name,
-        uint256 amountBurnt,
-        uint256 withdraw
-    );
-}
-
-contract SingleState is ISingleState, Ownable, ReentrancyGuard {
-    struct Tracker {uint256 numberOfPools;} Tracker public tracker;
-    struct InitialFundingSchedule {
-        uint256 startTimestamp;
-        uint256 durationSeconds;
-        uint256 requiredInMatic;
-        bool isWhitelisted;
-        bool success;
-    }
-    /** can only do this for assets we can get the price of */
-    struct CollatTSchedule {
-        uint256 startTimestamp;
-        uint256 remainingTime;
-        uint256 collateralInMatic;
-        bool complete;
-    }
-
-    struct Asset {
-        address contractToken;
-        uint256 balanceOf;
-    }
-    
-    struct Pool {
-        uint256 id;
-        string name;
-        InitialFundingSchedule initialFundingSchedule;
-        SimpleTokenContract.SimpleToken simpleToken;
-        uint256 numberOfCollatTSchedules;
-        uint256 nav;
-        /** assets */
-        uint256 balanceInMatic;
-        address[] contracts;
-        uint256[] amounts;
-    }
-
-    mapping(uint256 => Pool) public pools;
-    mapping(uint256 => mapping(uint256 => CollatTSchedule)) public poolsCollatTSchedules;
-    /** roles */
-    struct Account {
-        bool[] isAdmin;
-        bool[] isCreator;
-        bool[] isManager;
-        bool[] isOnWhitelist;
-    }
-
-    mapping(address => Account) internal accounts;
-
-    struct Settings {
-        uint256 priceToCreateNewPool;
-        uint256 feeToContribute;
-        uint256 feeToWithdraw;
-        address dreamToken;
-        address safe;
-    }
-    
-    Settings public settings;
-
-    constructor() Ownable() {}
-
-    /*---------------------------------------------------------------- PRIVATE **/
-    function _connect(address obj, string memory signature, bytes memory args) internal {}
-
-    function _checkIsManagerOf(uint256 id) internal returns (bool) {
-        Account memory caller = accounts[msg.sender];
-        if (caller.isManager[id]) {
-            return true;
-        } 
-        
-        return false;
-    }
-    /** key issues what happens if a contracts is not found */
-    function _getNetAssetValueOf(bytes memory args) internal returns (uint256) {
-        (address oracle, uint256 id) = abi.decode(args, (address, uint256));
-        Pool memory pool = pools[id];
-        uint256 sum;
-        /** for each asset in the pool */
-        for (uint256 i = 0; i < pool.contracts.length; i++) {
-            address contract_ = pool.contracts[i];
-            address[] memory contract__;
-            contract__[0] = contract_;
-            uint256 amount = pool.amounts[i];
-            args = abi.encode(contract_);
-            bool isVerified = IOracle(oracle).isVerifiedInUSD(args);
-            if (isVerified) {
-                uint256[] memory price = IOracle(oracle).getContractsToValuesUSD(
-                    abi.encode(
-                        contract__
-                    )
-                );
-
-                sum += amount * price[0];
-            } else {
-                /** do something if not verified */
-            }
-        }
-        /** will return zero if nothing was found */
-        return sum;
-    }
-
-
-
-    /*---------------------------------------------------------------- PUBLIC **/
-    /** proxy compatible */
-    function createNewPool(bytes memory args) public payable nonReentrant returns (bool) {
-        (
-            string memory name,
-            address[] memory managers,
-            string memory nameToken,
-            string memory symbolToken,
-            uint256 durationSeconds,
-            uint256 requiredInMatic,
-            bool isWhitelisted
-        ) = abi.decode(
-            args,
-            (
-                string,
-                address[],
-                string,
-                string,
-                uint256,
-                uint256,
-                bool
-            )
-        );
-
-        require(
-            durationSeconds >= 604800 seconds,
-            "SingleState::createNewPool: durationSeconds < 604800 seconds"
-        );
-
-        require(
-            requiredInMatic >= 0,
-            "SingleState::createNewPool: requiredInMatic < 0"
-        );
-        /** if there is a cost then execute */
-        if (settings.priceToCreateNewPool > 0) {
-            IERC20(settings.dreamToken).transferFrom(
-                msg.sender,
-                settings.safe,
-                settings.priceToCreateNewPool
-            );
-        }
-        /** generate new id and deploy new token contract */
-        require(
-            tracker.numberOfPools < type(uint256).max,
-            "SingleState::createNewPool: tracker.numberOfPools >= type(uint256).max"
-        );
-
-        tracker.numberOfPools ++;
-
-        uint256 id = tracker.numberOfPools;
-        SimpleTokenContract.SimpleToken simpleToken = new SimpleTokenContract.SimpleToken(nameToken, symbolToken);
-        uint256 now_ = block.timestamp;
-        /** generate initial funding schedule */
-        InitialFundingSchedule memory newInitialFundingSchedule;
-        newInitialFundingSchedule.startTimestamp = now_;
-        newInitialFundingSchedule.durationSeconds = durationSeconds;
-        newInitialFundingSchedule.requiredInMatic = requiredInMatic;
-        newInitialFundingSchedule.isWhitelisted = isWhitelisted;
-        newInitialFundingSchedule.success = false;
-        /** generate new pool */
-        Pool memory newPool;
-        newPool.id = id;
-        newPool.name = name;
-        newPool.balanceInMatic = msg.value;
-        newPool.initialFundingSchedule = newInitialFundingSchedule;
-        newPool.simpleToken = simpleToken;
-        newPool.nav = 0;
-
-        pools[id] = newPool;
-
-        /** set managers and give whitelist permission */
-        for (uint256 i = 0; i < managers.length; i++) {
-            Account memory manager = accounts[managers[i]];
-            manager.isManager[id] = true;
-            manager.isOnWhitelist[id] = true;
-            accounts[managers[i]] = manager;
-        }
-
-        emit NewPoolCreated(
-            msg.sender,
-            name,
-            managers,
-            nameToken,
-            symbolToken,
-            durationSeconds,
-            requiredInMatic,
-            isWhitelisted
-        );
-
-        return true;
-    }
-    /** proxy compatible */
-    function contribute(bytes memory args) public payable nonReentrant returns (bool) {
-        uint256 id = abi.decode(args, (uint256));
-        uint256 value = msg.value;
-        require(value > 0, "SingleState::contribute: value <= 0");
-        /** get pool and caller meta data */
-        Account memory caller = accounts[msg.sender];
-        Pool memory pool = pools[id];
-        /** check if pool is whitelisted and if caller is whitelisted */
-        if (pool.initialFundingSchedule.isWhitelisted) {
-            require(caller.isOnWhitelist[id], "SingleState::contribute: caller is not on whitelist for this pool");
-        }
-
-        uint256 supply = pool.simpleToken.totalSupply();
-        uint256 balance = pool.balanceInMatic;
-
-        require(supply > 0, "SingleState::contribute: supply <= 0");
-        require(balance > 0, "SingleState::contribute: balance <= 0");
-
-        uint256 amountToMint = Utils.valueToMint(
-            value,
-            supply,
-            balance
-        );
-
-        require(
-            block.timestamp
-            <= pool.initialFundingSchedule.startTimestamp
-            + pool.initialFundingSchedule.durationSeconds,
-            "SingleState::contribute: initial funding period for this pool has expired"
-        );
-
-        if (settings.feeToContribute > 0) {
-            uint256 fee = (amountToMint * settings.feeToContribute) / 10000;
-            amountToMint -= fee;
-            /** mint fee of tokens to safe */
-            pool.simpleToken.mint(settings.safe, fee);
-        }
-
-        /** update */
-        pool.balanceInMatic += value;
-        pool.simpleToken.mint(msg.sender, amountToMint);
-        pools[id] = pool;
-        accounts[msg.sender] = caller;
-
-        emit Contribution(
-            msg.sender,
-            pool.name,
-            value,
-            amountToMint
-        );
-
-        return true;
-    }
-    /** proxy compatible */
-    function withdraw(bytes memory args) public nonReentrant returns (bool) {
-        (
-            uint256 id,
-            uint256 amount
-        ) = abi.decode(
-            args,
-            (
-                uint256,
-                uint256
-            )
-        );
-
-        require(amount > 0, "SingleState::withdraw: value <= 0");
-        Pool memory pool = pools[id];
-
-        uint256 supply = pool.simpleToken.totalSupply();
-        uint256 balance = pool.balanceInMatic;
-        
-        require(supply > 0, "SingleState::withdraw: supply <= 0");
-        require(balance > 0, "SingleState::withdraw: balance <= 0");
-        
-        uint256 valueToSend = Utils.burnToValue(
-            amount,
-            supply,
-            balance
-        );
-        /** note this should never happen but if it does we return the tokens back and we can identify who we need to payout */
-        require(
-            pool.balanceInMatic >= valueToSend,
-            "SingleState::withdraw: insufficient balance on contract to make withdrawal"
-        );
-        /** fees */
-        if (settings.feeToWithdraw > 0) {
-            uint256 fee = (amount * settings.feeToWithdraw) / 10000;
-            valueToSend -= fee;
-            Address.sendValue(payable(settings.safe), fee);
-        }
-        /** burn, send value, and update */
-        pool.simpleToken.burnFrom(msg.sender, amount);
-        Address.sendValue(payable(msg.sender), valueToSend);
-        pool.balanceInMatic -= valueToSend;
-        
-        emit Withdrawal(
-            msg.sender,
-            pool.name,
-            amount,
-            valueToSend
-        );
-
-        return true;
-    }
-    /** use money from the pool to purchase an asset not listed */
-    function newCollatTAgreement(bytes memory args) public payable returns (bool) {
-        (
-            uint256 id,
-            address asset,
-            uint256 amount
-        ) = abi.decode(
-            args,
-            (
-                uint256,
-                address,
-                uint256
-            )
-        );
-
-        require(_checkIsManagerOf(id), "SingleState::newCollatTAgreement: caller is not manager of this pool");
-
-
-
-    }
-
-}
-
+// we use this for centralized pools because they dont need their dedicated voting mechanism
 contract StandardToken is ERC2O, ERC20Burnable, ERC20Permit, AccessControl {
     using SafeMath for uint256;
 
@@ -385,6 +33,7 @@ contract StandardToken is ERC2O, ERC20Burnable, ERC20Permit, AccessControl {
     }
 }
 
+// we use this for decentralized and hybrid style pools as they have voting features
 contract GovernanceToken is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit, AccessControl {
     using SafeMath for uint256;
 
@@ -411,6 +60,24 @@ contract GovernanceToken is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit, Ac
     function getPastVotes(address account, uint256 snapshotId) public view returns (uint256) {
         return balanceOfAt(account, snapshotId);
     }
+}
+
+interface ISingleState {
+    event NewPoolCreated(
+        string name,
+        string description,
+        address tokenContract,
+        uint256 initialSupply,
+        uint64 startTime,
+        uint64 duration,
+        uint target,
+        uint required,
+        bool hasWhitelist,
+        bool isVerified,
+        bool onlyVerifiedAssets,
+        address[] admins,
+        address[] managers
+    );
 }
 
 /**
@@ -446,6 +113,7 @@ contract SingleState is Initializable, PausableUpgradeable, OwnableUpgradeable, 
         address[] contracts;
         address[] amounts;
         uint256 balance;
+        bool onlyVerifiedAssets;
     }
 
     struct Pool {
@@ -460,7 +128,7 @@ contract SingleState is Initializable, PausableUpgradeable, OwnableUpgradeable, 
         CollatTSchedule collatTSchedules;
     }
 
-    struct Account {
+    struct Account { // i know this is more gas heavy but this makes code more readable and flexible
         bool[] isAdminOf;
         bool[] isCreatorOf;
         bool[] isManagerOf;
@@ -482,13 +150,16 @@ contract SingleState is Initializable, PausableUpgradeable, OwnableUpgradeable, 
     bytes32 centralized = keccak256(abi.encodePacked("centralized"));
     bytes32 hybrid = keccak256(abi.encodePacked("hybrid"));
 
-    address terminal;
+    address public terminal; // all roads lead to terminal
 
     // this is the amount of time after the start of a funding schedule
     // that contributors can withdraw
     // assuming the funding schedule has not succeeded yet
-    lockUpPeriod;
+    uint64 public lockUpPeriod;
 
+    /*//////////////////////////////////////////////////////////////
+                              MODIFIERS
+    //////////////////////////////////////////////////////////////*/
     modifier onlyAdminOf(uint no) {
         Account memory caller = accounts[msg.sender];
         require(
@@ -528,6 +199,9 @@ contract SingleState is Initializable, PausableUpgradeable, OwnableUpgradeable, 
         _;
     }
 
+    /*//////////////////////////////////////////////////////////////
+                             CONSTRUCTOR
+    //////////////////////////////////////////////////////////////*/
     // @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
@@ -550,7 +224,64 @@ contract SingleState is Initializable, PausableUpgradeable, OwnableUpgradeable, 
 
         lockUpPeriod = 4 weeks;
     }
+
+    /*//////////////////////////////////////////////////////////////
+                               PRIVATE
+    //////////////////////////////////////////////////////////////*/
+    /*---------------------------------------------------------------- GETPOOL **/
+    function _getPool(uint no) internal returns (Pool) {
+        return pools[no];
+    }
+
+    /*---------------------------------------------------------------- GETPOOL **/
+    function _getAccount(address account) internal returns (Account) {
+        return accounts[account];
+    }
+
+    /*---------------------------------------------------------------- OVERWRITEPOOL **/
+    function _overwritePool(uint no, Pool newPool) internal {
+        pools[no] = newPool;
+    }
+
+    /*---------------------------------------------------------------- OVERWRITEACCOUNT **/
+    function _overwriteAccount(address account, Account newAccount) internal {
+        accounts[no] = newAccount;
+    }
+
+    /*---------------------------------------------------------------- GETNETASSETVALUEOF **/
+    // this is how we get the price of assets being held by pools
+    // but some assets may not be available
+    // pools can decide to trade only verified assets
+    // needs work
+    function _getNetAssetValueOf(bytes memory args) internal returns (uint256) {
+        (address oracle, uint256 id) = abi.decode(args, (address, uint256));
+        Pool memory pool = pools[id];
+        uint256 sum;
+        /** for each asset in the pool */
+        for (uint256 i = 0; i < pool.contracts.length; i++) {
+            address contract_ = pool.contracts[i];
+            address[] memory contract__;
+            contract__[0] = contract_;
+            uint256 amount = pool.amounts[i];
+            args = abi.encode(contract_);
+            bool isVerified = IOracle(oracle).isVerifiedInUSD(args);
+            if (isVerified) {
+                uint256[] memory price = IOracle(oracle).getContractsToValuesUSD(
+                    abi.encode(
+                        contract__
+                    )
+                );
+
+                sum += amount * price[0];
+            } else {
+                /** do something if not verified */
+            }
+        }
+        /** will return zero if nothing was found */
+        return sum;
+    }
     
+    /*---------------------------------------------------------------- PUSHNEWPOOLTOSTORAGE **/
     function _pushNewPoolToStorage(
         string memory style,
         uint256 no,
@@ -565,6 +296,7 @@ contract SingleState is Initializable, PausableUpgradeable, OwnableUpgradeable, 
         uint256 required,
         bool hasWhitelist,
         bool isVerified,
+        bool onlyVerifiedAssets,
         address[] memory admins,
         address[] memory managers,
         bool override_
@@ -607,7 +339,7 @@ contract SingleState is Initializable, PausableUpgradeable, OwnableUpgradeable, 
             );
         } 
 
-        bytes32 style_ = keccak256(abi.encodePacked(style));
+        bytes32 style_ = Utils.convertStringToBytes32(style);
 
         if (style_ == decentralized || style_ == hybrid) {
             Pool pool = Pool({
@@ -632,7 +364,8 @@ contract SingleState is Initializable, PausableUpgradeable, OwnableUpgradeable, 
                 reserve: Reserve({
                     contracts: new address[](0),
                     amounts: new address[](0),
-                    balance: msg.value
+                    balance: msg.value,
+                    onlyVerifiedAssets: onlyVerifiedAssets
                 }),
                 collatTSchedules: new CollatTSchedule[](0)
             });
@@ -708,6 +441,7 @@ contract SingleState is Initializable, PausableUpgradeable, OwnableUpgradeable, 
         }
     }
 
+    /*---------------------------------------------------------------- CONTRIBUTE **/
     // onlyOnWhitelistOf will not revert if there is no whitelist for the selected pool
     function _contribute(uint no, bool override_) internal payable onlyOnWhitelistOf(no) nonReentrant {
         // in this context value is the amount in matic being sent to the pool
@@ -720,8 +454,22 @@ contract SingleState is Initializable, PausableUpgradeable, OwnableUpgradeable, 
             );
         }
         
-        Account memory caller = accounts[msg.sender];
-        Pool memory pool = pools[no];
+        Account memory caller = _getAccount(msg.sender);
+        Pool memory pool = _getPool(no);
+        
+
+        if (override_ == false) { // can bypass this using override
+            // check eligibility
+            bool fundingPeriodHasEnded = block.timestamp <= pool.fundingSchedule.startTime.add(pool.fundingSchedule.duration);
+            bool fundingPeriodHasBegun = block.timestamp <= pool.fundingSchedule.startTime;
+
+            // you cannot contribute if the funding period for the selected pool has not begun yet
+            // you cannot contribute if the funding period for the selected pool has ended
+            // this is the set up for close ended pools
+            // there will be a contract for open ended pools as they are more difficult
+            require(fundingPeriodHasBegun, "SingleState::_contribute(): the funding period has not begun yet");
+            require(!fundingPeriodHasEnded, "SingleState::_contribute(): the funding period has ended");
+        }
 
         /** replaced by onlyOnWhitelistOf modifier
         if (pool.fundingSchedule.hasWhitelist) {
@@ -731,28 +479,26 @@ contract SingleState is Initializable, PausableUpgradeable, OwnableUpgradeable, 
             );
         }
         */
+        
+        {
+            bytes32 class = pool.class;
+            if (class == decentralized || class == hybrid) {
+                uint supply = pool.governanceToken.totalSupply();
+            }
 
-        if (pool.class == decentralized || pool.class == hybrid) {
-            uint supply = pool.governanceToken.totalSupply();
+            else if (class == centralized) {
+                uint supply = pool.standardToken.totalSupply();
+            }
 
-        } else if (pool.class == centralized) {
-            uint supply = pool.standardToken.totalSupply();
-        } else {
-            revert("SingleState::_contribute: unidentified class");
+            else {
+                revert("SingleState::_contribute: unidentified class");
+            }
+
+            uint balance = pool.reserve.balance;
         }
-
-        uint balance = pool.reserve.balance;
         
         // this will revert if parameters are insufficient as the math cannot be done with low values
         uint amountToMint = Utils.valueToMint(value, supply, balance);
-        
-        // cannot contribute to a pool after funding period in prototype
-        if (override_ == false) {
-            require(
-                block.timestamp <= pool.fundingSchedule.startTime + pool.fundingSchedule.duration,
-                "SingleState::_contribute(): funding period for selected pool is over"
-            );
-        }
 
         if (override_ == false) {
             if (fee.contribute >= 1) {
@@ -787,11 +533,14 @@ contract SingleState is Initializable, PausableUpgradeable, OwnableUpgradeable, 
             revert("SingleState::_contribute: unidentified class");
         }
 
-        // note storage update
-        pools[no] = pool;
-        accounts[msg.sender] = caller;
+        _overwritePool(no, pool);
+        _overwriteAccount(msg.sender, caller);
     }
 
+    /*---------------------------------------------------------------- WITHDRAW **/
+    // internal function for withdraw
+    // use no to select which pool
+    // then the amount of that pool's tokens to burn in return for matic
     function _withdraw(uint no, uint amount, bool override_) internal payable nonReentrant {
         // in this context amount is the amount of the corresponding token being burnt
         require(
@@ -800,8 +549,6 @@ contract SingleState is Initializable, PausableUpgradeable, OwnableUpgradeable, 
         );
 
         Pool memory pool = pools[no];
-
-
 
         // if past lock up period then can withdraw even if fundingSchedule is stil active
         // so setting funding schedule ending to 100 years doesnt cause a disaster
@@ -866,4 +613,9 @@ contract SingleState is Initializable, PausableUpgradeable, OwnableUpgradeable, 
         Address.sendValue(payable(msg.sender), valueToSend);
         pool.reserve.balance = pool.reserve.balance.sub(valueToSend);
     }
+
+    /*//////////////////////////////////////////////////////////////
+                            ADMIN COMMANDS
+    //////////////////////////////////////////////////////////////*/
+
 }
