@@ -1,0 +1,457 @@
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+    background-color: var(--background-color);
+    color: #fff;
+}
+
+:root {
+  --background-color: #1f202d;
+  --navbar-colour: transparent;
+  --text-color: #fce9ea;
+  --button-color: #3ce2d7;
+  --Secondary-Button: #454a96;
+  --Accent: #5961cf;
+  --main-font: monospace;
+  }
+
+*{
+    box-sizing: border-box;
+  }
+
+  ::-webkit-scrollbar {
+    width: 2px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #f1f1f1;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #888;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #555;
+  }
+  
+  .navbar {
+    background: var(--navbar-colour);
+    height: 80px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.2rem;
+    font-family: var(--main-font);
+    position: sticky;
+    top: 0;
+    z-index: 999;
+  }
+  
+  .navbar__container {
+    display: flex;
+    justify-content: space-between;
+    height: 80px;
+    z-index: 1;
+    width: 100%;
+    max-width: 1800px;
+    margin: 0 auto;
+    padding: 0 50px;
+    }
+  
+  #navbar__logo {
+    background-image: linear-gradient(to right, rgb(54, 162, 148) 0%, teal 100%);
+    background-size: 100%;
+    -webkit-background-clip: text;
+    -moz-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    -moz-text-fill-color: transparent;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    text-decoration: none;
+    font-size: 3.5rem;
+  }
+  
+  .fa-gem {
+    margin-right: 0.5rem;
+  }
+  
+  .navbar__menu {
+    display: flex;
+    align-items: center;
+    list-style: none;
+    text-align: center;
+  }
+  
+  .navbar__item {
+    height: 80px;
+    font-size: 2.5rem;
+  }
+  
+  .navbar__links {
+    color: var(--text-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    padding: 0 1rem;
+    height: 100%;
+  }
+  
+  .navbar__btn {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0 1rem;
+    width: 100%;
+  }
+  
+  .nav-button {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-decoration: none;
+    padding: 10px 20px;
+    height: 100%;
+    width: 100%;
+    border: none;
+    outline: none;
+    border-radius: 4px;
+    background: var(--button-color);
+    color: white;
+    font-size: 1.5em;
+  }
+  
+  .nav-button:hover {
+    background: white;
+    transition: all 0.3s ease;
+    color: #131313;
+  }
+  
+  .navbar__links:hover {
+    color: var(--button-color);
+    transition: all 0.3s ease;
+  }
+  
+  @media screen and (max-width: 90em){
+    .navbar__container {
+     display: flex;
+     justify-content: space-between;
+     height: 40px;
+     z-index: 1;
+     width: 100%;
+     max-width: 500px;
+     padding: 0;
+     background: var(--navbar-colour);
+    }
+  
+    .navbar__menu {
+      display: grid;
+      grid-template-columns: auto;
+      margin: 0;
+      width: 30%;
+      position: absolute;
+      top: -1000px;
+      opacity: 0;
+      transition: all 0.5s ease;
+      height: 50vh;
+      z-index: -1;
+      background: #333;
+      right: 0;
+    }
+  
+    .navbar__menu.active {
+      background: #333;
+      top: 100%;
+      opacity: 1;
+      transition: all 0.5s;
+      z-index: 99;
+      height: 50vh;
+      font-size: 1.6rem;
+    }
+  
+    #navbar__logo {
+      position: relative;
+      padding-left: 0px;
+      margin: 0;
+      left: -20rem;
+
+    }
+  
+    .navbar__toggle .bar {
+      width: 25px;
+      height: 3px;
+      margin: 0.4rem 1rem;
+      transition: all 0.3s ease-in-out;
+      background: #fff;
+    }
+  
+    .navbar__item {
+      width: 100%;
+    }
+  
+    .navbar__links {
+      text-align: center;
+      padding: 2rem;
+      width: 100%;
+      display: table;
+      line-height: 10px;
+    }
+  
+    #mobile-menu {
+      position: absolute;
+      top: 20%;
+      right: 0;
+      transform: translate(5%, 20%);
+    }
+  
+    .navbar__btn {
+      padding-bottom: 2rem;
+    }
+  
+    .button {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 50%;
+      height: 80px;
+      margin: 0;
+    }
+  
+    .navbar__toggle .bar {
+      display: block;
+      cursor: pointer;
+    }
+  
+    #mobile-menu.is.active .bar:nth-child(2) {
+      opacity: 0;
+    }
+  
+    #mobile-menu.is.active .bar:nth-child(1) {
+      transform: translateY(8px) rotate(45deg);
+    }
+  
+    #mobile-menu.is.active .bar:nth-child(3) {
+      transform: translateY(-8px) rotate(-45deg);
+  
+  }
+  }
+  
+  .main {
+    display: flex;
+    justify-content: center;
+    max-width: 100%;
+    margin-top: 5rem;
+    font-family: var(--main-font);
+  }
+
+  .heading {
+    position: absolute;
+    padding: 0;
+    margin: 2rem;
+    font-size: 2rem;
+    max-width: 80%;
+  }
+
+  .img {
+    position: absolute;
+  }
+
+  .logo-container {
+    position: relative;
+    width: 10em;
+    height: 10em;
+  }
+
+  .logo img {
+    width: 100%;
+    height: 100%;
+    animation: bob 8s linear infinite;
+  }
+  
+  .logo {
+    position: absolute;
+    top: 21em;
+    left: 3rem;
+    transform: translate(-50%);
+    width: 10em;
+    height: 20em;
+    perspective: 2000px;
+    transform-style: preserve-3d;
+  }
+  
+  .moon {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 1rem;
+    background-color: transparent;
+    animation-duration: 12s;
+    animation-iteration-count: infinite;
+    animation-timing-function: linear;
+    font-size: 2rem;
+    cursor: pointer;
+    transform-style: preserve-3d; 
+  }
+  
+  .moon1 {
+    animation-name: orbit1;
+    animation-delay: 0s;
+    opacity: 0;
+    transform: translateX(6em) rotateY(90deg); 
+    white-space: nowrap;
+  }
+  
+  .moon2 {
+    animation-name: orbit2;
+    animation-delay: 2.5s;
+    opacity: 0;
+    transform: translateX(8em) rotateY(90deg); 
+  }
+  
+  .moon3 {
+    animation-name: orbit3;
+    animation-delay: 6.5s;
+    opacity: 0;
+    transform: translateX(6em) rotateY(-90deg); 
+    white-space: nowrap;
+  }
+  
+  .moon4 {
+    animation-name: orbit4;
+    animation-delay: 8.5s;
+    opacity: 0;
+    transform: translateX(8em) rotateY(-90deg); 
+  }
+  
+  @keyframes orbit1 {
+    from {
+      opacity: 1;
+      transform: rotateY(0deg) rotateY(0deg) translateZ(8em);
+    }
+    to {
+      opacity: 1;
+      transform: rotateY(360deg) rotateY(0deg) translateZ(8em);
+    }
+  }
+  
+  @keyframes orbit2 {
+    from {
+      opacity: 1;
+      transform: rotateY(0deg) rotateY(0deg)  translateZ(10em);
+    }
+    to {
+      opacity: 1;
+      transform: rotateY(360deg) rotateY(0deg) translateZ(10em);
+    }
+  }
+  
+  @keyframes orbit3 {
+    from {
+      opacity: 1;
+      transform: rotateY(0deg) rotateY(0deg) translateZ(8em);
+    }
+    to {
+      opacity: 1;
+      transform: rotateY(360deg) rotateY(0deg) translateZ(8em);
+    }
+  }
+  
+  @keyframes orbit4 {
+    from {
+      opacity: 1;
+      transform: rotateY(0deg) rotateY(0deg) translateZ(10em);
+    }
+    to {
+      opacity: 1;
+      transform: rotateY(360deg) rotateY(0deg) translateZ(10em);
+    }
+  }
+
+  @keyframes bob {
+    0% {
+      transform: translateY(0) perspective(100px); transform: rotatey(0deg);
+    }
+    50% {
+      transform: translateY(-30px) perspective(100px); transform: rotatey(360deg);
+    }
+    100% {
+      transform: translateY(0) perspective(100px); 
+    }
+  }
+  
+  
+.side-content {
+  display: flex;
+  position: absolute;
+  justify-content: flex-end;
+  top: 28em;
+  width: 100%;
+  height: 35em;
+  padding-left: 25rem;
+  padding-right: 25rem;
+}
+
+.box1 ::after {
+  height: 100%;
+  width: 90em;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 0.2rem;
+  opacity: 0.25;
+}
+
+.box1 ::before {
+  height: 100%;
+  width: 90em;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 0.2rem;
+  opacity: 0.25;
+}
+  
+.middlecontent {
+  display: flex;
+  position: absolute;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  width: 80%;
+  height: 115rem;
+  left: 50%;
+  transform: translate(-50%);
+  top: 50em;
+}
+
+.protocol-security{
+  position: relative;
+  width: 35%;
+  height: 50rem;
+  width: 34%;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 0.2rem;
+  opacity: 0.25;
+  margin-right: 20em;
+}
+
+.whitepapers{
+  position: relative;
+  width: 35%;
+  height: 50rem;
+  width: 34%;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 0.2rem;
+  opacity: 0.25;
+}
+  
+.venturecapitol {
+  position: relative;
+  height: 25%;
+  width: 85%;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 0.2rem;
+  opacity: 0.25;
+  top: -10rem;
+}
+  
