@@ -365,28 +365,37 @@ contract SingleState is ISingleState, Ownable, ReentrancyGuard {
 
 }
 
-// simple token: no snapshot, no voting
-contract StandardToken {
+contract StandardToken is ERC2O, ERC20Burnable, ERC20Permit, AccessControl {
+    using SafeMath for uint256;
 
+    constructor(string memory name, string memory symbol) ERC20(name, symbol) ERC20Permit(name) {
+        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+    }
+
+    function _beforeTokenTransfer(address from, address to, uint256 amount) internal override {
+        super._beforeTokenTransfer(from, to, amount);
+    }
+
+    function mint(address to, uint256 amount) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        _mint(to, amount);
+    }
+
+    function burn(address to, uint256 amount) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        _burn(to, amount);
+    }
 }
 
-// capped token
-contract StandardTokenCapped {
-
-}
-
-// used for governance pools
-contract GovernanceToken is ERC20, ERC20Burnable, ERC20Snapshot, AccessControl, ERC20Permit {
+contract GovernanceToken is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit, AccessControl {
     using SafeMath for uint256;
 
     constructor(string memory name, string memory symbol) ERC20(name, symbol) ERCPermit(name) {
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
-    // -.-.-.- private
+
     function _beforeTokenTransfer(address from, address to, uint256 amount) internal override(ERC20, ERC20Snapshot) {
         super._beforeTokenTransfer(from, to, amount);
     }
-    // -.-.-.- owner commands
+
     function snapshot() public onlyRole(DEFAULT_ADMIN_ROLE) {
         _snapshot();
     }
@@ -394,7 +403,7 @@ contract GovernanceToken is ERC20, ERC20Burnable, ERC20Snapshot, AccessControl, 
     function mint(address to, uint256 amount) public onlyRole(DEFAULT_ADMIN_ROLE) {
         _mint(to, amount);
     }
-    // -.-.-.- public
+
     function getVotes(address account) public view returns (uint256) {
         return balanceOfAt(account, _getCurrentSnapshotId());
     }
@@ -404,185 +413,119 @@ contract GovernanceToken is ERC20, ERC20Burnable, ERC20Snapshot, AccessControl, 
     }
 }
 
-contract GovernanceTokenCapped is GovernanceToken {
-    uint256 internal mintable_;
-    uint256 immutable maxSupply_;
-
-    constructor(string memory name, string memory symbol, uint256 cap) GovernanceToken(name, symbol) {
-        mintable_ = cap;
-        maxSupply_ = cap;
-    }
-    // -.-.-.- private
-    function _mint(address to, uint256 amount) internal override {
-        require(mintable_ <= amount, "StandardToken::_mint(): mintable_ > amount");
-        mintable_ = mintable_.sub(amount);
-        super._mint(to, amount);
-    }
-
-    function _burn(address account, uint256 amount) internal override {
-        super._burn(account, amount);
-        mintable_.add(amount);
-    }
-}
-
+/**
+no: is the unique number generated for each pool in the contract
+this is used to select which pool is being refered to in functions
+ */
 contract SingleState is Initializable, PausableUpgradeable, OwnableUpgradeable, ReentrancyGuard, AccessControl {
-    /**
-    * D: dencentralized.
-    * C: centralized.
-    * H: hybrid.
-     */
-    uint256 internal priceToCreateNewPool;
-    uint256 internal feeToContribute;
-    uint256 internal feeToWithdraw;
-
-    uint256 internal numberOfD;
-    uint256 internal numberOfC;
-    uint256 internal numberOfH;
-
-    uint256 internal numberOfCappedD;
-    uint256 internal numberOfCappedC;
-    uint256 internal numberOfCappedH;
-
-    struct Meta {
-        uint256 no;
-        string name;
-        string description;
+    struct Fee {
+        uint256 createNewPool;
+        uint256 contribute;
+        uint256 withdraw;
+        uint256 update;
     }
 
-    struct Funding {
-        uint64 startTimestamp;
+    struct FundingSchedule {
+        uint64 startTime;
         uint64 duration;
+        uint256 target;
         uint256 required;
-        bool isWhitelisted;
+        bool hasWhitelist;
         bool isVerified;
         bool success;
     }
 
     struct CollatTSchedule {
-        uint256 startTimestamp;
+        uint256 startTime;
         uint256 duration;
-        uint256 guarantee;
+        uint256 collateral;
         bool complete;
     }
 
-    struct Holdings {
+    struct Reserve {
         address[] contracts;
         address[] amounts;
         uint256 balance;
     }
 
-    struct PoolD {
-        Meta meta;
-        GovernanceToken governanceToken;
-        Funding funding;
-        Holdings holdings;
-        CollatTSchedule[] collatTSchedules;
-    }
-
-    struct PoolC {
-        Meta meta;
+    struct Pool {
+        uint256 no;
+        bytes32 class;
+        string name;
+        string description;
         StandardToken standardToken;
-        Funding funding;
-        Holdings holdings;
-        CollatTSchedule[] collatTSchedules;
-    }
-
-    struct PoolH {
-        Meta meta;
         GovernanceToken governanceToken;
-        Funding funding;
-        Holdings holdings;
-        CollatTSchedule[] collatTSchedules;
+        FundingSchedule fundingSchedule;
+        Reserve reserve;
+        CollatTSchedule collatTSchedules;
     }
 
-    mapping(uint256 => PoolD) internal poolsD;
-    mapping(uint256 => PoolC) internal poolsC;
-    mapping(uint256 => PoolH) internal poolsH;
-
-    mapping(address => mapping(uint256 => bool)) internal isAdminOfD;
-    mapping(address => mapping(uint256 => bool)) internal isCreatorOfD;
-    mapping(address => mapping(uint256 => bool)) internal isManagerOfD;     // D: mainly the team behind
-    mapping(address => mapping(uint256 => bool)) internal isOnWhitelistOfD; // D: does not have whitelist
-
-    mapping(address => mapping(uint256 => bool)) internal isAdminOfC;
-    mapping(address => mapping(uint256 => bool)) internal isCreatorOfC;
-    mapping(address => mapping(uint256 => bool)) internal isManagerOfC;
-    mapping(address => mapping(uint256 => bool)) internal isOnWhitelistOfC;
-
-    mapping(address => mapping(uint256 => bool)) internal isAdminOfH;
-    mapping(address => mapping(uint256 => bool)) internal isCreatorOfH;
-    mapping(address => mapping(uint256 => bool)) internal isManagerOfH;
-    mapping(address => mapping(uint256 => bool)) internal isOnWhitelistOfH;
-    /**
-    * createNewPool: int
-    * contribute: points
-    * withdraw: points
-     */
-    struct Fee {
-        uint256 createNewPool;
-        uint256 contribute;
-        uint256 withdraw;
-    } Fee private fee;
-
-    // is the caller the admin of the pool [identifier] of x type
-    modifier onlyAdminOf(uint class, uint256 no) {
-        if (class == 0) { // D
-            require(isAdminOfD[msg.sender][no], "onlyAdminOfD");
-        }
-
-        if (class == 1) { // C
-            require(isAdminOfC[msg.sender][no], "onlyAdminOfC");
-        }
-
-        if (class == 2) { // H
-            require(isAdminOfH[msg.sender][no], "onlyAdminOfH");
-        }
+    struct Account {
+        bool[] isAdminOf;
+        bool[] isCreatorOf;
+        bool[] isManagerOf;
+        bool[] isOnWhitelistOf;
+        bool[] isParticipantOf;
+        bool hasCompletedKYC;
+        bool isVerified;
+        uint256 reputationScore;
     }
 
-    // is the caller the creator of the pool [identifier] of x type
-    modifier onlyCreatorOf(uint class, uint256 no) {
-        if (class == 0) { // D
-            require(isCreatorOfD[msg.sender][no], "onlyCreatorOfD");
-        }
+    uint256 poolCount;
 
-        if (class == 1) { // C
-            require(isCreatorOfC[msg.sender][no], "onlyCreatorOfC");
-        }
+    Fee public fee;
 
-        if (class == 2) { // H
-            require(isCreatorOfH[msg.sender][no], "onlyCreatorOfH");
-        }
+    mapping(uint256 => Pool) public pools;
+    mapping(address => Account) public accounts;
+
+    bytes32 decentralized = keccak256(abi.encodePacked("decentralized"));
+    bytes32 centralized = keccak256(abi.encodePacked("centralized"));
+    bytes32 hybrid = keccak256(abi.encodePacked("hybrid"));
+
+    address terminal;
+
+    // this is the amount of time after the start of a funding schedule
+    // that contributors can withdraw
+    // assuming the funding schedule has not succeeded yet
+    lockUpPeriod;
+
+    modifier onlyAdminOf(uint no) {
+        Account memory caller = accounts[msg.sender];
+        require(
+            caller.isAdminOf[no],
+            "SingleState::onlyAdminOf(): caller is not admin of selected pool"
+        );
+        _;
     }
 
-    // is the caller the manager of the pool [identifier] of x type
-    modifier onlyManagerOf(uint class, uint256 no) {
-        if(class == 0) { // D
-            require(isManagerOfD[msg.sender][no], "onlyManagerOfD");
-        }
-
-        if(class == 1) { // C
-            require(isManagerOfC[msg.sender][no], "onlyManagerOfC");
-        }
-
-        if(class == 2) { // H
-            require(isManagerOfH[msg.sender][no], "onlyManagerOfH");
-        }
+    modifier onlyCreatorOf(uint no) {
+        Account memory caller = accounts[msg.sender];
+        require(
+            caller.isAdminOf[no],
+            "SingleState::onlyAdminOf(): caller is not admin of selected pool"
+        );
+        _;
     }
 
-    // whitelisted accounts can be set manually by admins but in future we will help do kyc and mml checks
-    // is the caller on the whitelist of the pool [identifier] of x type
-    modifier onlyOnWhitelistOf(uint class, uint256 no) {
-        if (class == 0) { // D
-            require(isOnWhitelistOfD[msg.sender][no], "onlyOnWhitelistOfD");
-        }
+    modifier onlyManagerOf(uint no) {
+        Account memory caller = accounts[msg.sender];
+        require(
+            caller.isAdminOf[no],
+            "SingleState::onlyAdminOf(): caller is not admin of selected pool"
+        );
+        _;
+    }
 
-        if (class == 1) { // C
-            require(isOnWhitelistOfC[msg.sender][no], "onlyOnWhitelistOfC");
+    modifier onlyOnWhitelistOf(uint no) {
+        Pool memory pool = pools[no];
+        if (pool.fundingSchedule.hasWhitelist) {
+            Account memory caller = accounts[msg.sender];
+            require(
+                caller.isAdminOf[no],
+                "SingleState::onlyAdminOf(): caller is not admin of selected pool"
+            );
         }
-
-        if (class == 2) { // H
-            require(isOnWhitelistOfH[msg.sender][no], "onlyOnWhitelistOfH");
-        }
+        _;
     }
 
     // @custom:oz-upgrades-unsafe-allow constructor
@@ -590,244 +533,337 @@ contract SingleState is Initializable, PausableUpgradeable, OwnableUpgradeable, 
         _disableInitializers();
     }
 
-    function initialize(address terminal) initializer public {
+    function initialize(address terminal_) initializer public {
         __Pausable_init();
         __Ownable_init();
-        // set authenticator
-        if (msg.sender != terminal) {
+        
+        if (msg.sender != terminal_) {
             _grantRole(DEFAULT_ADMIN_ROLE, address(this));
             _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
-            _grantRole(DEFAULT_ADMIN_ROLE, terminal);
+            _grantRole(DEFAULT_ADMIN_ROLE, terminal_);
         } else {
             _grantRole(DEFAULT_ADMIN_ROLE, address(this));
             _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         }
-    }
-    // -.-.-.- private
-    function _convertToWei(uint value) internal returns (uint256) {
-        return value * 10**18;
-    }
 
-    function _newMeta(
+        terminal = terminal_;
+
+        lockUpPeriod = 4 weeks;
+    }
+    
+    function _pushNewPoolToStorage(
+        string memory style,
         uint256 no,
         string memory name,
-        string memory description
-    ) internal returns (Meta) {
-        Meta newMeta = Meta({
-            no: no,
-            name: name,
-            description: description
-        });
-
-        return newMeta;
-    }
-
-    function _newFundingSchedule(
-        uint64 startTimestamp,
-        uint64 duration,
-        uint256 required,
-        bool isWhitelisted,
-        bool isVerified,
-        bool success
-    ) internal returns (Funding) {
-        Funding newFunding = Funding({
-            startTimestamp: startTimestamp,
-            duration: duration,
-            required: required,
-            isWhitelisted: isWhitelisted,
-            isVerified: isVerified,
-            success: success
-        });
-
-        return newFunding;
-    }
-
-    /**
-        this is for collateralized transfers
-     */
-    function _newCollatTSchedule(
-        uint256 startTimestamp,
-        uint256 duration,
-        uint256 guarantee,
-        bool complete
-    ) internal returns (CollatTSchedule) {
-        CollatTSchedule newCollatTSchedule = CollatTSchedule({
-            startTimestamp: startTimestamp,
-            duration: duration,
-            guarantee: guarantee,
-            complete: complete
-        });
-
-        return newCollatTSchedule;
-    }
-
-    function _newHoldings(
-        address[] contracts,
-        address[] amounts,
-        uint256 balance
-    ) internal returns (Holdings) {
-        Holdings newHoldings = Holdings({
-            contracts: contracts,
-            amounts: amounts,
-            balance: balance
-        });
-
-        return newHoldings;
-    }
-
-    /**
-        class: the base style of pool being generated
-        name: the name of the pool
-        description: a short description directly by the creator
-        fundingStartTimestamp: when does the funding period start
-        fundingDuration: how long does the funding period last
-        fundingRequired: amount in matic required to pass the funding period
-        isWhitelisted: are only kyc and mml entities allowed to use this
-        isVerified: this pool is verified and is compliant
-        admins: who are the admins who can edit key components of the pool
-        managers: who can move capital
-        tokenName: name of token
-        tokenSymbol: symbol
-        initialSupply: set the initialSupply for the amount of wei given
-     */
-    function _createNewPool(
-        uint class,
-        string memory name,
         string memory description,
-        uint64 fundingStartTimestamp,
-        uint64 fundingDuration,
-        uint256 fundingRequired,
-        bool isWhitelisted,
-        bool isVerified,
-        address[] admins,
-        address[] managers,
         string memory tokenName,
         string memory tokenSymbol,
-        uint256 initialSupply
-    ) internal nonReentrant payable {
-        // required checks before the process
-        require(msg.value >= 1, "SingleStage::_createNewPoolD(): msg.value < 1");
+        uint256 initialSupply,
+        uint64 startTime,
+        uint64 duration,
+        uint256 target,
+        uint256 required,
+        bool hasWhitelist,
+        bool isVerified,
+        address[] memory admins,
+        address[] memory managers,
+        bool override_
+    ) internal payable nonReentrant {
 
-        /** PATH TO DECENTRALIZED POOL */
-        // centralized pools are total controlled by managers
-        // contributors within the pool dont have a say in what managers buy after contribution
-        if (class == 0) { // D
-            numberOfD += 1;
-            Meta newMeta = _newMeta(numberOfD, name, description);
-            Funding newFundingSchedule = _newFundingSchedule(
-                fundingStartTimestamp,
-                fundingDuration,
-                fundingRequired,
-                isWhitelisted,
-                isVerified,
-                false
+        if (override_ == false) {
+            require(
+                no >= 0,
+                "SingleState::_pushNewPoolToStorage(): no < 0"
             );
 
-            // if the target is 0 then automatically pass the funding
-            if (fundingRequired == 0) {
-                newFundingSchedule.success = true;
+            require(
+                no <= type(uint256).max,
+                "SingleState::_pushNewPoolToStorage(): no > type(uint256).max"
+            );
+
+            require(
+                initialSupply >= Utils.convertToWei(1),
+                "SingleState::_pushNewPoolToStorage(): initialSupply < 1 wei"
+            );
+
+            require(
+                admins.length >= 0,
+                "SingleState::_pushNewPoolToStorage(): admins.length < 0"
+            );
+
+            require(
+                admins.length <= 9,
+                "SingleState::_pushNewPoolToStorage(): admins.length > 9"
+            );
+
+            require(
+                managers.length >= 0,
+                "SingleState::_pushNewPoolToStorage(): managers.length < 0"
+            );
+
+            require(
+                managers.length <= 9,
+                "SingleState::_pushNewPoolToStorage(): managers.length > 9"
+            );
+        } 
+
+        bytes32 style_ = keccak256(abi.encodePacked(style));
+
+        if (style_ == decentralized || style_ == hybrid) {
+            Pool pool = Pool({
+                no: no,
+                class: style_,
+                name: name,
+                description: description,
+                standardToken: address(0),
+                governanceToken: new GovernanceToken(
+                    tokenName,
+                    tokenSymbol
+                ),
+                fundingSchedule: FundingSchedule({
+                    startTime: startTime,
+                    duration: duration,
+                    target: target,
+                    required: required,
+                    hasWhitelist: hasWhitelist,
+                    isVerified: isVerified,
+                    success: false
+                }),
+                reserve: Reserve({
+                    contracts: new address[](0),
+                    amounts: new address[](0),
+                    balance: msg.value
+                }),
+                collatTSchedules: new CollatTSchedule[](0)
+            });
+
+            Account memory account;
+            account = accounts[msg.sender];
+            account.isCreatorOf[no] = true;
+
+            for (uint256 i = 0; i < admins.length; i++) {
+                account = accounts[admins[i]];
+                account.isAdminOf[no] = true;
             }
 
-            GovernanceToken newGovernanceToken = new GovernanceToken(
-                tokenName,
-                tokenSymbol
-            );
+            for (uint256 i = 0; i < managers.length; i++) {
+                account = accounts[managers[i]];
+                account.isManagerOf[no] = true;
+            }
 
-            // generate empty Holdings but factor in msg.value
-            address[] contracts;
-            address[] amounts;
+            pools[no] = pool;
+        }
 
-            // initial investment from creator
-            uint256 balance = msg.value;
-            newHoldings = _newHoldings(contracts, amounts, balance);
-
-            PoolD newPoolD = PoolD({
-                meta: newMeta,
-                governanceToken: newGovernanceToken,
-                funding: newFundingSchedule,
-                holdings: newHoldings,
+        else if (style_ == centralized) {
+            Pool pool = Pool({
+                no: no,
+                class: style_,
+                name: name,
+                description: description,
+                standardToken: new StandardToken(
+                    tokenName,
+                    tokenSymbol
+                ),
+                governanceToken: address(0),
+                fundingSchedule: FundingSchedule({
+                    startTime: startTime,
+                    duration: duration,
+                    target: target,
+                    required: required,
+                    hasWhitelist: hasWhitelist,
+                    isVerified: isVerified,
+                    success: false
+                }),
+                reserve: Reserve({
+                    contracts: [],
+                    amounts: [],
+                    balance: msg.value
+                }),
                 collatTSchedules: []
             });
 
-            // mint initial supply for creator contribution
-            newPoolD.governanceToken.mint(msg.sender, initialSupply);
+            Account account;
+            account = accounts[msg.sender];
+            account.isCreatorOf[no] = true;
 
-            // add new pool to mapping
-            poolsD[numberOfD] = newPoolD;
-
-            // set creator
-            isCreatorOfD[msg.sender][no] = true;
-
-            // admins
-            for (uint256 i = 0; i < admins.length; i++) {
-                isAdminOfD[admins[i]][no] = true;
+            if (admins.length != 0) {
+                for (uint256 i = 0; i < admins.length; i++) {
+                    account = accounts[admins[i]];
+                    account.isAdminOf[no] = true;
+                }
             }
 
-            // set managers
-            for (uint256 i = 0; i < managers.length; i++) {
-                isManagerOfD[managers[i]][no] = true;
+            if (managers.length != 0) {
+                for (uint256 i = 0; i < managers.length; i++) {
+                    account = accounts[managers[i]];
+                    account.isManagerOf[no] = true;
+                }
             }
+
+            pools[no] = pool;
         }
 
-        // PATH TO CENTRALIZED POOL
-        if (class == 1) { // C
-            numberOfC += 1;
-            Meta newMeta = _newMeta(numberOfC, name, description);
-            Funding newFundingSchedule = _newFundingSchedule(
-                fundingStartTimestamp,
-                fundingDuration,
-                fundingRequired,
-                isWhitelisted,
-                isVerified,
-                false
-            );
-
-            // if the target is 0 then automatically pass the funding
-            if (fundingRequired == 1) {
-                newFundingSchedule.success = true;
-            }
-
-            // because centralized pools dont require voting theres not need for governance features
-            StandardToken newStandardToken = new StandardToken(
-                tokenName,
-                tokenSymbol
-            );
-
-            // generate empty Holdings and adjust msg value
-            address[] contracts;
-            address[] amounts;
-
-            // initial investment from creator
-            uint256 balance = msg.value;
-            newHoldings = _newHoldings(contracts, amounts, balance);
-
-            PoolC newPoolC = PoolC({
-                meta: newMeta,
-                standardToken: newStandardToken,
-                funding: newFundingSchedule,
-                holdings: newHoldings,
-                collatTSchedule: []
-            });
-
-            // mint initial supply for creator contribution
-            newPoolC.standardToken.mint(msg.sender, initialSupply);
-
-            // add new pool to mapping
-            poolsC[numberOfC] = newPoolC;
-
-            // set creator
-            isCreatorOfC[msg.sender][no] = true;
-
-            // admins
-            for (uint256 i = 0; i < admins.length; i++) {
-                isAdminOfC[admins[i]][no] = true;
-            }
-
-            // managers
-            for (uint256 i = 0; i < managers.length; i++) {
-                isManagerOfC[managers[i]][no] = true;
-            }
+        else {
+            revert("SingleState::_pushNewPoolToStorage(): invalid style");
         }
     }
+
+    // onlyOnWhitelistOf will not revert if there is no whitelist for the selected pool
+    function _contribute(uint no, bool override_) internal payable onlyOnWhitelistOf(no) nonReentrant {
+        // in this context value is the amount in matic being sent to the pool
+        uint value = msg.value;
+
+        if (override_ == false) {
+            require(
+                value >= 1,
+                "SingleState::_contribute(): value < 1 wei"
+            );
+        }
         
+        Account memory caller = accounts[msg.sender];
+        Pool memory pool = pools[no];
+
+        /** replaced by onlyOnWhitelistOf modifier
+        if (pool.fundingSchedule.hasWhitelist) {
+            require(
+                caller.isOnWhitelistOf[no],
+                "SingleState::_contribute: caller is not on whitelist of the selected pool"
+            );
+        }
+        */
+
+        if (pool.class == decentralized || pool.class == hybrid) {
+            uint supply = pool.governanceToken.totalSupply();
+
+        } else if (pool.class == centralized) {
+            uint supply = pool.standardToken.totalSupply();
+        } else {
+            revert("SingleState::_contribute: unidentified class");
+        }
+
+        uint balance = pool.reserve.balance;
+        
+        // this will revert if parameters are insufficient as the math cannot be done with low values
+        uint amountToMint = Utils.valueToMint(value, supply, balance);
+        
+        // cannot contribute to a pool after funding period in prototype
+        if (override_ == false) {
+            require(
+                block.timestamp <= pool.fundingSchedule.startTime + pool.fundingSchedule.duration,
+                "SingleState::_contribute(): funding period for selected pool is over"
+            );
+        }
+
+        if (override_ == false) {
+            if (fee.contribute >= 1) {
+                uint fee = amountToMint.mul(fee.contribute).div(10_000);
+                amountToMint = amountToMint.sub(fee);
+                
+                if (pool.class == decentralized || pool.class == hybrid) {
+                    pool.governanceToken.mint(terminal, fee);
+
+                } else if (pool.class = centralized) {
+                    pool.standardToken.mint(terminal, fee);
+
+                } else {
+                    // if it got here and hasnt reverted already this is troubling
+                    revert("SingleState::_contribute: unidentified class");
+                }
+            }
+        }
+        
+        pool.reserve.balance += value;
+        
+        if (pool.class == decentralized || pool.class == hybrid) {
+            pool.governanceToken.mint(msg.sender, amountToMint);
+        } 
+
+        else if (pool.class = centralized) {
+            pool.standardToken.mint(msg.sender, amountToMint);
+        } 
+        
+        else {
+            // better safe than sorry i guess ...
+            revert("SingleState::_contribute: unidentified class");
+        }
+
+        // note storage update
+        pools[no] = pool;
+        accounts[msg.sender] = caller;
+    }
+
+    function _withdraw(uint no, uint amount, bool override_) internal payable nonReentrant {
+        // in this context amount is the amount of the corresponding token being burnt
+        require(
+            amount >= 1,
+            "SingleState::_withdraw(): amount < 1"
+        );
+
+        Pool memory pool = pools[no];
+
+
+
+        // if past lock up period then can withdraw even if fundingSchedule is stil active
+        // so setting funding schedule ending to 100 years doesnt cause a disaster
+        bool isPastLockUpPeriod = block.timestamp >= pool.fundingSchedule.startTime.add(lockUpPeriod);
+
+        if (!isPastLockUpPeriod) {
+            bool isWithdrawalAllowed = !pool.fundingSchedule.success && (block.timestamp >= pool.fundingSchedule.startTime + pool.fundingSchedule.duration);
+
+            require(
+                isWithdrawalAllowed,
+                "SingleState::_withdraw(): withdrawal is not allowed at this time"
+            );
+        }
+        
+        
+        if (pool.class == decentralized || pool.class == hybrid) {
+            uint supply = pool.governanceToken.totalSupply();
+        } 
+
+        else if (pool.class == centralized) {
+            uint supply = pool.standardToken.totalSupply();
+        }
+
+        else {
+            // first check. if this happens its likely because of a pool creation error
+            revert("SingleState::_contribute: unidentified class");
+        }
+
+        uint balance = pool.reserve.balance;
+
+        // this will revert if there is insufficient values to make the calculation
+        uint amountToSend = Utils.burnToValue(amount, supply, balance);
+
+        // this must never happen. but if it does revert and return their tokens to them
+        require(
+            pool.reserve.balance >= valueToSend,
+            "SingleState::_withdraw(): insufficient balance on contract to make withdrawal"
+        );
+
+        if (override_ == false) {
+            if (fee.withdraw >= 1) {
+                uint fee = amount.mul(fee.withdraw).div(10_000);
+                valueToSend = valueToSend.sub(fee);
+                Address.sendValue(payable(terminal), fee);
+            }
+        }
+
+        if (pool.class == decentralized || pool.class == hybrid) {
+            uint supply = pool.governanceToken.burnFrom(msg.sender, amount);
+        } 
+
+        else if (pool.class == centralized) {
+            uint supply = pool.standardToken.burnFrom(msg.sender, amount);
+        }
+
+        else {
+            // again ... better safe than sorry ...
+            revert("SingleState::_contribute: unidentified class");
+        }
+
+        // note storage update
+        Address.sendValue(payable(msg.sender), valueToSend);
+        pool.reserve.balance = pool.reserve.balance.sub(valueToSend);
+    }
 }

@@ -8,14 +8,23 @@ import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/draft-ERC20Permit.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
-contract EmberToken is ERC20, ERC20Burnable, ERC20Snapshot, AccessControl, ERC20Permit {
+contract EmberToken is
+    ERC20,
+    ERC20Burnable,
+    ERC20Snapshot,
+    AccessControl,
+    ERC20Permit
+{
     // safe math
     using SafeMath for uint256;
 
     address[] accounts;
     mapping(address => bool) private isRegistered;
 
-    constructor(address terminal) ERC20("EmberToken", "EMBER") ERC20Permit("EmberToken") {
+    constructor(address terminal)
+        ERC20("EmberToken", "EMBER")
+        ERC20Permit("EmberToken")
+    {
         _grantRole(DEFAULT_ADMIN_ROLE, address(this));
 
         if (msg.sender != terminal) {
@@ -29,7 +38,7 @@ contract EmberToken is ERC20, ERC20Burnable, ERC20Snapshot, AccessControl, ERC20
 
     // ... private
 
-    function _split(uint multiplier) internal {
+    function _split(uint256 multiplier) internal {
         for (uint256 i = 0; i < accounts.length; i++) {
             uint256 balance = balanceOf(accounts[i]);
             uint256 newBalance = balance.mul(multiplier);
@@ -38,7 +47,7 @@ contract EmberToken is ERC20, ERC20Burnable, ERC20Snapshot, AccessControl, ERC20
         }
     }
 
-    function _stack(uint divisor) internal {
+    function _stack(uint256 divisor) internal {
         for (uint256 i = 0; i < accounts.length; i++) {
             uint256 balance = balanceOf(accounts[i]);
             uint256 newBalance = balance.div(divisor);
@@ -49,17 +58,26 @@ contract EmberToken is ERC20, ERC20Burnable, ERC20Snapshot, AccessControl, ERC20
 
     function _mintByPoints(address to, uint256 points) internal {
         require(points >= 0, "EmberToken::_mintByPoints(): points < 0");
-        require(points <= 10_000, "EmberToken::_mintByPoints(): points > 10_000");
+        require(
+            points <= 10_000,
+            "EmberToken::_mintByPoints(): points > 10_000"
+        );
         uint256 amountToMint = (totalSupply() / 10_000) * points;
         _mint(to, amountToMint);
     }
 
     function _burnByPoints(address account, uint256 points) internal {
-        uint weight = getWeight(account);
+        uint256 weight = getWeight(account);
         require(points >= 0, "EmberToken::_burnByPoints(): points < 0");
-        require(points <= weight, "EmberToken::_burnByPoints(): insufficient weighting");
+        require(
+            points <= weight,
+            "EmberToken::_burnByPoints(): insufficient weighting"
+        );
         uint256 amountToBurn = (totalSupply() / 10_000) * points;
-        require(balanceOf(account) >= amountToBurn, "EmberToken::_burnByPoints(): insufficient balance");
+        require(
+            balanceOf(account) >= amountToBurn,
+            "EmberToken::_burnByPoints(): insufficient balance"
+        );
         _burn(account, amountToBurn);
     }
 
@@ -67,7 +85,11 @@ contract EmberToken is ERC20, ERC20Burnable, ERC20Snapshot, AccessControl, ERC20
         return value * 10**18;
     }
 
-    function _beforeTokenTransfer(address from, address to, uint256 amount) internal override(ERC20, ERC20Snapshot) {
+    function _beforeTokenTransfer(
+        address from,
+        address to,
+        uint256 amount
+    ) internal override(ERC20, ERC20Snapshot) {
         super._beforeTokenTransfer(from, to, amount);
     }
 
@@ -79,7 +101,7 @@ contract EmberToken is ERC20, ERC20Burnable, ERC20Snapshot, AccessControl, ERC20
             accounts.push(to);
             isRegistered[to] = true;
         }
-        
+
         super._mint(to, amount);
     }
 
@@ -89,7 +111,10 @@ contract EmberToken is ERC20, ERC20Burnable, ERC20Snapshot, AccessControl, ERC20
         _snapshot();
     }
 
-    function mint(address to, uint256 amount) public onlyRole(DEFAULT_ADMIN_ROLE) {
+    function mint(address to, uint256 amount)
+        public
+        onlyRole(DEFAULT_ADMIN_ROLE)
+    {
         _mint(to, amount);
     }
 
@@ -105,8 +130,15 @@ contract EmberToken is ERC20, ERC20Burnable, ERC20Snapshot, AccessControl, ERC20
         return balance.div(getCurrentTotalSupply()).mul(10_000);
     }
 
-    function getPastWeight(address account, uint256 snapshotId) public view returns (uint256) {
-        require(snapshotId <= _getCurrentSnapshotId(), "EmberToken::getPastWeight(): future lookup");
+    function getPastWeight(address account, uint256 snapshotId)
+        public
+        view
+        returns (uint256)
+    {
+        require(
+            snapshotId <= _getCurrentSnapshotId(),
+            "EmberToken::getPastWeight(): future lookup"
+        );
 
         balance = balanceOfAt(account, snapshotId);
 

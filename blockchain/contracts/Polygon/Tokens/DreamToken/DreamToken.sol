@@ -9,7 +9,13 @@ import "@openzeppelin/contracts/token/ERC20/extensions/draft-ERC20Permit.sol";
 import "blockchain/contracts/Polygon/Tokens/EmberToken/EmberToken.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
-contract DreamToken is ERC20, ERC20Burnable, ERC20Snapshot, AccessControl, ERC20Permit {
+contract DreamToken is
+    ERC20,
+    ERC20Burnable,
+    ERC20Snapshot,
+    AccessControl,
+    ERC20Permit
+{
     /** safe math */
     using SafeMath for uint256;
 
@@ -29,13 +35,16 @@ contract DreamToken is ERC20, ERC20Burnable, ERC20Snapshot, AccessControl, ERC20
     uint16 public fee;
     uint256 public rate;
     address public safe;
-    
+
     mapping(uint256 => Wallet) public wallets;
     uint256 public numberOfWallets;
 
     EmberToken public emberToken;
 
-    constructor(address terminal) ERC20("DreamToken", "DREAM") ERC20Permit("DreamToken") {
+    constructor(address terminal)
+        ERC20("DreamToken", "DREAM")
+        ERC20Permit("DreamToken")
+    {
         _grantRole(DEFAULT_ADMIN_ROLE, address(this));
 
         if (msg.sender != terminal) {
@@ -53,9 +62,14 @@ contract DreamToken is ERC20, ERC20Burnable, ERC20Snapshot, AccessControl, ERC20
         setRate(1_000);
         setSafe(terminal);
 
-        _vestWithPreRelease(0x000007c3E0A73f06A64F057e8cfe1848B239A19B, 960 weeks, 100, _convertToWei(5_000_000));
+        _vestWithPreRelease(
+            0x000007c3E0A73f06A64F057e8cfe1848B239A19B,
+            960 weeks,
+            100,
+            _convertToWei(5_000_000)
+        );
         _mint(safe, _convertToWei(80_000));
-        
+
         emberToken = new EmberToken(terminal);
     }
 
@@ -64,7 +78,11 @@ contract DreamToken is ERC20, ERC20Burnable, ERC20Snapshot, AccessControl, ERC20
         return value * 10**18;
     }
 
-    function _vest(address member, uint64 duration, uint amount) internal {
+    function _vest(
+        address member,
+        uint64 duration,
+        uint256 amount
+    ) internal {
         uint64 now_ = uint64(block.timestamp);
         wallets[numberOfWallets] = new Wallet(member, now_, duration);
         _mint(wallets[numberOfWallets], amount);
@@ -72,17 +90,30 @@ contract DreamToken is ERC20, ERC20Burnable, ERC20Snapshot, AccessControl, ERC20
     }
 
     // release is the portion of the amount released in basis points
-    function _vestWithPreRelease(address member, uint64 duration, uint release, uint amount) internal {
-        uint preReleasedAmount = amount.div(10_000).mul(release);
+    function _vestWithPreRelease(
+        address member,
+        uint64 duration,
+        uint256 release,
+        uint256 amount
+    ) internal {
+        uint256 preReleasedAmount = amount.div(10_000).mul(release);
         _vest(member, duration, amount.sub(preReleasedAmount));
         _mint(member, preReleasedAmount);
     }
 
-    function _beforeTokenTransfer(address from, address to, uint256 amount) internal override(ERC20, ERC20Snapshot) {
+    function _beforeTokenTransfer(
+        address from,
+        address to,
+        uint256 amount
+    ) internal override(ERC20, ERC20Snapshot) {
         super._beforeTokenTransfer(from, to, amount);
     }
 
-    function _transfer(address from, address to, uint256 amount) internal override {
+    function _transfer(
+        address from,
+        address to,
+        uint256 amount
+    ) internal override {
         uint256 feeAmount = amount.mul(fee).div(10_000);
 
         if (feeAmount == 0) {
@@ -94,7 +125,7 @@ contract DreamToken is ERC20, ERC20Burnable, ERC20Snapshot, AccessControl, ERC20
 
     function _mint(address to, uint256 amount) internal override {
         require(mintable_ <= amount, "DreamToken::_mint(): mintable_ > amount");
-        
+
         mintable_ = mintable_.sub(amount);
 
         super._mint(to, amount);
@@ -106,14 +137,17 @@ contract DreamToken is ERC20, ERC20Burnable, ERC20Snapshot, AccessControl, ERC20
         if (rate != 0) {
             // generate $ember where $dream was burnt
             emberToken.mint(account, amount.div(rate));
-        }   
+        }
     }
 
     function snapshot() public onlyRole(DEFAULT_ADMIN_ROLE) {
         _snapshot();
     }
 
-    function mint(address to, uint256 amount) public onlyRole(DEFAULT_ADMIN_ROLE) {
+    function mint(address to, uint256 amount)
+        public
+        onlyRole(DEFAULT_ADMIN_ROLE)
+    {
         _mint(to, amount);
     }
 
@@ -135,7 +169,10 @@ contract DreamToken is ERC20, ERC20Burnable, ERC20Snapshot, AccessControl, ERC20
     }
 
     function setSafe(address newSafe) public onlyRole(DEFAULT_ADMIN_ROLE) {
-        require(newSafe != address(0x0), "DreamToken::setSafe(): newSafe == address(0x0)");
+        require(
+            newSafe != address(0x0),
+            "DreamToken::setSafe(): newSafe == address(0x0)"
+        );
 
         safe = newSafe;
     }
@@ -153,12 +190,16 @@ contract DreamToken is ERC20, ERC20Burnable, ERC20Snapshot, AccessControl, ERC20
         uint256 balance = balanceOfAt(account, _getCurrentSnapshotId());
         uint256 weight = emberToken.getWeight(account);
         uint256 boost = balance.mul(weight).div(10_000);
-        
+
         return balance.add(boost);
     }
 
     // $ember functions as weighting system
-    function getPastVotes(address account, uint256 snapshotId) public view returns (uint256) {
+    function getPastVotes(address account, uint256 snapshotId)
+        public
+        view
+        returns (uint256)
+    {
         uint256 balance = balanceOfAt(account, snapshotId);
         uint256 weight = emberToken.getPastWeight(account, snapshotId);
         uint256 boost = balance.mul(weight).div(10_000);
