@@ -502,8 +502,8 @@ contract SingleState is Initializable, PausableUpgradeable, OwnableUpgradeable, 
 
         if (override_ == false) {
             if (fee.contribute >= 1) {
-                uint fee = amountToMint.mul(fee.contribute).div(10_000);
-                amountToMint = amountToMint.sub(fee);
+                uint feeAmount = amountToMint.mul(fee.contribute).div(10_000);
+                amountToMint = amountToMint.sub(feeAmount);
                 
                 if (pool.class == decentralized || pool.class == hybrid) {
                     pool.governanceToken.mint(terminal, fee);
@@ -590,8 +590,8 @@ contract SingleState is Initializable, PausableUpgradeable, OwnableUpgradeable, 
 
         if (override_ == false) {
             if (fee.withdraw >= 1) {
-                uint fee = amount.mul(fee.withdraw).div(10_000);
-                valueToSend = valueToSend.sub(fee);
+                uint feeAmount = amount.mul(fee.withdraw).div(10_000);
+                valueToSend = valueToSend.sub(feeAmount);
                 Address.sendValue(payable(terminal), fee);
             }
         }
