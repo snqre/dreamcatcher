@@ -94,6 +94,7 @@ contract SingleStateBaseClass is ISingleStateBaseClass, Initializable, PausableU
     mapping(address => Account) internal accounts;
 
     address internal terminal;
+    address internal dreamToken;
 
     // amnt time after strt of fnding to allw withdrawals
     uint64 internal lockUpDuration;
@@ -126,23 +127,55 @@ contract SingleStateBaseClass is ISingleStateBaseClass, Initializable, PausableU
         _;
     }
 
+    modifier onlyDuringSchedule(uint id) {
+        Pool memory pool = pools[id];
+        uint64 now_ = block.timestamp;
+        uint64 start = pool.fundingSchedule.startTimestamp;
+        uint64 duration = pool.fundingSchedule.duration;
+        uint64 end = start + duration;
+        bool scheduleBegun = now_ >= start;
+        bool scheduleEnded = now_ >= end;
+        require(scheduleBegun, "schedule not begun");
+        require(!scheduleEnded, "schedule has ended");
+        _;
+    }
+
+    modifier onlyAfterLockUpDuration(uint id) {
+        Pool memory pool = pools[id];
+        uint64 now_ = block.timestamp;
+        uint64 start = pool.fundingSchedule.startTimestamp;
+        uint64 duration = pool.fundingSchedule.duration;
+        uint64 end = start + duration;
+        uint64 lockUpEnd = start + lockUpDuration;
+        bool lockUpHasEnded = now_ >= lockUpEnd;
+        bool scheduleEnded = now_ >= end;
+
+        // either the lock up period is over or the schedule has ended
+        require(lockUpHasEnded || scheduleEnded);
+        _;
+    }
+
     // @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
     }
 
-    function initialize(address terminal_) initializer public {
+    function initialize(address terminal_, address dreamToken_) initializer public {
         __Pausable_init();
         __Ownable_init();
 
         _grantRole(DEFAULT_ADMIN_ROLE, terminal_);
 
         terminal = terminal_;
+        dreamToken = dreamToken_;
 
         lockUpDuration = 4 weeks;
-    }
 
-    // work in progress
+        fee.create = 100000;
+        fee.contribute = 10;
+        fee.withdraw = 10;
+        fee.update = 10;
+    }
 
     function _create(
         uint value,
@@ -161,15 +194,18 @@ contract SingleStateBaseClass is ISingleStateBaseClass, Initializable, PausableU
         address[] memory managers,
         bool override_
     ) internal {
+        poolCount ++;
         if (override_ == false) {
-            require(value >= Utils.convertToWei(1), "insufficient value");
-            require(supply >= Utils.convertToWei(1), "insufficient supply");
-            require(block.timestamp <= startTimestamp_, "funding schedule begins in the past");
-            require(admins.length >= 1, "no admins given");
-            require(managers.length >= 1, "no managers given");
+            require(poolCount        <= type(uint256).max, "maximum amount of pools created");
+            require(value            >= 1, "insufficient value");
+            require(supply           >= 1, "insufficient supply");
+            require(block.timestamp  <= startTimestamp_, "funding schedule begins in the past");
+            require(admins.length    >= 1, "no admins given");
+            require(admins.length    <= 9, "too many admins given");
+            require(managers.length  >= 1, "no managers given");
+            require(managers.length  <= 9, "too many managers given");
         }
 
-        poolCount ++;
         Pool memory newPool = Pool({
             id:                  poolCount,
             name:                name_,
@@ -209,15 +245,45 @@ contract SingleStateBaseClass is ISingleStateBaseClass, Initializable, PausableU
         for (uint i = 0; i < admins.length; i++) {
             account = accounts[admins[i]];
             account.isAdmin[poolCount] = true;
-            account.isOnWhitelist[poolCount] = true;
             accounts[admins[i]] = account;
         }
 
         for (uint i = 0; i < managers.length; i++) {
             account = accounts[managers[i]];
             account.isManager[poolCount] = true;
-            account.isOnWhitelist[poolCount] = true;
             accounts[managers[i]] = account;
         }
+    }
+
+    function _contribute(uint id, uint value) internal onlyOnWhitelist(id) onlyDuringSchedule(id) {
+        require(value >= 1, "insufficient value");
+
+        Pool memory selectedPool = pools[id];
+
+        uint supply = selectedPool.standardToken.totalSupply();
+        uint balance = selectedPool.reserve.balance;
+        uint amountToMint = Utils.amountToMint(value, supply, balance);
+
+        selectedPool.reserve.balance += value;
+        selectedPool.standardToken.mint(msg.sender, amountToMint);
+        
+        pools[id] = selectedPool;
+    }
+
+    function _withdraw(uint id, uint amount) internal onlyAfterLockUpDuration(id) {
+        require(amount >= 1, "insufficient amount");
+
+        Pool memory selectedPool = pools[id];
+
+        uint supply = selectedPool.standardToken.totalSupply();
+        uint balance = selectedPool.reserve.balance;
+        uint valueToSend = Utils.valueToMint(amount, supply, balance);
+
+        // this should never happen. but if it does we return tokens back to owners so we have something to go of
+        require(selectedPool.reserve.balance >= valueToSend, "insufficient balance on contract to make withdrawal");
+
+        Address.sendValue(payable(msg.sender), valueToSend);
+        selectedPool.reserve.balance -= valueToSend;
+        pools[id] = selectedPool;
     }
 }

@@ -1,15 +1,13 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity ^0.8.9;
 
-/** once these are loaded locally reset imports
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
-import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Snapshot.sol";
-import "@openzeppelin/contracts/access/AccessControl.sol";
-import "@openzeppelin/contracts/token/ERC20/extensions/draft-ERC20Permit.sol";
-import "blockchain/contracts/Polygon/Tokens/EmberToken/EmberToken.sol";
-import "smart_contracts\utils\Utils.sol";
- */
+import ".deps/npm/@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import ".deps/npm/@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
+import ".deps/npm/@openzeppelin/contracts/token/ERC20/extensions/ERC20Snapshot.sol";
+import ".deps/npm/@openzeppelin/contracts/access/AccessControl.sol";
+import ".deps/npm/@openzeppelin/contracts/token/ERC20/extensions/draft-ERC20Permit.sol";
+import "smart_contracts/tokens/ember_token/EmberToken.sol";
+import "smart_contracts/utils/Utils.sol";
 
 contract DreamToken is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit, AccessControl {
     uint mintable_;
