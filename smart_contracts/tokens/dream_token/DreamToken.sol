@@ -1,15 +1,13 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity ^0.8.9;
 
-// these imports dont work for some reason
-// once these are replaced this should be ready
-import ".deps/npm/@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import ".deps/npm/@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
-import ".deps/npm/@openzeppelin/contracts/token/ERC20/extensions/ERC20Snapshot.sol";
-import ".deps/npm/@openzeppelin/contracts/access/AccessControl.sol";
-import ".deps/npm/@openzeppelin/contracts/token/ERC20/extensions/draft-ERC20Permit.sol";
-import "smart_contracts/tokens/ember_token/EmberToken.sol";
+import "deps/openzeppelin/token/ERC20/ERC20.sol";
+import "deps/openzeppelin/token/ERC20/extensions/ERC20Burnable.sol";
+// missing snapshot
+// missing erc20 permit
+import "deps/openzeppelin/access/AccessControl.sol";
 import "smart_contracts/utils/Utils.sol";
+import "smart_contracts/tokens/ember_token/EmberToken.sol";
 
 contract DreamToken is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit, AccessControl {
     uint mintable_;
@@ -48,6 +46,9 @@ contract DreamToken is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit, AccessC
 
     function snapshot() public onlyRole(DEFAULT_ADMIN_ROLE) {
         _snapshot();
+
+        // also snapshot for $ember
+        emberToken.snapshot();
     }
 
     function mint(address to, uint amount) public onlyRole(DEFAULT_ADMIN_ROLE) {

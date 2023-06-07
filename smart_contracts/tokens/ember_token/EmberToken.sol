@@ -1,13 +1,11 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity ^0.8.9;
 
-// these imports dont work need the actual physical libraries
-// need to replace these
-import ".deps/npm/@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import ".deps/npm/@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
-import ".deps/npm/@openzeppelin/contracts/token/ERC20/extensions/ERC20Snapshot.sol";
-import ".deps/npm/@openzeppelin/contracts/access/AccessControl.sol";
-import ".deps/npm/@openzeppelin/contracts/token/ERC20/extensions/draft-ERC20Permit.sol";
+import "deps/openzeppelin/token/ERC20/ERC20.sol";
+import "deps/openzeppelin/token/ERC20/extensions/ERC20Burnable.sol";
+// missing ERC20Snapshot
+// missing draft-ERC20Permit
+import "deps/openzeppelin/access/AccessControl.sol";
 import "smart_contracts/utils/Utils.sol";
 
 contract EmberToken is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit, AccessControl {
