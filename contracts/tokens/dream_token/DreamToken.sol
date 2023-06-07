@@ -2,6 +2,7 @@
 pragma solidity ^0.8.9;
 
 // these imports dont work for some reason
+// once these are replaced this should be ready
 import ".deps/npm/@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import ".deps/npm/@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 import ".deps/npm/@openzeppelin/contracts/token/ERC20/extensions/ERC20Snapshot.sol";
