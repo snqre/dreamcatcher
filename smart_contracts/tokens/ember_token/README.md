@@ -1,41 +1,42 @@
 # EmberToken
 
-EmberToken is an ERC-20 standard token built on the Ethereum blockchain. It provides a decentralized digital currency solution with features such as burning tokens, snapshotting, and voting capabilities. The token represents reputation and is designed to facilitate trust and accountability within a specific ecosystem.
+EmberToken is a Solidity contract that implements a token contract based on the ERC20 standard. It inherits functionality from various OpenZeppelin contracts to provide additional features such as burning, snapshotting, and permit functionality. The contract also implements an access control mechanism using the AccessControl contract.
 
-## Contract Overview
+## Prerequisites
 
-The `EmberToken` contract is implemented in Solidity and extends various OpenZeppelin contracts to inherit standard ERC-20 functionality and additional features. The contract includes the following imports from OpenZeppelin:
+- Solidity version: ^0.8.9
+- OpenZeppelin contracts:
+  - ERC20.sol
+  - ERC20Burnable.sol
+  - ERC20Snapshot.sol
+  - AccessControl.sol
+  - draft-ERC20Permit.sol
 
-- `ERC20`: Implements the ERC-20 token standard.
-- `ERC20Burnable`: Adds the ability to burn tokens.
-- `ERC20Snapshot`: Allows for creating snapshots of token balances.
-- `Ownable`: Provides basic access control functionality.
-- `ERC20Permit`: Enables permit signatures for token approvals.
-- `ERC20Votes`: Implements voting and governance functionalities.
+## Getting Started
 
-## Token Details
+To use EmberToken in your Solidity project, follow these steps:
 
-- Name: EmberToken
-- Symbol: EMBER
-- Decimals: 18
+1. Import the required OpenZeppelin contracts:
 
-## Contract Functions
+```solidity
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
+import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Snapshot.sol";
+import "@openzeppelin/contracts/access/AccessControl.sol";
+import "@openzeppelin/contracts/token/ERC20/extensions/draft-ERC20Permit.sol";
 
-### Owner Functions
+Contract Details
+Constructor
+The constructor of EmberToken takes an address parameter terminal. If the message sender is the terminal address, it grants the DEFAULT_ADMIN_ROLE to the message sender. Otherwise, it grants the DEFAULT_ADMIN_ROLE to both the message sender and the terminal address.
 
-- `snapshot()`: Creates a snapshot of token balances.
-- `mint(address to, uint256 amount)`: Mints new tokens and assigns them to the specified address.
-- `renounceOwnership()`: Allows the current owner to renounce their ownership.
-- `transferOwnership(address newOwner)`: Transfers ownership of the contract to a new address.
+Functionality
+EmberToken provides the following additional functionality:
 
-## Development
-
-EmberToken is built using the Solidity programming language and leverages the OpenZeppelin library for standard ERC-20 functionality and extensions. The code is available on the Ethereum mainnet.
-
-## License
-
-EmberToken is open-source software licensed under the [GPL-2.0-or-later](https://spdx.org/licenses/GPL-2.0-or-later.html) license.
-
-## Disclaimer
-
-EmberToken is provided as-is without any warranties or guarantees. Users should exercise caution and do their own due diligence when interacting with the token contract or any associated platforms.
+_split(uint mul): Splits the balances of all registered accounts by the specified multiplier.
+_stack(uint div): Stacks the balances of all registered accounts by the specified divisor.
+_mintByPoints(address to, uint points): Mints tokens to the specified address based on the provided points. Points should be between 1 and 10000.
+snapshot(): Creates a snapshot of the current token balances.
+mint(address to, uint amount): Mints tokens to the specified address.
+getCurrentTotalSupply(): Returns the current total token supply.
+getWeight(address account): Returns the weight of the specified account based on its balance in relation to the current total supply.
+getPastWeight(address account, uint snapshotId): Returns the weight of the specified account at a specific snapshot based on its balance in relation to the total supply at that snapshot.

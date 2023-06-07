@@ -177,7 +177,7 @@ contract SingleStateBaseClass is ISingleStateBaseClass, Initializable, PausableU
         fee.update = 10;
     }
 
-    function _create(
+    function _createNewPool(
         uint value,
         string memory name_,
         string memory description_,
