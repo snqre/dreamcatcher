@@ -87,6 +87,7 @@ contract SingleStateBaseClass is ISingleStateBaseClass, Initializable, PausableU
     }
 
     uint poolCount;
+    uint collatTScheduleCount;
 
     Fee internal fee;
 
@@ -117,6 +118,14 @@ contract SingleStateBaseClass is ISingleStateBaseClass, Initializable, PausableU
         _;
     }
 
+    // checks the amount of tokens of the corresponding pool so only someone with a specific amount can access a particular function
+    modifier onlyAmount(uint id, uint amount) {
+        Pool selectedPool = pools[id];
+        uint callerBalance = selectedPool.standardToken.balanceOf(msg.sender);
+        require(callerBalance >= amount, "insufficient amount of tokens");
+        _;
+    }
+
     modifier onlyOnWhitelist(uint id) {
         Pool memory pool = pools[id];
 
@@ -140,6 +149,7 @@ contract SingleStateBaseClass is ISingleStateBaseClass, Initializable, PausableU
         _;
     }
 
+    // after funding period duration unlock funds and after lockUpAmount even if funding period is not over still allow withdrawal
     modifier onlyAfterLockUpDuration(uint id) {
         Pool memory pool = pools[id];
         uint64 now_ = block.timestamp;
@@ -285,5 +295,72 @@ contract SingleStateBaseClass is ISingleStateBaseClass, Initializable, PausableU
         Address.sendValue(payable(msg.sender), valueToSend);
         selectedPool.reserve.balance -= valueToSend;
         pools[id] = selectedPool;
+    }
+
+    function createNewPool(
+        string memory name,
+        string memory description,
+        bool useNonVerified,
+        bool isWhitelisted,
+        string memory tokenName,
+        string memory tokenSymbol,
+        uint supply,
+        uint64 duration,
+        uint required,
+        address[] memory admins,
+        address[] memory managers
+    ) public payable returns (bool) {
+        uint value = msg.value;
+        uint64 now_ = block.timestamp;
+
+        // logic to check if the pool is pre verified
+        bool isVerified;
+
+        _createNewPool(
+            value,
+            name,
+            description,
+            useNonVerified,
+            isWhitelisted,
+            tokenName,
+            tokenSymbol,
+            supply,
+            now_,
+            duration,
+            required,
+            isVerified,
+            admins,
+            managers,
+            false
+        );
+
+        return true;
+    }
+
+    function contribute(uint id) public payable returns (bool) {
+        _contribute(id, msg.value);
+        return true;
+    }
+
+    function withdraw(uint id, uint amount) public returns (bool) {
+        _withdraw(id, amount);
+        return true;
+    }
+
+    // collateralized transfers
+    function newCollatTSchedule(uint id, uint64 duration_, uint amount) public onlyManager(id) onlyAmount(id, amount) returns (bool) {
+        collatTScheduleCount ++;
+        Pool selectedPool = pools[id];
+
+        uint64 now_ = block.timestamp;
+
+        CollatTSchedule collatTSchedule = CollatTSchedule({
+            startTimestamp: now_,
+            duration: duration_,
+            
+        });
+
+
+        selectedPool.collatTSchedules[collatTScheduleCount] = 
     }
 }

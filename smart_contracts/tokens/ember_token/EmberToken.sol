@@ -3,8 +3,13 @@ pragma solidity ^0.8.9;
 
 import "deps/openzeppelin/token/ERC20/ERC20.sol";
 import "deps/openzeppelin/token/ERC20/extensions/ERC20Burnable.sol";
-// missing ERC20Snapshot
-// missing draft-ERC20Permit
+
+// im still being a pig and pulling this from github
+import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v4.9.0/contracts/token/ERC20/extensions/ERC20Snapshot.sol";
+
+// yup ...
+import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v4.9.0/contracts/token/ERC20/extensions/draft-ERC20Permit.sol";
+
 import "deps/openzeppelin/access/AccessControl.sol";
 import "smart_contracts/utils/Utils.sol";
 
@@ -13,15 +18,8 @@ contract EmberToken is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit, AccessC
     
     mapping(address => bool) isRegistered;
 
-    constructor(address terminal) ERC20("EmberToken", "EMBER") ERC20Permit("EmberToken") {
-        if (msg.sender == terminal) {
-            _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
-        }
-
-        else {
-            _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
-            _grantRole(DEFAULT_ADMIN_ROLE, terminal);
-        }
+    constructor() ERC20("EmberToken", "EMBER") ERC20Permit("EmberToken") {
+        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
     function _split(uint mul) internal {
@@ -50,6 +48,7 @@ contract EmberToken is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit, AccessC
         _mint(to, amountToMint);
     }
 
+    // $ember is non transferable
     function _transfer() internal override {}
 
     function _mint(address to, uint amount) internal override {
@@ -67,6 +66,20 @@ contract EmberToken is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit, AccessC
 
     function mint(address to, uint amount) public onlyRole(DEFAULT_ADMIN_ROLE) {
         _mint(to, amount);
+    }
+
+    function mintByPoints(address to, uint points) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        _mintByPoints(to, points);
+    }
+
+    // this is like a stock split everyone maintain the same ownership
+    function split(uint mul) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        _split(mul);
+    }
+
+    // this is like a stock merger everyone maintains the same ownership
+    function stack(uint div) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        _stack(div);
     }
 
     function getCurrentTotalSupply() public view returns (uint) {
