@@ -9,5 +9,9 @@ pragma solidity ^0.8.0;
 // because we are building on polygon it only makes sense that we use MATIC as the baseline currency for the space
 // all switches will default to MATIC
 contract AMM {
+
+}
+
+contract OrderBook {
     
 }

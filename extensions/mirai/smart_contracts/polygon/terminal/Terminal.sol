@@ -16,6 +16,8 @@ contract Terminal is ITerminal, Initializable, AccessControlUpgradeable, Reentra
 
     mapping(address => bool) internal isOnWhitelist;
 
+    
+
     modifier onlyOnWhitelist(address contract_) {
         require(isOnWhitelist[contract_], "contract is not on whitelist");
         _;

@@ -14,6 +14,9 @@ import "deps/openzeppelin/access/AccessControl.sol";
 import "smart_contracts/utils/Utils.sol";
 import "smart_contracts/tokens/ember_token/EmberToken.sol";
 
+// this is for vesting
+import "smart_contracts/finance/wallets/linear_vested_wallet/LinearVestedWallet.sol";
+
 contract DreamToken is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit, AccessControl {
     uint mintable_;
     
