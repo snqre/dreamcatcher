@@ -104,27 +104,27 @@ contract MultiSig is IMultiSig, Ownable {
         emit Cancelled();
     }
 
-    function getStartTimestamp() external view returns (uint64) {
+    function startTimestamp_() external view returns (uint64) {
         return startTimestamp;
     }
 
-    function getEndTimestamp() external view returns (uint64) {
+    function endTimestamp_() external view returns (uint64) {
         return endTimestamp;
     }
 
-    function getIsCancelled() external view returns (bool) {
+    function isCancelled_() external view returns (bool) {
         return isCancelled;
     }
 
-    function getIsExecuted() external view returns (bool) {
+    function isExecuted_() external view returns (bool) {
         return isExecuted;
     }
 
-    function getIsPassed() external view returns (bool) {
+    function isPassed_() external view returns (bool) {
         return isPassed;
     }
 
-    function getThreshold() external view returns (uint) {
+    function threshold() external view returns (uint) {
         return threshold;
     }
 
