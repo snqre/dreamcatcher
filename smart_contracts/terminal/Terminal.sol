@@ -1,16 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-pragma solidity ^0.8.9;
+pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/security/ReentrancyGuard.sol";
-import "blockchain/contracts/Polygon/ERC20Standards/Tokens/TokenHub.sol";
-import "blockchain/contracts/Polygon/Pools/Prototype/SingleState/SingleStage_v0.2.5.sol";
-import "blockchain/contracts/Polygon/Pools/Prototype/StandAlone/StandAlone.sol";
-import "blockchain/contracts/Polygon/Finance/Wallet.sol";
-import "blockchain/contracts/Polygon/Finance/Oracle.sol";
 
-import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/access/Ownable.sol";
 import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/structs/EnumerableSet.sol";
 
 import "@openzeppelin/contracts/access/AccessControl.sol";
@@ -76,6 +68,7 @@ contract Terminal is ITerminal, AccessControl {
     modifier onlyIfNotPassed(uint ref) {
         bool hasBeenPassed = multiSigProposals[ref].hasBeenPassed;
         require(!hasBeenPassed, "selected multi sig proposal has been passed");
+        _;
     }
 
     modifier onlyIfCancelled(uint ref) {
@@ -99,6 +92,7 @@ contract Terminal is ITerminal, AccessControl {
     modifier onlyIfNotExecuted(uint ref) {
         bool hasBeenExecuted = multiSigProposals[ref].hasBeenExecuted;
         require(!hasBeenExecuted, "selected multi sig proposal has not been executed");
+        _;
     }
 
     modifier onlyifExpired(uint ref) {
@@ -164,15 +158,15 @@ contract Terminal is ITerminal, AccessControl {
         emit ObjWhitelistEdit(contract_, newWhitelistState);
     }
 
-    function newMultiSigProposal(address[] memory signers_, uint timeout, uint threshold_, address obj_, string signature_, bytes args_) public onlyRole(ROLE_BOARD) {
+    function newMultiSigProposal(address[] memory signers_, uint timeout, uint threshold_, address obj_, string memory signature_, bytes memory args_) public onlyRole(ROLE_BOARD) {
         bool has2OrMoreThan2Signers = signers_.length >= 2;
         bool has9OrLessThan9Signers = signers_.length <= 9;
         require(has2OrMoreThan2Signers, "signers_.length >= 2");
         require(has9OrLessThan9Signers, "signers_.length <= 9");
 
         numberOfMultiSigProposals += 1;
-        now_ = block.timestamp;
-        ref = numberOfMultiSigProposals;
+        uint now_ = block.timestamp;
+        uint ref = numberOfMultiSigProposals;
         
         multiSigProposals[ref] = MultiSigProposal({
             startTimestamp: now_,
@@ -217,8 +211,8 @@ contract Terminal is ITerminal, AccessControl {
     // note to establish delegatecall with a contract not in delegatecall a proposal can be made to add a contract to whitelist first
     function multiSigProposalExecute(uint ref) public onlyIfNotExpired(ref) onlyIfNotCancelled(ref) onlyIfPassed(ref) onlyIfNotExecuted(ref) onlyRole(ROLE_BOARD) returns (bool) {
         address contract_ = multiSigProposals[ref].obj;
-        string memory signature = multiSigProposal[ref].signature;
-        bytes memory args = multiSigProposal[ref].args;
+        string memory signature = multiSigProposals[ref].signature;
+        bytes memory args = multiSigProposals[ref].args;
 
         _safeConnect(contract_, signature, args);
         return true;
