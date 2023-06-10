@@ -132,3 +132,8 @@ contract MultiSig is IMultiSig, Ownable {
         return signatures.contains(signer);
     }
 }
+
+using EnumerableSet for EnumerableSet.AddressSet;
+contract MultiSigModule is IMultiSig, Ownable {
+    
+}

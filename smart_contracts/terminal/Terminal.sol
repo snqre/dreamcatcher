@@ -10,166 +10,239 @@ import "blockchain/contracts/Polygon/Pools/Prototype/StandAlone/StandAlone.sol";
 import "blockchain/contracts/Polygon/Finance/Wallet.sol";
 import "blockchain/contracts/Polygon/Finance/Oracle.sol";
 
+import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/access/Ownable.sol";
+import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/structs/EnumerableSet.sol";
+
+import "@openzeppelin/contracts/access/AccessControl.sol";
+
 interface ITerminal {
-    function connect(address obj, string memory signature, bytes memory args) public returns (bool);
-    
-    event ConnectionEstablished(
-        address indexed obj,
-        string signature,
-        bytes args
-    );
+    function setObjWhitelist(address contract_, bool newWhitelistState) external;
 
+
+    event ConnectionEstablished(address indexed contract_, string signature, bytes args);
     event ObjWhitelistEdit(address indexed obj, bool isWhitelisted);
+
+    event MultiSigProposalSigned(uint ref, address indexed signer_, uint timestamp);
+    event MultiSigProposalHasBeenPassed(uint ref, address indexed lastSigner, uint timestamp, uint numberOfSignatures);
+    event MultiSigProposalSignatureRevoked(uint ref, address indexed signer_, uint timestamp);
+    event MultiSigProposalCancelled(uint ref, address indexed caller, uint timestamp);
 }
 
-contract Terminal is Initializable, AccessControlUpgradeable, ReentrancyGuard, ITerminal {
+using EnumerableSet for EnumerableSet.AddressSet;
+contract Terminal is ITerminal, AccessControl {
+    // STATE DECLARATIONS FOR ACCESS CONTROL
+    bytes32 public constant ROLE_ADMIN = keccak256("ROLE_ADMIN");
+    bytes32 public constant ROLE_BOARD = keccak256("ROLE_BOARD_MEMBER");
+    bytes32 public constant ROLE_SYNDICATE = keccak256("ROLE_SYNDICATE");
+    bytes32 public constant ROLE_MEMBER = keccak256("ROLE_MEMBER");
 
-    TokenHub tokenHub;
-    SingleState singleState;
-    Wallet[] wallets;
-    Oracle oracle;
-    
+    // STATE DECLARATIONS FOR MULTI SIG PROPOSALS
+    struct MultiSigProposal {
+        uint startTimestamp;
+        uint endTimestamp;
+        uint threshold;
 
-    struct Book {
-        address tokenHub;
-        address singleState;
-        address[] wallets;
-        address oracle;
+        bool hasBeenCancelled;
+        bool hasBeenExecuted;
+        bool hasBeenPassed;
+
+        address obj;
+        string signature;
+        bytes args;
     }
 
-    Book book;
+    uint numberOfMultiSigProposals;
 
-    mapping(address => bool) public objWhitelist;
+    mapping(uint => MultiSigProposal) private multiSigProposals;
+    mapping(uint => EnumerableSet.AddressSet) private signers;
+    mapping(uint => EnumerableSet.AddressSet) private signatures;
 
-    /** @custom:oz-upgrades-unsafe-allow constructor */
+    // STATE DECLARATIONS FOR TERMINAL
+    mapping(address => bool) private objWhitelist;
+
+    // MODIFIERS FOR MULTI SIG PROPOSALS
+    modifier onlySignerOf(uint ref) {
+        bool isSignerOf = signers[ref].contains(msg.sender);
+        require(isSignerOf, "caller is not a signer for the selected multi sig proposal");
+        _;
+    }
+
+    modifier onlyIfPassed(uint ref) {
+        bool hasBeenPassed = multiSigProposals[ref].hasBeenPassed;
+        require(hasBeenPassed, "selected multi sig proposal has not been passed");
+        _;
+    }
+
+    modifier onlyIfNotPassed(uint ref) {
+        bool hasBeenPassed = multiSigProposals[ref].hasBeenPassed;
+        require(!hasBeenPassed, "selected multi sig proposal has been passed");
+    }
+
+    modifier onlyIfCancelled(uint ref) {
+        bool hasBeenCancelled = multiSigProposals[ref].hasBeenCancelled;
+        require(hasBeenCancelled, "selected multi sig proposal has not been cancelled");
+        _;
+    }
+
+    modifier onlyIfNotCancelled(uint ref) {
+        bool hasBeenCancelled = multiSigProposals[ref].hasBeenCancelled;
+        require(!hasBeenCancelled, "selected multi sig proposal has been cancelled");
+        _;
+    }
+
+    modifier onlyIfExecuted(uint ref) {
+        bool hasBeenExecuted = multiSigProposals[ref].hasBeenExecuted;
+        require(hasBeenExecuted, "selected multi sig proposal has been executed");
+        _;
+    }
+
+    modifier onlyIfNotExecuted(uint ref) {
+        bool hasBeenExecuted = multiSigProposals[ref].hasBeenExecuted;
+        require(!hasBeenExecuted, "selected multi sig proposal has not been executed");
+    }
+
+    modifier onlyifExpired(uint ref) {
+        bool isExpired = block.timestamp >= multiSigProposals[ref].endTimestamp;
+        require(isExpired, "selected multi sig proposal has not expired");
+        _;
+    }
+
+    modifier onlyIfNotExpired(uint ref) {
+        bool isExpired = block.timestamp >= multiSigProposals[ref].endTimestamp;
+        require(!isExpired, "selected multi sig proposal has expired");
+        _;
+    }
+
+    modifier onlyIfNotDuplicateSignature(uint ref) {
+        bool hasDuplicateSignature = signatures[ref].contains(msg.sender);
+        require(!hasDuplicateSignature, "caller has already signed for selected multi sig proposal");
+        _;
+    }
+
+    modifier onlyIfDuplicateSignature(uint ref) {
+        bool hasDuplicateSignature = signatures[ref].contains(msg.sender);
+        require(hasDuplicateSignature, "caller has not signed for selected multi sig proposal");
+        _;
+    }
+
+    modifier onlyIfThresholdHasBeenMet(uint ref) {
+        uint currentThreshold = (signers[ref].length() * 100) / signatures[ref].length();
+        require(currentThreshold >= multiSigProposals[ref].threshold);
+        _;
+    }
+
+    modifier onlyIfThresholdHasNotBeenMet(uint ref) {
+        uint currentThreshold = (signers[ref].length() * 100) / signatures[ref].length();
+        require(currentThreshold < multiSigProposals[ref].threshold);
+        _;
+    }
+
+    modifier onlyIfObjIsWhitelisted(address contract_) {
+        require(objWhitelist[contract_], "contract is not whitelisted");
+        _;
+    }
+
+    modifier onlyIfObjIsNotWhitelisted(address contract_) {
+        require(!objWhitelist[contract_], "contract is whitelisted");
+        _;
+    }
+
     constructor() {
-        tokenHub = new TokenHub();
-        singleState = new SingleState();
-        oracle = new Oracle();
-        book.tokenHub = address(tokenHub);
-        book.singleState = address(singleState);
-        _setObjWhitelist(address(tokenHub), true);
-        _setObjWhitelist(address(singleState), true);
-        _disableInitializers();
+        _grantRole(ROLE_ADMIN, address(this));
+        
     }
 
-    function initialize() initializer public {
-        __AccessControl_init();
-
-        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
-    }
-
-    /*---------------------------------------------------------------- PRIVATE **/
-    function _convertToWei(uint256 value) internal pure returns (uint256) {
-        return value * 10**decimals();
-    }
-
-    function _setObjWhitelist(address obj, bool isWhitelisted) internal {
-        objWhitelist[obj] = isWhitelisted;
-        emit ObjWhitelistEdit(obj, isWhitelisted);
-    }
-
-    function _safeConnect(address obj, string memory signature, bytes memory args) internal returns (bool) {
-        require(objWhitelist[obj], "Dreamcatcher::_safeConnect: contract not whitelisted");
-        /** if there is malicious code that returns true regardless this may fail to protect us */
-        (bool success, ) = address(obj).delegatecall(abi.encodeWithSignature(signature, args));
-        require(success);
-
-        emit ConnectionEstablished(obj, signature, args);
-
+    function _safeConnect(address contract_, string memory signature, bytes memory args) private onlyIfObjIsWhitelisted(contract_) returns (bool) {
+        (bool callWasSuccessful, ) = address(contract_).delegatecall(abi.encodeWithSignature(signature, args));
+        require(callWasSuccessful, "call was not successful");
+        emit ConnectionEstablished(contract_, signature, args);
         return true;
     }
 
-    /*---------------------------------------------------------------- OWNER COMMANDS **/
-
-
-    /*---------------------------------------------------------------- PUBLIC **/
-    function connect(address obj, string memory signature, bytes memory args) public returns (bool) {
-        /** users should only be able to call whitelisted contracts */
-        bool success = _safeConnect(obj, signature, args);
-        return success;
+    function setObjWhitelist(address contract_, bool newWhitelistState) public onlyRole(ROLE_ADMIN) {
+        objWhitelist[contract_] = newWhitelistState;
+        emit ObjWhitelistEdit(contract_, newWhitelistState);
     }
 
-    // terminal > singlestate
-    function createNewFundSingleState(
-        string memory identifier,
-        address[] memory managers,
-        uint32 durationInSeconds,
-        uint256 required,
-        bool isWhitelisted,
-        string memory nameOfToken,
-        string memory symbolOfToken,
-        uint256 initialSupply
-    ) public payable returns (bool) {
-        args = abi.encode(
-            identifier,
-            managers,
-            durationInSeconds,
-            required,
-            isWhitelisted,
-            nameOfToken,
-            symbolOfToken,
-            initialSupply,
-            /** nativeToken */,
-            /** safe */
-        );
+    function newMultiSigProposal(address[] memory signers_, uint timeout, uint threshold_, address obj_, string signature_, bytes args_) public onlyRole(ROLE_BOARD) {
+        bool has2OrMoreThan2Signers = signers_.length >= 2;
+        bool has9OrLessThan9Signers = signers_.length <= 9;
+        require(has2OrMoreThan2Signers, "signers_.length >= 2");
+        require(has9OrLessThan9Signers, "signers_.length <= 9");
 
-        _safeConnect(
-            address(singleState),
-            "createNewFund(bytes)",
-            args
-        );
+        numberOfMultiSigProposals += 1;
+        now_ = block.timestamp;
+        ref = numberOfMultiSigProposals;
+        
+        multiSigProposals[ref] = MultiSigProposal({
+            startTimestamp: now_,
+            endTimestamp: now_ + timeout,
+            threshold: threshold_,
+            hasBeenCancelled: false,
+            hasBeenExecuted: false,
+            hasBeenPassed: false,
+            obj: obj_,
+            signature: signature_,
+            args: args_
+        });
+
+        for (uint i = 0; i < signers_.length; i++) {
+            signers[ref].add(signers_[i]);
+        }
     }
-    
-    function contributeSingleState(uint256 id) public payable nonReentrant returns (bool) {
-        bytes memory args = abi.encode(id);
-        address obj = address(SingleState);
-        string memory signature = "contribute(bytes)";
-        /** connect . will revert if return is false */
-        _safeConnect(obj, signature, args);
+
+    function multiSigProposalSign(uint ref) public onlyIfNotExpired(ref) onlyIfNotCancelled(ref) onlyIfNotDuplicateSignature(ref) onlySignerOf(ref) {
+        signatures[ref].add(msg.sender);
+        emit MultiSigProposalSigned(ref, msg.sender, block.timestamp);
+
+        uint currentQuota = (signers[ref].length() * 100) / signatures[ref].length();
+
+        if (currentQuota >= multiSigProposals[ref].threshold) {
+            multiSigProposals[ref].hasBeenPassed = true;
+            emit MultiSigProposalHasBeenPassed(ref, msg.sender, block.timestamp, signatures[ref].length());
+        }
+    }
+
+    function multiSigProposalUnsign(uint ref) public onlyIfNotExpired(ref) onlyIfNotCancelled(ref) onlyIfDuplicateSignature(ref) onlySignerOf(ref) {
+        signatures[ref].remove(msg.sender);
+        emit MultiSigProposalSignatureRevoked(ref, msg.sender, block.timestamp);
+    }
+
+    function multiSigProposalCancel(uint ref) public onlyIfNotExpired(ref) onlyIfNotCancelled(ref) onlyIfNotExecuted(ref) onlyRole(ROLE_BOARD) {
+        multiSigProposals[ref].hasBeenCancelled = true;
+        emit MultiSigProposalCancelled(ref, msg.sender, block.timestamp);
+    }
+ 
+    // once a multi sig proposal is passed a board member can call this function
+    // note to establish delegatecall with a contract not in delegatecall a proposal can be made to add a contract to whitelist first
+    function multiSigProposalExecute(uint ref) public onlyIfNotExpired(ref) onlyIfNotCancelled(ref) onlyIfPassed(ref) onlyIfNotExecuted(ref) onlyRole(ROLE_BOARD) returns (bool) {
+        address contract_ = multiSigProposals[ref].obj;
+        string memory signature = multiSigProposal[ref].signature;
+        bytes memory args = multiSigProposal[ref].args;
+
+        _safeConnect(contract_, signature, args);
         return true;
     }
 
-    function withdrawSingleState(uint256 id, uint256 amount) public nonReentrant returns (bool) {
-        bytes memory args = abi.encode(id, amount);
-        address obj = address(SingleState);
-        string memory signature = "withdraw(bytes)";
-        /** connect . will revert if return is false */
-        _safeConnect(obj, signature, args);
-        return true;
+    function multiSigProposalStartTimestamp(uint ref) public view returns (uint) {
+        return multiSigProposals[ref].startTimestamp;
     }
 
-    /** finance tools */
-    function createNewVestedWallet(
-        address beneficiaryAddress,
-        uint64 startTimestamp,
-        uint64 durationSeconds
-    ) public returns (bool) {
-        bytes memory args = abi.encode(
-            beneficiaryAddress,
-            startTimestamp,
-            durationSeconds
-        );
-
-        address obj = address(book.wallets[0]);
-        string memory signature = "constructor(address,uint64,durationSeconds)";
-        _safeConnect(obj, signature, args);
-        return true;
+    function multiSigProposalEndTimestamp(uint ref) public view returns (uint) {
+        return multiSigProposals[ref].endTimestamp;
     }
 
-    /** return address */
-    function getTokenHub() public view returns (address) {
-        return book.tokenHub;
+    function multiSigProposalHasBeenCancelled(uint ref) public view returns (bool) {
+        return multiSigProposals[ref].hasBeenCancelled;
     }
 
-    function getSingleState() public view returns (address) {
-        return book.singleState;
+    function multiSigProposalHasBeenExecuted(uint ref) public view returns (bool) {
+        return multiSigProposals[ref].hasBeenExecuted;
     }
 
-    /** tokens */
+    function multiSigProposalHasBeenPassed(uint ref) public view returns (bool) {
+        return multiSigProposals[ref].hasBeenPassed;
+    }
+
 
 }
-
-
-// that we need to deploy the token contracts seply instead of together
-// you can deploy everything from one file
