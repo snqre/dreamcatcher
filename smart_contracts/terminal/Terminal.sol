@@ -191,6 +191,7 @@ contract Terminal is ITerminal, AccessControl {
 
         uint currentQuota = (signers[ref].length() * 100) / signatures[ref].length();
 
+        // getting stack too deep error ffs
         if (currentQuota >= multiSigProposals[ref].threshold) {
             multiSigProposals[ref].hasBeenPassed = true;
             emit MultiSigProposalHasBeenPassed(ref, msg.sender, block.timestamp, signatures[ref].length());
