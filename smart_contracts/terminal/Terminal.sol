@@ -23,6 +23,8 @@ interface ITerminal {
 using EnumerableSet for EnumerableSet.AddressSet;
 contract Terminal is ITerminal, AccessControl {
     struct Settings {
+        uint minAdmin;
+        uint maxAdmin;
         uint minReqBoardMembers;
         uint maxReqBoardMembers;
         uint minReqSyndicates;
@@ -206,24 +208,35 @@ contract Terminal is ITerminal, AccessControl {
     }
 
     constructor(address[] memory boards) {
-        /**
-         * Here we are setting the main admin role to the contract itself.
-         * Only the contract has the ability to modify its settings.
-         * To modify its settings we go through a proposal by the board.
-         * Once the proposal passes MultiSig it then passes to public discussion.
-         * And once passed to public discussion and voted on will then apply.
-         */
-        _grantRole(DEFAULT_ADMIN_ROLE, address(this));
-        
-        /**
-         * Here we loop through the given amount of initial board members
-         */
-        
+        _grantRoleAdmin(address(this));
+
+        _grantRoleOperator(0x000007c3E0A73f06A64F057e8cfe1848B239A19B);
     }
 
     function _grantRoleAdmin(address account) private {
         _grantRole(ROLE_ADMIN, account);
+        _grantRole(DEFAULT_ADMIN_ROLE, account);
         admins.add(account);
+    }
+
+    function _grantRoleOperator(address account) private {
+        _grantRole(ROLE_OPERATOR, account);
+        operators.add(account);
+    }
+
+    function _grantRoleBoardMember(address account) private {
+        _grantRole(ROLE_BOARD_MEMBER, account);
+        boardMembers.add(account);
+    }
+
+    function _grantRoleSyndicate(address account) private {
+        _grantRole(ROLE_SYNDICATE, account);
+        syndicates.add(account);
+    }
+
+    function _grantRoleMember(address account) private {
+        _grantRole(ROLE_MEMBER, account);
+        members.add(account);
     }
 
     function _safeConnect(address contract_, string memory signature, bytes memory args) private onlyIfObjIsWhitelisted(contract_) returns (bool) {
@@ -233,12 +246,12 @@ contract Terminal is ITerminal, AccessControl {
         return true;
     }
 
-    function setObjWhitelist(address contract_, bool newWhitelistState) public onlyRole(ROLE_ADMIN) {
+    function setObjWhitelist(address contract_, bool newWhitelistState) public onlyAdmin {
         objWhitelist[contract_] = newWhitelistState;
         emit ObjWhitelistEdit(contract_, newWhitelistState);
     }
 
-    function newMultiSigProposal(address[] memory signers_, uint timeout, uint threshold_, address obj_, string memory signature_, bytes memory args_) public onlyRole(ROLE_BOARD) {
+    function newMultiSigProposal(address[] memory signers_, uint timeout, uint threshold_, address obj_, string memory signature_, bytes memory args_) public onlyBoardMember {
         bool has2OrMoreThan2Signers = signers_.length >= 2;
         bool has9OrLessThan9Signers = signers_.length <= 9;
         require(has2OrMoreThan2Signers, "signers_.length >= 2");
@@ -283,14 +296,14 @@ contract Terminal is ITerminal, AccessControl {
         emit MultiSigProposalSignatureRevoked(ref, msg.sender, block.timestamp);
     }
 
-    function multiSigProposalCancel(uint ref) public onlyIfNotExpired(ref) onlyIfNotCancelled(ref) onlyIfNotExecuted(ref) onlyRole(ROLE_BOARD) {
+    function multiSigProposalCancel(uint ref) public onlyIfNotExpired(ref) onlyIfNotCancelled(ref) onlyIfNotExecuted(ref) onlyBoardMember {
         multiSigProposals[ref].hasBeenCancelled = true;
         emit MultiSigProposalCancelled(ref, msg.sender, block.timestamp);
     }
  
     // once a multi sig proposal is passed a board member can call this function
     // note to establish delegatecall with a contract not in delegatecall a proposal can be made to add a contract to whitelist first
-    function multiSigProposalExecute(uint ref) public onlyIfNotExpired(ref) onlyIfNotCancelled(ref) onlyIfPassed(ref) onlyIfNotExecuted(ref) onlyRole(ROLE_BOARD) returns (bool) {
+    function multiSigProposalExecute(uint ref) public onlyIfNotExpired(ref) onlyIfNotCancelled(ref) onlyIfPassed(ref) onlyIfNotExecuted(ref) onlyBoardMember returns (bool) {
         address contract_ = multiSigProposals[ref].obj;
         string memory signature = multiSigProposals[ref].signature;
         bytes memory args = multiSigProposals[ref].args;

@@ -10,6 +10,15 @@ library Utils {
         return keccak256(abi.encodePacked(string_));
     }
 
+    function byteToStr(bytes32 value) internal pure returns (string memory) {
+        bytes memory bytesValue = new bytes(32);
+        for (uint i = 0; i < 32; i++) {
+            bytesValue[i] = value[i];
+        }
+
+        return string(bytesValue);
+    }
+
     function amountToMint(uint v, uint s, uint b) internal pure returns (uint) {
         // v: value
         // s: suppl

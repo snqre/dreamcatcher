@@ -1,0 +1,1 @@
+Terminal is a massive contract so ive decided to break it down
