@@ -5,7 +5,7 @@ import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contr
 
 import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/structs/EnumerableSet.sol";
 
-import "@openzeppelin/contracts/access/AccessControl.sol";
+import "deps/openzeppelin/access/AccessControl.sol";
 
 interface ITerminal {
     function setObjWhitelist(address contract_, bool newWhitelistState) external;
@@ -22,11 +22,25 @@ interface ITerminal {
 
 using EnumerableSet for EnumerableSet.AddressSet;
 contract Terminal is ITerminal, AccessControl {
+    struct Settings {
+        uint minReqBoardMembers;
+        uint maxReqBoardMembers;
+        uint minReqSyndicates;
+        uint maxReqSyndicates;
+    }
+
     // STATE DECLARATIONS FOR ACCESS CONTROL
     bytes32 public constant ROLE_ADMIN = keccak256("ROLE_ADMIN");
-    bytes32 public constant ROLE_BOARD = keccak256("ROLE_BOARD_MEMBER");
+    bytes32 public constant ROLE_OPERATOR = keccak256("ROLE_OPERATOR");
+    bytes32 public constant ROLE_BOARD_MEMBER = keccak256("ROLE_BOARD_MEMBER");
     bytes32 public constant ROLE_SYNDICATE = keccak256("ROLE_SYNDICATE");
     bytes32 public constant ROLE_MEMBER = keccak256("ROLE_MEMBER");
+
+    EnumerableSet.AddressSet private admins;
+    EnumerableSet.AddressSet private operators;
+    EnumerableSet.AddressSet private boardMembers;
+    EnumerableSet.AddressSet private syndicates;
+    EnumerableSet.AddressSet private members;
 
     // STATE DECLARATIONS FOR MULTI SIG PROPOSALS
     struct MultiSigProposal {
@@ -141,9 +155,75 @@ contract Terminal is ITerminal, AccessControl {
         _;
     }
 
-    constructor() {
-        _grantRole(ROLE_ADMIN, address(this));
+    // AUTHENTICATOR
+    modifier onlyAdmin {
+        require(admins.contains(msg.sender), "caller is not admin");
+        _;
+    }
+
+    modifier onlyNotAdmin {
+        require(!admins.contains(msg.sender), "caller is admin");
+        _;
+    }
+
+    modifier onlyOperator {
+        require(operators.contains(msg.sender), "caller is not operator");
+        _;
+    }
+
+    modifier onlyNotOperator {
+        require(!operators.contains(msg.sender), "caller is operator");
+        _;
+    }
+
+    modifier onlyBoardMember {
+        require(boardMembers.contains(msg.sender), "caller is not board member");
+        _;
+    }
+
+    modifier onlyNotBoardMember {
+        require(!boardMembers.contains(msg.sender), "caller is board member");
+    }
+
+    modifier onlySyndicate {
+        require(syndicates.contains(msg.sender), "caller is not syndicate");
+        _;
+    }
+
+    modifier onlyNotSyndicate {
+        require(!syndicates.contains(msg.sender), "caller is syndicate");
+        _;
+    }
+
+    modifier onlyMember {
+        require(members.contains(msg.sender), "caller is not member");
+        _;
+    }
+
+    modifier onlyNotMember {
+        require(!members.contains(msg.sender), "caller is member");
+        _;
+    }
+
+    constructor(address[] memory boards) {
+        /**
+         * Here we are setting the main admin role to the contract itself.
+         * Only the contract has the ability to modify its settings.
+         * To modify its settings we go through a proposal by the board.
+         * Once the proposal passes MultiSig it then passes to public discussion.
+         * And once passed to public discussion and voted on will then apply.
+         */
+        _grantRole(DEFAULT_ADMIN_ROLE, address(this));
         
+        /**
+         * Here we loop through the given amount of initial board members
+         */
+        
+    }
+
+    function _grantRoleAdmin(address account) private {
+        _grantRole(ROLE_ADMIN, account);
+        admins.add(account);
     }
 
     function _safeConnect(address contract_, string memory signature, bytes memory args) private onlyIfObjIsWhitelisted(contract_) returns (bool) {
