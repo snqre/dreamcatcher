@@ -1,3 +1,5 @@
+SPDX-License-Identifier: CC-BY-NC-SA-4.0
+
 # AccessControl
 - `onlyRole(bytes32)`
 - `supportsInterface(bytes4 interfaceId)`
