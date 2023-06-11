@@ -10,6 +10,17 @@ contract Authenticator is AccessControlEnumerable {
     mapping(string => uint) public rolesMax;
     mapping(string => bool) public rolesHasMinEnabled;
     mapping(string => bool) public rolesHasMaxEnabled;
+    mapping(string => string) public rolesDescription;
+
+    struct Role {
+        string title;
+        uint minNumberOf;
+        uint maxNumberOf;
+        bool hasMinEnabled;
+        bool hasMaxEnabled;
+        string description;
+        uint numberOfMembers;
+    }
 
     /** if max enabled then will not grant the role if at max */
     function _grantRole(bytes32 role, address account) internal virtual override {
@@ -51,5 +62,22 @@ contract Authenticator is AccessControlEnumerable {
 
     function setRoleHasMaxEnabled(string memory role, bool newSetting) public onlyRole(DEFAULT_ADMIN_ROLE) {
         rolesHasMaxEnabled[role] = newSetting;
+    }
+
+    function setRoleDescription(string memory role, string memory newDescription) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        rolesDescription[role] = newDescription;
+    }
+
+    // return a struct as a data class with all the relevant information about roles
+    function getRole(string memory role) public view returns (Role memory) {
+        return Role({
+            title: role,
+            minNumberOf: rolesMin[role],
+            maxNumberOf: rolesMax[role],
+            hasMinEnabled: rolesHasMinEnabled[role],
+            hasMaxEnabled: rolesHasMaxEnabled[role],
+            description: rolesDescription[role],
+            numberOfMembers: getRoleMemberCount(Utils.strToByte(role))
+        });
     }
 }
