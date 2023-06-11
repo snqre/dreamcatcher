@@ -26,4 +26,4 @@
 - `setRoleMin(string role, uint newMin)`
 - `setRoleMax(string role, uint newMax)`
 - `setRoleHasMinEnabled(string role, bool newSetting)`
-- `setRoleHasMaxEnabled(string role, bool newSetting)`
+- `setRoleHasMaxEnabled(string role, bool newSetting)`: onlyRole(DEFAULT_ADMIN_ROLE)
