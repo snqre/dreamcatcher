@@ -20,10 +20,10 @@
 - `_revokeRole(bytes32 role, address account)`
 
 # Authenticator
-- `_grantRole(bytes32 role, address account)`
-- `_revokeRole(bytes32 role, address account)`
-- `addRole(string role)`
-- `setRoleMin(string role, uint newMin)`
-- `setRoleMax(string role, uint newMax)`
-- `setRoleHasMinEnabled(string role, bool newSetting)`
+- `_grantRole(bytes32 role, address account)` internal
+- `_revokeRole(bytes32 role, address account)`: internal
+- `addRole(string role)`: onlyRole(DEFAULT_ADMIN_ROLE)
+- `setRoleMin(string role, uint newMin)`: onlyRole(DEFAULT_ADMIN_ROLE)
+- `setRoleMax(string role, uint newMax)`: onlyRole(DEFAULT_ADMIN_ROLE)
+- `setRoleHasMinEnabled(string role, bool newSetting)`: onlyRole(DEFAULT_ADMIN_ROLE)
 - `setRoleHasMaxEnabled(string role, bool newSetting)`: onlyRole(DEFAULT_ADMIN_ROLE)
