@@ -44,4 +44,12 @@ contract Authenticator is AccessControlEnumerable {
         require(newMax >= rolesMin[role], "newMax cannot be smaller than min");
         rolesMax[role] = newMax;
     }
+
+    function setRoleHasMinEnabled(string memory role, bool newSetting) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        rolesHasMinEnabled[role] = newSetting;
+    }
+
+    function setRoleHasMaxEnabled(string memory role, bool newSetting) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        rolesHasMaxEnabled[role] = newSetting;
+    }
 }
