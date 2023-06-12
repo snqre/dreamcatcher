@@ -76,7 +76,7 @@ contract MultiSigProposals is Context, Ownable {
         newMultiSigProposal.endTimestamp = newMultiSigProposal.startTimestamp + newMultiSigProposal.timeout;
         
         // note this is in percentage out of 100 and here we check for default quorum required
-        uint defaultQuorumRequired = 50;
+        uint defaultQuorumRequired = 100;
         if (quorumRequired == 0) {
             newMultiSigProposal.quorumRequired = defaultQuorumRequired;
         }
