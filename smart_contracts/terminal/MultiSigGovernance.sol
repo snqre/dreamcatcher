@@ -3,18 +3,10 @@ pragma solidity ^0.8.0;
 
 import "smart_contracts/terminal/Authenticator.sol";
 import "deps/openzeppelin/utils/structs/EnumerableSet.sol";
+import "smart_contracts/utils/Utils.sol";
 
 contract MultiSigGovernance is Authenticator {
     using EnumerableSet for EnumerableSet.AddressSet;
-
-    /** tier => timeout || higher tier less timeout */
-    /** tier => threshold || higher tier lower threshold */
-    struct Tier {
-        
-    }
-
-    mapping(uint => uint) public timeout;
-    mapping(uint => uint) public threshold;
 
     uint public numberOfMultiSigProposals;
 
@@ -121,43 +113,54 @@ contract MultiSigGovernance is Authenticator {
         _;
     }
 
-    modifier generateNewRefForMultiSigProposal() {
-        numberOfMultiSigProposals ++;
-        _;
+    function _incrementNumberOfMultiSigProposals(uint increase) private {
+        numberOfMultiSigProposals += increase;
     }
 
     function _pushNewMultiSigProposal(
         address creator,
         string memory reason,
         uint startTimestamp,
-        uint tier,
+        uint timeout,
+        uint threshold,
         bool delegateToTarget,
         address target,
         string memory signature,
         bytes memory args,
         uint value,
         uint gasLimit
-    ) internal virtual generateNewRefForMultiSigProposal {
-        uint ref = numberOfMultiSigProposals;
-        multiSigProposals[ref] = MultiSigProposal({
-            ref: ref,
-            creator: msg.sender,
+    ) internal virtual {
+        _incrementNumberOfMultiSigProposals(1);
+
+        multiSigProposals[numberOfMultiSigProposals] = MultiSigProposal({
+            ref: numberOfMultiSigProposals,
+            creator: creator,
             reason: reason,
             startTimestamp: startTimestamp,
-            endTimestamp: startTimestamp + timeout[tier],
-
+            endTimestamp: startTimestamp + timeout,
+            threshold: threshold,
+            hasBeenCancelled: false,
+            hasBeenExecuted: false,
+            hasBeenPassed: false,
+            delegateToTarget: delegateToTarget,
+            target: target,
+            signature: signature,
+            args: args,
+            value: value,
+            gasLimit: gasLimit
         });
-        multiSigProposals[ref].ref = ref;
-        multiSigProposals[ref].creator = creator;
-        multiSigProposals[ref].reason = reason;
-        multiSigProposals[ref].startTimestamp = startTimestamp;
-        multiSigProposals[ref].endTimestamp = startTimestamp + timeout[tier];
-        multiSigProposals[ref].threshold = threshold[tier];
-        multiSigProposals[ref].delegateToTarget = delegateToTarget;
-        multiSigProposals[ref].target = target;
-        multiSigProposals[ref].signature = signature;
-        multiSigProposals[ref].args = args;
-        multiSigProposals[ref].value = value;
-        multiSigProposals[ref].gasLimit = gasLimit;
+    }
+
+    function pushNewMultiSigProposal(
+        string memory reason,
+        uint startTimestamp,
+        bool delegateToTarget,
+        address target,
+        string memory signature,
+        bytes memory args,
+        uint value,
+        uint gasLimit
+    ) public {
+
     }
 }
