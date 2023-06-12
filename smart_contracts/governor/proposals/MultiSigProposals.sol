@@ -34,9 +34,9 @@ contract MultiSigProposals is Context, Ownable {
     mapping(uint => MultiSigProposal) private multiSigProposals;
 
     event MultiSigProposalCreated(
-        uint reference_,
+        uint indexed reference_,
         address indexed creator,
-        uint startTimestamp,
+        uint indexed startTimestamp,
         uint endTimestamp,
         uint timeout,
         uint quorumRequired,
@@ -253,6 +253,7 @@ contract MultiSigProposals is Context, Ownable {
         emit Withdrawn(reference_, _msgSender(), block.timestamp);
     }
 
+    // this alone does nothing, can only set once
     function _implement(uint reference_) internal virtual {
         _mustNotBeExpired(reference_);
         _mustNotBeImplemented(reference_);
