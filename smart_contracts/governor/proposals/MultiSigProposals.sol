@@ -33,7 +33,98 @@ contract MultiSigProposals is Context, Ownable {
 
     mapping(uint => MultiSigProposal) private multiSigProposals;
 
-    constructor(address admin) Ownable(admin) {}
+    event MultiSigProposalCreated(
+        uint reference_,
+        address indexed creator,
+        uint startTimestamp,
+        uint endTimestamp,
+        uint timeout,
+        uint quorumRequired,
+        bool delegate,
+        address target,
+        string signature,
+        bytes args,
+        uint gasLimit,
+        address[] signers
+    );
+
+    event Signed(
+        uint indexed reference_,
+        address indexed signer,
+        uint indexed timestamp
+    );
+
+    event SignatureRevoked(
+        uint indexed reference_,
+        address indexed signer,
+        uint indexed timestamp
+    );
+
+    event Cleared(
+        uint indexed reference_,
+        address indexed lastSigner,
+        uint indexed timestamp,
+        uint numberOfSignatures
+    );
+
+    event Withdrawn(
+        uint indexed reference_,
+        address indexed caller,
+        uint indexed timestamp
+    );
+
+    event Implemented(
+        uint indexed reference_,
+        address indexed caller,
+        uint indexed timestamp
+    );
+
+    constructor(address owner) Ownable(owner) {}
+
+    // will revert if the caller is not a signer
+    function _mustBeSigner(uint reference_, address account) internal virtual {
+        require(multiSigProposals[reference_].signers.contains(account), "caller is not an expected signer");
+    }
+
+    function _mustHaveSigned(uint reference_, address account) internal virtual {
+        require(multiSigProposals[reference_].signatures.contains(account), "caller has not signed");
+    }
+
+    // will revert if the referenced proposal has been cleared
+    function _mustNotBeCleared(uint reference_) internal virtual {
+        require(!multiSigProposals[reference_].hasBeenCleared, "referenced proposal has been cleared");
+    }
+
+    // will revert if the referenced proposal has been cleared
+    function _mustBeCleared(uint reference_) internal virtual {
+        require(multiSigProposals[reference_].hasBeenCleared, "referenced proposal has been cleared");
+    }
+
+    // will revert if the referenced proposal has been withdraw
+    function _mustNotBeWithdrawn(uint reference_) internal virtual {
+        require(!multiSigProposals[reference_].hasBeenWithdrawn, "referenced proposal has been withdraw");
+    }
+
+    // will revert if the referenced proposal has been implemented
+    function _mustNotBeImplemented(uint reference_) internal virtual {
+        require(!multiSigProposals[reference_].hasBeenImplemented, "referenced proposal has been implemented");
+    }
+
+    // will revert if the referenced proposal has expired
+    function _mustNotBeExpired(uint reference_) internal virtual {
+        require(block.timestamp < multiSigProposals[reference_].endTimestamp, "referenced proposal has expired");
+    }
+
+    function _requiredQuorumHasBeenMet(uint reference_) internal virtual returns (bool) {
+        uint currentQuorum = (multiSigProposals[reference_].signers.length() * 100) / multiSigProposals[reference_].signatures.length();
+        if (currentQuorum >= multiSigProposals[reference_].quorumRequired) {
+            return true;
+        }
+
+        else {
+            return false;
+        }
+    }
 
     function _pushNewMultiSigProposal(
         uint startTimestamp,
@@ -99,5 +190,76 @@ contract MultiSigProposals is Context, Ownable {
         }
 
         // ... we dont touch signatures because this remains empty ...
+
+        // we finally emit an event for proposal creation on the contract
+        emit MultiSigProposalCreated(
+            newMultiSigProposal.reference_,
+            newMultiSigProposal.creator,
+            newMultiSigProposal.startTimestamp,
+            newMultiSigProposal.endTimestamp,
+            newMultiSigProposal.timeout,
+            newMultiSigProposal.quorumRequired,
+            newMultiSigProposal.delegate,
+            newMultiSigProposal.target,
+            newMultiSigProposal.signature,
+            newMultiSigProposal.args,
+            newMultiSigProposal.gasLimit,
+            signers
+        );
+    }
+
+    function _sign(uint reference_) internal virtual {
+        _mustBeSigner(reference_, _msgSender());
+        _mustNotBeCleared(reference_);
+        _mustNotBeWithdrawn(reference_);
+        _mustNotBeImplemented(reference_);
+        _mustNotBeExpired(reference_);
+
+        // we add the callers address to the array of signatures
+        multiSigProposals[reference_].signatures.add(_msgSender());
+
+        uint now_ = block.timestamp;
+        emit Signed(reference_, _msgSender(), now_);
+
+        // here we check if the threshold has been met
+        if (_requiredQuorumHasBeenMet(reference_)) {
+            multiSigProposals[reference_].hasBeenCleared;
+            emit Cleared(reference_, _msgSender(), now_, multiSigProposals[reference_].signatures.length());
+        }
+    }
+
+    function _unsign(uint reference_) internal virtual {
+        _mustBeSigner(reference_, _msgSender());
+        _mustHaveSigned(reference_, _msgSender());
+        _mustNotBeCleared(reference_);
+        _mustNotBeWithdrawn(reference_);
+        _mustNotBeImplemented(reference_);
+        _mustNotBeExpired(reference_);
+
+        // we remove the callers signature
+        multiSigProposals[reference_].signatures.remove(_msgSender());
+
+        emit SignatureRevoked(reference_, _msgSender(), block.timestamp);
+    }
+
+    // in this context this is cancel
+    function _withdraw(uint reference_) internal virtual {
+        _mustNotBeCleared(reference_);
+        _mustNotBeWithdrawn(reference_);
+        _mustNotBeImplemented(reference_);
+
+        multiSigProposals[reference_].hasBeenWithdrawn = true;
+
+        emit Withdrawn(reference_, _msgSender(), block.timestamp);
+    }
+
+    function _implement(uint reference_) internal virtual {
+        _mustNotBeExpired(reference_);
+        _mustNotBeImplemented(reference_);
+        _mustBeCleared(reference_);
+        
+        multiSigProposals[reference_].hasBeenImplemented = true;
+
+        emit Implemented(reference_, _msgSender(), block.timestamp);
     }
 }
