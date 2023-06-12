@@ -14,7 +14,7 @@ contract MultiSigProposals is Context, Ownable {
         uint reference_;            // the unique identifier of this proposal on this contract
         address creator;            // the address that created this proposal
         uint startTimestamp;        // start timestamp
-        uint endTimestamp;          // start timestamp - timeout
+        uint endTimestamp;          // start timestamp + timeout
         uint timeout;               // amount of time after start timestamp proposal will expire
         uint quorumRequired;        // minimum % of signatures required to clear the proposal
         bool hasBeenWithdrawn;      // proposal has been withdrawn
