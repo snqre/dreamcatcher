@@ -8,15 +8,29 @@ import "deps/openzeppelin/utils/Context.sol";
 import "deps/openzeppelin/security/ReentrancyGuard.sol";
 
 using EnumerableSet for EnumerableSet.AddressSet;
-contract SyndicateProposals is Context, Ownable, ReentrancyGuard {
+contract PublicVotedProposals is Context, Ownable, ReentrancyGuard {
     uint count;
 
-    struct SyndicateProposal {
+    struct PublicVotedProposal {
         uint reference_;
         address creator;
+        string reason;
         uint startTimestamp;
         uint endTimestamp;
         uint timeout;
+        uint quorum;
+        uint quorumRequired;
+        uint votesFor;
+        uint votesAgainst;
+        uint votesToAbstain;
+        uint threshold;
+        bool hasBeenWithdrawn;
+        bool hasBeenImplemented;
+        bool hasBeenCleared;
+        bool delegate;
+        address target;
+        string signature;
+        bytes args;
     }
 
     constructor(address owner) Ownable(owner) {}

@@ -17,7 +17,6 @@ interface IMultiSigProposals {
         address target,
         string memory signature,
         bytes memory args,
-        uint gasLimit,
         address[] memory signers
     ) external returns (bool);
 
@@ -41,7 +40,6 @@ interface IMultiSigProposals {
         address target,
         string memory signature,
         bytes memory args,
-        uint gasLimit,
         address[] memory signers,
         address[] memory signatures
     );
@@ -50,7 +48,7 @@ interface IMultiSigProposals {
 using EnumerableSet for EnumerableSet.AddressSet;
 contract MultiSigProposals is Context, Ownable, ReentrancyGuard {
     uint count;
-
+    
     struct MultiSigProposal {
         uint reference_;            // the unique identifier of this proposal on this contract
         address creator;            // the address that created this proposal
@@ -65,7 +63,6 @@ contract MultiSigProposals is Context, Ownable, ReentrancyGuard {
         address target;             // you are requesting to target this contract  
         string signature;           // you are requesting to call this function
         bytes args;                 // you are requesting to use these parameters
-        uint gasLimit;              // you are requesting this gas limit
         EnumerableSet
             .AddressSet signers;    // an array of signers who are authorized to sign
         EnumerableSet
@@ -85,8 +82,8 @@ contract MultiSigProposals is Context, Ownable, ReentrancyGuard {
         address target,
         string signature,
         bytes args,
-        uint gasLimit,
-        address[] signers
+        address[] signers,
+        uint timestamp
     );
 
     event Signed(
@@ -175,7 +172,6 @@ contract MultiSigProposals is Context, Ownable, ReentrancyGuard {
         address target,
         string memory signature,
         bytes memory args,
-        uint gasLimit,
         address[] memory signers
     ) internal virtual {
         count ++;
@@ -222,7 +218,6 @@ contract MultiSigProposals is Context, Ownable, ReentrancyGuard {
         newMultiSigProposal.target = target;
         newMultiSigProposal.signature = signature;
         newMultiSigProposal.args = args;
-        newMultiSigProposal.gasLimit = gasLimit;
 
         // here we are adding the expected signers to the proposal
         for (uint i = 0; i < signers.length; i++) {
@@ -244,8 +239,8 @@ contract MultiSigProposals is Context, Ownable, ReentrancyGuard {
             newMultiSigProposal.target,
             newMultiSigProposal.signature,
             newMultiSigProposal.args,
-            newMultiSigProposal.gasLimit,
-            signers
+            signers,
+            block.timestamp
         );
     }
 
@@ -315,7 +310,6 @@ contract MultiSigProposals is Context, Ownable, ReentrancyGuard {
         address target,
         string memory signature,
         bytes memory args,
-        uint gasLimit,
         address[] memory signers
     ) public virtual onlyOwner nonReentrant returns (bool) {
         _pushNewMultiSigProposal(
@@ -326,7 +320,6 @@ contract MultiSigProposals is Context, Ownable, ReentrancyGuard {
             target,
             signature,
             args,
-            gasLimit,
             signers
         );
 
@@ -372,7 +365,6 @@ contract MultiSigProposals is Context, Ownable, ReentrancyGuard {
         address target,
         string memory signature,
         bytes memory args,
-        uint gasLimit,
         address[] memory signers,
         address[] memory signatures
     ) {
@@ -391,7 +383,6 @@ contract MultiSigProposals is Context, Ownable, ReentrancyGuard {
             proposal.target,
             proposal.signature,
             proposal.args,
-            proposal.gasLimit,
             Utils.convertEnumerableSetAddressSetToArray(proposal.signers),
             Utils.convertEnumerableSetAddressSetToArray(proposal.signatures)
         );
