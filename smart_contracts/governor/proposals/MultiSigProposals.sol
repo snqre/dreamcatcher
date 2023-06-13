@@ -7,6 +7,25 @@ import "deps/openzeppelin/utils/Address.sol";
 import "deps/openzeppelin/utils/Context.sol";
 import "deps/openzeppelin/security/ReentrancyGuard.sol";
 
+interface IMultiSigProposals {
+    function pushNewMultiSigProposal(
+        uint startTimestamp,    // 0 for default to now
+        uint timeout,           // 0 for default to 24 hours
+        uint quorumRequired,    // 0 for default to 50%
+        bool delegate,
+        address target,
+        string memory signature,
+        bytes memory args,
+        uint gasLimit,
+        address[] memory signers
+    ) external returns (bool);
+
+    function sign(uint reference_) external returns (bool);
+    function unsign(uint reference_) external returns (bool);
+    function withdraw(uint reference_) external returns (bool);
+    function implement(uint reference_) external returns (bool);
+}
+
 using EnumerableSet for EnumerableSet.AddressSet;
 contract MultiSigProposals is Context, Ownable, ReentrancyGuard {
     uint count;
