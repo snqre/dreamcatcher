@@ -120,40 +120,40 @@ contract MultiSigProposals is Context, Ownable, ReentrancyGuard {
     constructor(address owner) Ownable(owner) {}
 
     // will revert if the caller is not a signer
-    function _mustBeSigner(uint reference_, address account) internal virtual {
+    function _mustBeSigner(uint reference_, address account) view internal virtual {
         require(multiSigProposals[reference_].signers.contains(account), "caller is not an expected signer");
     }
 
-    function _mustHaveSigned(uint reference_, address account) internal virtual {
+    function _mustHaveSigned(uint reference_, address account) view internal virtual {
         require(multiSigProposals[reference_].signatures.contains(account), "caller has not signed");
     }
 
     // will revert if the referenced proposal has been cleared
-    function _mustNotBeCleared(uint reference_) internal virtual {
+    function _mustNotBeCleared(uint reference_) internal view virtual {
         require(!multiSigProposals[reference_].hasBeenCleared, "referenced proposal has been cleared");
     }
 
     // will revert if the referenced proposal has been cleared
-    function _mustBeCleared(uint reference_) internal virtual {
+    function _mustBeCleared(uint reference_) internal view virtual {
         require(multiSigProposals[reference_].hasBeenCleared, "referenced proposal has been cleared");
     }
 
     // will revert if the referenced proposal has been withdraw
-    function _mustNotBeWithdrawn(uint reference_) internal virtual {
+    function _mustNotBeWithdrawn(uint reference_) internal view virtual {
         require(!multiSigProposals[reference_].hasBeenWithdrawn, "referenced proposal has been withdraw");
     }
 
     // will revert if the referenced proposal has been implemented
-    function _mustNotBeImplemented(uint reference_) internal virtual {
+    function _mustNotBeImplemented(uint reference_) internal view virtual {
         require(!multiSigProposals[reference_].hasBeenImplemented, "referenced proposal has been implemented");
     }
 
     // will revert if the referenced proposal has expired
-    function _mustNotBeExpired(uint reference_) internal virtual {
+    function _mustNotBeExpired(uint reference_) internal view virtual {
         require(block.timestamp < multiSigProposals[reference_].endTimestamp, "referenced proposal has expired");
     }
 
-    function _requiredQuorumHasBeenMet(uint reference_) internal virtual returns (bool) {
+    function _requiredQuorumHasBeenMet(uint reference_) internal view virtual returns (bool) {
         uint currentQuorum = (multiSigProposals[reference_].signers.length() * 100) / multiSigProposals[reference_].signatures.length();
         if (currentQuorum >= multiSigProposals[reference_].quorumRequired) {
             return true;
@@ -162,6 +162,11 @@ contract MultiSigProposals is Context, Ownable, ReentrancyGuard {
         else {
             return false;
         }
+    }
+
+    function _mustBePresent(uint reference_) internal view virtual {
+        require(reference_ >= 1, "reference does not point to an existing proposal");
+        require(reference_ > count, "reference does not point to an existing proposal");
     }
 
     function _pushNewMultiSigProposal(
@@ -245,6 +250,7 @@ contract MultiSigProposals is Context, Ownable, ReentrancyGuard {
     }
 
     function _sign(uint reference_) internal virtual {
+        _mustBePresent(reference_);
         _mustBeSigner(reference_, _msgSender());
         _mustNotBeCleared(reference_);
         _mustNotBeWithdrawn(reference_);
@@ -265,6 +271,7 @@ contract MultiSigProposals is Context, Ownable, ReentrancyGuard {
     }
 
     function _unsign(uint reference_) internal virtual {
+        _mustBePresent(reference_);
         _mustBeSigner(reference_, _msgSender());
         _mustHaveSigned(reference_, _msgSender());
         _mustNotBeCleared(reference_);
@@ -280,6 +287,7 @@ contract MultiSigProposals is Context, Ownable, ReentrancyGuard {
 
     // in this context this is cancel
     function _withdraw(uint reference_) internal virtual {
+        _mustBePresent(reference_);
         _mustNotBeCleared(reference_);
         _mustNotBeWithdrawn(reference_);
         _mustNotBeImplemented(reference_);
@@ -292,6 +300,7 @@ contract MultiSigProposals is Context, Ownable, ReentrancyGuard {
 
     // this alone does nothing, can only set once
     function _implement(uint reference_) internal virtual {
+        _mustBePresent(reference_);
         _mustNotBeExpired(reference_);
         _mustNotBeImplemented(reference_);
         _mustBeCleared(reference_);
@@ -348,16 +357,19 @@ contract MultiSigProposals is Context, Ownable, ReentrancyGuard {
         return true;
     }
 
+    // number of proposals
     function count_() public view virtual returns (uint) {
         return count;
     }
 
+    // view request from proposal
     function requestOf(uint reference_) public view virtual returns (
         bool delegate,
         address target,
         string memory signature,
         bytes memory args
     ) {
+        _mustBePresent(reference_);
         return (
             multiSigProposals[reference_].delegate,
             multiSigProposals[reference_].target,
@@ -366,11 +378,13 @@ contract MultiSigProposals is Context, Ownable, ReentrancyGuard {
         );
     }
 
+    // view state of a proposal
     function stateOf(uint reference_) public view virtual returns (
         bool hasBeenWithdrawn,
         bool hasBeenImplemented,
         bool hasBeenCleared
     ) {
+        _mustBePresent(reference_);
         return (
             multiSigProposals[reference_].hasBeenWithdrawn,
             multiSigProposals[reference_].hasBeenImplemented,
@@ -378,6 +392,7 @@ contract MultiSigProposals is Context, Ownable, ReentrancyGuard {
         );
     }
 
+    // view meta data of a proposal
     function metaOf(uint reference_) public view virtual returns (
         address creator,
         uint startTimestamp,
@@ -385,6 +400,7 @@ contract MultiSigProposals is Context, Ownable, ReentrancyGuard {
         uint timeout,
         uint quorumRequired
     ) {
+        _mustBePresent(reference_);
         return (
             multiSigProposals[reference_].creator,
             multiSigProposals[reference_].startTimestamp,
@@ -394,11 +410,15 @@ contract MultiSigProposals is Context, Ownable, ReentrancyGuard {
         );
     }
 
+    // view expected signers of a proposal
     function signersOf(uint reference_) public view virtual returns (address[] memory) {
+        _mustBePresent(reference_);
         return Utils.convertEnumerableSetAddressSetToArray(multiSigProposals[reference_].signers);
     }
 
+    // view signatures of a proposal
     function signaturesOf(uint reference_) public view virtual returns (address[] memory) {
+        _mustBePresent(reference_);
         return Utils.convertEnumerableSetAddressSetToArray(multiSigProposals[reference_].signatures);
     }
 }
