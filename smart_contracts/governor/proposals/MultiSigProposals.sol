@@ -5,9 +5,10 @@ import "deps/openzeppelin/access/Ownable.sol";
 import "deps/openzeppelin/utils/structs/EnumerableSet.sol";
 import "deps/openzeppelin/utils/Address.sol";
 import "deps/openzeppelin/utils/Context.sol";
+import "deps/openzeppelin/security/ReentrancyGuard.sol";
 
 using EnumerableSet for EnumerableSet.AddressSet;
-contract MultiSigProposals is Context, Ownable {
+contract MultiSigProposals is Context, Ownable, ReentrancyGuard {
     uint count;
 
     struct MultiSigProposal {
@@ -276,7 +277,7 @@ contract MultiSigProposals is Context, Ownable {
         bytes memory args,
         uint gasLimit,
         address[] memory signers
-    ) public virtual onlyOwner returns (bool) {
+    ) public virtual onlyOwner nonReentrant returns (bool) {
         _pushNewMultiSigProposal(
             startTimestamp,
             timeout,
@@ -293,23 +294,23 @@ contract MultiSigProposals is Context, Ownable {
     }
 
     // only signer can call this function
-    function sign(uint reference_) public virtual returns (bool) {
+    function sign(uint reference_) public virtual nonReentrant returns (bool) {
         _sign(reference_);
         return true;
     }
 
     // only signer can call this function
-    function unsign(uint reference_) public virtual returns (bool) {
+    function unsign(uint reference_) public virtual nonReentrant returns (bool) {
         _unsign(reference_);
         return true;
     }
 
-    function withdraw(uint reference_) public virtual onlyOwner returns (bool) {
+    function withdraw(uint reference_) public virtual onlyOwner nonReentrant returns (bool) {
         _withdraw(reference_);
         return true;
     }
 
-    function implement(uint reference_) public virtual onlyOwner returns (bool) {
+    function implement(uint reference_) public virtual onlyOwner nonReentrant returns (bool) {
         _implement(reference_);
         return true;
     }
