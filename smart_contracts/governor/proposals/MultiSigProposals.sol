@@ -223,7 +223,7 @@ contract MultiSigProposals is Context, Ownable {
 
         // here we check if the threshold has been met
         if (_requiredQuorumHasBeenMet(reference_)) {
-            multiSigProposals[reference_].hasBeenCleared;
+            multiSigProposals[reference_].hasBeenCleared = true;
             emit Cleared(reference_, _msgSender(), now_, multiSigProposals[reference_].signatures.length());
         }
     }
@@ -247,6 +247,7 @@ contract MultiSigProposals is Context, Ownable {
         _mustNotBeCleared(reference_);
         _mustNotBeWithdrawn(reference_);
         _mustNotBeImplemented(reference_);
+        _mustNotBeExpired(reference_);
 
         multiSigProposals[reference_].hasBeenWithdrawn = true;
 
@@ -258,9 +259,58 @@ contract MultiSigProposals is Context, Ownable {
         _mustNotBeExpired(reference_);
         _mustNotBeImplemented(reference_);
         _mustBeCleared(reference_);
-        
+        _mustNotBeWithdrawn(reference_);
+
         multiSigProposals[reference_].hasBeenImplemented = true;
 
         emit Implemented(reference_, _msgSender(), block.timestamp);
+    }
+
+    function pushNewMultiSigProposal(
+        uint startTimestamp,
+        uint timeout,
+        uint quorumRequired,
+        bool delegate,
+        address target,
+        string memory signature,
+        bytes memory args,
+        uint gasLimit,
+        address[] memory signers
+    ) public virtual onlyOwner returns (bool) {
+        _pushNewMultiSigProposal(
+            startTimestamp,
+            timeout,
+            quorumRequired,
+            delegate,
+            target,
+            signature,
+            args,
+            gasLimit,
+            signers
+        );
+
+        return true;
+    }
+
+    // only signer can call this function
+    function sign(uint reference_) public virtual returns (bool) {
+        _sign(reference_);
+        return true;
+    }
+
+    // only signer can call this function
+    function unsign(uint reference_) public virtual returns (bool) {
+        _unsign(reference_);
+        return true;
+    }
+
+    function withdraw(uint reference_) public virtual onlyOwner returns (bool) {
+        _withdraw(reference_);
+        return true;
+    }
+
+    function implement(uint reference_) public virtual onlyOwner returns (bool) {
+        _implement(reference_);
+        return true;
     }
 }
