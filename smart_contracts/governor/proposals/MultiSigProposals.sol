@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: CC-BY-NC-SA-4.0
 pragma solidity ^0.8.0;
 
-import "deps/openzeppelin/access/Ownable.sol";
-import "deps/openzeppelin/utils/structs/EnumerableSet.sol";
-import "deps/openzeppelin/utils/Address.sol";
-import "deps/openzeppelin/utils/Context.sol";
-import "deps/openzeppelin/security/ReentrancyGuard.sol";
-import "smart_contracts/utils/Utils.sol";
+import { Ownable }           from "deps/openzeppelin/access/Ownable.sol";
+import { EnumerableSet }     from "deps/openzeppelin/utils/structs/EnumerableSet.sol";
+import { Address }           from "deps/openzeppelin/utils/Address.sol";
+import { Context }           from "deps/openzeppelin/utils/Context.sol";
+import { ReentrancyGuard }   from "deps/openzeppelin/security/ReentrancyGuard.sol";
+import { Utils }             from "smart_contracts/utils/Utils.sol";
 
 interface IMultiSigProposals {
     function pushNewMultiSigProposal(
@@ -25,24 +25,31 @@ interface IMultiSigProposals {
     function withdraw(uint reference_) external returns (bool);
     function implement(uint reference_) external returns (bool);
 
-    function numberOf() external view returns (uint);
+    function count_() external view returns (uint);
 
-    function getMultiSigProposal(uint reference_) external view returns (
+    function requestOf(uint reference_) external view returns (
+        bool delegate,
+        address target,
+        string memory signature,
+        bytes memory args
+    );
+
+    function stateOf(uint reference_) external view returns (
+        bool hasBeenWithdrawn,
+        bool hasBeenImplemented,
+        bool hasBeenCleared
+    );
+
+    function metaOf(uint reference_) external view returns (
         address creator,
         uint startTimestamp,
         uint endTimestamp,
         uint timeout,
-        uint quorumRequired,
-        bool hasBeenWithdrawn,
-        bool hasBeenImplemented,
-        bool hasBeenCleared,
-        bool delegate,
-        address target,
-        string memory signature,
-        bytes memory args,
-        address[] memory signers,
-        address[] memory signatures
+        uint quorumRequired
     );
+
+    function signersOf(uint reference_) external view returns (address[] memory);
+    function signaturesOf(uint reference_) external view returns (address[] memory);
 }
 
 using EnumerableSet for EnumerableSet.AddressSet;
@@ -165,8 +172,7 @@ contract MultiSigProposals is Context, Ownable, ReentrancyGuard {
     }
 
     function _mustBePresent(uint reference_) internal view virtual {
-        require(reference_ >= 1, "reference does not point to an existing proposal");
-        require(reference_ > count, "reference does not point to an existing proposal");
+        require(reference_ >= 1 && reference_ <= count, "reference does not point to an existing proposal");
     }
 
     function _pushNewMultiSigProposal(
