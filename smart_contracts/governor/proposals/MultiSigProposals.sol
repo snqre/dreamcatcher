@@ -24,6 +24,26 @@ interface IMultiSigProposals {
     function unsign(uint reference_) external returns (bool);
     function withdraw(uint reference_) external returns (bool);
     function implement(uint reference_) external returns (bool);
+
+    function numberOf() external view returns (uint);
+
+    function getMultiSigProposal(uint reference_) external view returns (
+        address creator,
+        uint startTimestamp,
+        uint endTimestamp,
+        uint timeout,
+        uint quorumRequired,
+        bool hasBeenWithdrawn,
+        bool hasBeenImplemented,
+        bool hasBeenCleared,
+        bool delegate,
+        address target,
+        string memory signature,
+        bytes memory args,
+        uint gasLimit,
+        address[] memory signers,
+        address[] memory signatures
+    );
 }
 
 using EnumerableSet for EnumerableSet.AddressSet;
@@ -332,5 +352,47 @@ contract MultiSigProposals is Context, Ownable, ReentrancyGuard {
     function implement(uint reference_) public virtual onlyOwner nonReentrant returns (bool) {
         _implement(reference_);
         return true;
+    }
+
+    function numberOf() public view virtual returns (uint) {
+        return count;
+    }
+
+    function getMultiSigProposal(uint reference_) public view virtual returns (
+        address creator,
+        uint startTimestamp,
+        uint endTimestamp,
+        uint timeout,
+        uint quorumRequired,
+        bool hasBeenWithdrawn,
+        bool hasBeenImplemented,
+        bool hasBeenCleared,
+        bool delegate,
+        address target,
+        string memory signature,
+        bytes memory args,
+        uint gasLimit,
+        address[] memory signers,
+        address[] memory signatures
+    ) {
+        MultiSigProposal storage proposal = multiSigProposals[reference_];
+
+        return (
+            proposal.creator,
+            proposal.startTimestamp,
+            proposal.endTimestamp,
+            proposal.timeout,
+            proposal.quorumRequired,
+            proposal.hasBeenWithdrawn,
+            proposal.hasBeenImplemented,
+            proposal.hasBeenCleared,
+            proposal.delegate,
+            proposal.target,
+            proposal.signature,
+            proposal.args,
+            proposal.gasLimit,
+            proposal.signers.values(),
+            proposal.signatures.values()
+        );
     }
 }
