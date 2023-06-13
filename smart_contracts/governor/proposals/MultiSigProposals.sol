@@ -348,43 +348,57 @@ contract MultiSigProposals is Context, Ownable, ReentrancyGuard {
         return true;
     }
 
-    function numberOf() public view virtual returns (uint) {
+    function count_() public view virtual returns (uint) {
         return count;
     }
 
-    function getMultiSigProposal(uint reference_) public view virtual returns (
+    function requestOf(uint reference_) public view virtual returns (
+        bool delegate,
+        address target,
+        string memory signature,
+        bytes memory args
+    ) {
+        return (
+            multiSigProposals[reference_].delegate,
+            multiSigProposals[reference_].target,
+            multiSigProposals[reference_].signature,
+            multiSigProposals[reference_].args
+        );
+    }
+
+    function stateOf(uint reference_) public view virtual returns (
+        bool hasBeenWithdrawn,
+        bool hasBeenImplemented,
+        bool hasBeenCleared
+    ) {
+        return (
+            multiSigProposals[reference_].hasBeenWithdrawn,
+            multiSigProposals[reference_].hasBeenImplemented,
+            multiSigProposals[reference_].hasBeenCleared
+        );
+    }
+
+    function metaOf(uint reference_) public view virtual returns (
         address creator,
         uint startTimestamp,
         uint endTimestamp,
         uint timeout,
-        uint quorumRequired,
-        bool hasBeenWithdrawn,
-        bool hasBeenImplemented,
-        bool hasBeenCleared,
-        bool delegate,
-        address target,
-        string memory signature,
-        bytes memory args,
-        address[] memory signers,
-        address[] memory signatures
+        uint quorumRequired
     ) {
-        MultiSigProposal storage proposal = multiSigProposals[reference_];
-
         return (
-            proposal.creator,
-            proposal.startTimestamp,
-            proposal.endTimestamp,
-            proposal.timeout,
-            proposal.quorumRequired,
-            proposal.hasBeenWithdrawn,
-            proposal.hasBeenImplemented,
-            proposal.hasBeenCleared,
-            proposal.delegate,
-            proposal.target,
-            proposal.signature,
-            proposal.args,
-            Utils.convertEnumerableSetAddressSetToArray(proposal.signers),
-            Utils.convertEnumerableSetAddressSetToArray(proposal.signatures)
+            multiSigProposals[reference_].creator,
+            multiSigProposals[reference_].startTimestamp,
+            multiSigProposals[reference_].endTimestamp,
+            multiSigProposals[reference_].timeout,
+            multiSigProposals[reference_].quorumRequired
         );
+    }
+
+    function signersOf(uint reference_) public view virtual returns (address[] memory) {
+        return Utils.convertEnumerableSetAddressSetToArray(multiSigProposals[reference_].signers);
+    }
+
+    function signaturesOf(uint reference_) public view virtual returns (address[] memory) {
+        return Utils.convertEnumerableSetAddressSetToArray(multiSigProposals[reference_].signatures);
     }
 }
