@@ -1,7 +1,10 @@
 // SPDX-License-Identifier: CC-BY-NC-SA-4.0
 pragma solidity ^0.8.0;
+import "deps/openzeppelin/utils/structs/EnumerableSet.sol";
 
 library Utils {
+    using EnumerableSet for EnumerableSet.AddressSet;
+
     function convertToWei(uint value) internal pure returns (uint) {
         return value * 10**18;
     }
@@ -41,5 +44,16 @@ library Utils {
         require(b >= convertToWei(1));
 
         return ((v * b) / s);
+    }
+
+    function convertEnumerableSetAddressSetToArray(EnumerableSet.AddressSet storage set) internal view returns (address[] memory) {
+        uint length = set.length();
+        address[] memory array = new address[](length);
+
+        for (uint i = 0; i < length; i++) {
+            array[i] = set.at(i);
+        }
+
+        return array;
     }
 }

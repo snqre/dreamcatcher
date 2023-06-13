@@ -6,6 +6,7 @@ import "deps/openzeppelin/utils/structs/EnumerableSet.sol";
 import "deps/openzeppelin/utils/Address.sol";
 import "deps/openzeppelin/utils/Context.sol";
 import "deps/openzeppelin/security/ReentrancyGuard.sol";
+import "smart_contracts/utils/Utils.sol";
 
 interface IMultiSigProposals {
     function pushNewMultiSigProposal(
@@ -391,8 +392,8 @@ contract MultiSigProposals is Context, Ownable, ReentrancyGuard {
             proposal.signature,
             proposal.args,
             proposal.gasLimit,
-            proposal.signers.values(),
-            proposal.signatures.values()
+            Utils.convertEnumerableSetAddressSetToArray(proposal.signers),
+            Utils.convertEnumerableSetAddressSetToArray(proposal.signatures)
         );
     }
 }
