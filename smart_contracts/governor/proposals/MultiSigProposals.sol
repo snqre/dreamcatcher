@@ -1,12 +1,21 @@
 // SPDX-License-Identifier: CC-BY-NC-SA-4.0
 pragma solidity ^0.8.0;
 
-import { Ownable }           from "deps/openzeppelin/access/Ownable.sol";
-import { EnumerableSet }     from "deps/openzeppelin/utils/structs/EnumerableSet.sol";
-import { Address }           from "deps/openzeppelin/utils/Address.sol";
-import { Context }           from "deps/openzeppelin/utils/Context.sol";
-import { ReentrancyGuard }   from "deps/openzeppelin/security/ReentrancyGuard.sol";
-import { Utils }             from "smart_contracts/utils/Utils.sol";
+/** THIS WAY?
+import { Ownable } from "deps/openzeppelin/access/Ownable.sol";
+import { EnumerableSet } from "deps/openzeppelin/utils/structs/EnumerableSet.sol";
+import { Address } from "deps/openzeppelin/utils/Address.sol";
+import { Context } from "deps/openzeppelin/utils/Context.sol";
+import { ReentrancyGuard } from "deps/openzeppelin/security/ReentrancyGuard.sol";
+import { Utils } from "smart_contracts/utils/Utils.sol";
+*/
+
+import "deps/openzeppelin/access/Ownable.sol";
+import "deps/openzeppelin/utils/structs/EnumerableSet.sol";
+import "deps/openzeppelin/utils/Address.sol";
+import "deps/openzeppelin/utils/Context.sol";
+import "deps/openzeppelin/security/ReentrancyGuard.sol";
+import "smart_contracts/utils/Utils.sol";
 
 interface IMultiSigProposals {
     function pushNewMultiSigProposal(
