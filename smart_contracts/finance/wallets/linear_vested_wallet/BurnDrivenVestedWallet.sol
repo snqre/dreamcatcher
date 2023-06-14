@@ -1,10 +1,9 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: CC-BY-NC-SA-4.0
 pragma solidity ^0.8.9;
 
-// this also needs replacing
 import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/finance/VestingWallet.sol";
 
-contract LinearVestedWallet is VestingWallet {
+contract BurnDrivenVestedWallet is VestingWallet {
 
     struct Settings {
         address beneficiary;
@@ -20,5 +19,9 @@ contract LinearVestedWallet is VestingWallet {
         startTimestamp,
         durationSeconds
     ) payable {}
+
+    function _vestingSchedule(uint totalAllocation, uint timestamp) internal view virtual override returns (uint) {
+        
+    }
 
 }

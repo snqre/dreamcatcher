@@ -6,11 +6,13 @@ import "deps/openzeppelin/utils/structs/EnumerableSet.sol";
 import "deps/openzeppelin/utils/Address.sol";
 import "deps/openzeppelin/utils/Context.sol";
 import "deps/openzeppelin/security/ReentrancyGuard.sol";
+
 import "smart_contracts/utils/Utils.sol";
 
 using EnumerableSet for EnumerableSet.AddressSet;
 contract PublicVotedProposals is Context, Ownable, ReentrancyGuard {
     uint count;
+    address dreamToken;
 
     struct PublicVotedProposal {
         uint reference_;
@@ -35,4 +37,9 @@ contract PublicVotedProposals is Context, Ownable, ReentrancyGuard {
     }
 
     constructor(address owner) Ownable(owner) {}
+
+    function _getVotes(address account) view internal virtual returns (uint) {
+        
+    }
+
 }

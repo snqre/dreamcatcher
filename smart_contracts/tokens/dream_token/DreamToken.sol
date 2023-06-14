@@ -1,21 +1,90 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.9;
+
+// **WE NEED TO IMPORT THIS LOCALLY
+import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v4.9.0/contracts/token/ERC20/extensions/ERC20Snapshot.sol";
+import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v4.9.0/contracts/token/ERC20/extensions/draft-ERC20Permit.sol";
 
 import "deps/openzeppelin/token/ERC20/ERC20.sol";
 import "deps/openzeppelin/token/ERC20/extensions/ERC20Burnable.sol";
-
-// this is here because we still havent connected this locally so im being lazy and pulling it from github
-import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v4.9.0/contracts/token/ERC20/extensions/ERC20Snapshot.sol";
-
-// yup im doing the same for this one
-import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v4.9.0/contracts/token/ERC20/extensions/draft-ERC20Permit.sol";
-
 import "deps/openzeppelin/access/AccessControl.sol";
+
 import "smart_contracts/utils/Utils.sol";
 import "smart_contracts/tokens/ember_token/EmberToken.sol";
-
-// this is for vesting
 import "smart_contracts/finance/wallets/linear_vested_wallet/LinearVestedWallet.sol";
+
+contract DreamToken is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit, AccessControl {
+    uint mintable;
+    EmberToken emberToken;
+    
+    mapping(address => address) private founderToVestingWallet;
+
+    constructor(
+        address[] memory owners,
+        address[] memory founders,
+        uint[] memory allocations,
+        uint[] memory durationsSecondsVested
+    ) ERC20("DreamToken", "DREAM") ERC20Permit("DreamToken") {
+        mintable = Utils.convertToWei(200_000_000);
+
+        // for each owner in owners grant them admin role
+        address owner;
+        uint length = owners.length;
+        for (uint i = 0; i < length; i++) {
+            owner = owners[i];
+            _grantRole(DEFAULT_ADMIN_ROLE, owner);
+        }
+        
+        address wallet;
+        address founder;
+        uint allocation;
+        uint duration;
+        uint now_ = block.timestamp;
+
+        for (uint i = 0; i < founders.length; i++) {
+            founder = founders[i];
+            allocation = allocations[i];
+            duration = durationsSecondsVested[i];
+
+            wallet = new LinearVestedWallet(founder, now_, duration);
+        }
+    }
+
+    function _mustBeAdmin() internal view {
+        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "must be an owner");
+    }
+
+    function _mustNotBeFutureLookup(uint snapshotId) internal view {
+        require(snapshotId <= _getCurrentSnapshotId(), "must not be future lookup");
+    }
+
+    function _mustBeMintable(uint amount) {
+        require(amount <= mintable, "insufficient mintable amount left");
+    }
+
+    function _beforeTokenTransfer(address from, address to, uint amount) internal override(ERC20, ERC20Snapshot) {
+        super._beforeTokenTransfer(from, to, amount);
+    }
+
+    function _afterTokenTransfer(address from, address to, uint amount) internal override {
+        super._afterTokenTransfer(from, to, amount);
+    }
+
+    function _mint(address to, uint amount) internal override {
+        _mustBeMintable(amount);
+        mintable -= amount;
+        super._mint(to, amount);
+    }
+
+    function snapshot() public {
+        _mustBeAdmin();
+        _snapshot();
+
+        // also snapshot $ember
+        emberToken.snapshot();
+    }
+
+}
 
 contract DreamToken is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit, AccessControl {
     uint mintable_;
