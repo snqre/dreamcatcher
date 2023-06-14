@@ -6,8 +6,8 @@ import plotly.graph_objects as go
 # testing incentive scheme
 
 class Stat:
-    def __init__(self, _real:float):
-        self.real = _real
+    def __init__(self, real):
+        self.real = real
         self.max = 0
         self.min = 0
 
@@ -60,25 +60,46 @@ class Stat:
             # update
             self.real /= value
 
-maxSupply = Stat(200_000_000)
+stats = []
+def createNewStat(value):
+    global stats
+    stats.append(Stat(value))
+
 totalSupply = Stat(0)
+def release(reference, value):
+    global totalSupply
+    global stats
+    stats[reference].sub(value)
+    totalSupply.add(value)
+
+months = 240
 months:int = 240
+
+createNewStat(40_000_000)
+createNewStat(40_000_000)
+
 
 months:int = 240
 teamVestedWallets = Stat(40_000_000)
 linearlyUnlockedPerMonth:float = teamVestedWallets.real / months.real
+
 x = []
 y = []
-
+x1 = []
+y1 = []
 for month in range(months + 1):
-    teamVestedWallets.sub(linearlyUnlockedPerMonth)
-    totalSupply.add(linearlyUnlockedPerMonth)
-    totalSupply.real *= (month / 300)
+    release(0, 100_000)
+    release(1, 235_000)
+
     x.append(month)
     y.append(totalSupply.real)
 
+    x1.append(month)
+    y1.append(stats[1].real)
+
 # create a line plot
 fig = go.Figure(data=go.Scatter(x=x, y=y, mode='lines'))
+fig = go.Figure(data=go.Scatter(x=x1, y=y1, mode='lines'))
 
 # customize the layout
 fig.update_layout(
