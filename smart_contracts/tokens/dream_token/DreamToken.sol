@@ -8,41 +8,30 @@ import "deps/openzeppelin/token/ERC20/extensions/ERC20Burnable.sol";
 import "deps/openzeppelin/access/AccessControl.sol";
 
 import "smart_contracts/utils/Utils.sol";
-import "smart_contracts/tokens/ember_token/EmberToken.sol";
 
 contract DreamToken is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit, AccessControl {
-    uint mintable_;
-    
-    EmberToken emberToken;
+    uint private mintable_;
 
-    constructor(address[] memory admins) ERC20("DreamToken", "DRMK") ERC20Permit("DreamToken") {
+    constructor(address[] memory admins) ERC20("DreamToken", "DREAM") ERC20Permit("DreamToken") {
         mintable_ = Utils.convertToWei(200000000);
 
         for (uint i = 0; i < admins.length; i++) {
             _grantRole(DEFAULT_ADMIN_ROLE, admins[i]);
         }
-
-        /**
-         * @dev Here we deploy Ember token
-         */
-        emberToken = new EmberToken();
     }
 
     function _mustBeAdmin() internal view {
-        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "must be an admin");
+        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "DreamToken: must be an admin");
     }
 
     function _mustNotBeFutureLookup(uint snapshotId) internal view {
-        require(snapshotId <= _getCurrentSnapshotId(), "must not be future lookup");
+        require(snapshotId <= _getCurrentSnapshotId(), "DreamToken: must not be future lookup");
     }
 
     function _mustBeMintable(uint amount) internal view {
-        require(amount <= mintable_, "insufficient mintable amount left");
+        require(amount <= mintable_, "DreamToken: insufficient mintable amount left");
     }
 
-    /**
-     * @dev This is a required override
-     */
     function _beforeTokenTransfer(address from, address to, uint amount) internal override(ERC20, ERC20Snapshot) {
         super._beforeTokenTransfer(from, to, amount);
     }
@@ -51,23 +40,15 @@ contract DreamToken is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit, AccessC
         super._afterTokenTransfer(from, to, amount);
     }
 
-    // overriden function to check mintable_
     function _mint(address to, uint amount) internal override {
         _mustBeMintable(amount);
         mintable_ -= amount;
         super._mint(to, amount);
     }
 
-    /**
-     * @dev Creates a snapshot and returns the snapshot reference
-     * @notice Will also snapshot Ember Token
-     */
-    function snapshot() public returns (uint) {
+    function snapshot() public returns (uint snapshotId) {
         _mustBeAdmin();
         _snapshot();
-
-        // also snapshot for $ember
-        emberToken.snapshot();
 
         return _getCurrentSnapshotId();
     }
@@ -77,92 +58,62 @@ contract DreamToken is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit, AccessC
         _mint(to, amount);
     }
 
-    function emberMint(address to, uint amount) public {
+    function burn(uint amount) public override {
         _mustBeAdmin();
-        emberToken.mint(to, amount);
+        _burn(msg.sender, amount);
     }
 
-    // see $ember mintByPoints()
-    function emberMintByPoints(address to, uint points) public {
+    function burnFrom(address from, uint amount) public override {
         _mustBeAdmin();
-        emberToken.mintByPoints(to, points);
-    }
-
-    function emberBurn(uint amount) public {
-        _mustBeAdmin();
-        emberToken.burn(amount);
-    }
-
-    function emberBurnFrom(address from, uint amount) public {
-        _mustBeAdmin();
-        emberToken.burnFrom(from, amount);
-    }
-    
-    // see $ember split()
-    function emberSplit(uint mul) public {
-        _mustBeAdmin();
-        emberToken.split(mul);
-    }
-
-    // see $ember stack()
-    function emberStack(uint div) public {
-        _mustBeAdmin();
-        emberToken.stack(div);
+        _burn(from, amount);
     }
 
     function mintable() public view returns (uint) {
         return mintable_;
     }
 
-    // The getVotes() function calculates and returns the total number of votes for an account in the current snapshot. It retrieves the base votes by getting the account's balance at the current snapshot using balanceOfAt(). It then fetches the weight of the account using emberToken.getWeight(account). After that, it calculates the additional votes by multiplying the base votes with the weight and dividing by 10000. Finally, it returns the sum of the base votes and additional votes.
-    function getVotes(address account) public view returns (uint) {
-        uint baseVotes = balanceOfAt(account, _getCurrentSnapshotId());
-
-        // error here
-        uint weight = emberToken.getWeight(account);
-        uint additionalVotes = (baseVotes * weight) / 10000;
-
-        return baseVotes + additionalVotes;
+    function maxSupply() public view returns (uint) {
+        return totalSupply() + mintable_;
     }
 
-    // The getPastVotes() function calculates and returns the total number of votes for an account at a specific snapshotId in the past. It retrieves the base votes by getting the account's balance at the given snapshotId using balanceOfAt(). It then fetches the weight of the account at the same snapshotId using emberToken.getPastWeight(account, snapshotId). After that, it calculates the additional votes by multiplying the base votes with the weight and dividing by 10000. Finally, it returns the sum of the base votes and additional votes.
-    function getPastVotes(address account, uint snapshotId) public view returns (uint) {
+    function getVotes(address account) 
+        public view returns (uint) {
+        return balanceOfAt(
+            account,
+            _getCurrentSnapshotId()
+        );
+    }
+
+    function getPastVotes(address account, uint snapshotId)
+        public view returns (uint) {
         _mustNotBeFutureLookup(snapshotId);
-        uint baseVotes = balanceOfAt(account, snapshotId);
-        uint weight = emberToken.getPastWeight(account, snapshotId);
-        uint additionalVotes = (baseVotes * weight) / 10000;
-
-        return baseVotes + additionalVotes;
+        return balanceOfAt(
+            account,
+            snapshotId
+        );
     }
 
-    // The getCurrentTotalSupply() function returns the total supply of a token at the current snapshot ID.
-    function getCurrentTotalSupply() public view returns (uint) {
-        return totalSupplyAt(_getCurrentSnapshotId());
-    }
-
-    // The getWeight() function calculates and returns the weight of an account based on its balance relative to the current total supply of the token.
+    /**
+     * @dev Get weight of user from $DREAM
+     */
     function getWeight(address account) public view returns (uint) {
         uint balance = balanceOfAt(account, _getCurrentSnapshotId());
+        uint totalSupply = totalSupplyAt(_getCurrentSnapshotId());
 
-        return (balance / getCurrentTotalSupply()) * 10000;
+        require(balance >= 1, "DreamToken: insufficient balance");
+        require(totalSupply >= 1, "DreamToken: insufficient totalSupply");
+
+        return (balance * 10000) / totalSupply;
     }
 
-    // The getPastWeight() function calculates and returns the weight of an account at a specific snapshotId in the past. It ensures that the provided snapshotId is not in the future, and then calculates the weight based on the account's balance at that snapshot relative to the total supply at that snapshot.
     function getPastWeight(address account, uint snapshotId) public view returns (uint) {
         _mustNotBeFutureLookup(snapshotId);
-        uint balance = balanceOfAt(account, snapshotId);
+        uint balance = balanceOfAt(account, _getCurrentSnapshotId());
+        uint totalSupply = totalSupplyAt(_getCurrentSnapshotId());
 
-        return (balance / totalSupplyAt(snapshotId)) * 10000;
-    }
+        require(balance >= 1, "DreamToken: insufficient balance");
+        require(totalSupply >= 1, "DreamToken: insufficient totalSupply");
 
-    // The emberGetWeight() function simply calls the getWeight() function of another contract emberToken and returns the result. It retrieves the weight of an account using the emberToken contract.
-    function emberGetWeight(address account) public view returns (uint) {
-        return emberToken.getWeight(account);
-    }
-
-    // The emberGetPastWeight() function calls the getPastWeight() function of another contract emberToken with the specified account and snapshotId parameters. It retrieves the weight of an account at a specific snapshotId using the emberToken contract.
-    function emberGetPastWeight(address account, uint snapshotId) public view returns (uint) {
-        _mustNotBeFutureLookup(snapshotId);
-        return emberToken.getPastWeight(account, snapshotId);
+        return (balance * 10000) / totalSupply;
     }
 }

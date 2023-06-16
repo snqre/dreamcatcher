@@ -88,10 +88,19 @@ contract EmberToken is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit, AccessC
         return totalSupplyAt(_getCurrentSnapshotId());
     }
 
+    /**
+     * @dev Make sure to snapshot from DreamToken before using this
+     * @dev Without a valid current snapshotId it will not work
+     */
     function getWeight(address account) public view returns (uint) {
         uint balance = balanceOfAt(account, _getCurrentSnapshotId());
+        uint supply = totalSupplyAt(_getCurrentSnapshotId());
 
-        return (balance / getCurrentTotalSupply()) * 10000;
+        require(balance >= 1, "EmberToken: insufficient balance");
+        require(supply >= 1, "EmberToken: insufficient supply");
+
+        // weight should be the percentage of ember token owned over supply
+        return (balance * 10000) / supply;
     }
 
     function getPastWeight(address account, uint snapshotId) public view returns (uint) {
