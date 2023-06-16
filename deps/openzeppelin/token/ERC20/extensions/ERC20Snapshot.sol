@@ -5,7 +5,7 @@ pragma solidity ^0.8.0;
 
 import "../ERC20.sol";
 import "../../../utils/Arrays.sol";
-import "deps/openzeppelin/utils/Counters.sol";
+import "../../../utils/Counters.sol";
 
 /**
  * @dev This contract extends an ERC20 token with a snapshot mechanism. When a snapshot is created, the balances and

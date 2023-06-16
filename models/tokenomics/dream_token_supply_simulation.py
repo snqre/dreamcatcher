@@ -1,138 +1,124 @@
+# THIS IS TERRIBLE BUT ITS IT WORKS.
 import plotly.graph_objects as go
+import numpy as np
+import math
 
-# testing burn mechanics unlocks
-# exponential vesting
-# linear vesting
-# testing incentive scheme
-
-class Stat:
-    def __init__(self, name, real):
-        self.name = name
-        self.real = real
-        self.max = 0
+class Wallet:
+    def __init__(self, purpose, vestedAmount):
+        self.purpose = purpose
+        self.vestedAmount = vestedAmount
         self.min = 0
+        self.max = 0
+        self.minIsEnabled = True
+        self.maxIsEnabled = False
         self.x = []
         self.y = []
-
-    # config max value
-    def configure_max(self, value):
-        self.max = value
     
-    def configure_min(self, value):
-        self.min = value
-
-    # this will not perform the addition if it overflows
-    def add(self, value):
-        # is above max and max has been configured
-        if self.max != 0 and self.real + value >= self.max:
-            # do nothing
-            pass
-            
-        else:
-            # update
-            self.real += value
-    
-    # this will not perform the subtraction if it overflows
-    def sub(self, value):
-        # is below min
-        if self.real - value <= self.min:
-            # do nothing
-            pass
-
-        else:
-            # update
-            self.real -= value
-    
-    def mul(self, value):
-        # is above max
-        if self.real * value > self.max:
-            # do nothing
-            pass
-
-        else:
-            # update
-            self.real *= value
-    
-    def div(self, value):
-        # is below min
-        if self.real / value < self.min:
-            # do nothing
-            pass
-
-        else:
-            # update
-            self.real /= value
-    
-    def push_set(self, x, y):
+    def pushSet(self, x, y):
         self.x.append(x)
         self.y.append(y)
 
-stats = []
-def push_new_stat(name, value):
-    global stats
-    stats.append(Stat(name, value))
+class Token:
+    def __init__(self, name, maxSupply):
+        self.name = name
+        self.maxSupply = maxSupply
+        self.totalSupply = 0
+        self.burnedSupply = 0
+        self.mintedSupply = 0
+        self.vestingWallets = []
+        self.vestingWalletFinder = {}
+        self.x = []
+        self.y = []
 
-stats_total_supply = []
-def push_new_stat_total_supply(name, value):
-    global stats_total_supply
-    stats_total_supply.append(Stat(name, value))
+    def createNewWallet(self, purpose, vestedAmount):
+        wallet = Wallet(purpose, vestedAmount)
+        self.vestingWallets.append(wallet)
+        index = self.vestingWallets.index(wallet)
+        # for humans : )
+        self.vestingWalletFinder[purpose] = index
 
-def release(reference_total_supply, reference, value):
-    global total_supply
-    global stats
-    stats[reference].sub(value)
-    stats_total_supply[reference_total_supply].add(value)
+    def release(self, purpose, amount):
+        index = self.vestingWalletFinder[purpose]
+        remaining = self.vestingWallets[index].vestedAmount - self.vestingWallets[index].min
+        if remaining < amount:
+            self.vestingWallets[index].vestedAmount -= remaining
+            self.totalSupply += remaining
 
-months = 240
-
-def push_new_set(reference, x, y):
-    global stats
-    stats[reference].push_set(x, y)
-
-def push_new_set_total_supply(reference, x, y):
-    global stats_total_supply
-    stats_total_supply[reference].push_set(x, y)
-
-push_new_stat_total_supply("Polkadex Total Supply", 0)
-push_new_stat("Founders and Team", 1_800_000)
-push_new_stat("Seed Round", 1_400_000)
-
-quarter = 0
-quarter_2 = 0
-for month in range(months + 1):
-    # POLKADEX
-    if month == 12:
-        release(0, 0, 360_000)
-
-    # RELEASED QUARTERLY AFTER 12 MONTHS
-    if month > 12:
-        quarter += 1
-        if quarter == 4:
-            quarter = 0
-            # ASSUMING 1 YEAR UNLOCK!
-            release(0, 0, 360_000)
+        else:
+            self.vestingWallets[index].vestedAmount -= amount
+            self.totalSupply += amount
     
-    release(0, 1, 280_000)
+    def pushSet(self, x, y):
+        self.x.append(x)
+        self.y.append(y)
 
-    quarter_2 += 1
-    if quarter_2 == 4:
-        quarter_2 = 0
-        # ASSUMING 1 YEAR UNLOCK
-        release(0, 1, 280_000)
+class Simulation:
+    def __init__(self, months):
+        self.months = months
 
-    for i in range(len(stats)):
-        push_new_set(i, month, stats[i].real)
+simulation = Simulation(240)
+exampleTankVestingSchedule = Token("ExampleToken", 100_000)
 
-    for i in range(len(stats_total_supply)):
-        push_new_set_total_supply(i, month, stats_total_supply[i].real)
+exampleTankVestingSchedule.createNewWallet("Team", 20_000)
+exampleTankVestingSchedule.createNewWallet("Investors", 30_000)
+exampleTankVestingSchedule.createNewWallet("Advisors", 5_000)
+exampleTankVestingSchedule.createNewWallet("Ecosystem", 15_000)
+exampleTankVestingSchedule.createNewWallet("Community", 15_000)
+exampleTankVestingSchedule.createNewWallet("Liquidity", 15_000)
 
-fig  = go.Figure()
+dreamToken = Token("DreamToken", 200_000_000)
+dreamToken.createNewWallet("General", 200_000_000)
 
-for i in range(len(stats)):
-    fig.add_trace(go.Scatter(x=stats[i].x, y=stats[i].y, mode="lines", name=stats[i].name))
+startValue = 100
+growthRate = 0.1
+quarter = 0
+for month in range(simulation.months):
+    if month == 12:
+        exampleTankVestingSchedule.release("Team", 5_000)
 
-for i in range(len(stats_total_supply)):
-    fig.add_trace(go.Scatter(x=stats_total_supply[i].x, y=stats_total_supply[i].y, mode="lines", name=stats_total_supply[i].name))
+    if month == 6:
+        exampleTankVestingSchedule.release("Investors", 6_000)
+    
+    quarter += 1
+    if quarter == 4:
+        if month > 12:
+            exampleTankVestingSchedule.release("Team", 416.60)
+
+        if month > 6:
+            exampleTankVestingSchedule.release("Investors", 1333.30)
+        
+        quarter = 0
+
+    if month <= 24:
+        exampleTankVestingSchedule.release("Advisors", 208.30)
+        exampleTankVestingSchedule.release("Ecosystem", 625)
+
+    if month <= 6:
+        exampleTankVestingSchedule.release("Community", 2_500)
+    
+    for i in range(len(exampleTankVestingSchedule.vestingWallets)):
+        vestedAmount = exampleTankVestingSchedule.vestingWallets[i].vestedAmount
+        exampleTankVestingSchedule.vestingWallets[i].pushSet(month, vestedAmount)
+    
+    totalSupply = exampleTankVestingSchedule.totalSupply
+    maxSupply = exampleTankVestingSchedule.maxSupply
+    exampleTankVestingSchedule.pushSet(month, (totalSupply / maxSupply) * 100)
+
+    if dreamToken.totalSupply < 200_000_000:
+        if month == 0:
+            dreamToken.totalSupply += 20_000_000
+
+        totalSupply = dreamToken.totalSupply
+        dreamToken.totalSupply = totalSupply + ((totalSupply / 100) * 1)
+
+        totalSupply = dreamToken.totalSupply
+        maxSupply = dreamToken.maxSupply
+        dreamToken.pushSet(month, (totalSupply / maxSupply) * 100)
+
+fig = go.Figure()
+
+fig.add_trace(go.Scatter(x=exampleTankVestingSchedule.x, y=exampleTankVestingSchedule.y, mode="lines", name=exampleTankVestingSchedule.name))
+fig.add_trace(go.Scatter(x=dreamToken.x, y=dreamToken.y, mode="lines", name=dreamToken.name))
 
 # customize the layout
 fig.update_layout(

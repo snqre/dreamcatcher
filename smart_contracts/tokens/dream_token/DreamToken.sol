@@ -1,10 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.9;
 
-// **WE NEED TO IMPORT THIS LOCALLY
-import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v4.9.0/contracts/token/ERC20/extensions/ERC20Snapshot.sol";
-import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v4.9.0/contracts/token/ERC20/extensions/draft-ERC20Permit.sol";
-
+import "deps/openzeppelin/token/ERC20/extensions/ERC20Snapshot.sol";
+import "deps/openzeppelin/token/ERC20/extensions/draft-ERC20Permit.sol";
 import "deps/openzeppelin/token/ERC20/ERC20.sol";
 import "deps/openzeppelin/token/ERC20/extensions/ERC20Burnable.sol";
 import "deps/openzeppelin/access/AccessControl.sol";
@@ -14,44 +12,27 @@ import "smart_contracts/tokens/ember_token/EmberToken.sol";
 import "smart_contracts/finance/wallets/linear_vested_wallet/LinearVestedWallet.sol";
 
 contract DreamToken is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit, AccessControl {
-    uint mintable;
-    EmberToken emberToken;
+    uint mintable_;
     
-    mapping(address => address) private founderToVestingWallet;
+    EmberToken emberToken;
 
-    constructor(
-        address[] memory owners,
-        address[] memory founders,
-        uint[] memory allocations,
-        uint[] memory durationsSecondsVested
-    ) ERC20("DreamToken", "DREAM") ERC20Permit("DreamToken") {
-        mintable = Utils.convertToWei(200_000_000);
+    constructor(address[] memory admins) ERC20("DreamToken", "DRMK") ERC20Permit("DreamToken") {
+        mintable_ = Utils.convertToWei(200000000);
 
-        // for each owner in owners grant them admin role
-        address owner;
-        uint length = owners.length;
-        for (uint i = 0; i < length; i++) {
-            owner = owners[i];
-            _grantRole(DEFAULT_ADMIN_ROLE, owner);
+        for (uint i = 0; i < admins.length; i++) {
+            _grantRole(DEFAULT_ADMIN_ROLE, admins[i]);
         }
-        
-        address wallet;
-        address founder;
-        uint allocation;
-        uint duration;
-        uint now_ = block.timestamp;
 
-        for (uint i = 0; i < founders.length; i++) {
-            founder = founders[i];
-            allocation = allocations[i];
-            duration = durationsSecondsVested[i];
+        _mint(terminal, Utils.convertToWei(180000000));
 
-            wallet = new LinearVestedWallet(founder, now_, duration);
-        }
+        /**
+         * @dev Here we deploy Ember token
+         */
+        emberToken = new EmberToken(terminal);
     }
 
     function _mustBeAdmin() internal view {
-        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "must be an owner");
+        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "must be an admin");
     }
 
     function _mustNotBeFutureLookup(uint snapshotId) internal view {
@@ -62,58 +43,9 @@ contract DreamToken is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit, AccessC
         require(amount <= mintable, "insufficient mintable amount left");
     }
 
-    function _beforeTokenTransfer(address from, address to, uint amount) internal override(ERC20, ERC20Snapshot) {
-        super._beforeTokenTransfer(from, to, amount);
-    }
-
-    function _afterTokenTransfer(address from, address to, uint amount) internal override {
-        super._afterTokenTransfer(from, to, amount);
-    }
-
-    function _mint(address to, uint amount) internal override {
-        _mustBeMintable(amount);
-        mintable -= amount;
-        super._mint(to, amount);
-    }
-
-    function snapshot() public {
-        _mustBeAdmin();
-        _snapshot();
-
-        // also snapshot $ember
-        emberToken.snapshot();
-    }
-
-}
-
-contract DreamToken is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit, AccessControl {
-    uint mintable_;
-    
-    EmberToken emberToken;
-
-    modifier onlyAdmin() {
-        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "only admin");
-        _;
-    }
-
-    modifier checkFutureLookup(uint snapshotId) {
-        require(snapshotId <= _getCurrentSnapshotId(), "future lookup");
-        _;
-    }
-
-    modifier checkMintable(uint amount) {
-        require(amount <= mintable_, "insufficient mintable amount");
-        _;
-    }
-
-    constructor() ERC20("DreamToken", "DREAM") ERC20Permit("DreamToken") {
-        mintable_ = Utils.convertToWei(200000000);
-        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
-        _mint(terminal, Utils.convertToWei(180000000));
-        emberToken = new EmberToken(terminal);
-    }
-
-    // required override
+    /**
+     * @dev This is a required override
+     */
     function _beforeTokenTransfer(address from, address to, uint amount) internal override(ERC20, ERC20Snapshot) {
         super._beforeTokenTransfer(from, to, amount);
     }
@@ -123,16 +55,23 @@ contract DreamToken is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit, AccessC
     }
 
     // overriden function to check mintable_
-    function _mint(address to, uint amount) internal override checkMintable(amount) {
+    function _mint(address to, uint amount) internal override {
+        _mustBeMintable(amount);
         mintable_ -= amount;
         super._mint(to, amount);
     }
 
-    function snapshot() public onlyAdmin {
+    /**
+     * @dev Creates a snapshot and returns the snapshot reference
+     * @notice Will also snapshot Ember Token
+     */
+    function snapshot() public onlyAdmin returns (uint) {
         _snapshot();
 
         // also snapshot for $ember
         emberToken.snapshot();
+
+        return _getCurrentSnapshotId();
     }
 
     function mint(address to, uint amount) public onlyAdmin {

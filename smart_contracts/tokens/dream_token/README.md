@@ -2,6 +2,8 @@
 
 DreamToken is an ERC-20 standard token built on the Ethereum blockchain. It provides a decentralized digital currency solution with additional features such as burning tokens, snapshotting, and voting capabilities. The token aims to symbolize the power of imagination and the importance of pursuing one's passions.
 
+mintable_: 
+
 ## Contract Overview
 
 The `DreamToken` contract is implemented in Solidity and extends various OpenZeppelin contracts to inherit standard ERC-20 functionality and additional features. The contract includes the following imports from OpenZeppelin:
