@@ -49,7 +49,7 @@ contract DreamToken is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit, AccessC
     function snapshot() public returns (uint snapshotId) {
         _mustBeAdmin();
         _snapshot();
-
+        
         return _getCurrentSnapshotId();
     }
 
@@ -76,44 +76,12 @@ contract DreamToken is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit, AccessC
         return totalSupply() + mintable_;
     }
 
-    function getVotes(address account) 
-        public view returns (uint) {
-        return balanceOfAt(
-            account,
-            _getCurrentSnapshotId()
-        );
+    function getVotes(address account) public view returns (uint) {
+        return balanceOfAt(account, _getCurrentSnapshotId());
     }
 
-    function getPastVotes(address account, uint snapshotId)
-        public view returns (uint) {
+    function getPastVotes(address account, uint snapshotId) public view returns (uint) {
         _mustNotBeFutureLookup(snapshotId);
-        return balanceOfAt(
-            account,
-            snapshotId
-        );
-    }
-
-    /**
-     * @dev Get weight of user from $DREAM
-     */
-    function getWeight(address account) public view returns (uint) {
-        uint balance = balanceOfAt(account, _getCurrentSnapshotId());
-        uint totalSupply = totalSupplyAt(_getCurrentSnapshotId());
-
-        require(balance >= 1, "DreamToken: insufficient balance");
-        require(totalSupply >= 1, "DreamToken: insufficient totalSupply");
-
-        return (balance * 10000) / totalSupply;
-    }
-
-    function getPastWeight(address account, uint snapshotId) public view returns (uint) {
-        _mustNotBeFutureLookup(snapshotId);
-        uint balance = balanceOfAt(account, _getCurrentSnapshotId());
-        uint totalSupply = totalSupplyAt(_getCurrentSnapshotId());
-
-        require(balance >= 1, "DreamToken: insufficient balance");
-        require(totalSupply >= 1, "DreamToken: insufficient totalSupply");
-
-        return (balance * 10000) / totalSupply;
+        return balanceOfAt(account, snapshotId);
     }
 }
