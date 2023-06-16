@@ -1,16 +1,14 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity ^0.8.9;
 
+
+
+import "deps/openzeppelin/token/ERC20/extensions/ERC20Snapshot.sol";
+import "deps/openzeppelin/token/ERC20/extensions/draft-ERC20Permit.sol";
 import "deps/openzeppelin/token/ERC20/ERC20.sol";
 import "deps/openzeppelin/token/ERC20/extensions/ERC20Burnable.sol";
-
-// im still being a pig and pulling this from github
-import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v4.9.0/contracts/token/ERC20/extensions/ERC20Snapshot.sol";
-
-// yup ...
-import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v4.9.0/contracts/token/ERC20/extensions/draft-ERC20Permit.sol";
-
 import "deps/openzeppelin/access/AccessControl.sol";
+
 import "smart_contracts/utils/Utils.sol";
 
 contract EmberToken is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit, AccessControl {
@@ -48,9 +46,6 @@ contract EmberToken is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit, AccessC
         _mint(to, amountToMint);
     }
 
-    // $ember is non transferable
-    function _transfer() internal override {}
-
     function _mint(address to, uint amount) internal override {
         if (!isRegistered[to]) {
             accounts.push(to);
@@ -58,6 +53,13 @@ contract EmberToken is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit, AccessC
         }
 
         super._mint(to, amount);
+    }
+
+    /**
+     * @dev This is a required override
+     */
+    function _beforeTokenTransfer(address from, address to, uint amount) internal override(ERC20, ERC20Snapshot) {
+        super._beforeTokenTransfer(from, to, amount);
     }
 
     function snapshot() public onlyRole(DEFAULT_ADMIN_ROLE) {
@@ -95,7 +97,7 @@ contract EmberToken is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit, AccessC
     function getPastWeight(address account, uint snapshotId) public view returns (uint) {
         require(snapshotId <= _getCurrentSnapshotId());
 
-        balance = balanceOfAt(account, snapshotId);
+        uint balance = balanceOfAt(account, snapshotId);
 
         return (balance / totalSupplyAt(snapshotId)) * 10000;
     }

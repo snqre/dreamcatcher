@@ -9,7 +9,6 @@ import "deps/openzeppelin/access/AccessControl.sol";
 
 import "smart_contracts/utils/Utils.sol";
 import "smart_contracts/tokens/ember_token/EmberToken.sol";
-import "smart_contracts/finance/wallets/linear_vested_wallet/LinearVestedWallet.sol";
 
 contract DreamToken is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit, AccessControl {
     uint mintable_;
@@ -23,12 +22,10 @@ contract DreamToken is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit, AccessC
             _grantRole(DEFAULT_ADMIN_ROLE, admins[i]);
         }
 
-        _mint(terminal, Utils.convertToWei(180000000));
-
         /**
          * @dev Here we deploy Ember token
          */
-        emberToken = new EmberToken(terminal);
+        emberToken = new EmberToken();
     }
 
     function _mustBeAdmin() internal view {
@@ -39,8 +36,8 @@ contract DreamToken is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit, AccessC
         require(snapshotId <= _getCurrentSnapshotId(), "must not be future lookup");
     }
 
-    function _mustBeMintable(uint amount) {
-        require(amount <= mintable, "insufficient mintable amount left");
+    function _mustBeMintable(uint amount) internal view {
+        require(amount <= mintable_, "insufficient mintable amount left");
     }
 
     /**
@@ -65,7 +62,8 @@ contract DreamToken is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit, AccessC
      * @dev Creates a snapshot and returns the snapshot reference
      * @notice Will also snapshot Ember Token
      */
-    function snapshot() public onlyAdmin returns (uint) {
+    function snapshot() public returns (uint) {
+        _mustBeAdmin();
         _snapshot();
 
         // also snapshot for $ember
@@ -74,34 +72,41 @@ contract DreamToken is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit, AccessC
         return _getCurrentSnapshotId();
     }
 
-    function mint(address to, uint amount) public onlyAdmin {
+    function mint(address to, uint amount) public {
+        _mustBeAdmin();
         _mint(to, amount);
     }
 
-    function emberMint(address to, uint amount) public onlyAdmin {
+    function emberMint(address to, uint amount) public {
+        _mustBeAdmin();
         emberToken.mint(to, amount);
     }
 
     // see $ember mintByPoints()
-    function emberMintByPoints(address to, uint points) public onlyAdmin {
+    function emberMintByPoints(address to, uint points) public {
+        _mustBeAdmin();
         emberToken.mintByPoints(to, points);
     }
 
-    function emberBurn(uint amount) public onlyAdmin {
+    function emberBurn(uint amount) public {
+        _mustBeAdmin();
         emberToken.burn(amount);
     }
 
-    function emberBurnFrom(address from, uint amount) public onlyAdmin {
+    function emberBurnFrom(address from, uint amount) public {
+        _mustBeAdmin();
         emberToken.burnFrom(from, amount);
     }
     
     // see $ember split()
-    function emberSplit(uint mul) public onlyAdmin {
+    function emberSplit(uint mul) public {
+        _mustBeAdmin();
         emberToken.split(mul);
     }
 
     // see $ember stack()
-    function emberStack(uint div) public onlyAdmin {
+    function emberStack(uint div) public {
+        _mustBeAdmin();
         emberToken.stack(div);
     }
 
@@ -112,6 +117,8 @@ contract DreamToken is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit, AccessC
     // The getVotes() function calculates and returns the total number of votes for an account in the current snapshot. It retrieves the base votes by getting the account's balance at the current snapshot using balanceOfAt(). It then fetches the weight of the account using emberToken.getWeight(account). After that, it calculates the additional votes by multiplying the base votes with the weight and dividing by 10000. Finally, it returns the sum of the base votes and additional votes.
     function getVotes(address account) public view returns (uint) {
         uint baseVotes = balanceOfAt(account, _getCurrentSnapshotId());
+
+        // error here
         uint weight = emberToken.getWeight(account);
         uint additionalVotes = (baseVotes * weight) / 10000;
 
@@ -119,7 +126,8 @@ contract DreamToken is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit, AccessC
     }
 
     // The getPastVotes() function calculates and returns the total number of votes for an account at a specific snapshotId in the past. It retrieves the base votes by getting the account's balance at the given snapshotId using balanceOfAt(). It then fetches the weight of the account at the same snapshotId using emberToken.getPastWeight(account, snapshotId). After that, it calculates the additional votes by multiplying the base votes with the weight and dividing by 10000. Finally, it returns the sum of the base votes and additional votes.
-    function getPastVotes(address account, uint snapshotId) public view checkFutureLookup(snapshotId) returns (uint) {
+    function getPastVotes(address account, uint snapshotId) public view returns (uint) {
+        _mustNotBeFutureLookup(snapshotId);
         uint baseVotes = balanceOfAt(account, snapshotId);
         uint weight = emberToken.getPastWeight(account, snapshotId);
         uint additionalVotes = (baseVotes * weight) / 10000;
@@ -140,8 +148,9 @@ contract DreamToken is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit, AccessC
     }
 
     // The getPastWeight() function calculates and returns the weight of an account at a specific snapshotId in the past. It ensures that the provided snapshotId is not in the future, and then calculates the weight based on the account's balance at that snapshot relative to the total supply at that snapshot.
-    function getPastWeight(address account, uint snapshotId) public view checkFutureLookup(snapshotId) returns (uint) {
-        balance = balanceOfAt(account, snapshotId);
+    function getPastWeight(address account, uint snapshotId) public view returns (uint) {
+        _mustNotBeFutureLookup(snapshotId);
+        uint balance = balanceOfAt(account, snapshotId);
 
         return (balance / totalSupplyAt(snapshotId)) * 10000;
     }
@@ -152,7 +161,8 @@ contract DreamToken is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit, AccessC
     }
 
     // The emberGetPastWeight() function calls the getPastWeight() function of another contract emberToken with the specified account and snapshotId parameters. It retrieves the weight of an account at a specific snapshotId using the emberToken contract.
-    function emberGetPastWeight(address account, uint snapshotId) public view checkFutureLookup(snapshotId) returns (uint) {
+    function emberGetPastWeight(address account, uint snapshotId) public view returns (uint) {
+        _mustNotBeFutureLookup(snapshotId);
         return emberToken.getPastWeight(account, snapshotId);
     }
 }
