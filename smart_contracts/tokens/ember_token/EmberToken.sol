@@ -16,6 +16,9 @@ contract EmberToken is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit, AccessC
     
     mapping(address => bool) isRegistered;
 
+    /**
+     * @notice Only Dream can change Ember
+     */
     constructor() ERC20("EmberToken", "EMBER") ERC20Permit("EmberToken") {
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }

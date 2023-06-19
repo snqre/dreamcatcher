@@ -1,336 +1,59 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
-pragma solidity ^0.8.0;
+// SPDX-License-Identifier: CC-BY-NC-SA-4.0
+pragma solidity ^0.8.9;
+
+// need to import these locally to continue this contract
 
 import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/security/ReentrancyGuard.sol";
 
 import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/structs/EnumerableSet.sol";
+import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 import "deps/openzeppelin/access/AccessControl.sol";
 
-interface ITerminal {
-    function setObjWhitelist(address contract_, bool newWhitelistState) external;
+import "smart_contracts/terminal/authenticator/Authenticator.sol";
 
 
-    event ConnectionEstablished(address indexed contract_, string signature, bytes args);
-    event ObjWhitelistEdit(address indexed obj, bool isWhitelisted);
+contract Terminal is Initializable, AccessControlUpgradeable, UUPSUpgradeable {
+    bytes public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
+    bytes public constant OPERATOR_ROLE = keccak256("OPERATOR_ROLE");
+    bytes public constant BOARD_ROLE = keccak256("BOARD_ROLE");
+    bytes public constant COUNCIL_ROLE = keccak256("COUNCIL_ROLE");
+    bytes public constant DEV_ROLE = keccak256("DEV_ROLE");
+    bytes public constant SYNDICATE_ROLE = keccak256("SYNDICATE_ROLE");
+    bytes public constant MEMBER_ROLE = keccak256("MEMBER_ROLE");
 
-    event MultiSigProposalSigned(uint ref, address indexed signer_, uint timestamp);
-    event MultiSigProposalHasBeenPassed(uint ref, address indexed lastSigner, uint timestamp, uint numberOfSignatures);
-    event MultiSigProposalSignatureRevoked(uint ref, address indexed signer_, uint timestamp);
-    event MultiSigProposalCancelled(uint ref, address indexed caller, uint timestamp);
-}
+    mapping(address => bool) private contractWhitelist;
 
-using EnumerableSet for EnumerableSet.AddressSet;
-contract Terminal is ITerminal, AccessControl {
-    struct Settings {
-        uint minAdmin;
-        uint maxAdmin;
-        uint minReqBoardMembers;
-        uint maxReqBoardMembers;
-        uint minReqSyndicates;
-        uint maxReqSyndicates;
+    address safe;
+
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
     }
 
-    // STATE DECLARATIONS FOR ACCESS CONTROL
-    bytes32 public constant ROLE_ADMIN = keccak256("ROLE_ADMIN");
-    bytes32 public constant ROLE_OPERATOR = keccak256("ROLE_OPERATOR");
-    bytes32 public constant ROLE_BOARD_MEMBER = keccak256("ROLE_BOARD_MEMBER");
-    bytes32 public constant ROLE_SYNDICATE = keccak256("ROLE_SYNDICATE");
-    bytes32 public constant ROLE_MEMBER = keccak256("ROLE_MEMBER");
+    function initialize() initializer public {
+        __AccessControl_init();
+        __UUPSUpgradeable_init();
 
-    EnumerableSet.AddressSet private admins;
-    EnumerableSet.AddressSet private operators;
-    EnumerableSet.AddressSet private boardMembers;
-    EnumerableSet.AddressSet private syndicates;
-    EnumerableSet.AddressSet private members;
-
-    // STATE DECLARATIONS FOR MULTI SIG PROPOSALS
-    struct MultiSigProposal {
-        uint startTimestamp;
-        uint endTimestamp;
-        uint threshold;
-
-        bool hasBeenCancelled;
-        bool hasBeenExecuted;
-        bool hasBeenPassed;
-
-        address obj;
-        string signature;
-        bytes args;
+        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        _grantRole(UPGRADER_ROLE, msg.sender);
+        _grantRole(DEV_ROLE, 0x000007c3E0A73f06A64F057e8cfe1848B239A19B);
     }
 
-    uint numberOfMultiSigProposals;
+    function _authorizeUpgrade(address newImplementation) internal override {}
 
-    mapping(uint => MultiSigProposal) private multiSigProposals;
-    mapping(uint => EnumerableSet.AddressSet) private signers;
-    mapping(uint => EnumerableSet.AddressSet) private signatures;
-
-    // STATE DECLARATIONS FOR TERMINAL
-    mapping(address => bool) private objWhitelist;
-
-    // MODIFIERS FOR MULTI SIG PROPOSALS
-    modifier onlySignerOf(uint ref) {
-        bool isSignerOf = signers[ref].contains(msg.sender);
-        require(isSignerOf, "caller is not a signer for the selected multi sig proposal");
-        _;
-    }
-
-    modifier onlyIfPassed(uint ref) {
-        bool hasBeenPassed = multiSigProposals[ref].hasBeenPassed;
-        require(hasBeenPassed, "selected multi sig proposal has not been passed");
-        _;
-    }
-
-    modifier onlyIfNotPassed(uint ref) {
-        bool hasBeenPassed = multiSigProposals[ref].hasBeenPassed;
-        require(!hasBeenPassed, "selected multi sig proposal has been passed");
-        _;
-    }
-
-    modifier onlyIfCancelled(uint ref) {
-        bool hasBeenCancelled = multiSigProposals[ref].hasBeenCancelled;
-        require(hasBeenCancelled, "selected multi sig proposal has not been cancelled");
-        _;
-    }
-
-    modifier onlyIfNotCancelled(uint ref) {
-        bool hasBeenCancelled = multiSigProposals[ref].hasBeenCancelled;
-        require(!hasBeenCancelled, "selected multi sig proposal has been cancelled");
-        _;
-    }
-
-    modifier onlyIfExecuted(uint ref) {
-        bool hasBeenExecuted = multiSigProposals[ref].hasBeenExecuted;
-        require(hasBeenExecuted, "selected multi sig proposal has been executed");
-        _;
-    }
-
-    modifier onlyIfNotExecuted(uint ref) {
-        bool hasBeenExecuted = multiSigProposals[ref].hasBeenExecuted;
-        require(!hasBeenExecuted, "selected multi sig proposal has not been executed");
-        _;
-    }
-
-    modifier onlyifExpired(uint ref) {
-        bool isExpired = block.timestamp >= multiSigProposals[ref].endTimestamp;
-        require(isExpired, "selected multi sig proposal has not expired");
-        _;
-    }
-
-    modifier onlyIfNotExpired(uint ref) {
-        bool isExpired = block.timestamp >= multiSigProposals[ref].endTimestamp;
-        require(!isExpired, "selected multi sig proposal has expired");
-        _;
-    }
-
-    modifier onlyIfNotDuplicateSignature(uint ref) {
-        bool hasDuplicateSignature = signatures[ref].contains(msg.sender);
-        require(!hasDuplicateSignature, "caller has already signed for selected multi sig proposal");
-        _;
-    }
-
-    modifier onlyIfDuplicateSignature(uint ref) {
-        bool hasDuplicateSignature = signatures[ref].contains(msg.sender);
-        require(hasDuplicateSignature, "caller has not signed for selected multi sig proposal");
-        _;
-    }
-
-    modifier onlyIfThresholdHasBeenMet(uint ref) {
-        uint currentThreshold = (signers[ref].length() * 100) / signatures[ref].length();
-        require(currentThreshold >= multiSigProposals[ref].threshold);
-        _;
-    }
-
-    modifier onlyIfThresholdHasNotBeenMet(uint ref) {
-        uint currentThreshold = (signers[ref].length() * 100) / signatures[ref].length();
-        require(currentThreshold < multiSigProposals[ref].threshold);
-        _;
-    }
-
-    modifier onlyIfObjIsWhitelisted(address contract_) {
-        require(objWhitelist[contract_], "contract is not whitelisted");
-        _;
-    }
-
-    modifier onlyIfObjIsNotWhitelisted(address contract_) {
-        require(!objWhitelist[contract_], "contract is whitelisted");
-        _;
-    }
-
-    // AUTHENTICATOR
-    modifier onlyAdmin {
-        require(admins.contains(msg.sender), "caller is not admin");
-        _;
-    }
-
-    modifier onlyNotAdmin {
-        require(!admins.contains(msg.sender), "caller is admin");
-        _;
-    }
-
-    modifier onlyOperator {
-        require(operators.contains(msg.sender), "caller is not operator");
-        _;
-    }
-
-    modifier onlyNotOperator {
-        require(!operators.contains(msg.sender), "caller is operator");
-        _;
-    }
-
-    modifier onlyBoardMember {
-        require(boardMembers.contains(msg.sender), "caller is not board member");
-        _;
-    }
-
-    modifier onlyNotBoardMember {
-        require(!boardMembers.contains(msg.sender), "caller is board member");
-    }
-
-    modifier onlySyndicate {
-        require(syndicates.contains(msg.sender), "caller is not syndicate");
-        _;
-    }
-
-    modifier onlyNotSyndicate {
-        require(!syndicates.contains(msg.sender), "caller is syndicate");
-        _;
-    }
-
-    modifier onlyMember {
-        require(members.contains(msg.sender), "caller is not member");
-        _;
-    }
-
-    modifier onlyNotMember {
-        require(!members.contains(msg.sender), "caller is member");
-        _;
-    }
-
-    constructor(address[] memory boards) {
-        _grantRoleAdmin(address(this));
-
-        _grantRoleOperator(0x000007c3E0A73f06A64F057e8cfe1848B239A19B);
-    }
-
-    function _grantRoleAdmin(address account) private {
-        _grantRole(ROLE_ADMIN, account);
-        _grantRole(DEFAULT_ADMIN_ROLE, account);
-        admins.add(account);
-    }
-
-    function _grantRoleOperator(address account) private {
-        _grantRole(ROLE_OPERATOR, account);
-        operators.add(account);
-    }
-
-    function _grantRoleBoardMember(address account) private {
-        _grantRole(ROLE_BOARD_MEMBER, account);
-        boardMembers.add(account);
-    }
-
-    function _grantRoleSyndicate(address account) private {
-        _grantRole(ROLE_SYNDICATE, account);
-        syndicates.add(account);
-    }
-
-    function _grantRoleMember(address account) private {
-        _grantRole(ROLE_MEMBER, account);
-        members.add(account);
-    }
-
-    function _safeConnect(address contract_, string memory signature, bytes memory args) private onlyIfObjIsWhitelisted(contract_) returns (bool) {
-        (bool callWasSuccessful, ) = address(contract_).delegatecall(abi.encodeWithSignature(signature, args));
-        require(callWasSuccessful, "call was not successful");
-        emit ConnectionEstablished(contract_, signature, args);
+    function _safeDelegateCall(address contract_, string memory signature, bytes memory args) public onlyRole(DEFAULT_ADMIN_ROLE) returns (bool) {
+        (bool success, ) = address(contract_).delegatecall(abi.encodeWithSignature(signature, args));
+        require(success, "Terminal: call was not successful");
         return true;
     }
 
-    function setObjWhitelist(address contract_, bool newWhitelistState) public onlyAdmin {
-        objWhitelist[contract_] = newWhitelistState;
-        emit ObjWhitelistEdit(contract_, newWhitelistState);
+    fallback() external payable {
+        // check if ether or erc20
+        // send to safe
+        // if value is less than 1 wei means they were likely trying to access a function
     }
-
-    function newMultiSigProposal(address[] memory signers_, uint timeout, uint threshold_, address obj_, string memory signature_, bytes memory args_) public onlyBoardMember {
-        bool has2OrMoreThan2Signers = signers_.length >= 2;
-        bool has9OrLessThan9Signers = signers_.length <= 9;
-        require(has2OrMoreThan2Signers, "signers_.length >= 2");
-        require(has9OrLessThan9Signers, "signers_.length <= 9");
-
-        numberOfMultiSigProposals += 1;
-        uint now_ = block.timestamp;
-        uint ref = numberOfMultiSigProposals;
-        
-        multiSigProposals[ref] = MultiSigProposal({
-            startTimestamp: now_,
-            endTimestamp: now_ + timeout,
-            threshold: threshold_,
-            hasBeenCancelled: false,
-            hasBeenExecuted: false,
-            hasBeenPassed: false,
-            obj: obj_,
-            signature: signature_,
-            args: args_
-        });
-
-        for (uint i = 0; i < signers_.length; i++) {
-            signers[ref].add(signers_[i]);
-        }
-    }
-
-    function multiSigProposalSign(uint ref) public onlyIfNotExpired(ref) onlyIfNotCancelled(ref) onlyIfNotDuplicateSignature(ref) onlySignerOf(ref) {
-        signatures[ref].add(msg.sender);
-        emit MultiSigProposalSigned(ref, msg.sender, block.timestamp);
-
-        uint currentQuota = (signers[ref].length() * 100) / signatures[ref].length();
-
-        // getting stack too deep error ffs
-        if (currentQuota >= multiSigProposals[ref].threshold) {
-            multiSigProposals[ref].hasBeenPassed = true;
-            emit MultiSigProposalHasBeenPassed(ref, msg.sender, block.timestamp, signatures[ref].length());
-        }
-    }
-
-    function multiSigProposalUnsign(uint ref) public onlyIfNotExpired(ref) onlyIfNotCancelled(ref) onlyIfDuplicateSignature(ref) onlySignerOf(ref) {
-        signatures[ref].remove(msg.sender);
-        emit MultiSigProposalSignatureRevoked(ref, msg.sender, block.timestamp);
-    }
-
-    function multiSigProposalCancel(uint ref) public onlyIfNotExpired(ref) onlyIfNotCancelled(ref) onlyIfNotExecuted(ref) onlyBoardMember {
-        multiSigProposals[ref].hasBeenCancelled = true;
-        emit MultiSigProposalCancelled(ref, msg.sender, block.timestamp);
-    }
- 
-    // once a multi sig proposal is passed a board member can call this function
-    // note to establish delegatecall with a contract not in delegatecall a proposal can be made to add a contract to whitelist first
-    function multiSigProposalExecute(uint ref) public onlyIfNotExpired(ref) onlyIfNotCancelled(ref) onlyIfPassed(ref) onlyIfNotExecuted(ref) onlyBoardMember returns (bool) {
-        address contract_ = multiSigProposals[ref].obj;
-        string memory signature = multiSigProposals[ref].signature;
-        bytes memory args = multiSigProposals[ref].args;
-
-        _safeConnect(contract_, signature, args);
-        return true;
-    }
-
-    function multiSigProposalStartTimestamp(uint ref) public view returns (uint) {
-        return multiSigProposals[ref].startTimestamp;
-    }
-
-    function multiSigProposalEndTimestamp(uint ref) public view returns (uint) {
-        return multiSigProposals[ref].endTimestamp;
-    }
-
-    function multiSigProposalHasBeenCancelled(uint ref) public view returns (bool) {
-        return multiSigProposals[ref].hasBeenCancelled;
-    }
-
-    function multiSigProposalHasBeenExecuted(uint ref) public view returns (bool) {
-        return multiSigProposals[ref].hasBeenExecuted;
-    }
-
-    function multiSigProposalHasBeenPassed(uint ref) public view returns (bool) {
-        return multiSigProposals[ref].hasBeenPassed;
-    }
-
-
+    
 }

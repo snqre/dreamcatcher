@@ -294,13 +294,11 @@ contract MultiSigProposals is Context, Ownable, ReentrancyGuard {
         _mustNotBeImplemented(reference_);
         _mustNotBeExpired(reference_);
 
-        // we remove the callers signature
         multiSigProposals[reference_].signatures.remove(_msgSender());
 
         emit SignatureRevoked(reference_, _msgSender(), block.timestamp);
     }
 
-    // in this context this is cancel
     function _withdraw(uint reference_) internal virtual {
         _mustBePresent(reference_);
         _mustNotBeCleared(reference_);
@@ -313,7 +311,6 @@ contract MultiSigProposals is Context, Ownable, ReentrancyGuard {
         emit Withdrawn(reference_, _msgSender(), block.timestamp);
     }
 
-    // this alone does nothing, can only set once
     function _implement(uint reference_) internal virtual {
         _mustBePresent(reference_);
         _mustNotBeExpired(reference_);
@@ -350,13 +347,11 @@ contract MultiSigProposals is Context, Ownable, ReentrancyGuard {
         return true;
     }
 
-    // only signer can call this function
     function sign(uint reference_) public virtual nonReentrant returns (bool) {
         _sign(reference_);
         return true;
     }
 
-    // only signer can call this function
     function unsign(uint reference_) public virtual nonReentrant returns (bool) {
         _unsign(reference_);
         return true;
@@ -372,12 +367,10 @@ contract MultiSigProposals is Context, Ownable, ReentrancyGuard {
         return true;
     }
 
-    // number of proposals
     function count_() public view virtual returns (uint) {
         return count;
     }
 
-    // view request from proposal
     function requestOf(uint reference_) public view virtual returns (
         bool delegate,
         address target,
@@ -407,7 +400,6 @@ contract MultiSigProposals is Context, Ownable, ReentrancyGuard {
         );
     }
 
-    // view meta data of a proposal
     function metaOf(uint reference_) public view virtual returns (
         address creator,
         uint startTimestamp,
@@ -425,13 +417,11 @@ contract MultiSigProposals is Context, Ownable, ReentrancyGuard {
         );
     }
 
-    // view expected signers of a proposal
     function signersOf(uint reference_) public view virtual returns (address[] memory) {
         _mustBePresent(reference_);
         return Utils.convertEnumerableSetAddressSetToArray(multiSigProposals[reference_].signers);
     }
 
-    // view signatures of a proposal
     function signaturesOf(uint reference_) public view virtual returns (address[] memory) {
         _mustBePresent(reference_);
         return Utils.convertEnumerableSetAddressSetToArray(multiSigProposals[reference_].signatures);
