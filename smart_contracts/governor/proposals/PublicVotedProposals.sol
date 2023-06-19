@@ -523,12 +523,12 @@ contract PublicVotedProposals is Context, Ownable, ReentrancyGuard {
         return true;
     }
 
-    function withdraw(uint reference_) public virtual nonReentrant returns (bool success) {
+    function withdraw(uint reference_) public virtual onlyOwner nonReentrant returns (bool success) {
         _withdraw(reference_);
         return true;
     }
-
-    function implement(uint reference_) public virtual nonReentrant returns (bool success) {
+    //again this does nothing unless connected to other contract
+    function implement(uint reference_) public virtual onlyOwner nonReentrant returns (bool success) {
         _implement(reference_);
         return true;
     }

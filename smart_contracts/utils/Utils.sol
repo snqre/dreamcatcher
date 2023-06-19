@@ -63,6 +63,9 @@ library Utils {
 
         uint secondsPassed = currentTimestamp - timestamp;
         uint daysPassed_ = secondsPassed / 86400;
+
+        if (daysPassed_ < 1) { daysPassed_ = 0; }
+        
         return daysPassed_;
     }
 }

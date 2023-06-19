@@ -1,15 +1,6 @@
 // SPDX-License-Identifier: CC-BY-NC-SA-4.0
 pragma solidity ^0.8.0;
 
-/** THIS WAY?
-import { Ownable } from "deps/openzeppelin/access/Ownable.sol";
-import { EnumerableSet } from "deps/openzeppelin/utils/structs/EnumerableSet.sol";
-import { Address } from "deps/openzeppelin/utils/Address.sol";
-import { Context } from "deps/openzeppelin/utils/Context.sol";
-import { ReentrancyGuard } from "deps/openzeppelin/security/ReentrancyGuard.sol";
-import { Utils } from "smart_contracts/utils/Utils.sol";
-*/
-
 import "deps/openzeppelin/access/Ownable.sol";
 import "deps/openzeppelin/utils/structs/EnumerableSet.sol";
 import "deps/openzeppelin/utils/Address.sol";
@@ -193,7 +184,7 @@ contract MultiSigProposals is Context, Ownable, ReentrancyGuard {
         string memory signature,
         bytes memory args,
         address[] memory signers
-    ) internal virtual {
+    ) internal virtual nonReentrant {
         count ++;
         MultiSigProposal storage newMultiSigProposal = multiSigProposals[count];
         newMultiSigProposal.reference_ = count;
@@ -264,7 +255,7 @@ contract MultiSigProposals is Context, Ownable, ReentrancyGuard {
         );
     }
 
-    function _sign(uint reference_) internal virtual {
+    function _sign(uint reference_) internal virtual nonReentrant {
         _mustBePresent(reference_);
         _mustBeSigner(reference_, _msgSender());
         _mustNotBeCleared(reference_);
@@ -285,7 +276,7 @@ contract MultiSigProposals is Context, Ownable, ReentrancyGuard {
         }
     }
 
-    function _unsign(uint reference_) internal virtual {
+    function _unsign(uint reference_) internal virtual nonReentrant {
         _mustBePresent(reference_);
         _mustBeSigner(reference_, _msgSender());
         _mustHaveSigned(reference_, _msgSender());
@@ -299,7 +290,7 @@ contract MultiSigProposals is Context, Ownable, ReentrancyGuard {
         emit SignatureRevoked(reference_, _msgSender(), block.timestamp);
     }
 
-    function _withdraw(uint reference_) internal virtual {
+    function _withdraw(uint reference_) internal virtual nonReentrant {
         _mustBePresent(reference_);
         _mustNotBeCleared(reference_);
         _mustNotBeWithdrawn(reference_);
@@ -311,7 +302,7 @@ contract MultiSigProposals is Context, Ownable, ReentrancyGuard {
         emit Withdrawn(reference_, _msgSender(), block.timestamp);
     }
 
-    function _implement(uint reference_) internal virtual {
+    function _implement(uint reference_) internal virtual nonReentrant {
         _mustBePresent(reference_);
         _mustNotBeExpired(reference_);
         _mustNotBeImplemented(reference_);
