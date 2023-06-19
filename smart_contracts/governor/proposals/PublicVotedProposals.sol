@@ -294,8 +294,29 @@ contract PublicVotedProposals is Context, Ownable, ReentrancyGuard {
                 sideOf[msg.sender][reference_] = 2;
                 proposal.votesAgainst += votes;
             }
-        }
-        
+        }   
+    }
+
+    function _withdraw(uint reference_) internal virtual nonReentrant {
+        _mustBePresent(reference_);
+        _mustNotBeCleared(reference_);
+        _mustNotBeWithdrawn(reference_);
+        _mustNotBeImplemented(reference_);
+        _mustNotBeExpired(reference_);
+
+        PublicVotedProposal storage proposal = publicVotedProposals[reference_];
+        proposal.hasBeenWithdrawn = true;        
+    }
+
+    function _implement(uint reference_) internal virtual nonReentrant {
+        _mustBePresent(reference_);
+        _mustNotBeExpired(reference_);
+        _mustNotBeImplemented(reference_);
+        _mustBeCleared(reference_);
+        _mustNotBeWithdrawn(reference_);
+
+        PublicVotedProposal storage proposal = publicVotedProposals[reference_];
+        proposal.hasBeenImplemented = true;
     }
 
     function pushNewPublicVotedProposal(
@@ -309,10 +330,14 @@ contract PublicVotedProposals is Context, Ownable, ReentrancyGuard {
         string memory signature,
         bytes memory args
     ) internal virtual nonReentrant returns (
-        uint,
-        uint
+        bool success,
+        uint reference__,
+        uint snapshotId_
     ) {//generate new proposal using internal function
-        return _pushNewPublicVotedProposal(
+        (
+            uint reference_,
+            uint snapshotId
+        ) = _pushNewPublicVotedProposal(
             reason,
             startTimestamp,
             timeout,
@@ -323,17 +348,104 @@ contract PublicVotedProposals is Context, Ownable, ReentrancyGuard {
             signature,
             args
         );
+
+        return (
+            true,
+            reference_,
+            snapshotId
+        );
     }
 
     function vote(
         uint reference_, 
         uint side
-    ) public virtual nonReentrant returns (bool) {
+    ) public virtual nonReentrant returns (bool success) {
         _vote(
             reference_,
             side
         );
 
         return true;
+    }
+
+    function withdraw(uint reference_) public virtual nonReentrant returns (bool success) {
+        _withdraw(reference_);
+        return true;
+    }
+
+    function implement(uint reference_) public virtual nonReentrant returns (bool success) {
+        _implement(reference_);
+        return true;
+    }
+
+    function count_() public view virtual returns (uint) {
+        return count;
+    }
+
+    function requestOf(uint reference_) public view virtual returns (
+        bool delegate,
+        address target,
+        string memory signature,
+        bytes memory args
+    ) {
+        _mustBePresent(reference_);
+        PublicVotedProposal storage proposal = publicVotedProposals[reference_];
+        return (
+            proposal.delegate,
+            proposal.target,
+            proposal.signature,
+            proposal.args
+        );
+    }
+
+    function stateOf(uint reference_) public view virtual returns (
+        bool hasBeenWithdrawn,
+        bool hasBeenImplemented,
+        bool hasBeenCleared
+    ) {
+        _mustBePresent(reference_);
+        PublicVotedProposal storage proposal = publicVotedProposals[reference_];
+        return (
+            proposal.hasBeenWithdrawn,
+            proposal.hasBeenImplemented,
+            proposal.hasBeenCleared
+        );
+    }
+
+    function metaOf(uint reference_) public view virtual returns (
+        address creator,
+        string memory reason,
+        uint snapshotId,
+        uint startTimestamp,
+        uint endTimestamp,
+        uint timeout,
+        uint quorum,
+        uint quorumRequired,
+        uint votesFor,
+        uint votesAgainst,
+        uint votesToAbstain,
+        uint threshold
+    ) {
+        _mustBePresent(reference_);
+        PublicVotedProposal storage proposal = publicVotedProposals[reference_];
+        return (
+            proposal.creator,
+            proposal.reason,
+            proposal.snapshotId,
+            proposal.startTimestamp,
+            proposal.endTimestamp,
+            proposal.timeout,
+            proposal.quorum,
+            proposal.quorumRequired,
+            proposal.votesFor,
+            proposal.votesAgainst,
+            proposal.votesToAbstain,
+            proposal.threshold
+        );
+    }
+    //get everyone who has voted on this proposal
+    function votersOf(uint reference_) public view virtual returns (address[] memory) {
+        _mustBePresent(reference_);
+        return Utils.convertEnumerableSetAddressSetToArray(publicVotedProposals[reference_].voters);
     }
 }
