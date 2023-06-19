@@ -13,7 +13,6 @@ import "smart_contracts/tokens/dream_token/DreamToken.sol";
 using EnumerableSet for EnumerableSet.AddressSet;
 contract PublicVotedProposals is Context, Ownable, ReentrancyGuard {
     uint count;
-    uint countActivitySnapshots;
     address dreamToken;
 
     struct PublicVotedProposal {
@@ -39,43 +38,67 @@ contract PublicVotedProposals is Context, Ownable, ReentrancyGuard {
         bytes args;
     }
 
-    struct ActivitySnapshot {
-        uint timestamp;
-        uint reference_;
-        uint activeProposals;
-        uint countInteractions;
-    }
-
     mapping(uint => PublicVotedProposal) private publicVotedProposals;
-    mapping(uint => ActivitySnapshot) private activitySnapshots;
 
     constructor(address owner) Ownable(owner) {}
 
-    function _mustBeMember(uint reference_, address account) internal view virtual {
-        // get snapshotId
-        uint sId = publicVotedProposals[reference_].snapshotId;
-
-        // get balance at the time of the proposal
-        uint balance = IDreamToken(dreamToken).getVotesAt(account, sId);
-
-        // caller must have at least 1 wei of $DREAM to be a member
-        require(balance >= 1, "PublicVotedProposal: caller is not a member");
+    function _mustNotBeMember(
+        uint snapshotId
+    ) internal view virtual {
+        require(
+            IDreamToken(dreamToken).getVotesAt(
+                msg.sender,
+                snapshotId
+            ) <= 0,
+            "PublicVotedProposals: caller is a member of referenced member"
+        );
     }
 
-    function _getVotes(address account) internal view virtual returns (uint) {
-        return IDreamToken(dreamToken).getVotes(account);
+    function _mustBeMember(
+        uint snapshotId
+    ) internal view virtual {
+        require(
+            IDreamToken(dreamToken).getVotesAt(
+                msg.sender,
+                snapshotId
+            ) >= 1,
+            "PublicVotedProposals: caller is not a member"
+        );
     }
 
-    /**
-     * @dev Activity snapshots are used to measure the quorum
-     * If there is less activity, less quorum is needed
-     * Vice versa more activity will require more quorum
-     * This can also incentive more proposals
-     * During less active moments, its easier to pass a proposal which results in more proposals
-     */
+    function _mustNotBeCleared(uint reference_) internal view virtual {
+        require(!publicVotedProposals[reference_].hasBeenCleared, "PublicVotedProposals: referenced proposal has been cleared");
+    }
 
-    function _calculateAverageActiveQuorum() internal virtual returns (
-        uint
+    function _mustBeCleared(uint reference_) internal view virtual {
+        require(publicVotedProposals[reference_].hasBeenCleared, "PublicVotedProposals: referenced proposal has not been cleared");
+    }
+
+    function _mustNotBeWithdrawn(uint reference_) internal view virtual {
+        require(!publicVotedProposals[reference_].hasBeenWithdrawn, "PublicVotedProposals: referenced proposal has been withdrawn");
+    }
+
+    function _mustBeWithdrawn(uint reference_) internal view virtual {
+        require(publicVotedProposals[reference_].hasBeenWithdrawn, "PublicVotedProposals: referened proposal has not been withdrawn");
+    }
+
+    function _mustNotBeImplemented(uint reference_) internal view virtual {
+        require(!publicVotedProposals[reference_].hasBeenImplemented, "PublicVotedProposals: referenced proposal has been implemented");
+    }
+
+    function _mustBeImplemented(uint reference_) internal view virtual {
+        require(publicVotedProposals[reference_].hasBeenImplemented, "PublicVotedProposals: referenced proposal has not been implemented");
+    }
+    //required quorum wip
+    function _requiredQuorumHasBeenMet(uint reference_) internal view virtual {
+        uint currentQuorum = (publicVotedProposals[reference_])
+    }
+
+    function _getAverageActiveQuorum(
+        uint rangeBeginTimestamp,
+        uint rangeEndTimestamp
+    ) internal virtual returns (
+        uint //average active quorum
     ) {
         uint activeProposals;
         uint totalQuorum;
@@ -86,11 +109,11 @@ contract PublicVotedProposals is Context, Ownable, ReentrancyGuard {
         ) {//too many proposals may increase gas costs too much
             PublicVotedProposal storage proposal = publicVotedProposals[i];
             if (//conditions to be an active proposal
-                block.timestamp >= proposal.startTimestamp &&
-                block.timestamp <= proposal.endTimestamp &&
-                proposal.hasBeenWithdrawn == false &&
-                proposal.hasBeenImplemented == false &&
-                proposal.hasBeenCleared == false
+                rangeBeginTimestamp          >= proposal.startTimestamp &&
+                rangeEndTimestamp            <= proposal.endTimestamp &&
+                proposal.hasBeenWithdrawn    == false &&
+                proposal.hasBeenImplemented  == false &&
+                proposal.hasBeenCleared      == false
             ) {
                 activeProposals ++;
                 totalQuorum += proposal.quorum;
@@ -99,35 +122,6 @@ contract PublicVotedProposals is Context, Ownable, ReentrancyGuard {
 
         uint averageActiveQuorum = totalQuorum / activeProposals;
         return averageActiveQuorum;
-    }
-
-    function _activitySnapshot() internal virtual returns (uint, uint) {
-        countActivitySnapshots ++;
-        uint reference_ = countActivitySnapshots;
-        ActivitySnapshot storage snapshot = activitySnapshots[reference_];
-        snapshot.timestamp = block.timestamp;
-        snapshot.reference_ = reference_;
-
-        uint activeProposals;
-        uint countInteractions;
-        for (uint i = 1; i < count; i++) {//too many proposals may increase the cost of this calculation
-            PublicVotedProposal storage proposal = publicVotedProposals[reference_];
-            if (//conditions to be an active proposal
-                proposal.startTimestamp <= snapshot.timestamp && 
-                proposal.endTimestamp >= snapshot.timestamp && 
-                proposal.hasBeenWithdrawn == false &&
-                proposal.hasBeenImplemented == false &&
-                proposal.hasBeenCleared == false
-            ) {
-                activeProposals ++;
-                countInteractions += proposal.quorum;
-            }
-        }
-
-        snapshot.activeProposals = activeProposals;
-        snapshot.countInteractions = countInteractions;
-        //return reference and timestamp
-        return (snapshot.reference_, snapshot.timestamp);
     }
 
     function _pushNewPublicVotedProposal(
@@ -140,40 +134,93 @@ contract PublicVotedProposals is Context, Ownable, ReentrancyGuard {
         address target,
         string memory signature,
         bytes memory args
-    ) internal virtual {
+    ) internal virtual nonReentrant returns (
+        uint,
+        uint
+    ) {
         count ++;
-        PublicVotedProposal storage newPublicVotedProposal = publicVotedProposals[count];
-        newPublicVotedProposal.reference_ = count;
-        newPublicVotedProposal.snapshotId = IDreamToken(dreamToken).snapshot();
-        newPublicVotedProposal.creator = _msgSender();
-        newPublicVotedProposal.reason = reason;
-
-        /** @dev setting startTimeframe and checking for default value */
+        PublicVotedProposal storage newProposal = publicVotedProposals[count];
+        newProposal.reference_ = count;
+        newProposal.snapshotId = IDreamToken(dreamToken).snapshot();
+        newProposal.creator = _msgSender();
+        newProposal.reason = reason;
+        //check for default startTimestamp
         uint defaultStartTimestamp = block.timestamp;
         if (startTimestamp == 0) {
-            newPublicVotedProposal.startTimestamp = defaultStartTimestamp;
+            newProposal.startTimestamp = defaultStartTimestamp;
         }
 
         else {
-            newPublicVotedProposal.startTimestamp = startTimestamp;
+            newProposal.startTimestamp = startTimestamp;
         }
-
-        /** @dev setting timeout and checking for default value */
-        uint defaultTimeout = 1 weeks;
+        //check for default timeout
+        uint defaultTimeout = 4 weeks;
         if (timeout == 0) {
-            newPublicVotedProposal.timeout = defaultTimeout;
+            newProposal.timeout = defaultTimeout;
         }
 
         else {
-            newPublicVotedProposal.timeout = timeout;
+            newProposal.timeout = timeout;
+        }
+        //check for default quorumRequired
+        uint now_ = block.timestamp;
+        uint range = now_ - 4 weeks;
+        uint defaultQuorumRequired = _getAverageActiveQuorum(
+            range,
+            now_
+        );
+        if (quorumRequired == 0) {
+            newProposal.quorumRequired = defaultQuorumRequired;
         }
 
-        /** @dev default check */
-        uint defaultQuorumRequired = 50;
+        else {
+            newProposal.quorumRequired = quorumRequired;
+        }
+        //check for default threshold
+        uint defaultThreshold = 80;
+        if (threshold == 0) {
+            newProposal.threshold = defaultThreshold;
+        }
 
-        // calculate based on algo
-        
-        
+        else {
+            newProposal.threshold = threshold;
+        }
+        //copy commands
+        newProposal.delegate = delegate;
+        newProposal.target = target;
+        newProposal.signature = signature;
+        newProposal.args = args;
+
+        return (//return reference and snapshot id
+            newProposal.reference_,
+            newProposal.snapshotId
+        );
     }
 
+    function pushNewPublicVotedProposal(
+        string memory reason,
+        uint startTimestamp,
+        uint timeout,
+        uint quorumRequired,
+        uint threshold,
+        bool delegate,
+        address target,
+        string memory signature,
+        bytes memory args
+    ) internal virtual nonReentrant returns (
+        uint,
+        uint
+    ) {//generate new proposal using internal function
+        return _pushNewPublicVotedProposal(
+            reason,
+            startTimestamp,
+            timeout,
+            quorumRequired,
+            threshold,
+            delegate,
+            target,
+            signature,
+            args
+        );
+    }
 }
