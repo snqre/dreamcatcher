@@ -10,6 +10,56 @@ import "deps/openzeppelin/security/ReentrancyGuard.sol";
 import "smart_contracts/utils/Utils.sol";
 import "smart_contracts/tokens/dream_token/DreamToken.sol";
 
+interface IPublicVotedProposals {
+    function pushNewPublicVotedProposal(
+        uint startTimestamp,
+        uint timeout,
+        uint quorumRequired,
+        bool delegate,
+        address target,
+        string memory signature,
+        bytes memory args
+    ) external returns (
+        bool,
+        uint,
+        uint
+    );
+
+    function vote(uint reference_) external returns (bool);
+    function withdraw(uint reference_) external returns (bool);
+    function implement(uint reference_) external returns (bool);
+
+    function count_() external view returns (uint);
+
+    function requestOf(uint reference_) external view returns (
+        bool delegate,
+        address target,
+        string memory signature,
+        bytes memory args
+    );
+
+    function stateOf(uint reference_) external view returns (
+        bool hasBeenWithdrawn,
+        bool hasBeenImplemented,
+        bool hasBeenCleared
+    );
+
+    function metaOf(uint reference_) external view returns (
+        address creator,
+        uint startTimestamp,
+        uint endTimestamp,
+        uint timeout,
+        uint quorum,
+        uint quorumRequired,
+        uint votesFor,
+        uint votesAgainst,
+        uint votesToAbstain,
+        uint threshold
+    );
+
+    function votersOf(uint reference_) external view returns (address[] memory);
+}
+
 using EnumerableSet for EnumerableSet.AddressSet;
 contract PublicVotedProposals is Context, Ownable, ReentrancyGuard {
     uint count;
@@ -44,6 +94,47 @@ contract PublicVotedProposals is Context, Ownable, ReentrancyGuard {
 
     //account => reference_ : side
     mapping(address => mapping(uint => uint)) private sideOf;
+
+    event PublicVotedProposalCreated(
+        uint indexed reference_,
+        address indexed creator,
+        uint indexed startTimestamp,
+        uint endTimestamp,
+        uint timeout,
+        uint quorumRequired,
+        bool delegate,
+        address target,
+        string signature,
+        bytes args,
+        uint timestamp
+    );
+
+    event Voted(
+        uint indexed reference_,
+        address indexed voter,
+        uint indexed votes,
+        uint side
+    );
+
+    event Cleared(
+        uint indexed reference_,
+        address indexed lastVoter,
+        uint indexed timestamp,
+        uint numberOfVoters,
+        uint quorum
+    );
+
+    event Withdrawn(
+        uint indexed reference_,
+        address indexed caller,
+        uint indexed timestamp
+    );
+
+    event Implemented(
+        uint indexed reference_,
+        address indexed caller,
+        uint indexed timestamp
+    );
 
     constructor(address owner) Ownable(owner) {}
 
@@ -114,6 +205,21 @@ contract PublicVotedProposals is Context, Ownable, ReentrancyGuard {
         uint quorum = publicVotedProposals[reference_].quorum;
         uint quorumRequired = publicVotedProposals[reference_].quorumRequired;
         if (quorum >= quorumRequired) {
+            return true;
+        }
+
+        else {
+            return false;
+        }
+    }
+
+    function _requiredThresholdHasBeenMet(uint reference_) internal view virtual returns (bool) {
+        uint threshold = publicVotedProposals[reference_].threshold;
+        uint votesFor = publicVotedProposals[reference_].votesFor;
+        uint votesAgainst = publicVotedProposals[reference_].votesAgainst;
+        uint totalVotes = votesFor + votesAgainst;
+        uint current = (votesFor * 100) / totalVotes;
+        if (current >= threshold) {
             return true;
         }
 
@@ -227,6 +333,20 @@ contract PublicVotedProposals is Context, Ownable, ReentrancyGuard {
         newProposal.signature = signature;
         newProposal.args = args;
 
+        emit PublicVotedProposalCreated(
+            count,
+            _msgSender(),
+            newProposal.startTimestamp,
+            newProposal.endTimestamp,
+            newProposal.timeout,
+            newProposal.quorumRequired,
+            newProposal.delegate,
+            newProposal.target,
+            newProposal.signature,
+            newProposal.args,
+            block.timestamp
+        );
+
         return (//return reference and snapshot id
             newProposal.reference_,
             newProposal.snapshotId
@@ -294,7 +414,30 @@ contract PublicVotedProposals is Context, Ownable, ReentrancyGuard {
                 sideOf[msg.sender][reference_] = 2;
                 proposal.votesAgainst += votes;
             }
-        }   
+        }
+
+        //recount votes and check if it has been cleared
+        if (
+            _requiredQuorumHasBeenMet(reference_) &&
+            _requiredThresholdHasBeenMet(reference_)
+        ) {
+            proposal.hasBeenCleared = true;
+
+            emit Cleared(
+                reference_,
+                _msgSender(),
+                block.timestamp,
+                proposal.voters.length(),
+                proposal.quorum
+            );
+        }
+
+        emit Voted(
+            reference_,
+            _msgSender(),
+            votes,
+            side
+        );
     }
 
     function _withdraw(uint reference_) internal virtual nonReentrant {
@@ -305,7 +448,13 @@ contract PublicVotedProposals is Context, Ownable, ReentrancyGuard {
         _mustNotBeExpired(reference_);
 
         PublicVotedProposal storage proposal = publicVotedProposals[reference_];
-        proposal.hasBeenWithdrawn = true;        
+        proposal.hasBeenWithdrawn = true;
+
+        emit Withdrawn(
+            reference_,
+            _msgSender(),
+            block.timestamp
+        );
     }
 
     function _implement(uint reference_) internal virtual nonReentrant {
@@ -317,6 +466,12 @@ contract PublicVotedProposals is Context, Ownable, ReentrancyGuard {
 
         PublicVotedProposal storage proposal = publicVotedProposals[reference_];
         proposal.hasBeenImplemented = true;
+
+        emit Implemented(
+            reference_,
+            _msgSender(),
+            block.timestamp
+        );
     }
 
     function pushNewPublicVotedProposal(
