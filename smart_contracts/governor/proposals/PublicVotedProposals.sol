@@ -13,6 +13,7 @@ import "smart_contracts/tokens/dream_token/DreamToken.sol";
 using EnumerableSet for EnumerableSet.AddressSet;
 contract PublicVotedProposals is Context, Ownable, ReentrancyGuard {
     uint count;
+    uint countActivitySnapshots;
     address dreamToken;
 
     struct PublicVotedProposal {
@@ -38,7 +39,15 @@ contract PublicVotedProposals is Context, Ownable, ReentrancyGuard {
         bytes args;
     }
 
+    struct ActivitySnapshot {
+        uint timestamp;
+        uint reference_;
+        uint activeProposals;
+        uint countInteractions;
+    }
+
     mapping(uint => PublicVotedProposal) private publicVotedProposals;
+    mapping(uint => ActivitySnapshot) private activitySnapshots;
 
     constructor(address owner) Ownable(owner) {}
 
@@ -55,6 +64,70 @@ contract PublicVotedProposals is Context, Ownable, ReentrancyGuard {
 
     function _getVotes(address account) internal view virtual returns (uint) {
         return IDreamToken(dreamToken).getVotes(account);
+    }
+
+    /**
+     * @dev Activity snapshots are used to measure the quorum
+     * If there is less activity, less quorum is needed
+     * Vice versa more activity will require more quorum
+     * This can also incentive more proposals
+     * During less active moments, its easier to pass a proposal which results in more proposals
+     */
+
+    function _calculateAverageActiveQuorum() internal virtual returns (
+        uint
+    ) {
+        uint activeProposals;
+        uint totalQuorum;
+        for (
+            uint i = 1; 
+            i < count; 
+            i++
+        ) {//too many proposals may increase gas costs too much
+            PublicVotedProposal storage proposal = publicVotedProposals[i];
+            if (//conditions to be an active proposal
+                block.timestamp >= proposal.startTimestamp &&
+                block.timestamp <= proposal.endTimestamp &&
+                proposal.hasBeenWithdrawn == false &&
+                proposal.hasBeenImplemented == false &&
+                proposal.hasBeenCleared == false
+            ) {
+                activeProposals ++;
+                totalQuorum += proposal.quorum;
+            }
+        }
+
+        uint averageActiveQuorum = totalQuorum / activeProposals;
+        return averageActiveQuorum;
+    }
+
+    function _activitySnapshot() internal virtual returns (uint, uint) {
+        countActivitySnapshots ++;
+        uint reference_ = countActivitySnapshots;
+        ActivitySnapshot storage snapshot = activitySnapshots[reference_];
+        snapshot.timestamp = block.timestamp;
+        snapshot.reference_ = reference_;
+
+        uint activeProposals;
+        uint countInteractions;
+        for (uint i = 1; i < count; i++) {//too many proposals may increase the cost of this calculation
+            PublicVotedProposal storage proposal = publicVotedProposals[reference_];
+            if (//conditions to be an active proposal
+                proposal.startTimestamp <= snapshot.timestamp && 
+                proposal.endTimestamp >= snapshot.timestamp && 
+                proposal.hasBeenWithdrawn == false &&
+                proposal.hasBeenImplemented == false &&
+                proposal.hasBeenCleared == false
+            ) {
+                activeProposals ++;
+                countInteractions += proposal.quorum;
+            }
+        }
+
+        snapshot.activeProposals = activeProposals;
+        snapshot.countInteractions = countInteractions;
+        //return reference and timestamp
+        return (snapshot.reference_, snapshot.timestamp);
     }
 
     function _pushNewPublicVotedProposal(
@@ -96,7 +169,7 @@ contract PublicVotedProposals is Context, Ownable, ReentrancyGuard {
         }
 
         /** @dev default check */
-        uint defaultQuorumRequired = 50
+        uint defaultQuorumRequired = 50;
 
         // calculate based on algo
         

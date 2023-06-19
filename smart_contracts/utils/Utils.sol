@@ -56,4 +56,13 @@ library Utils {
 
         return array;
     }
+
+    function daysPassed(uint timestamp, uint currentTimestamp) internal pure returns (uint) {
+        require(timestamp >= 1, "Utils: timestamp < 1");
+        require(currentTimestamp >= 1, "Utils: timestamp < 1");
+
+        uint secondsPassed = currentTimestamp - timestamp;
+        uint daysPassed_ = secondsPassed / 86400;
+        return daysPassed_;
+    }
 }
