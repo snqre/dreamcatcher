@@ -191,7 +191,7 @@ contract Referendums is Context, Ownable, ReentrancyGuard {
         uint rangeEnd
     ) internal virtual returns (
         uint averageActiveQuorum,
-        uint numberOfActiveReferendums
+        uint numberOfActiveReferendums_
     ) {
         uint activeProposals;
         uint totalQuorum;
@@ -266,7 +266,7 @@ contract Referendums is Context, Ownable, ReentrancyGuard {
         referendum.endTimestamp = referendum.startTimestamp + referendum.timeout;
 
         if (quorumRequired == 0) {
-            uint averageActiveQuorum = _getAverageActiveQuorum(
+            (uint averageActiveQuorum, ) = _getAverageActiveQuorum(
                 now_ - settings.averageActiveQuorumLookBackDays,
                 now_
             );
@@ -444,8 +444,8 @@ contract Referendums is Context, Ownable, ReentrancyGuard {
         bytes memory args
     ) public virtual onlyOwner nonReentrant returns (
         bool success,
-        uint identifier,
-        uint snapshot
+        uint identifier_,
+        uint snapshot_
     ) {
         (
             uint identifier,
@@ -497,7 +497,7 @@ contract Referendums is Context, Ownable, ReentrancyGuard {
         return tracker.numberOfReferendums;
     }
 
-    function numberOfActiveReferendums() public view virtual returns (uint) {
+    function numberOfActiveReferendums() public virtual returns (uint) {
         (, uint activeReferendums) = _getAverageActiveQuorum(
             0, type(uint256).max
         );

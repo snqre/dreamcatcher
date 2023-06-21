@@ -68,6 +68,4 @@ library Utils {
         
         return daysPassed_;
     }
-
-    function daysToSeconds(uint days)
 }

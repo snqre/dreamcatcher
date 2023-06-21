@@ -1,0 +1,53 @@
+{
+	"compiler": {
+		"version": "0.8.20+commit.a1b79de6"
+	},
+	"language": "Solidity",
+	"output": {
+		"abi": [],
+		"devdoc": {
+			"kind": "dev",
+			"methods": {},
+			"version": 1
+		},
+		"userdoc": {
+			"kind": "user",
+			"methods": {},
+			"version": 1
+		}
+	},
+	"settings": {
+		"compilationTarget": {
+			"smart_contracts/utils/Utils.sol": "Utils"
+		},
+		"evmVersion": "shanghai",
+		"libraries": {},
+		"metadata": {
+			"bytecodeHash": "ipfs"
+		},
+		"optimizer": {
+			"enabled": false,
+			"runs": 200
+		},
+		"remappings": []
+	},
+	"sources": {
+		"deps/openzeppelin/utils/structs/EnumerableSet.sol": {
+			"keccak256": "0xeefcbb8cb69f04a18f6dc61d4811133ce9aeff96ce60820f758abc52ef55b892",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://81c61c0dd40890f6a4b1fb792bc5b5b61e821fcafa2aae6c7eda6d4f1ece2593",
+				"dweb:/ipfs/QmRLMrq6BiPS9wGu7ZC174SFYWCu6cxbU3agDw2XgJeDpT"
+			]
+		},
+		"smart_contracts/utils/Utils.sol": {
+			"keccak256": "0xfd5481f3ba75e7be49ac03fd7692ec2b81150811ea457684876176de9d06de3d",
+			"license": "CC-BY-NC-SA-4.0",
+			"urls": [
+				"bzz-raw://1e99462925ae3bb5ad15439f91179bf52b7a55fb1eeee7fd1d5cc531f2419abb",
+				"dweb:/ipfs/Qmeyue4N5tXYmDYjVdMRrHBsJHpND1qZ6Q1YuyHPPc9ABZ"
+			]
+		}
+	},
+	"version": 1
+}
