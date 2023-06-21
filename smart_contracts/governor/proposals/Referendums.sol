@@ -16,7 +16,7 @@ contract Referendums is Context, Ownable, ReentrancyGuard {
         uint numberOfReferendums;
     }
     
-    struct Setting {
+    struct Settings {
         uint threshold;
         uint minTimeoutDays;
         uint maxTimeoutDays;
@@ -48,8 +48,9 @@ contract Referendums is Context, Ownable, ReentrancyGuard {
     }
 
     Tracker internal tracker;
-    Setting internal setting;
+    Settings internal settings;
     mapping(uint => Referendum) internal referendums;
+    mapping(address => bool) internal whitelist;//remember check this from terminal
 
     constructor(address owner) Ownable(owner) {
         settings.threshold = 50;        //require 50% to pass
@@ -57,27 +58,38 @@ contract Referendums is Context, Ownable, ReentrancyGuard {
         settings.maxTimeoutDays = 365;  //maximum of 1 year timeout
     }
 
-    function _new() internal virtual {
+    function _new(
+        string memory reason,
+        uint startTimestamp,
+        uint timeout,
+        bool delegatecall,
+        address target,
+        string memory signature,
+        bytes memory args
+    ) internal virtual {
         require(_msgSender() != address(0), "Referendums: _msgSender() == address(0)");
-        require(now >= startTimestamp, "Referendums: startTimestamp is in the past");
+        require(block.timestamp >= startTimestamp, "Referendums: startTimestamp is in the past");
         require(
             timeout >= settings.minTimeoutDays &&
             timeout <= settings.maxTimeoutDays,
             "Referendums: timeout value out of bounds"
         );
-        
-
-
+        require(target != address(0), "Referendum: target == address(0)");
+        require(whitelist[target], "Referendum: target is not whitelisted");
 
         tracker.numberOfReferendums ++;
         uint identifier = tracker.numberOfReferendums;
         Referendum storage referendum = referendums[identifier];
         referendum.identifier = identifier;
+
         //create snapshot and return snapshot identifier
         referendum.snapshot = IDreamToken().snapshot();
         referendum.creator = _msgSender();
         referendum.reason = reason;
-        referendum.startTimestamp 
+
+        //default startTimestamp
+        
+        
     }  
 
 
