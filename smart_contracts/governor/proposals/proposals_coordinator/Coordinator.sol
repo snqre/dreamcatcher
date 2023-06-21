@@ -1,7 +1,19 @@
 // SPDX-License-Identifier: CC-BY-NC-SA-4.0
 pragma solidity ^0.8.9;
 
+contract Coordinator {
+    address referendums;
+    address multiSigReferendums;
+
+
+    function upgradeReferendums(address newImplementation) public {
+        referendums = newImplementation;
+    }
+}
+
 contract ProposalsCoordinator {
+    address Referendums;
+
     address multiSigProposals;
     address publicVotedProposals;
 
@@ -48,5 +60,7 @@ contract ProposalsCoordinator {
             // Update the lastUpdatedTimestamp to the current timestamp
             lastUpdatedTimestamp = currentTimestamp;
         }
+
+        
     }
 }

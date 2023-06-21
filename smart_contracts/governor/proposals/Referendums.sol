@@ -27,6 +27,7 @@ contract Referendums is Context, Ownable, ReentrancyGuard {
         uint maxQuorumRequired;
         uint minThreshold;
         uint maxThreshold;
+        address nativeToken;
     }
 
     struct Referendum {
@@ -252,7 +253,7 @@ contract Referendums is Context, Ownable, ReentrancyGuard {
         referendum.identifier = identifier;
 
         //create snapshot and return snapshot identifier
-        referendum.snapshot = IDreamToken().snapshot();
+        referendum.snapshot = IDreamToken(settings.nativeToken).snapshot();
         referendum.creator = _msgSender();
         referendum.reason = reason;
 
@@ -318,7 +319,7 @@ contract Referendums is Context, Ownable, ReentrancyGuard {
 
         Referendum storage referendum = referendums[identifier];
         Side selectedSide = Side(side);
-        uint votes = IDreamToken().getVotesAt(
+        uint votes = IDreamToken(settings.nativeToken).getVotesAt(
             _msgSender(),
             referendum.snapshot
         );
