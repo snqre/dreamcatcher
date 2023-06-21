@@ -139,7 +139,7 @@ contract PublicVotedProposals is Context, Ownable, ReentrancyGuard {
     constructor(address owner) Ownable(owner) {}
 
     function _hasVoted(uint reference_) internal view virtual returns (bool) {
-        if (publicVotedProposals[reference_].voters.contains(msg.sender)) {
+        if (publicVotedProposals[reference_].voters.contains(_msgSender())) {
             return true;
         }
 
@@ -154,7 +154,7 @@ contract PublicVotedProposals is Context, Ownable, ReentrancyGuard {
     ) internal view virtual {
         require(
             IDreamToken(dreamToken).getVotesAt(
-                msg.sender,
+                _msgSender(),
                 snapshotId
             ) <= 0,
             "PublicVotedProposals: caller is a member of referenced member"
@@ -166,7 +166,7 @@ contract PublicVotedProposals is Context, Ownable, ReentrancyGuard {
     ) internal view virtual {
         require(
             IDreamToken(dreamToken).getVotesAt(
-                msg.sender,
+                _msgSender(),
                 snapshotId
             ) >= 1,
             "PublicVotedProposals: caller is not a member"
@@ -280,6 +280,12 @@ contract PublicVotedProposals is Context, Ownable, ReentrancyGuard {
         uint,
         uint
     ) {
+        require(
+            threshold >= 0 &&
+            threshold <= 100,
+            "PublicVotedProposals: threshold out of bounds"
+        );
+
         count ++;
         PublicVotedProposal storage newProposal = publicVotedProposals[count];
         newProposal.reference_ = count;
@@ -311,7 +317,15 @@ contract PublicVotedProposals is Context, Ownable, ReentrancyGuard {
             range,
             now_
         );
-        if (quorumRequired == 0) {
+        
+        if (quorumRequired == 0) {//make sure to define this in native token
+            uint totalSupply = IDreamToken(dreamToken).totalSupply();
+            uint percentage = 20;
+            uint portionOfTotalSupply = (totalSupply / 100) * percentage;
+            if (defaultQuorumRequired < portionOfTotalSupply) {
+                defaultQuorumRequired = portionOfTotalSupply;
+            }
+
             newProposal.quorumRequired = defaultQuorumRequired;
         }
 
@@ -362,13 +376,13 @@ contract PublicVotedProposals is Context, Ownable, ReentrancyGuard {
         _mustNotBeExpired(reference_);
 
         uint votes = IDreamToken(dreamToken).getVotesAt(
-            msg.sender,
+            _msgSender(),
             proposal.snapshotId
         );
 
         if (_hasVoted(reference_)) {//caller has already voted
             //clear their votes from existing votes
-            uint side_ = sideOf[msg.sender][reference_];
+            uint side_ = sideOf[_msgSender()][reference_];
             if (side_ == 0) {// abstain
                 proposal.votesToAbstain -= votes;
             }
@@ -382,36 +396,36 @@ contract PublicVotedProposals is Context, Ownable, ReentrancyGuard {
             }
             //add edited votes for new side
             if (side == 0) {//abstain
-                sideOf[msg.sender][reference_] = 0;
+                sideOf[_msgSender()][reference_] = 0;
                 proposal.votesToAbstain += votes;
             }
 
             else if (side == 1) {//for
-                sideOf[msg.sender][reference_] = 1;
+                sideOf[_msgSender()][reference_] = 1;
                 proposal.votesFor += votes;
             }
 
             else if (side == 2) {//against
-                sideOf[msg.sender][reference_] = 2;
+                sideOf[_msgSender()][reference_] = 2;
                 proposal.votesAgainst += votes;
             }
         }
 
         else {//caller has not voted yet
-            proposal.voters.add(msg.sender);
+            proposal.voters.add(_msgSender());
             proposal.quorum += votes;
             if (side == 0) {//abstain
-                sideOf[msg.sender][reference_] = 0;
+                sideOf[_msgSender()][reference_] = 0;
                 proposal.votesToAbstain += votes;
             }
 
             else if (side == 1) {//for
-                sideOf[msg.sender][reference_] = 1;
+                sideOf[_msgSender()][reference_] = 1;
                 proposal.votesFor += votes;
             }
 
             else if (side == 2) {//against
-                sideOf[msg.sender][reference_] = 2;
+                sideOf[_msgSender()][reference_] = 2;
                 proposal.votesAgainst += votes;
             }
         }

@@ -10,6 +10,8 @@ import "deps/openzeppelin/access/AccessControl.sol";
 import "smart_contracts/utils/Utils.sol";
 
 interface IDreamToken {
+    function totalSupply() external returns (uint);
+
     // Admin Commands
     function snapshot() external returns (uint snapshotId);
     
