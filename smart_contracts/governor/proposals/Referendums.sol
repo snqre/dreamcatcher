@@ -37,7 +37,28 @@ interface IReferendums {
     function numberOfReferendums() external returns (uint);
     function numberOfActiveReferendums() external returns (uint);
     function getSnapshot(uint identifier) external view returns (uint);
-    //wip
+    function getCreator(uint identifier) external view returns (uint);
+    function getReason(uint identifier) external view returns (string memory);
+    function getStartTimestamp(uint identifier) external view returns (uint);
+    function getEndTimestamp(uint identifier) external view returns (uint);
+    function getTimeout(uint identifier) external view returns (uint);
+    function getQuorum(uint identifier) external view returns (uint);
+    function getQuorumRequired(uint identifier) external view returns (uint);
+    function getVotesFor(uint identifier) external view returns (uint);
+    function getVotesAgainst(uint identifier) external view returns (uint);
+    function getVotesToAbstain(uint identifier) external view returns (uint);
+    function getThreshold(uint identifier) external view returns (uint);
+    function hasBeenCancelled(uint identifier) public view returns (bool);
+    function hasBeenExecuted(uint identifier) public view returns (bool);
+    function hasBeenPassed(uint identifier) public view returns (bool);
+    function getPayload(uint identifier) public view returns (
+        bool delegatecall_,
+        address target_,
+        string memory signature_,
+        bytes memory args_
+    );
+
+    function getVoters(uint identifier) public view returns (address[] memory);
 }
 
 using EnumerableSet for EnumerableSet.AddressSet;
