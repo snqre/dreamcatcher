@@ -1,0 +1,1 @@
+4040s are protocols that the DAO refers to if there are no humans available or insufficient activity. In the case of absence of human resources, the DAO will prioritize functions as usual and some functions may pause.

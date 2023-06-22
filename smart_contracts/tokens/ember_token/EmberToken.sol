@@ -1,116 +1,108 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+// SPDX-License-Identifier: CC-BY-NC-SA-4.0
 pragma solidity ^0.8.9;
 
-
-
-import "deps/openzeppelin/token/ERC20/extensions/ERC20Snapshot.sol";
+import "deps/openzeppelin/access/Ownable.sol";
 import "deps/openzeppelin/token/ERC20/extensions/draft-ERC20Permit.sol";
-import "deps/openzeppelin/token/ERC20/ERC20.sol";
+import "deps/openzeppelin/token/ERC20/extensions/ERC20Snapshot.sol";
 import "deps/openzeppelin/token/ERC20/extensions/ERC20Burnable.sol";
-import "deps/openzeppelin/access/AccessControl.sol";
+import "deps/openzeppelin/token/ERC20/ERC20.sol";
 
 import "smart_contracts/utils/Utils.sol";
 
-contract EmberToken is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit, AccessControl {
-    address[] accounts;
-    
-    mapping(address => bool) isRegistered;
+contract EmberToken is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit, Ownable {
+    constructor(address owner) ERC20("EmberToken", "EMBER") ERC20Permit("EmberToken") Ownable(owner) {}
 
-    /**
-     * @notice Only Dream can change Ember
-     */
-    constructor() ERC20("EmberToken", "EMBER") ERC20Permit("EmberToken") {
-        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+    function _mustNotBeFutureLookup(uint snapshot) internal view {
+        require(
+            snapshot <= _getCurrentSnapshotId(),
+            "EmberToken: Must not be future lookup."
+        );
     }
 
-    function _split(uint mul) internal {
-        for (uint i = 0; i < accounts.length; i++) {
-            uint balance = balanceOf(accounts[i]);
-            uint newBalance = balance * mul;
-            uint amountToMint = newBalance - balance;
-            _mint(accounts[i], amountToMint);
-        }
+    function _beforeTokenTransfer(
+        address from, 
+        address to, 
+        uint amount
+    ) internal override(
+        ERC20, 
+        ERC20Snapshot
+    ) {
+        super._beforeTokenTransfer(
+            from, 
+            to, 
+            amount
+        );
+
+        revert("EmberToken: Tokens are non-transferable by design.");
     }
 
-    function _stack(uint div) internal {
-        for (uint i = 0; i < accounts.length; i++) {
-            uint balance = balanceOf(accounts[i]);
-            uint newBalance = balance / div;
-            uint amountToBurn = balance - newBalance;
-            _burn(accounts[i], amountToBurn);
-        }
+    function _afterTokenTransfer(
+        address from,
+        address to,
+        uint amount
+    ) internal override {
+        super._afterTokenTransfer(
+            from,
+            to,
+            amount
+        );
     }
 
-    function _mintByPoints(address to, uint points) internal {
-        require(points >= 1);
-        require(points <= 10000);
+    function mint(
+        address to,
+        uint amount
+    ) public onlyOwner {
+        _mint(
+            to,
+            amount
+        );
+    }
+
+    function mintByPoints(
+        address to,
+        uint points
+    ) public onlyOwner {
+        require(
+            points >= 1 &&
+            points <= 10000,
+            "EmberToken: Points out of bounds"
+        );
 
         uint amountToMint = (totalSupply() / 10000) * points;
-        _mint(to, amountToMint);
+        _mint(
+            to,
+            amountToMint
+        );
     }
 
-    function _mint(address to, uint amount) internal override {
-        if (!isRegistered[to]) {
-            accounts.push(to);
-            isRegistered[to] = true;
-        }
-
-        super._mint(to, amount);
-    }
-
-    /**
-     * @dev This is a required override
-     */
-    function _beforeTokenTransfer(address from, address to, uint amount) internal override(ERC20, ERC20Snapshot) {
-        super._beforeTokenTransfer(from, to, amount);
-    }
-
-    function snapshot() public onlyRole(DEFAULT_ADMIN_ROLE) {
+    function snapshot_() public onlyOwner returns (uint) {
         _snapshot();
+        return _getCurrentSnapshotId();
     }
 
-    function mint(address to, uint amount) public onlyRole(DEFAULT_ADMIN_ROLE) {
-        _mint(to, amount);
-    }
-
-    function mintByPoints(address to, uint points) public onlyRole(DEFAULT_ADMIN_ROLE) {
-        _mintByPoints(to, points);
-    }
-
-    // this is like a stock split everyone maintain the same ownership
-    function split(uint mul) public onlyRole(DEFAULT_ADMIN_ROLE) {
-        _split(mul);
-    }
-
-    // this is like a stock merger everyone maintains the same ownership
-    function stack(uint div) public onlyRole(DEFAULT_ADMIN_ROLE) {
-        _stack(div);
-    }
-
-    function getCurrentTotalSupply() public view returns (uint) {
-        return totalSupplyAt(_getCurrentSnapshotId());
-    }
-
-    /**
-     * @dev Make sure to snapshot from DreamToken before using this
-     * @dev Without a valid current snapshotId it will not work
-     */
     function getWeight(address account) public view returns (uint) {
-        uint balance = balanceOfAt(account, _getCurrentSnapshotId());
-        uint supply = totalSupplyAt(_getCurrentSnapshotId());
+        uint balance = balanceOfAt(
+            account,
+            _getCurrentSnapshotId()
+        );
 
-        require(balance >= 1, "EmberToken: insufficient balance");
-        require(supply >= 1, "EmberToken: insufficient supply");
+        uint totalSupply = totalSupplyAt(_getCurrentSnapshotId());
 
-        // weight should be the percentage of ember token owned over supply
-        return (balance * 10000) / supply;
+        return (balance * 10000) / totalSupply;
     }
 
-    function getPastWeight(address account, uint snapshotId) public view returns (uint) {
-        require(snapshotId <= _getCurrentSnapshotId());
+    function getPastWeight(
+        address account,
+        uint snapshot
+    ) public view returns (uint) {
+        _mustNotBeFutureLookup(snapshot);
+        uint balance = balanceOfAt(
+            account,
+            snapshot
+        );
 
-        uint balance = balanceOfAt(account, snapshotId);
+        uint totalSupply = totalSupplyAt(_getCurrentSnapshotId());
 
-        return (balance / totalSupplyAt(snapshotId)) * 10000;
+        return (balance * 10000) / totalSupply;
     }
 }
