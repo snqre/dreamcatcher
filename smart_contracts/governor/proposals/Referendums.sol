@@ -544,6 +544,12 @@ contract Referendums is Context, Ownable, ReentrancyGuard {
         return true;
     }
 
+    //WIP CREATE SETTER FUNCTIONS FOR SETTINGS
+    function setThreshold(uint newValue) public virtual onlyOwner nonReentrant returns (bool) {
+        settings.threshold = newValue;
+        return true;
+    }
+
     function numberOfReferendums() public view virtual returns (uint) {
         return tracker.numberOfReferendums;
     }
