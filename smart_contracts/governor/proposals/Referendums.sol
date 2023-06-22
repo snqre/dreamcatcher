@@ -10,6 +10,36 @@ import "deps/openzeppelin/security/ReentrancyGuard.sol";
 import "smart_contracts/utils/Utils.sol";
 import "smart_contracts/tokens/dream_token/DreamToken.sol";
 
+interface IReferendums {
+    function new_(
+        string memory reason,
+        uint startTimestamp,
+        uint timeout,
+        uint quorumRequired,
+        uint threshold,
+        bool delegatecall,
+        address target,
+        string memory signature,
+        bytes memory args
+    ) external returns (
+        bool success,
+        uint identifier_,
+        uint snapshot_
+    );
+
+    function vote(
+        uint identifier,
+        uint side
+    ) external returns (bool success);
+
+    function cancel(uint identifier) external returns (bool success);
+    function execute(uint identifier) external returns (bool success);
+    function numberOfReferendums() external returns (uint);
+    function numberOfActiveReferendums() external returns (uint);
+    function getSnapshot(uint identifier) external view returns (uint);
+    //wip
+}
+
 using EnumerableSet for EnumerableSet.AddressSet;
 contract Referendums is Context, Ownable, ReentrancyGuard {
     enum Side { ABSTAIN, FOR, AGAINST }
@@ -505,4 +535,82 @@ contract Referendums is Context, Ownable, ReentrancyGuard {
         return activeReferendums;
     }
 
+    function getSnapshot(uint identifier) public view virtual returns (uint) {
+        return referendums[identifier].snapshot;
+    }
+
+    function getCreator(uint identifier) public view virtual returns (address) {
+        return referendums[identifier].creator; 
+    }
+
+    function getReason(uint identifier) public view virtual returns (string memory) { 
+        return referendums[identifier].reason; 
+    }
+
+    function getStartTimestamp(uint identifier) public view virtual returns (uint) { 
+        return referendums[identifier].startTimestamp; 
+    }
+
+    function getEndTimestamp(uint identifier) public view virtual returns (uint) {
+        return referendums[identifier].endTimestamp; 
+    }
+
+    function getTimeout(uint identifier) public view virtual returns (uint) { 
+        return referendums[identifier].timeout; 
+    }
+
+    function getQuorum(uint identifier) public view virtual returns (uint) { 
+        return referendums[identifier].quorum; 
+    }
+
+    function getQuorumRequired(uint identifier) public view virtual returns (uint) { 
+        return referendums[identifier].quorumRequired; 
+    }
+
+    function getVotesFor(uint identifier) public view virtual returns (uint) { 
+        return referendums[identifier].votesFor; 
+    }
+
+    function getVotesAgainst(uint identifier) public view virtual returns (uint) { 
+        return referendums[identifier].votesAgainst; 
+    }
+
+    function getVotesToAbstain(uint identifier) public view virtual returns (uint) { 
+        return referendums[identifier].votesToAbstain; 
+    }
+
+    function getThreshold(uint identifier) public view virtual returns (uint) { 
+        return referendums[identifier].threshold; 
+    }
+
+    function hasBeenCancelled(uint identifier) public view virtual returns (bool) { 
+        return referendums[identifier].hasBeenCancelled; 
+    }
+
+    function hasBeenExecuted(uint identifier) public view virtual returns (bool) { 
+        return referendums[identifier].hasBeenExecuted; 
+    }
+
+    function hasBeenPassed(uint identifier) public view virtual returns (bool) { 
+        return referendums[identifier].hasBeenPassed; 
+    }
+
+    function getPayload(uint identifier) public view virtual returns (
+        bool delegatecall_,
+        address target_,
+        string memory signature_,
+        bytes memory args_
+    ) {
+        Referendum storage referendum = referendums[identifier];
+        return (
+            referendum.delegatecall,
+            referendum.target,
+            referendum.signature,
+            referendum.args
+        );
+    }
+
+    function getVoters(uint identifier) public view virtual returns (address[] memory) {
+        return Utils.convertEnumerableSetAddressSetToArray(referendums[identifier].voters);
+    }
 }
