@@ -189,7 +189,7 @@ contract MultiSigReferendums is Context, Ownable, ReentrancyGuard {
             "MultiSigReferendums: startTimestamp is in the past."
         );
         require(
-            timeout >= settings.minTimeoutDays &&
+            timeout >= settings.minTimeoutDays &&//fix this it conflicts with coming logic
             timeout <= settings.maxTimeoutDays,
             "MultiSigReferendums: Timeout value out of bounds."
         );
@@ -208,6 +208,19 @@ contract MultiSigReferendums is Context, Ownable, ReentrancyGuard {
         referendum.identifier = identifier;
         referendum.creator = _msgSender();
         referendum.reason = reason;
+
+        if (startTimestamp == 0) { referendum.startTimestamp = now_; }
+        else {
+            referendum.startTimestamp = startTimestamp;
+        }
+
+        if (timeout == 0) { timeout = settings.minTimeoutDays; }
+        else { referendum.timeout = timeout; }
+
+        referendum.endTimestamp = referendum.startTimestamp + referendum.timeout;
+
+        if (threshold == 0) { referendum.threshold = settings.threshold; }
+        else { referendum.threshold = threshold; }
     }
 
 
