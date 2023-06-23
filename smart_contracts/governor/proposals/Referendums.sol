@@ -163,56 +163,56 @@ contract Referendums is Context, Ownable, ReentrancyGuard {
         settings.averageActiveQuorumLookBackDays = 30 days;
         settings.minQuorumRequired = Utils.convertToWei(40000000);
         settings.maxQuorumRequired = Utils.convertToWei(200000000);
-        settings.minThreshold = 0;
+        settings.minThreshold = 50;
         settings.maxThreshold = 100;
     }
 
     function _mustNotBePassed(uint identifier) internal view virtual {
         require(
             !referendums[identifier].hasBeenPassed,
-            "Referendums: referendum has been passed"
+            "Referendums: Referendum has been passed."
         );
     }
 
     function _mustBePassed(uint identifier) internal view virtual {
         require(
             referendums[identifier].hasBeenPassed,
-            "Referendums: referendum has not been passed"
+            "Referendums: Referendum has not been passed."
         );
     }
 
     function _mustNotBeCancelled(uint identifier) internal view virtual {
         require(
             !referendums[identifier].hasBeenCancelled,
-            "Referendums: referendum has been cancelled"
+            "Referendums: Referendum has been cancelled."
         );
     }
 
     function _mustBeCancelled(uint identifier) internal view virtual {
         require(
             referendums[identifier].hasBeenCancelled,
-            "Referendums: referendum has not been cancelled"
+            "Referendums: Referendum has not been cancelled."
         );
     }
 
     function _mustNotBeExecuted(uint identifier) internal view virtual {
         require(
             !referendums[identifier].hasBeenExecuted,
-            "Referendums: referendum has been executed"
+            "Referendums: Referendum has been executed."
         );
     }
 
     function _mustBeExecuted(uint identifier) internal view virtual {
         require(
             referendums[identifier].hasBeenExecuted,
-            "Referendums: referendum has not been executed"
+            "Referendums: Referendum has not been executed."
         );
     }
 
     function _mustNotBeExpired(uint identifier) internal view virtual {
         require(
             block.timestamp < referendums[identifier].endTimestamp,
-            "Referendums: referendum has expired"
+            "Referendums: Referendum has expired."
         );
     }
 
@@ -571,16 +571,31 @@ contract Referendums is Context, Ownable, ReentrancyGuard {
     }
 
     function setMaxQuorumRequired(uint newValue) public virtual onlyOwner nonReentrant returns (bool) {
+        require(
+            newValue <= 200000000, 
+            "Referendums: Quorum cannot be larger than 200000000."
+        );
+
         settings.maxQuorumRequired = newValue;
         return true;
     }
 
     function setMinThreshold(uint newValue) public virtual onlyOwner nonReentrant returns (bool) {
+        require(
+            newValue >= 0, 
+            "Referendums: Threshold cannot be lower than 0%."
+        );
+
         settings.minThreshold = newValue;
         return true;
     }
 
     function setMaxThreshold(uint newValue) public virtual onlyOwner nonReentrant returns (bool) {
+        require(
+            newValue <= 100, 
+            "Referendums: Threshold cannot be larger than 100%."
+        );
+
         settings.maxThreshold = newValue;
         return true;
     }
