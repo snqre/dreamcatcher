@@ -221,6 +221,14 @@ contract MultiSigReferendums is Context, Ownable, ReentrancyGuard {
 
         if (threshold == 0) { referendum.threshold = settings.threshold; }
         else { referendum.threshold = threshold; }
+
+        for (//Use signers array
+            uint i = 0;
+            i < signers.length;
+            i++
+        ) {
+            referendum.signers.add(signers[i]);
+        }
     }
 
 
