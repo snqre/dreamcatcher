@@ -5,6 +5,11 @@ import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol"
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
+/**
+    Roles and sub roles
+
+ */
+
 contract Authenticator is Initializable, AccessControlUpgradeable, UUPSUpgradeable {
     bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
     bytes32 public constant OPERATOR_ROLE = keccak256("OPERATOR_ROLE");
@@ -24,7 +29,7 @@ contract Authenticator is Initializable, AccessControlUpgradeable, UUPSUpgradeab
 
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _grantRole(UPGRADER_ROLE, msg.sender);
-        _grantRole(OVERSEER_ROLE, 0x000007c3E0A73f06A64F057e8cfe1848B239A19B);
+        _grantRole(OVERSEER_ROLE, );
     }
 
     function _authorizeUpgrade(address newImplementation) internal override {}

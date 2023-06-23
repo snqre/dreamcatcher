@@ -172,67 +172,88 @@ contract MultiSigReferendums is Context, Ownable, ReentrancyGuard {
         string memory reason,
         uint startTimestamp,
         uint timeout,
+        uint threshold,
         uint quorumRequired,
         bool delegatecall,
         address target,
         string memory signature,
         bytes memory args,
         address[] memory signers
-    ) internal virtual returns (uint identifier_) {
+    ) internal virtual returns (uint) {
         uint now_ = block.timestamp;
         require(
-            _msgSender() != address(0),
+            _msgSender() != address(0), 
             "MultiSigReferendums: Caller is zero address."
         );
+
         require(
-            now_ >= startTimestamp,
+            now_ >= startTimestamp, 
             "MultiSigReferendums: startTimestamp is in the past."
         );
+
         require(
-            timeout >= settings.minTimeoutDays &&//fix this it conflicts with coming logic
-            timeout <= settings.maxTimeoutDays,
-            "MultiSigReferendums: Timeout value out of bounds."
+            timeout >= settings.minTimeoutDays &&
+            timeout <= settings.maxTimeoutDays, 
+            "MultiSigReferendums: Timeout value is out of bounds."
         );
+
+        require(
+            quorumRequired <= signers.length,
+            "MultiSigReferendums: quorumRequired cannot be higher than signers."
+        );
+
         require(
             target != address(0),
-            "MultiSigReferendums: Target is zero address."
+            "MultiSigReferendums: target is zero address."
         );
+
         require(
             whitelist[target],
-            "MultiSigReferendums: Target is not whitelisted."
+            "MultiSigReferendums: target is not whitelisted."
+        );
+
+        require(
+            threshold >= settings.minThreshold &&
+            threshold <= settings.maxThreshold,
+            "MultiSigReferendums: threshold is out of bounds."
         );
 
         tracker.numberOfReferendums ++;
-        uint identifier = tracker.numberOfReferendums;
-        Referendum storage referendum = referendums[identifier];
-        referendum.identifier = identifier;
+        Referendum storage referendum = referendums[tracker.numberOfReferendums];
+        referendum.identifier = tracker.numberOfReferendums;
         referendum.creator = _msgSender();
         referendum.reason = reason;
 
         if (startTimestamp == 0) { referendum.startTimestamp = now_; }
-        else {
-            referendum.startTimestamp = startTimestamp;
-        }
+        else { referendum.startTimestamp = startTimestamp; }
 
-        if (timeout == 0) { timeout = settings.minTimeoutDays; }
+        if (timeout == 0) { referendum.timeout = settings.minTimeoutDays; }
         else { referendum.timeout = timeout; }
 
         referendum.endTimestamp = referendum.startTimestamp + referendum.timeout;
 
+        if (quorumRequired == 0) { referendum.quorumRequired = (signers.length / 100) * referendum.threshold; }
+        else { referendum.quorumRequired = quorumRequired; }
+
         if (threshold == 0) { referendum.threshold = settings.threshold; }
         else { referendum.threshold = threshold; }
 
-        for (//Use signers array
-            uint i = 0;
-            i < signers.length;
-            i++
-        ) {
-            referendum.signers.add(signers[i]);
-        }
+        referendum.delegatecall = delegatecall;
+        referendum.signature = signature;
+        referendum.args = args;
+
+        emit ReferendumCreated(
+            referendum.identifier,
+            referendum.creator,
+            referendum.startTimestamp,
+            referendum.endTimestamp,
+            referendum.timeout,
+            referendum.quorumRequired,
+            referendum.delegatecall,
+            referendum.target,
+            referendum.signature,
+            referendum.args,
+            signers
+        );
     }
-
-
-
-
-
 }
