@@ -550,6 +550,46 @@ contract Referendums is Context, Ownable, ReentrancyGuard {
         return true;
     }
 
+    function setMinTimeoutDays(uint newValue) public virtual onlyOwner nonReentrant returns (bool) {
+        settings.minTimeoutDays = newValue;
+        return true;
+    }
+
+    function setMaxTimeoutDays(uint newValue) public virtual onlyOwner nonReentrant returns (bool) {
+        settings.maxTimeoutDays = newValue;
+        return true;
+    }
+
+    function setAverageActiveQuorumLookBackDays(uint newValue) public virtual onlyOwner nonReentrant returns (bool) {
+        settings.averageActiveQuorumLookBackDays = newValue;
+        return true;
+    }
+
+    function setMinQuorumRequired(uint newValue) public virtual onlyOwner nonReentrant returns (bool) {
+        settings.minQuorumRequired = newValue;
+        return true;
+    }
+
+    function setMaxQuorumRequired(uint newValue) public virtual onlyOwner nonReentrant returns (bool) {
+        settings.maxQuorumRequired = newValue;
+        return true;
+    }
+
+    function setMinThreshold(uint newValue) public virtual onlyOwner nonReentrant returns (bool) {
+        settings.minThreshold = newValue;
+        return true;
+    }
+
+    function setMaxThreshold(uint newValue) public virtual onlyOwner nonReentrant returns (bool) {
+        settings.maxThreshold = newValue;
+        return true;
+    }
+
+    function setNativeToken(address newAddress) public virtual onlyOwner nonReentrant returns (bool) {
+        settings.nativeToken = newAddress;
+        return true;
+    }
+
     function numberOfReferendums() public view virtual returns (uint) {
         return tracker.numberOfReferendums;
     }
