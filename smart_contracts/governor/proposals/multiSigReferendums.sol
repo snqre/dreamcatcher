@@ -99,6 +99,20 @@ contract MultiSigReferendums is Context, Ownable, ReentrancyGuard {
         settings.maxThreshold = 100;
     }
 
+    function _mustBeSigner(uint identifier, address account) view internal virtual {
+        require(
+            referendums[identifier].signers.contains(account),
+            "MultiSigReferendums: Caller is not an expected signer."
+        );
+    }
+
+    function _mustHaveSigned(uint identifier, address account) view internal virtual {
+        require(
+            referendums[identifier].signers.contains(account),
+            "MultiSigReferendums: Caller has not signed."
+        );
+    }
+
     function _mustNotBePassed(uint identifier) internal view virtual {
         require(
             !referendums[identifier].hasBeenPassed,
@@ -254,6 +268,53 @@ contract MultiSigReferendums is Context, Ownable, ReentrancyGuard {
             referendum.signature,
             referendum.args,
             signers
+        );
+    }
+
+    function _sign(uint identifier) internal virtual {
+        _mustBePresent(identifier);
+        _mustBeSigner(identifer, _msgSender());
+        _mustNotBePassed(identifier);
+        _mustNotBeCancelled(identifier);
+        _mustNotBeExecuted(identifier);
+        _mustNotBeExpired(identifier);
+
+        Referendum storage referendum = referendums[identifier];
+        referendum.signatures.add(_msgSender());
+
+        uint now_ = block.timestamp;
+        emit Signed(
+            identifier,
+            _msgSender(),
+            now_
+        );
+
+        // we check if the threshold has been met
+        if (_requiredQuorumHasBeenMet(identifier)) {
+            referendum.hasBeenPassed = true;
+            emit Passed(
+                identifier,
+                _msgSender(),
+                referendum.signatures.length()
+            );
+        }
+    }
+
+    function _unsign(uint identifier) internal virtual {
+        _mustBePresent(identifier);
+        _mustBeSigner(identifier, _msgSender());
+        _mustHaveSigned(identifier, _msgSender());
+        _mustNotBePassed(identifier);
+        _mustNotBeCancelled(identifier);
+        _mustNotBeExecuted(identifier);
+        _mustNotBeExpired(identifier);
+
+        Referendum storage referendum = referendums[identifier];
+        referendum.signatures.remove(_msgSender());
+
+        emit SignatureRevoked(
+            identifier,
+            _msgSender()
         );
     }
 }
