@@ -1,6 +1,57 @@
 // SPDX-License-Identifier: CC-BY-NC-SA-4.0
 pragma solidity ^0.8.9;
 
+/**
+    Blockchain > address signature > Server 
+    ** locking offchain upgrades through signatures
+    ** roles by functions
+    ** webDevRole granted role by referendum || implementations go to decentralized github for board to review
+    ** once seen by council then signed on
+    ** again decentralized github exists??
+    ** can link github with cloud flair
+    ** commit and confirmation
+    ** syndicate, and up can propose changes
+
+    Alex's take
+    ** back up is taken of the website and is reviewed
+    ** ability to revert back to older updates (situations where this might not be possible)
+    ** what if github dies?
+
+
+    ** snapshot
+
+    implementation of code
+
+    
+
+    once a proposal is approved, it returns a message or something 
+
+    dao legal entity
+    blockchain > lawyer > legal contracts
+    blockchain > .e<!|| offchain (signature) ||!>e. > decentralized server
+                                                    > other blockchains
+
+                                                        ** all of them
+                                                        Ethereum + IPFS: 
+                                                        Ethereum for data management and IPFS for content hosting.
+
+                                                        • Skynet: 
+                                                        Decentralized hosting platform built on the Sia blockchain.
+
+                                                        • Arweave: 
+                                                        Blockchain-based storage network for permanent web content hosting.
+
+                                                        • Filecoin: 
+                                                        Decentralized storage network that works with IPFS for hosting websites.
+
+                                                        • Storj: 
+                                                        Decentralized cloud storage platform that can be used with IPFS for web content hosting.
+
+
+
+ */
+
+
 // need to import these locally to continue this contract
 
 import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/security/ReentrancyGuard.sol";

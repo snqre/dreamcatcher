@@ -7,7 +7,8 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 /**
     Roles and sub roles
-
+    Authenticator > Terminal > sub contract > sub contract
+                  < sub contract
  */
 
 contract Authenticator is Initializable, AccessControlUpgradeable, UUPSUpgradeable {
@@ -59,5 +60,7 @@ contract Authenticator is Initializable, AccessControlUpgradeable, UUPSUpgradeab
     function _mustBeMember() internal view virtual {
         require(hasRole(MEMBER_ROLE), "Authenticator: caller is not a member");
     }
+
+    getRole() public
 
 }
