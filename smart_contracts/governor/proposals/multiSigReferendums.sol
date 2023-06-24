@@ -99,70 +99,70 @@ contract MultiSigReferendums is Context, Ownable, ReentrancyGuard {
         settings.maxThreshold = 100;
     }
 
-    function _mustBeSigner(uint identifier, address account) view internal virtual {
+    function _mustBeSigner(uint identifier, address account) private view {
         require(
             referendums[identifier].signers.contains(account),
             "MultiSigReferendums: Caller is not an expected signer."
         );
     }
 
-    function _mustHaveSigned(uint identifier, address account) view internal virtual {
+    function _mustHaveSigned(uint identifier, address account) private view {
         require(
             referendums[identifier].signers.contains(account),
             "MultiSigReferendums: Caller has not signed."
         );
     }
 
-    function _mustNotBePassed(uint identifier) internal view virtual {
+    function _mustNotBePassed(uint identifier) private view {
         require(
             !referendums[identifier].hasBeenPassed,
             "multiSigReferendums: Referendum has been passed."
         );
     }
 
-    function _mustBePassed(uint identifier) internal view virtual {
+    function _mustBePassed(uint identifier) private view {
         require(
             referendums[identifier].hasBeenPassed,
             "multiSigReferendums: Referendum has not been passed."
         );
     }
 
-    function _mustNotBeCancelled(uint identifier) internal view virtual {
+    function _mustNotBeCancelled(uint identifier) private view {
         require(
             !referendums[identifier].hasBeenCancelled,
             "multiSigReferendums: Referendum has been cancelled."
         );
     }
 
-    function _mustBeCancelled(uint identifier) internal view virtual {
+    function _mustBeCancelled(uint identifier) private view {
         require(
             referendums[identifier].hasBeenCancelled,
             "multiSigReferendums: Referendum has not been cancelled."
         );
     }
 
-    function _mustNotBeExecuted(uint identifier) internal view virtual {
+    function _mustNotBeExecuted(uint identifier) private view {
         require(
             !referendums[identifier].hasBeenExecuted,
             "multiSigReferendums: Referendum has been executed."
         );
     }
 
-    function _mustBeExecuted(uint identifier) internal view virtual {
+    function _mustBeExecuted(uint identifier) private view {
         require(
             referendums[identifier].hasBeenExecuted,
             "multiSigReferendums: Referendum has not been executed."
         );
     }
 
-    function _mustNotBeExpired(uint identifier) internal view virtual {
+    function _mustNotBeExpired(uint identifier) private view {
         require(
             block.timestamp < referendums[identifier].endTimestamp,
             "multiSigReferendums: Referendum has expired."
         );
     }
 
-    function _requiredQuorumHasBeenMet(uint identifier) internal view virtual returns (bool) {
+    function _requiredQuorumHasBeenMet(uint identifier) private view returns (bool) {
         Referendum storage referendum = referendums[identifier];
         uint currentQuorum = (referendum.signers.length() * 100) / referendum.signatures.length();
         if (currentQuorum >= referendum.quorumRequired) {
@@ -174,7 +174,7 @@ contract MultiSigReferendums is Context, Ownable, ReentrancyGuard {
         }
     }
 
-    function _mustBePresent(uint identifier) internal view virtual {
+    function _mustBePresent(uint identifier) private view {
         require(
             identifier >= 1 &&
             identifier <= tracker.numberOfReferendums,
@@ -193,7 +193,7 @@ contract MultiSigReferendums is Context, Ownable, ReentrancyGuard {
         string memory signature,
         bytes memory args,
         address[] memory signers
-    ) internal virtual returns (uint) {
+    ) private returns (uint) {
         uint now_ = block.timestamp;
         require(
             _msgSender() != address(0), 
@@ -269,9 +269,11 @@ contract MultiSigReferendums is Context, Ownable, ReentrancyGuard {
             referendum.args,
             signers
         );
+
+        return referendum.identifer;
     }
 
-    function _sign(uint identifier) internal virtual {
+    function _sign(uint identifier) private {
         _mustBePresent(identifier);
         _mustBeSigner(identifer, _msgSender());
         _mustNotBePassed(identifier);
@@ -300,7 +302,7 @@ contract MultiSigReferendums is Context, Ownable, ReentrancyGuard {
         }
     }
 
-    function _unsign(uint identifier) internal virtual {
+    function _unsign(uint identifier) private {
         _mustBePresent(identifier);
         _mustBeSigner(identifier, _msgSender());
         _mustHaveSigned(identifier, _msgSender());
@@ -316,5 +318,155 @@ contract MultiSigReferendums is Context, Ownable, ReentrancyGuard {
             identifier,
             _msgSender()
         );
+    }
+
+    function _cancel(uint identifier) private {
+        _mustBePresent(identifier);
+        _mustNotBePassed(identifer);
+        _mustNotBeCancelled(identifer);
+        _mustNotBeExecuted(identifier);
+        _mustNotBeExpired(identifier);
+
+        Referendum storage referendum = referendums[identifier];
+        referendum.hasBeenCancelled = true;
+
+        emit Cancelled(
+            identifier,
+            _msgSender()
+        );
+    }
+
+    function _execute(uint identifier) private {
+        _mustBePresent(identifier);
+        _mustNotBeExpired(identifier);
+        _mustNotBeExecuted(identifier);
+        _mustBePassed(identifier);
+        _mustNotBeWithdrawn(identifier);
+
+        Referendum storage referendum = referendums[identifier];
+        referendum.hasBeenExecuted = true;
+
+        emit Executed(
+            identifier,
+            _msgSender()
+        );
+    }
+
+    function new_(
+        string memory reason,
+        uint startTimestamp,
+        uint timeout,
+        uint threshold,
+        uint quorumRequired,
+        bool delegatecall,
+        address target,
+        string memory signature,
+        bytes memory args,
+        address[] memory signers
+    ) external onlyOwner nonReentrant returns (
+        bool,
+        uint
+    ) {
+        uint identifier = _new(
+            reason,
+            startTimestamp,
+            timeout,
+            threshold,
+            quorumRequired,
+            delegatecall,
+            target,
+            signature,
+            args,
+            signers
+        );
+
+        return (
+            true,
+            identifier
+        );
+    }
+
+    function sign(uint identifier) external onlyOwner nonReentrant returns (bool) {
+        _sign(identifier);
+        return true;
+    }
+
+    function unsign(uint identifier) external onlyOwner nonReentrant returns (bool) {
+        _unsign(identifier);
+        return true;
+    }
+
+    function cancel(uint identifier) external onlyOwner nonReentrant returns (bool) {
+        _cancel(identifier);
+        return true;
+    }
+
+    function execute(uint identifier) external onlyOwner nonReentrant returns (bool) {
+        _execute(identifier);
+        return true;
+    }
+
+    function getNumberOfReferendums() external view returns (uint) {
+        return tracker.numberOfReferendums;
+    }
+
+    function getPayload(uint identifier) external view returns (
+        bool,
+        address,
+        string memory,
+        bytes memory
+    ) {
+        _mustBePresent(identifier);
+        Referendum storage referendum = referendums[identifier];
+        return (
+            referendum.delegatecall,
+            referendum.target,
+            referendum.signature,
+            referendum.args
+        );
+    }
+
+    function getState(uint identifier) external view returns (
+        bool,
+        bool,
+        bool
+    ) {
+        _mustBePresent(identifier);
+        Referendum storage referendum = referendums[identifier];
+        return (
+            referendum.hasBeenCancelled,
+            referendum.hasBeenExecuted,
+            referendum.hasBeenPassed
+        );
+    }
+
+    function getMetaData(uint identifier) external view returns (
+        address,
+        uint,
+        uint,
+        uint,
+        uint
+    ) {
+        _mustBePresent(identifier);
+        Referendum storage referendum = referendums[identifier];
+        return (
+            referendum.creator,
+            referendum.startTimestamp,
+            referendum.endTimestamp,
+            referendum.timeout,
+            referendum.quorumRequired
+        );
+    }
+
+    function getSigners(uint identifier) external view returns (address[] memory) {
+        _mustBePresent(identifier);
+        Referendum storage referendum = referendums[identifier];
+        return Utils.convertEnumerableSetAddressSetToArray(referendum.signers);
+    }
+
+    function getSignatures(uint identifier) external view returns (address[] memory) {
+        _mustBePresent(identifier);
+        Referendum storage referendum = referendums[identifier];
+        return Utils.convertEnumerableSetAddressSetToArray(referendum.signatures);
     }
 }

@@ -6,8 +6,13 @@ contract Coordinator {
     address multiSigReferendums;
 
 
+
     function upgradeReferendums(address newImplementation) public {
         referendums = newImplementation;
+    }
+
+    function mustBeOnWhitelist(address contract_) external view returns (bool) {
+        
     }
 }
 
