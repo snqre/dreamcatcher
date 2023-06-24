@@ -1,6 +1,18 @@
 // SPDX-License-Identifier: CC-BY-NC-SA-4.0
 pragma solidity ^0.8.9;
 
+import "smart_contracts/governor/proposals/referendum/Referendum.sol";
+
+/// coordinate who, why, and when an address can use proposal mechanics
+
+contract ProposalCoordinator {
+    Referendum private referendum;
+    constructor() {
+        referendum = new Referendum();
+    }
+}
+
+
 contract Coordinator {
     address referendums;
     address multiSigReferendums;
