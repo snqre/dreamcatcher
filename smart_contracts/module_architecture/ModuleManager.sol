@@ -4,6 +4,11 @@ pragma solidity ^0.8.9;
 import "deps/openzeppelin/utils/structs/EnumerableSet.sol";
 
 import "smart_contracts/module_architecture/ModuleStateLib.sol";
+import "smart_contracts/module_architecture/Module.sol";
+
+interface IModuleManager {
+    
+}
 
 contract ModuleManager {
     using EnumerableSet for EnumerableSet.AddressSet;
@@ -76,5 +81,43 @@ contract ModuleManager {
         );
 
         return module.implementations.at(version);
+    }
+
+    /// update module manager.
+    /// very computationally intensive so not designed to be used often.
+    function _update(
+        address newImplementation
+    ) private {
+        /// let all modules know the location of the new implementation.
+        for (
+            uint i = 1;
+            i < numberOfModules;
+            i ++
+        ) { /// we let the most recent implementation know but already versions will not change.
+            ModuleStateLib.Module storage module = modules[i];
+            uint length = module.implementations.length();
+            address latestImplementation = module.implementations.at(length);
+            IModule(latestImplementation).setModuleManagerImplementation(newImplementation);
+
+            /// for each module we need to transfer existing data to the new one.
+            /// so we rebuild each module for each existing on at the new implementation.
+            IModuleManager(newImplementation).create(
+                module.implementations.at(1),
+                module.name,
+                module.description
+            );
+
+            /// and for each existing implementation we load them in.
+            for (
+                uint x = 2;
+                x < length;
+                x ++
+            ) { /// for each implementation after the original.
+                IModuleManager(newImplementation).updateImplementation(
+                    module.name,
+                    module.implementations.at(x)
+                );
+            }
+        }
     }
 }
