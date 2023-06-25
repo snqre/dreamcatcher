@@ -5,260 +5,131 @@ import "deps/openzeppelin/utils/structs/EnumerableSet.sol";
 import "deps/openzeppelin/utils/Context.sol";
 import "deps/openzeppelin/security/ReentrancyGuard.sol";
 
-import "smart_contracts/module_architecture/ModuleStateLib.sol";
-import "smart_contracts/module_architecture/Module.sol";
-
 interface IModuleManager {
-    
+    function create(string memory name) external returns (uint);
+    function upgrade(
+        string memory name,
+        address newImplementation
+    ) external;
+
+    function downgrade(
+        string memory name,
+        uint version
+    ) external;
+
+    function getLatestVersion(string memory name) external view returns (uint);
+    function getLatestImplementation(string memory name) external view returns (address);
+    function getImplementation(
+        string memory name,
+        uint version
+    ) external view returns (address);
 }
 
 contract ModuleManager is Context, ReentrancyGuard {
     using EnumerableSet for EnumerableSet.AddressSet;
-    uint numberOfModules;
+    uint count;
 
-    struct Implementation {
-        uint version;
-        address implementation;
-        uint launchTimestamp;
-        uint expirationTimestamp;
-        bool hasBeenPaused;
-        bool hasExpiration;
-    }
-    
+    /// @dev a Module is an abstraction for a group of contract addresses that do the same thing.
     struct Module {
         uint identifier;
-        uint latestVersion;
-        address latestImplementation;
         string name;
-        uint launchTimestamp;
-        uint expirationTimestamp;
-        bool hasBeenPaused;
-        bool hasExpiration;
+        EnumerableSet.
+            AddressSet implementations;
     }
 
+    /// storage.
     mapping(uint => Module) private modules;
-    mapping(uint => mapping(uint => Implementation)) private implementations;
     mapping(string => uint) private nameToIdentifier;
-
-    event ModuleCreated(
-        string indexed name,
-        uint indexed launchTimestamp,
-        uint indexed expirationTimestamp,
-        bool hasBeenPaused,
-        bool hasExpiration
-    );
-
-    event NewImplementation(
-        string indexed name,
-        address newImplementation,
-        uint launchTimestamp,
-        uint expirationTimestamp,
-        bool hasBeenPaused,
-        bool hasExpiration
-    );
 
     constructor() {}
 
-    function _createNewModule(
-        string memory name,
-        uint launchTimestamp,
-        uint expirationTimestamp,
-        bool startFromPaused
-    ) private returns (uint) {
-        numberOfModules ++;
-        uint identifier = numberOfModules;
-        Module storage module = modules[identifier];
-
-        /// map name to module identifier.
-        uint searchResult = nameToIdentifier[name];
-        require(searchResult == 0, "Module name is already in use.");
-        nameToIdentifier[name] = identifier;
-
-        if (launchTimestamp != 0) {
-            require(
-                launchTimestamp >= block.timestamp,
-                "Module is being launched in the past."
-            );
-        }
-
-        if (expirationTimestamp != 0) {
-            require(
-                expirationTimestamp >= block.timestamp,
-                "Module is expired in the past."
-            );
-        }
-
-        if (
-            launchTimestamp != 0 &&
-            expirationTimestamp != 0
-        ) {
-            require(
-                expirationTimestamp > launchTimestamp,
-                "Module expires before it is launched."
-            );
-        }
-
-        /// basic meta data.
-        module.identifier = identifier;
-        module.name = name;
-        
-        /// launch timestamp.
-        if (launchTimestamp != 0) { module.launchTimestamp = launchTimestamp; }
-        else { module.launchTimestamp = block.timestamp; }
-
-        /// expiration timestamp.
-        if (expirationTimestamp != 0) {
-            module.hasExpiration = true;
-            module.expirationTimestamp = expirationTimestamp;
-        }
-        
-        /// does the module start in a paused state.
-        if (startFromPaused) { module.hasBeenPaused = true; }
-
-        emit ModuleCreated(
-            module.name, 
-            module.launchTimestamp, 
-            module.expirationTimestamp, 
-            module.hasBeenPaused, 
-            module.hasExpiration
+    function _mustNotBeExistingModule(string memory name) private view {
+        /// check if module exists by name.
+        require(
+            nameToIdentifier[name] == 0,
+            "Module name is already in use."
         );
+    }
+
+    function _mustBeExistingModule(string memory name) private view {
+        /// check if module exists by name.
+        require(
+            nameToIdentifier[name] != 0,
+            "Module does not exist."
+        );
+    }
+
+    function _mustBeExistingVersion(
+        string memory name,
+        uint version
+    ) private view {
+        Module storage module = modules[nameToIdentifier[name]];
+        require(
+            version >= 1 &&
+            version <= module.implementations.length(),
+            "Version does not point to an existing implementation."
+        );
+    }
+
+    function create(string memory name) public nonReentrant returns (uint) {
+        /// create a module.
+        _mustNotBeExistingModule(name);
+
+        count ++;
+        Module storage module = modules[count];
+
+        /// map name to module.
+        nameToIdentifier[name] = count;
+
+        module.identifier = count;
+        module.name = name;
 
         return module.identifier;
     }
 
-    function _pushNewImplementation(
+    function upgrade(
         string memory name,
-        address newImplementation,
-        uint launchTimestamp,
-        uint expirationTimestamp,
-        bool startFromPaused
-    ) private returns (uint) {
-        Module storage module = modules[nameToIdentifier[name]];
-        uint version = module.latestVersion ++;
-        Implementation storage implementation = implementations[nameToIdentifier[name]][version];
-
-        if (launchTimestamp != 0) {
-            require(
-                launchTimestamp >= block.timestamp,
-                "Implementation is being launched in the past."
-            );
-        }
-
-        if (expirationTimestamp != 0) {
-            require(
-                expirationTimestamp >= block.timestamp,
-                "Implementation is expired in the past."
-            );
-        }
-
-        if (
-            launchTimestamp != 0 &&
-            expirationTimestamp != 0
-        ) {
-            require(
-                expirationTimestamp > launchTimestamp,
-                "Implementation expires before it is launched."
-            );
-        }
-
-        implementation.version = version;
-        implementation.implementation = newImplementation;
-        module.latestImplementation = newImplementation;
-        
-        if (launchTimestamp != 0) { implementation.launchTimestamp = launchTimestamp; }
-        else { implementation.launchTimestamp = block.timestamp; }
-
-        if (expirationTimestamp != 0) {
-            implementation.hasExpiration = true;
-            implementation.expirationTimestamp = expirationTimestamp;
-        }
-
-        if (startFromPaused) { implementation.hasBeenPaused; }
-
-        emit NewImplementation(
-            module.name, 
-            implementation.implementation, 
-            implementation.launchTimestamp, 
-            implementation.expirationTimestamp, 
-            implementation.hasBeenPaused, 
-            implementation.hasExpiration
-        );
-
-        return implementation.version;
-    }
-
-    /// update the module manager itself.
-    function _update(address newImplementation) private {
-        /// let all modules know the location of the new implementation
-        for (uint i = 1; i < numberOfModules; i ++) {
-            Module storage module = modules[i];
-
-        }
-    }
-
-    /// update module manager.
-    /// very computationally intensive so not designed to be used often.
-    function _update(
         address newImplementation
-    ) private {
-        /// let all modules know the location of the new implementation.
-        for (
-            uint i = 1;
-            i < numberOfModules;
-            i ++
-        ) { /// we let the most recent implementation know but already versions will not change.
-            ModuleStateLib.Module storage module = modules[i];
-            uint length = module.implementations.length();
-            address latestImplementation = module.implementations.at(length);
-            IModule(latestImplementation).setModuleManagerImplementation(newImplementation);
-
-            /// for each module we need to transfer existing data to the new one.
-            /// so we rebuild each module for each existing on at the new implementation.
-            IModuleManager(newImplementation).create(
-                module.implementations.at(1),
-                module.name,
-                module.description
-            );
-
-            /// and for each existing implementation we load them in.
-            for (
-                uint x = 2;
-                x < length;
-                x ++
-            ) { /// for each implementation after the original.
-                IModuleManager(newImplementation).updateImplementation(
-                    module.name,
-                    module.implementations.at(x)
-                );
-            }
+    ) public nonReentrant {
+        /// upgrade latest implementation to.
+        _mustBeExistingModule(name);
+        Module storage module = modules[nameToIdentifier[name]];
+        module.implementations.add(newImplementation);
     }
 
-    function _getLatestVersion(string memory name) private view returns (uint) {
-        uint searchResult = nameToIdentifier[name];
-        Module storage module = modules[searchResult];
-        return module.latestVersion;
-    }
-
-    function _getLatestImplementation(string memory name) private view returns (uint) {
-        uint searchResult = nameToIdentifier[name];
-        Module storage module = modules[searchResult];
-        return module.latestImplementation;
-    }
-
-    function _getImplementation(
+    function downgrade(
         string memory name,
         uint version
-    ) private view returns (address) {
-        uint searchResult = nameToIdentifier[name];
-        Module storage module = modules[searchResult];
-        uint length = module.latestVersion;
-        
-        require(
-            version >= 1 &&
-            version <= length,
-            "Version does not point to an existing implementation."
+    ) public nonReentrant {
+        _mustBeExistingModule(name);
+
+        Module storage module = modules[nameToIdentifier[name]];
+        upgrade( /// push this version as latest version.
+            name,
+            module.implementations.at(version)
+        );
+    }
+
+    function getLatestVersion(string memory name) public view returns (uint) {
+        Module storage module = modules[nameToIdentifier[name]];
+        return module.implementations.length();
+    }
+
+    function getLatestImplementation(string memory name) public view returns (address) {
+        Module storage module = modules[nameToIdentifier[name]];
+        return module.implementations.at(module.implementations.length());
+    }
+
+    function getImplementation(
+        string memory name,
+        uint version
+    ) public view returns (address) {
+        _mustBeExistingVersion(
+            name,
+            version
         );
 
-        return implementations[searchResult][version];
+        Module storage module = modules[nameToIdentifier[name]];
+        return module.implementations.at(version);
     }
 }

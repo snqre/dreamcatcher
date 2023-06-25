@@ -12,7 +12,6 @@ interface IModule {
 contract Module {
     /// module copy of module manager Module struct.
 
-
     struct Implementation {
         uint moduleIdentifier;
         uint version;
