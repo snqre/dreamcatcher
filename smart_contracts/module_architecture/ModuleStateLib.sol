@@ -8,6 +8,7 @@ library ModuleStateLib {
     using EnumerableSet for EnumerableSet.AddressSet;
 
     struct Module {
+        uint identifier;
         uint version;
         EnumerableSet
             .AddressSet implementations;
