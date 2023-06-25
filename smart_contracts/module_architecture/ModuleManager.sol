@@ -187,6 +187,15 @@ contract ModuleManager is Context, ReentrancyGuard {
         return implementation.version;
     }
 
+    /// update the module manager itself.
+    function _update(address newImplementation) private {
+        /// let all modules know the location of the new implementation
+        for (uint i = 1; i < numberOfModules; i ++) {
+            Module storage module = modules[i];
+
+        }
+    }
+
     /// update module manager.
     /// very computationally intensive so not designed to be used often.
     function _update(

@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: CC-BY-NC-SA-4.0
 pragma solidity ^0.8.9;
 
+/// all our contracts inherit a module wrapper
+
 interface IModule {
 
     function setModuleManagerImplementation(address newImplementation) external;
@@ -8,6 +10,9 @@ interface IModule {
 }
 
 contract Module {
+    /// module copy of module manager Module struct.
+
+
     struct Implementation {
         uint moduleIdentifier;
         uint version;
@@ -37,3 +42,5 @@ contract Module {
     function getModuleName() external view returns (string memory) { return name; }
     function getModuleDescription() external view returns (string memory) { return description; }
 }
+
+contract DC88ModuleWrapper()
