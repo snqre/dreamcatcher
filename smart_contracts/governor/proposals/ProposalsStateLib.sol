@@ -2,7 +2,7 @@
 pragma solidity ^0.8.9;
 
 library ProposalsStateLib {
-    struct ProposalsStateTracker {
+    struct Tracker {
         uint numberOfReferendums;
         uint numberOfMultiSigReferendums;
         uint numberOfFullSetElections;
@@ -10,7 +10,7 @@ library ProposalsStateLib {
         uint numberOfEmergencyProposals;
     }
 
-    struct ProposalsStateSettings {
+    struct Settings {
         address dreamToken;
         address emberToken;
     }

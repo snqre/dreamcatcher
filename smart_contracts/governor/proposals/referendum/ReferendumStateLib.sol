@@ -8,7 +8,7 @@ import "smart_contracts/governor/proposals/ProposalsStateLib.sol";
 library ReferendumStateLib {
     using EnumerableSet for EnumerableSet.AddressSet;
 
-    struct ReferendumSettings {
+    struct Settings {
         uint defaultThreshold;
         uint minThreshold;
         uint maxThreshold;
@@ -20,6 +20,17 @@ library ReferendumStateLib {
         uint defaultRequiredQuorum;
         uint minRequiredQuorum;
         uint maxRequiredQuorum;
+    }
+
+    struct Voter {
+        address account;
+        uint votes;
+        /// choice 1: abstain.
+        /// choice 2: for.
+        /// choice 3: against.
+        uint choice;
+        bool hasVoted;
+        uint timestampOfLastVote;
     }
 
     struct Referendum {
@@ -45,16 +56,5 @@ library ReferendumStateLib {
         bytes args;
         EnumerableSet.
             AddressSet voters;
-    }
-
-    struct Voter {
-        address account;
-        uint votes;
-        /// choice 1: abstain.
-        /// choice 2: for.
-        /// choice 3: against.
-        uint choice;
-        bool hasVoted;
-        uint timestampOfLastVote;
     }
 }
