@@ -3,6 +3,8 @@ pragma solidity ^0.8.9;
 
 import "smart_contracts/governor/proposals/referendum/ReferendumStateLib.sol";
 
+import "smart_contracts/tokens/dream_token/DreamToken.sol";
+
 library ReferendumLogicLib {
     function mustNotBePassed(ReferendumStateLib.Referendum storage referendum) public view {
         require(
@@ -74,21 +76,53 @@ library ReferendumLogicLib {
         );
     }
 
-    function mustBeWithinRange(
-        uint value,
-        uint min,
-        uint max
-    ) public pure {
+    function mustNotHaveVoted(ReferendumStateLib.Referendum storage referendum) public view {
         require(
-            value >= min &&
-            value <= max,
-            "Value is not within range."
+            !referendum.voters.contain(msg.sender),
+            "Caller has voted."
         );
+    }
+
+    function getAverageActiveQuorum(
+        ReferendumStateLib.Referendum[] storage referendums,
+        ProposalsStateLib.Tracker storage tracker,
+        uint start,
+        uint end
+    ) public returns (
+        uint,
+        uint
+    ) {
+        uint numberOfActiveReferendums;
+        uint totalQuorum;
+
+        for (
+            uint i = 1;
+            i < tracker.numberOfReferendums;
+            i++
+        ) {
+            ReferendumStateLib.Referendum storage referendum = referendums[i];
+
+            /// conditions for an active referendum.
+            if (
+                start >= referendum.startTimestamp &&
+                end <= referendum.endTimestamp &&
+                !referendum.hasBeenCancelled &&
+                !referendum.hasBeenExecuted &&
+                !referendum.hasBeenPassed
+            ) {
+                numberOfActiveReferendums ++;
+                totalQuorum += referendum.quorum;
+            }
+        }
+
+        uint averageActiveQuorum = totalQuorum / numberOfActiveReferendums;
+        return (numberOfActiveReferendums, averageActiveQuorum);
     }
 
     function create(
         ReferendumStateLib.Referendum[] storage referendums,
         ReferendumStateLib.Settings storage settings,
+        ProposalsStateLib.Settings storage proposalsSettings,
         ProposalsStateLib.Tracker storage tracker,
         string memory reason,
         uint startTimestamp,
@@ -135,6 +169,86 @@ library ReferendumLogicLib {
             );
         }
 
-        
+        tracker.numberOfReferendums ++;
+        ReferendumStateLib.Referendum storage referendum = referendums[tracker.numberOfReferendums];
+        referendum.identifier = tracker.numberOfReferendums;
+
+        /// create a snapshot and return the snapshot identifier.
+        referendum.snapshot = IDreamToken(proposalsSettings.dreamToken).snapshot();
+        referendum.creator = msg.sender;
+        referendum.reason = reason;
+
+        if (startTimestamp != 0) { referendum.startTimestamp = startTimestamp; }
+        else { referendum.startTimestamp = block.timestamp; }
+
+        if (timeout != 0) { referendum.timeout = settings.defaultTimeout; }
+        else { timeout = settings.minTimeout; }
+
+        referendum.endTimestamp = referendum.startTimestamp + referendum.timeout;
+
+        if (requiredQuorum != 0) { referendum.requiredQuorum = requiredQuorum; }
+        else {
+            (, uint averageActiveQuorum) = getAverageActiveQuorum(
+                referendums, 
+                tracker, 
+                block.timestamp - settings.defaultAverageActiveQuorumLookBackTime, 
+                block.timestamp
+            );
+
+            if (averageActiveQuorum < settings.minRequiredQuorum) { averageActiveQuorum = settings.minRequiredQuorum; }
+            else if (averageActiveQuorum > settings.maxRequiredQuorum) { averageActiveQuorum = settings.maxRequiredQuorum; }
+
+            referendum.requiredQuorum = averageActiveQuorum;
+        }
+
+        if (threshold != 0) { referendum.threshold = threshold; }
+        else { referendum.threshold = settings.defaultThreshold; }
+
+        /// store payload.
+        referendum.delegatecall = delegatecall;
+        referendum.signature = signature;
+        referendum.args = args;
+
+        /// store new referendum
+        referendums.push(referendum);
+
+        return (
+            referendum.identifer,
+            referendum.snapshot
+        );
+    }
+
+    function vote(
+        ReferendumStateLib.Referendum[] storage referendums,
+        ProposalsStateLib.Tracker storage tracker,
+        uint identifier,
+        uint choice
+    ) public {
+        ReferendumStateLib.Referendum storage referendum = referendums[identifer];
+
+        mustBePresent(referendum, tracker);
+        mustNotBePassed(referendum);
+        mustNotBeCancelled(referendum);
+        mustNotBeExpired(referendum);
+
+        require(
+            choice >= 0 &&
+            choice <= 2,
+            "Choice is out of bounds."
+        );
+
+        mustNotHaveVoted(referendum);
+
+        uint votes = IDreamToken(settings.nativeToken).getVotesAt(
+            msg.sender,
+            referendum.snapshot
+        );
+
+        if (choice == 0) { referendum.votesToAbstain += votes; }
+        else if (choice == 1) { referendum.votesFor += votes; }
+        else if (choice == 2) { referendum.votesAgainst += votes; }
+
+        referendum.quorum += votes;
+        referendum.voters.add(msg.sender);
     }
 }
