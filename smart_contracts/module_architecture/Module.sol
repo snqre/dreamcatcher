@@ -2,28 +2,34 @@
 pragma solidity ^0.8.9;
 
 interface IModule {
+
     function setModuleManagerImplementation(address newImplementation) external;
+    
 }
 
 contract Module {
-    uint identifier;
-    uint version;
-    string name;
-    string description;
-    bool isActiveImplementation;
-    address moduleManagerImplementation;
+    struct Implementation {
+        uint moduleIdentifier;
+        uint version;
+        string moduleName;
+        string moduleDescription;
+        bool isActiveImplementation;
+        address moduleManagerImplementation;
+    }
+
+    Implementation private implementation;
 
     constructor() {}
 
     function mustBeActiveImplementation() external view {
         require(
-            isActiveImplementation,
+            implementation.isActiveImplementation,
             "Not an active implementation."
         );
     }
 
     function setModuleManagerImplementation(address newImplementation) external {
-        moduleManagerImplementation = newImplementation;
+        implementation.moduleManagerImplementation = newImplementation;
     }
 
     function getModuleIdentifier() external view returns (uint) { return identifier; }

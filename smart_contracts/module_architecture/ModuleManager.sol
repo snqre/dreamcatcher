@@ -2,6 +2,8 @@
 pragma solidity ^0.8.9;
 
 import "deps/openzeppelin/utils/structs/EnumerableSet.sol";
+import "deps/openzeppelin/utils/Context.sol";
+import "deps/openzeppelin/security/ReentrancyGuard.sol";
 
 import "smart_contracts/module_architecture/ModuleStateLib.sol";
 import "smart_contracts/module_architecture/Module.sol";
@@ -10,77 +12,179 @@ interface IModuleManager {
     
 }
 
-contract ModuleManager {
+contract ModuleManager is Context, ReentrancyGuard {
     using EnumerableSet for EnumerableSet.AddressSet;
-
     uint numberOfModules;
 
-    mapping(string => uint) private modulesSearch;
-    mapping(uint => ModuleStateLib.Module) private modules;
+    struct Implementation {
+        uint version;
+        address implementation;
+        uint launchTimestamp;
+        uint expirationTimestamp;
+        bool hasBeenPaused;
+        bool hasExpiration;
+    }
+    
+    struct Module {
+        uint identifier;
+        uint latestVersion;
+        address latestImplementation;
+        string name;
+        uint launchTimestamp;
+        uint expirationTimestamp;
+        bool hasBeenPaused;
+        bool hasExpiration;
+    }
+
+    mapping(uint => Module) private modules;
+    mapping(uint => mapping(uint => Implementation)) private implementations;
+    mapping(string => uint) private nameToIdentifier;
+
+    event ModuleCreated(
+        string indexed name,
+        uint indexed launchTimestamp,
+        uint indexed expirationTimestamp,
+        bool hasBeenPaused,
+        bool hasExpiration
+    );
+
+    event NewImplementation(
+        string indexed name,
+        address newImplementation,
+        uint launchTimestamp,
+        uint expirationTimestamp,
+        bool hasBeenPaused,
+        bool hasExpiration
+    );
 
     constructor() {}
 
-    function _updateImplementation(
+    function _createNewModule(
         string memory name,
-        address newImplementation
-    ) private {
-        uint searchResult = modulesSearch[name];
-        ModuleStateLib.Module storage module = modules[searchResult];
-        module.version ++;
-        module.implementations.add(newImplementation);
-    }
-
-    function _create(
-        address implementation,
-        string memory name,
-        string memory description
-    ) private {
+        uint launchTimestamp,
+        uint expirationTimestamp,
+        bool startFromPaused
+    ) private returns (uint) {
         numberOfModules ++;
-        ModuleStateLib.Module storage module = modules[numberOfModules];
-        module.identifier = numberOfModules;
-
-        /// push first implementation
-        module.version ++;
-        module.implementations.add(implementation);
-
-        module.name = name;
-        module.description = description;
-        module.isActive;
+        uint identifier = numberOfModules;
+        Module storage module = modules[identifier];
 
         /// map name to module identifier.
-        uint searchResult = modulesSearch[module.name];
+        uint searchResult = nameToIdentifier[name];
         require(searchResult == 0, "Module name is already in use.");
-        modulesSearch[module.name] = module.identifier;
-    }
+        nameToIdentifier[name] = identifier;
 
-    function _getLatestVersion(string memory name) private view returns (uint) {
-        uint searchResult = modulesSearch[name];
-        ModuleStateLib.Module storage module = modules[searchResult];
-        return module.version;
-    }
+        if (launchTimestamp != 0) {
+            require(
+                launchTimestamp >= block.timestamp,
+                "Module is being launched in the past."
+            );
+        }
 
-    function _getLatestImplementation(string memory name) private view returns (address) {
-        uint searchResult = modulesSearch[name];
-        ModuleStateLib.Module storage module = modules[searchResult];
-        uint length = module.implementations.length();
-        return module.implementations.at(length);
-    }
+        if (expirationTimestamp != 0) {
+            require(
+                expirationTimestamp >= block.timestamp,
+                "Module is expired in the past."
+            );
+        }
 
-    function _getImplementation(
-        string memory name,
-        uint version
-    ) private view returns (address) {
-        uint searchResult = modulesSearch[name];
-        ModuleStateLib.Module storage module = modules[searchResult];
-        uint length = module.implementations.length();
+        if (
+            launchTimestamp != 0 &&
+            expirationTimestamp != 0
+        ) {
+            require(
+                expirationTimestamp > launchTimestamp,
+                "Module expires before it is launched."
+            );
+        }
 
-        require(
-            version >= 1 &&
-            version <= length,
-            "Version does not point to an existing implementation."
+        /// basic meta data.
+        module.identifier = identifier;
+        module.name = name;
+        
+        /// launch timestamp.
+        if (launchTimestamp != 0) { module.launchTimestamp = launchTimestamp; }
+        else { module.launchTimestamp = block.timestamp; }
+
+        /// expiration timestamp.
+        if (expirationTimestamp != 0) {
+            module.hasExpiration = true;
+            module.expirationTimestamp = expirationTimestamp;
+        }
+        
+        /// does the module start in a paused state.
+        if (startFromPaused) { module.hasBeenPaused = true; }
+
+        emit ModuleCreated(
+            module.name, 
+            module.launchTimestamp, 
+            module.expirationTimestamp, 
+            module.hasBeenPaused, 
+            module.hasExpiration
         );
 
-        return module.implementations.at(version);
+        return module.identifier;
+    }
+
+    function _pushNewImplementation(
+        string memory name,
+        address newImplementation,
+        uint launchTimestamp,
+        uint expirationTimestamp,
+        bool startFromPaused
+    ) private returns (uint) {
+        Module storage module = modules[nameToIdentifier[name]];
+        uint version = module.latestVersion ++;
+        Implementation storage implementation = implementations[nameToIdentifier[name]][version];
+
+        if (launchTimestamp != 0) {
+            require(
+                launchTimestamp >= block.timestamp,
+                "Implementation is being launched in the past."
+            );
+        }
+
+        if (expirationTimestamp != 0) {
+            require(
+                expirationTimestamp >= block.timestamp,
+                "Implementation is expired in the past."
+            );
+        }
+
+        if (
+            launchTimestamp != 0 &&
+            expirationTimestamp != 0
+        ) {
+            require(
+                expirationTimestamp > launchTimestamp,
+                "Implementation expires before it is launched."
+            );
+        }
+
+        implementation.version = version;
+        implementation.implementation = newImplementation;
+        module.latestImplementation = newImplementation;
+        
+        if (launchTimestamp != 0) { implementation.launchTimestamp = launchTimestamp; }
+        else { implementation.launchTimestamp = block.timestamp; }
+
+        if (expirationTimestamp != 0) {
+            implementation.hasExpiration = true;
+            implementation.expirationTimestamp = expirationTimestamp;
+        }
+
+        if (startFromPaused) { implementation.hasBeenPaused; }
+
+        emit NewImplementation(
+            module.name, 
+            implementation.implementation, 
+            implementation.launchTimestamp, 
+            implementation.expirationTimestamp, 
+            implementation.hasBeenPaused, 
+            implementation.hasExpiration
+        );
+
+        return implementation.version;
     }
 
     /// update module manager.
@@ -118,6 +222,34 @@ contract ModuleManager {
                     module.implementations.at(x)
                 );
             }
-        }
+    }
+
+    function _getLatestVersion(string memory name) private view returns (uint) {
+        uint searchResult = nameToIdentifier[name];
+        Module storage module = modules[searchResult];
+        return module.latestVersion;
+    }
+
+    function _getLatestImplementation(string memory name) private view returns (uint) {
+        uint searchResult = nameToIdentifier[name];
+        Module storage module = modules[searchResult];
+        return module.latestImplementation;
+    }
+
+    function _getImplementation(
+        string memory name,
+        uint version
+    ) private view returns (address) {
+        uint searchResult = nameToIdentifier[name];
+        Module storage module = modules[searchResult];
+        uint length = module.latestVersion;
+        
+        require(
+            version >= 1 &&
+            version <= length,
+            "Version does not point to an existing implementation."
+        );
+
+        return implementations[searchResult][version];
     }
 }
