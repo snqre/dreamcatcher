@@ -218,7 +218,7 @@ library ReferendumLogicLib {
         );
     }
 
-    function vote(
+    function vote( /// can only vote once.
         ReferendumStateLib.Referendum[] storage referendums,
         ProposalsStateLib.Tracker storage tracker,
         uint identifier,
@@ -303,6 +303,4 @@ library ReferendumLogicLib {
         settings.defaultThreshold = value;
         return true;
     }
-
-    
 }

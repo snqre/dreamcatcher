@@ -15,7 +15,7 @@ contract TokenTerminal is ReentrancyGuard {
         emberToken = new EmberToken();
     }
 
-    /// snapshot will call snapshot on both contracts.
+    /// snapshot will call snapshot on both contracts such that the snapshot identifier is the same.
     function _snapshot() private returns (uint) {
         uint snapshot = dreamToken.snapshot_();
         emberToken.snapshot_();
