@@ -2,7 +2,6 @@
 pragma solidity ^0.8.9;
 
 import "deps/openzeppelin/utils/structs/EnumerableSet.sol";
-import "deps/openzeppelin/utils/Context.sol";
 import "deps/openzeppelin/security/ReentrancyGuard.sol";
 
 interface IModuleManager {
@@ -25,7 +24,7 @@ interface IModuleManager {
     ) external view returns (address);
 }
 
-contract ModuleManager is Context, ReentrancyGuard {
+contract ModuleManager is ReentrancyGuard {
     using EnumerableSet for EnumerableSet.AddressSet;
     uint count;
 
@@ -40,6 +39,23 @@ contract ModuleManager is Context, ReentrancyGuard {
     /// storage.
     mapping(uint => Module) private modules;
     mapping(string => uint) private nameToIdentifier;
+
+    event ModuleCreated(
+        string indexed name,
+        uint indexed identifer
+    );
+
+    event ModuleUpgraded(
+        string indexed name,
+        uint indexed identifier,
+        address indexed newImplementation
+    );
+
+    event ModuleDowngraded(
+        string indexed name,
+        uint indexed identifier,
+        address indexed newImplementation
+    );
 
     constructor() {}
 
@@ -71,6 +87,28 @@ contract ModuleManager is Context, ReentrancyGuard {
         );
     }
 
+    function _mustNotBeDuplicateImplementation(
+        string memory name,
+        address newImplementation
+    ) private view {
+        /// @dev it is still possible to have duplicates using downgrade.
+        Module storage module = modules[nameToIdentifier[name]];
+        require(
+            !module.implementations.contains(newImplementation),
+            "Module already has this implementation."
+        );
+    }
+
+    function _upgrade(
+        string memory name,
+        address newImplementation
+    ) private {
+        /// upgrade latest implementation to.
+        _mustBeExistingModule(name);
+        Module storage module = modules[nameToIdentifier[name]];
+        module.implementations.add(newImplementation);
+    }
+
     function create(string memory name) public nonReentrant returns (uint) {
         /// create a module.
         _mustNotBeExistingModule(name);
@@ -84,6 +122,11 @@ contract ModuleManager is Context, ReentrancyGuard {
         module.identifier = count;
         module.name = name;
 
+        emit ModuleCreated(
+            module.name,
+            module.identifier
+        );
+
         return module.identifier;
     }
 
@@ -91,10 +134,22 @@ contract ModuleManager is Context, ReentrancyGuard {
         string memory name,
         address newImplementation
     ) public nonReentrant {
-        /// upgrade latest implementation to.
-        _mustBeExistingModule(name);
-        Module storage module = modules[nameToIdentifier[name]];
-        module.implementations.add(newImplementation);
+        /// check for duplicate implementation for module.
+        _mustNotBeDuplicateImplementation(
+            name,
+            newImplementation
+        );
+
+        _upgrade(
+            name,
+            newImplementation
+        );
+
+        emit ModuleUpgraded(
+            name,
+            nameToIdentifier[name],
+            newImplementation
+        );
     }
 
     function downgrade(
@@ -104,18 +159,26 @@ contract ModuleManager is Context, ReentrancyGuard {
         _mustBeExistingModule(name);
 
         Module storage module = modules[nameToIdentifier[name]];
-        upgrade( /// push this version as latest version.
+        _upgrade( /// push this version as latest version.
             name,
+            module.implementations.at(version)
+        );
+
+        emit ModuleDowngraded(
+            module.name,
+            module.identifier,
             module.implementations.at(version)
         );
     }
 
     function getLatestVersion(string memory name) public view returns (uint) {
+        /// return the active version for this module.
         Module storage module = modules[nameToIdentifier[name]];
         return module.implementations.length();
     }
 
     function getLatestImplementation(string memory name) public view returns (address) {
+        /// return the address to the active implementation for this module.
         Module storage module = modules[nameToIdentifier[name]];
         return module.implementations.at(module.implementations.length());
     }
@@ -124,6 +187,7 @@ contract ModuleManager is Context, ReentrancyGuard {
         string memory name,
         uint version
     ) public view returns (address) {
+        /// search the address of an existing version.
         _mustBeExistingVersion(
             name,
             version
@@ -131,5 +195,16 @@ contract ModuleManager is Context, ReentrancyGuard {
 
         Module storage module = modules[nameToIdentifier[name]];
         return module.implementations.at(version);
+    }
+
+    function getImplementations(string memory name) public view returns (address[] memory) {
+        /// @dev return an array with all the implementations for a module.
+        address[] memory implementations;
+        Module storage module = modules[nameToIdentifier[name]];
+        for (uint i = 1; i < module.implementations.length(); i ++) {
+            implementations[i] = module.implementations.at(i);
+        }
+
+        return implementations;
     }
 }
