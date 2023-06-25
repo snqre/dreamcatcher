@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.9;
 
-// this also needs replacing
-import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/finance/VestingWallet.sol";
+import "deps/openzeppelin/finance/VestingWallet.sol";
 
 contract LinearVestedWallet is VestingWallet {
 
@@ -20,5 +19,4 @@ contract LinearVestedWallet is VestingWallet {
         startTimestamp,
         durationSeconds
     ) payable {}
-
 }

@@ -8,7 +8,7 @@ import "deps/openzeppelin/utils/Context.sol";
 import "deps/openzeppelin/security/ReentrancyGuard.sol";
 
 import "smart_contracts/utils/Utils.sol";
-import "smart_contracts/tokens/dream_token/DreamToken.sol";
+import "smart_contracts/tokens/TokenTerminal.sol";
 
 interface IReferendums {
     function new_(
@@ -235,6 +235,20 @@ contract Referendums is Context, Ownable, ReentrancyGuard {
             identifier <= tracker.numberOfReferendums,
             "Referendums: identifier does not point to an existing referendum"
         );
+    }
+
+    function _call(
+        address target,
+        string memory signature,
+        bytes memory args
+    ) private returns (bool) {
+        (bool success, ) = address(target).call(abi.encodeWithSignature(
+            signature, 
+            args
+        ));
+
+        require(success, "Call was not successful.");
+        return true;
     }
 
     function _getAverageActiveQuorum(
@@ -476,6 +490,19 @@ contract Referendums is Context, Ownable, ReentrancyGuard {
         Referendum storage referendum = referendums[identifier];
         referendum.hasBeenExecuted = true;
 
+        address terminal;
+
+        /// make call to Terminal and pass payload.
+        terminal.call()
+
+        (bool success, ) = address(terminal).safeCall(
+            referendum.contract_,
+            referendum.signature,
+            referendum.args
+        );
+
+        require(success, "Unable to execute.");
+
         emit Executed(
             identifier,
             _msgSender(),
@@ -616,64 +643,8 @@ contract Referendums is Context, Ownable, ReentrancyGuard {
         return activeReferendums;
     }
 
-    function getSnapshot(uint identifier) public view virtual returns (uint) {
-        return referendums[identifier].snapshot;
-    }
-
-    function getCreator(uint identifier) public view virtual returns (address) {
-        return referendums[identifier].creator; 
-    }
-
-    function getReason(uint identifier) public view virtual returns (string memory) { 
-        return referendums[identifier].reason; 
-    }
-
-    function getStartTimestamp(uint identifier) public view virtual returns (uint) { 
-        return referendums[identifier].startTimestamp; 
-    }
-
-    function getEndTimestamp(uint identifier) public view virtual returns (uint) {
-        return referendums[identifier].endTimestamp; 
-    }
-
-    function getTimeout(uint identifier) public view virtual returns (uint) { 
-        return referendums[identifier].timeout; 
-    }
-
-    function getQuorum(uint identifier) public view virtual returns (uint) { 
-        return referendums[identifier].quorum; 
-    }
-
-    function getQuorumRequired(uint identifier) public view virtual returns (uint) { 
-        return referendums[identifier].quorumRequired; 
-    }
-
-    function getVotesFor(uint identifier) public view virtual returns (uint) { 
-        return referendums[identifier].votesFor; 
-    }
-
-    function getVotesAgainst(uint identifier) public view virtual returns (uint) { 
-        return referendums[identifier].votesAgainst; 
-    }
-
-    function getVotesToAbstain(uint identifier) public view virtual returns (uint) { 
-        return referendums[identifier].votesToAbstain; 
-    }
-
-    function getThreshold(uint identifier) public view virtual returns (uint) { 
-        return referendums[identifier].threshold; 
-    }
-
-    function hasBeenCancelled(uint identifier) public view virtual returns (bool) { 
-        return referendums[identifier].hasBeenCancelled; 
-    }
-
-    function hasBeenExecuted(uint identifier) public view virtual returns (bool) { 
-        return referendums[identifier].hasBeenExecuted; 
-    }
-
-    function hasBeenPassed(uint identifier) public view virtual returns (bool) { 
-        return referendums[identifier].hasBeenPassed; 
+    function getReferendum(uint identifier) external view returns (uint) {
+        return referendums[identifier];
     }
 
     function getPayload(uint identifier) public view virtual returns (

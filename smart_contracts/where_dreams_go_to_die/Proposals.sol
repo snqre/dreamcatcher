@@ -11,4 +11,11 @@ contract Proposals {
     ReferendumStateLib.Settings private referendumSettings;
     ReferendumStateLib.Referendum[] private referendums;
     
+    constructor() {}
+
+    function createReferendum() external {
+        ReferendumLogicLib.create(
+            
+        );
+    }
 }

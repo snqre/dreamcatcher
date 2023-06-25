@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: CC-BY-NC-SA-4.0
 pragma solidity ^0.8.9;
 
-import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/finance/VestingWallet.sol";
+import "deps/openzeppelin/finance/VestingWallet.sol";
 
 contract BurnDrivenVestedWallet is VestingWallet {
 
@@ -20,8 +20,13 @@ contract BurnDrivenVestedWallet is VestingWallet {
         durationSeconds
     ) payable {}
 
-    function _vestingSchedule(uint totalAllocation, uint timestamp) internal view virtual override returns (uint) {
-        
+    function _vestingSchedule(
+        uint totalAllocation, 
+        uint timestamp
+    ) internal view virtual override returns (uint256) {
+        if (timestamp < start()) { return 0; }
+        else if (timestamp > end()) { return totalAllocation; }
+        else {}
     }
 
 }

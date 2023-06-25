@@ -97,6 +97,7 @@ contract ProposalsTerminal { /// swappable
     function execute(
         uint identifier
     ) external returns (bool) {
+        _mustBeActive();
         ReferendumLogicLib.execute(
             referendums, 
             tracker, 

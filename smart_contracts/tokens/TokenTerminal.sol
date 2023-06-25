@@ -6,6 +6,10 @@ import "smart_contracts/tokens/dream_token/DreamToken.sol";
 import "smart_contracts/tokens/ember_token/EmberToken.sol";
 import "deps/openzeppelin/security/ReentrancyGuard.sol";
 
+interface ITokenTerminal {
+    function snapshot() external returns (uint);
+}
+
 contract TokenTerminal is ReentrancyGuard {
     DreamToken immutable private dreamToken;
     EmberToken immutable private emberToken;
