@@ -7,15 +7,13 @@ import "deps/openzeppelin/token/ERC20/extensions/ERC20Snapshot.sol";
 import "deps/openzeppelin/token/ERC20/extensions/ERC20Burnable.sol";
 import "deps/openzeppelin/token/ERC20/ERC20.sol";
 
-import "smart_contracts/utils/Utils.sol";
-
 contract EmberToken is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit, Ownable {
-    constructor(address owner) ERC20("EmberToken", "EMBER") ERC20Permit("EmberToken") Ownable(owner) {}
+    constructor() ERC20("EmberToken", "EMBER") ERC20Permit("EmberToken") Ownable() {}
 
-    function _mustNotBeFutureLookup(uint snapshot) internal view {
+    function _mustNotBeFutureLookup(uint snapshot) private view {
         require(
             snapshot <= _getCurrentSnapshotId(),
-            "EmberToken: Must not be future lookup."
+            "Must not be future lookup."
         );
     }
 
@@ -23,7 +21,7 @@ contract EmberToken is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit, Ownable
         address from, 
         address to, 
         uint amount
-    ) internal override(
+    ) private override(
         ERC20, 
         ERC20Snapshot
     ) {
@@ -33,14 +31,14 @@ contract EmberToken is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit, Ownable
             amount
         );
 
-        revert("EmberToken: Tokens are non-transferable by design.");
+        revert("Tokens are non-transferable by design.");
     }
 
     function _afterTokenTransfer(
         address from,
         address to,
         uint amount
-    ) internal override {
+    ) private override {
         super._afterTokenTransfer(
             from,
             to,
@@ -51,21 +49,21 @@ contract EmberToken is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit, Ownable
     function mint(
         address to,
         uint amount
-    ) public onlyOwner {
+    ) external onlyOwner {
         _mint(
             to,
             amount
         );
     }
 
-    function mintByPoints(
+    function mintUsingBasisPoints(
         address to,
         uint points
-    ) public onlyOwner {
+    ) external onlyOwner {
         require(
             points >= 1 &&
             points <= 10000,
-            "EmberToken: Points out of bounds"
+            "Points out of bounds."
         );
 
         uint amountToMint = (totalSupply() / 10000) * points;
@@ -75,12 +73,12 @@ contract EmberToken is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit, Ownable
         );
     }
 
-    function snapshot_() public onlyOwner returns (uint) {
+    function snapshot_() external onlyOwner returns (uint) {
         _snapshot();
         return _getCurrentSnapshotId();
     }
 
-    function getWeight(address account) public view returns (uint) {
+    function getWeight(address account) external view returns (uint) {
         uint balance = balanceOfAt(
             account,
             _getCurrentSnapshotId()
@@ -94,7 +92,7 @@ contract EmberToken is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit, Ownable
     function getPastWeight(
         address account,
         uint snapshot
-    ) public view returns (uint) {
+    ) external view returns (uint) {
         _mustNotBeFutureLookup(snapshot);
         uint balance = balanceOfAt(
             account,

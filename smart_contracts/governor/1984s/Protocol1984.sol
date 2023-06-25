@@ -1,0 +1,3 @@
+contract Protocol1984 {
+
+}

@@ -108,3 +108,46 @@ contract Terminal is Initializable, AccessControlUpgradeable, UUPSUpgradeable {
     }
     
 }
+
+// SPDX-License-Identifier: CC-BY-NC-SA-4.0
+pragma solidity ^0.8.9;
+
+import "smart_contracts/tokens/TokenTerminal.sol";
+
+contract Terminal {
+    TokenTerminal immutable private tokenTerminal;
+
+    mapping(address => bool) private whitelist;
+
+    constructor() {
+        tokenTerminal = new TokenTerminal();
+    }
+
+    function _safeCall(
+        address contract_,
+        string memory signature,
+        bytes memory args
+    ) private returns (bool) {
+        (bool success, ) = address(contract_).call(abi.encodeWithSignature(
+            signature, 
+            args
+        ));
+
+        require(success, "Call was not successful.");
+        return true;
+    }
+
+    function safeCall(
+        address contract_,
+        string memory signature,
+        bytes memory args
+    ) external returns (bool) {
+        return _safeCall(
+            contract_, 
+            signature, 
+            args
+        );
+    }
+
+    function getTokenTerminalContract() external view returns (address) { return address(tokenTerminal); }
+}

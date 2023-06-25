@@ -10,7 +10,5 @@ contract Proposals {
     
     ReferendumStateLib.Settings private referendumSettings;
     ReferendumStateLib.Referendum[] private referendums;
-    mapping(uint => mapping(address => ReferendumStateLib.Voter)) private referendumsVoters;
-
     
 }

@@ -250,5 +250,59 @@ library ReferendumLogicLib {
 
         referendum.quorum += votes;
         referendum.voters.add(msg.sender);
+
+        referendums[identifier] = referendum;
     }
+
+    function cancel(
+        ReferendumStateLib.Referendum[] storage referendums,
+        ProposalsStateLib.Tracker storage tracker,
+        uint identifier
+    ) public {
+        ReferendumStateLib.Referendum storage referendum = referendums[identifer];
+
+        mustBePresent(referendum, tracker);
+        mustNotBePassed(referendum);
+        mustNotBeCancelled(referendum);
+        mustNotBeExecuted(referendum);
+        mustNotBeExpired(referendum);
+
+        referendum.hasBeenCancelled = true;
+
+        referendums[identifier] = referendum;
+    }
+
+    function execute(
+        ReferendumStateLib.Referendum[] storage referendums,
+        ProposalsStateLib.Tracker storage tracker,
+        uint identifier
+    ) public {
+        ReferendumStateLib.Referendum storage referendum = referendums[identifer];
+
+        mustBePresent(referendum, tracker);
+        mustNotBeExpired(referendum);
+        mustNotBeExecuted(referendum);
+        mustBePassed(referendum);
+        mustNotBeCancelled(referendum);
+
+        referendum.hasBeenExecuted = true;
+
+        referendums[identifier] = referendum;
+    }
+
+    function setDefaultThreshold(
+        ReferendumStateLib.Settings storage settings,
+        uint value
+    ) public {
+        require(
+            value >= settings.minThreshold &&
+            value <= settings.maxThreshold,
+            "Value is out of bounds." 
+        );
+
+        settings.defaultThreshold = value;
+        return true;
+    }
+
+    
 }
