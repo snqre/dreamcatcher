@@ -12,10 +12,20 @@ contract ProposalsTerminal { /// swappable
     ReferendumStateLib.Settings private settingsReferendum;
     ReferendumStateLib.Referendum[] private referendums;
 
+    bool isActive;
     mapping(address => bool) private isModule;
     mapping(address => bool) private isSubModule;
 
-    constructor() {}
+    constructor() {
+        isActive = true;
+    }
+
+    function _mustBeActive() private view {
+        require(
+            isActive,
+            "This module is not in function."
+        );
+    }
 
     function createReferendum(
         string memory reason,
@@ -31,6 +41,7 @@ contract ProposalsTerminal { /// swappable
         uint,
         uint
     ) {
+        _mustBeActive();
         (
             uint identifier,
             uint snapshot
@@ -60,6 +71,7 @@ contract ProposalsTerminal { /// swappable
         uint identifier,
         uint choice
     ) external returns (bool) {
+        _mustBeActive();
         ReferendumLogicLib.vote(
             referendums,
             tracker,
@@ -74,6 +86,18 @@ contract ProposalsTerminal { /// swappable
         uint identifier
     ) external returns (bool) {
         ReferendumLogicLib.cancel(
+            referendums, 
+            tracker, 
+            identifier
+        );
+
+        return true;
+    }
+
+    function execute(
+        uint identifier
+    ) external returns (bool) {
+        ReferendumLogicLib.execute(
             referendums, 
             tracker, 
             identifier
