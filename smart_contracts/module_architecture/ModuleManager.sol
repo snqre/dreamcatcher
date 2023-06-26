@@ -199,8 +199,8 @@ contract ModuleManager is ReentrancyGuard {
 
     function getImplementations(string memory name) public view returns (address[] memory) {
         /// @dev return an array with all the implementations for a module.
-        address[] memory implementations;
         Module storage module = modules[nameToIdentifier[name]];
+        address[] memory implementations = new address[](module.implementations.length());
         for (uint i = 1; i < module.implementations.length(); i ++) {
             implementations[i] = module.implementations.at(i);
         }
