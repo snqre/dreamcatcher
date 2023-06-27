@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: CC-BY-NC-SA-4.0
-pragma solidity ^0.8.9;
+pragma solidity ^0.8.0;
 import "deps/openzeppelin/utils/structs/EnumerableSet.sol";
 import "deps/openzeppelin/security/ReentrancyGuard.sol";
 
@@ -115,7 +115,7 @@ contract ModuleManager is IModuleManager, ReentrancyGuard {
         /// create a module.
         _mustNotBeExistingModule(name);
 
-        count ++;
+        count += 1;
         Module storage module = modules[count];
 
         /// map name to module.
@@ -202,7 +202,7 @@ contract ModuleManager is IModuleManager, ReentrancyGuard {
     function getImplementations(string memory name) public view returns (address[] memory) {
         /// @dev return an array with all the implementations for a module.
         Module storage module = modules[nameToIdentifier[name]];
-        address[] memory implementations = new address[](module.implementations.length());
+        address[] memory implementations = new address[](module.implementations.length() + 1);
         for (
             uint i = 1; 
             i <= module.implementations.length(); 
@@ -213,10 +213,10 @@ contract ModuleManager is IModuleManager, ReentrancyGuard {
 
         return implementations;
     }
-    /// wtf is going on here?
+    /// wtf is going on here? ** i solved this finally just needed to add 1 to array size.
     function getModules() public view returns (string[] memory) {
         /// @dev return an array with all the names of existing modules.
-        string[] memory names = new string[](count);
+        string[] memory names = new string[](count + 1);
         for (
             uint i = 1;
             i <= count;

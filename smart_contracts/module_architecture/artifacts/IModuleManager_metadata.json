@@ -1,6 +1,6 @@
 {
 	"compiler": {
-		"version": "0.8.20+commit.a1b79de6"
+		"version": "0.8.19+commit.7dd6d404"
 	},
 	"language": "Solidity",
 	"output": {
@@ -170,7 +170,7 @@
 		"compilationTarget": {
 			"smart_contracts/module_architecture/ModuleManager.sol": "IModuleManager"
 		},
-		"evmVersion": "shanghai",
+		"evmVersion": "paris",
 		"libraries": {},
 		"metadata": {
 			"bytecodeHash": "ipfs"
@@ -199,11 +199,11 @@
 			]
 		},
 		"smart_contracts/module_architecture/ModuleManager.sol": {
-			"keccak256": "0x99b480d3c427eeeceaaaef99895b48df2e803515a5a54a2207a2436528b4c38f",
+			"keccak256": "0x9ed6bb76c0e3b8991f436bb786dc06bf85f58f361714bdc8e13c2552307ea05f",
 			"license": "CC-BY-NC-SA-4.0",
 			"urls": [
-				"bzz-raw://14ac6a6f46c590d85e386989c3c39b2c8dff4be0794e0a332b4257f7e28952a3",
-				"dweb:/ipfs/QmSWC7eKu6YT6tSSBjBgpGVCaUkHV2iGWikFFgmXRg16M6"
+				"bzz-raw://dd4935febd541f64963f810e31259e781ab80039b9b23a2c5ce041e8764096f2",
+				"dweb:/ipfs/QmbwpLjeepAr8cb4VeMXpZhN3gzqQ3zzsYLRoLWVvqDPrN"
 			]
 		}
 	},
