@@ -1,6 +1,5 @@
-// SPDX-License-Identifier: CC-BY-NC-SA-4.0
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.9;
-
 import "deps/openzeppelin/access/Ownable.sol";
 import "deps/openzeppelin/token/ERC20/extensions/draft-ERC20Permit.sol";
 import "deps/openzeppelin/token/ERC20/extensions/ERC20Snapshot.sol";
@@ -12,30 +11,45 @@ contract DreamToken is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit, Ownable
     uint private _maxSupply;
 
     constructor() ERC20("DreamToken", "DREAM") ERC20Permit("DreamToken") Ownable() {
-        _mintable = _convertToWei(200000000);
-        _maxSupply = _convertToWei(200000000);
+        /// initialize supply.
+        _mintable = _convertToWei(200_000_000);
+        _maxSupply = _convertToWei(200_000_000);
 
-        _mint(
+        _mint( /// mint all the supply to the deployer.
             _msgSender(),
-            _convertToWei(200000000)
+            _convertToWei(200_000_000)
         );
     }
 
+    function snapshot_() public returns (uint) {
+        /// create a snapshot.
+        _snapshot();
+        return _getCurrentSnapshotId();
+    }
+
+    function getCurrentSnapshotId() public view returns (uint) {
+        /// returns the latest snapshot id.
+        return _getCurrentSnapshotId();
+    }
+
+    function maxSupply() public view returns (uint) { 
+        /// return true max supply taking account for amount burnt.
+        return _maxSupply; 
+    }
+
+    function mintable() public view returns (uint) {
+        /// when zero no more tokens can be minted regardless of max supply.
+        return _mintable;
+    }
+
     function _convertToWei(uint value) private pure returns (uint) {
-        return value * 10**18;
+        return value * decimals();
     }
 
     function _mustBeMintable(uint amount) private view {
         require(
             amount <= _mintable,
             "Insufficient mintable amount. The requested amount exceeds the available mintable tokens."
-        );
-    }
-
-    function _mustNotBeFutureLookup(uint snapshot) private view {
-        require(
-            snapshot <= _getCurrentSnapshotId(),
-            "Must not be future lookup."
         );
     }
 
@@ -70,6 +84,7 @@ contract DreamToken is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit, Ownable
         address to,
         uint amount
     ) private override {
+        /// check how many tokens can still be minted.
         _mustBeMintable(amount);
         _mintable -= amount;
         super._mint(
@@ -82,36 +97,11 @@ contract DreamToken is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit, Ownable
         address account,
         uint amount
     ) private override {
+        /// reduce max supply for each burn.
         _maxSupply -= amount;
         super._burn(
             account,
             amount
-        );
-    }
-
-    function snapshot_() external onlyOwner returns (uint) {
-        _snapshot();
-        return _getCurrentSnapshotId();
-    }
-
-    function mintable() external view returns (uint) { return _mintable; }
-    function maxSupply() external view returns (uint) { return _maxSupply; }
-    
-    function getVotes(address account) external view returns (uint) {
-        return balanceOfAt(
-            account,
-            _getCurrentSnapshotId()
-        );
-    }
-
-    function getVotesAt(
-        address account,
-        uint snapshot
-    ) external view returns (uint) {
-        _mustNotBeFutureLookup(snapshot);
-        return balanceOfAt(
-            account,
-            snapshot
         );
     }
 }
