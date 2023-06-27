@@ -13,16 +13,11 @@ interface IModuleManager {
     function upgrade(
         string memory module,
         address newImplementation
-    ) public returns (bool);
-
-    function downgrade(
-        string memory module,
-        uint previousVersion
-    ) public returns (bool);
+    ) external returns (bool);
 
     /// PUBLIC ACCESS
     function getLatestVersion(string memory module)
-    external view returns (bool);
+    external view returns (uint);
 
     function getLatestImplementation(string memory module)
     external view returns (address);
@@ -102,6 +97,7 @@ contract ModuleManager is IModuleManager, Ownable {
             !_implementations[module].contains(implementation),
             "Module already has this implementation."
         );
+        _;
     }
 
     constructor(address owner) Ownable(owner) {}
@@ -109,7 +105,7 @@ contract ModuleManager is IModuleManager, Ownable {
     function _getLatestVersion(string memory module)
     internal view virtual returns (uint) {
         /// return the latest version of a module.
-        return _implementations[module].length();
+        return _implementations[module].length() - 1;
     }
 
     function _getLatestImplementation(string memory module)
@@ -166,29 +162,6 @@ contract ModuleManager is IModuleManager, Ownable {
         return true;
     }
 
-    function _downgrade(
-        string memory module,
-        uint previousVersion
-    ) internal virtual
-    onlyIfExistingVersionMatch(
-        module,
-        previousVersion
-    ) returns (bool) {
-        /// pushes an old implementation to the top of the array.
-        address newImplementation = _implementations[module].at(previousVersion);
-        _upgrade( /// in this case it is possible to have duplicate implementations in a module.
-            module, 
-            newImplementation
-        );
-
-        emit ModuleDowngraded(
-            module, 
-            newImplementation
-        );
-
-        return true;
-    }
-
     /// OWNER COMMANDS
     function create(
         string memory newModule,
@@ -209,17 +182,6 @@ contract ModuleManager is IModuleManager, Ownable {
         return _upgrade(
             module, 
             newImplementation
-        );
-    }
-
-    function downgrade(
-        string memory module,
-        uint previousVersion
-    ) public onlyOwner returns (bool) {
-        /// downgrade existing module to older implementation.
-        return _downgrade(
-            module, 
-            previousVersion
         );
     }
 

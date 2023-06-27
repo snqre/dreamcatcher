@@ -6,19 +6,81 @@
 	"output": {
 		"abi": [
 			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "string",
+						"name": "newModule",
+						"type": "string"
+					},
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "newImplementation",
+						"type": "address"
+					}
+				],
+				"name": "ModuleCreated",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "string",
+						"name": "module",
+						"type": "string"
+					},
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "newImplementation",
+						"type": "address"
+					}
+				],
+				"name": "ModuleDowngraded",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "string",
+						"name": "module",
+						"type": "string"
+					},
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "newImplementation",
+						"type": "address"
+					}
+				],
+				"name": "ModuleUpgraded",
+				"type": "event"
+			},
+			{
 				"inputs": [
 					{
 						"internalType": "string",
-						"name": "name",
+						"name": "newModule",
 						"type": "string"
+					},
+					{
+						"internalType": "address",
+						"name": "newImplementation",
+						"type": "address"
 					}
 				],
 				"name": "create",
 				"outputs": [
 					{
-						"internalType": "uint256",
+						"internalType": "bool",
 						"name": "",
-						"type": "uint256"
+						"type": "bool"
 					}
 				],
 				"stateMutability": "nonpayable",
@@ -28,68 +90,7 @@
 				"inputs": [
 					{
 						"internalType": "string",
-						"name": "name",
-						"type": "string"
-					},
-					{
-						"internalType": "uint256",
-						"name": "version",
-						"type": "uint256"
-					}
-				],
-				"name": "downgrade",
-				"outputs": [],
-				"stateMutability": "nonpayable",
-				"type": "function"
-			},
-			{
-				"inputs": [
-					{
-						"internalType": "string",
-						"name": "name",
-						"type": "string"
-					},
-					{
-						"internalType": "uint256",
-						"name": "version",
-						"type": "uint256"
-					}
-				],
-				"name": "getImplementation",
-				"outputs": [
-					{
-						"internalType": "address",
-						"name": "",
-						"type": "address"
-					}
-				],
-				"stateMutability": "view",
-				"type": "function"
-			},
-			{
-				"inputs": [
-					{
-						"internalType": "string",
-						"name": "name",
-						"type": "string"
-					}
-				],
-				"name": "getImplementations",
-				"outputs": [
-					{
-						"internalType": "address[]",
-						"name": "",
-						"type": "address[]"
-					}
-				],
-				"stateMutability": "view",
-				"type": "function"
-			},
-			{
-				"inputs": [
-					{
-						"internalType": "string",
-						"name": "name",
+						"name": "module",
 						"type": "string"
 					}
 				],
@@ -108,7 +109,7 @@
 				"inputs": [
 					{
 						"internalType": "string",
-						"name": "name",
+						"name": "module",
 						"type": "string"
 					}
 				],
@@ -124,23 +125,10 @@
 				"type": "function"
 			},
 			{
-				"inputs": [],
-				"name": "getModules",
-				"outputs": [
-					{
-						"internalType": "string[]",
-						"name": "",
-						"type": "string[]"
-					}
-				],
-				"stateMutability": "view",
-				"type": "function"
-			},
-			{
 				"inputs": [
 					{
 						"internalType": "string",
-						"name": "name",
+						"name": "module",
 						"type": "string"
 					},
 					{
@@ -150,7 +138,13 @@
 					}
 				],
 				"name": "upgrade",
-				"outputs": [],
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "",
+						"type": "bool"
+					}
+				],
 				"stateMutability": "nonpayable",
 				"type": "function"
 			}
@@ -162,13 +156,20 @@
 		},
 		"userdoc": {
 			"kind": "user",
-			"methods": {},
+			"methods": {
+				"create(string,address)": {
+					"notice": "OWNER COMMANDS"
+				},
+				"getLatestVersion(string)": {
+					"notice": "PUBLIC ACCESS"
+				}
+			},
 			"version": 1
 		}
 	},
 	"settings": {
 		"compilationTarget": {
-			"smart_contracts/module_architecture/ModuleManager.sol": "IModuleManager"
+			"smart_contracts/module_architecture/ModuleManager2.sol": "IModuleManager"
 		},
 		"evmVersion": "paris",
 		"libraries": {},
@@ -176,18 +177,26 @@
 			"bytecodeHash": "ipfs"
 		},
 		"optimizer": {
-			"enabled": true,
-			"runs": 1000000
+			"enabled": false,
+			"runs": 200
 		},
 		"remappings": []
 	},
 	"sources": {
-		"deps/openzeppelin/security/ReentrancyGuard.sol": {
-			"keccak256": "0x6b0ab8154532e4a60008f0d0ec7e4b6527f6966b3cfd1e7dc2cdbc5e635b288f",
+		"deps/openzeppelin/access/Ownable.sol": {
+			"keccak256": "0x8a19bbec220979aea9d2e8ab5420beae80d9c2e9604461fc84848f1fbb6f9431",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://6c30a827b06319022784f528cb46ed3b542235fcc6b977641c838bb6cd6c7450",
-				"dweb:/ipfs/QmX1xYPo4xcP11BpNHurEBACj8hMB9p2Fp22sx2myEa5vk"
+				"bzz-raw://1cbd99067b19556f6b07e1fa3ba26557af8f105a56c5ccfd489495c992434008",
+				"dweb:/ipfs/QmXeMpw55stUPMCjH4xZhPXbM7syYEAkwAoJroP6zg2pkn"
+			]
+		},
+		"deps/openzeppelin/utils/Context.sol": {
+			"keccak256": "0x639f180f9bedd48998c68f1bf4f8d01b37a4573bc496acb04a55308c6de0045c",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://4ff2313c66e4e14d167aae923b38509ec68dcaa281d2314f45b527139d33d4af",
+				"dweb:/ipfs/QmU7aik96EmKeG8feBbQZ8BufngtYB6guGTkZoX5umP73i"
 			]
 		},
 		"deps/openzeppelin/utils/structs/EnumerableSet.sol": {
@@ -198,12 +207,12 @@
 				"dweb:/ipfs/QmRLMrq6BiPS9wGu7ZC174SFYWCu6cxbU3agDw2XgJeDpT"
 			]
 		},
-		"smart_contracts/module_architecture/ModuleManager.sol": {
-			"keccak256": "0x9ed6bb76c0e3b8991f436bb786dc06bf85f58f361714bdc8e13c2552307ea05f",
-			"license": "CC-BY-NC-SA-4.0",
+		"smart_contracts/module_architecture/ModuleManager2.sol": {
+			"keccak256": "0x447c10bdf02ec09bfccfe440f678930ac5b5d161d70b952c62468958d679d70a",
+			"license": "Apache-2.0",
 			"urls": [
-				"bzz-raw://dd4935febd541f64963f810e31259e781ab80039b9b23a2c5ce041e8764096f2",
-				"dweb:/ipfs/QmbwpLjeepAr8cb4VeMXpZhN3gzqQ3zzsYLRoLWVvqDPrN"
+				"bzz-raw://24d98a7590472b10ff4d1315cd267f18acc842523f25d5a04f0ebd3c41f61895",
+				"dweb:/ipfs/QmVA7NjNevAofwqji4eeUhyCUHWs86Eyp3MPvbG4pP1uL1"
 			]
 		}
 	},
