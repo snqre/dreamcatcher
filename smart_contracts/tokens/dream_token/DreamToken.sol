@@ -10,7 +10,7 @@ contract DreamToken is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit, Ownable
     uint private _mintable;
     uint private _maxSupply;
 
-    constructor() ERC20("DreamToken", "DREAM") ERC20Permit("DreamToken") Ownable() {
+    constructor() ERC20("DreamToken", "DREAM") ERC20Permit("DreamToken") Ownable(address(this)) {
         /// initialize supply.
         _mintable = _convertToWei(200_000_000);
         _maxSupply = _convertToWei(200_000_000);
@@ -42,7 +42,7 @@ contract DreamToken is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit, Ownable
         return _mintable;
     }
 
-    function _convertToWei(uint value) private pure returns (uint) {
+    function _convertToWei(uint value) private view returns (uint) {
         return value * decimals();
     }
 
@@ -57,7 +57,7 @@ contract DreamToken is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit, Ownable
         address from, 
         address to, 
         uint amount
-    ) private override(
+    ) internal override(
         ERC20, 
         ERC20Snapshot
     ) {
@@ -72,7 +72,7 @@ contract DreamToken is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit, Ownable
         address from,
         address to,
         uint amount
-    ) private override {
+    ) internal override {
         super._afterTokenTransfer(
             from,
             to,
@@ -83,7 +83,7 @@ contract DreamToken is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit, Ownable
     function _mint(
         address to,
         uint amount
-    ) private override {
+    ) internal override {
         /// check how many tokens can still be minted.
         _mustBeMintable(amount);
         _mintable -= amount;
@@ -96,7 +96,7 @@ contract DreamToken is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit, Ownable
     function _burn(
         address account,
         uint amount
-    ) private override {
+    ) internal override {
         /// reduce max supply for each burn.
         _maxSupply -= amount;
         super._burn(
