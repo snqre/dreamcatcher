@@ -204,7 +204,7 @@ contract ModuleManager is IModuleManager, ReentrancyGuard {
         Module storage module = modules[nameToIdentifier[name]];
         address[] memory implementations = new address[](module.implementations.length());
         for (
-            uint i = 0; 
+            uint i = 1; 
             i <= module.implementations.length(); 
             i ++
         ) {
@@ -218,7 +218,7 @@ contract ModuleManager is IModuleManager, ReentrancyGuard {
         /// @dev return an array with all the names of existing modules.
         string[] memory names = new string[](count);
         for (
-            uint i = 0;
+            uint i = 1;
             i <= count;
             i++
         ) {
