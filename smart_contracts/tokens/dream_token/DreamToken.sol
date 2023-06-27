@@ -12,12 +12,12 @@ contract DreamToken is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit, Ownable
 
     constructor() ERC20("DreamToken", "DREAM") ERC20Permit("DreamToken") Ownable(address(this)) {
         /// initialize supply.
-        _mintable = _convertToWei(200_000_000);
-        _maxSupply = _convertToWei(200_000_000);
+        _mintable = _convertToWei(200000000);
+        _maxSupply = _convertToWei(200000000);
 
         _mint( /// mint all the supply to the deployer.
             _msgSender(),
-            _convertToWei(200_000_000)
+            _convertToWei(200000000)
         );
     }
 
@@ -42,11 +42,11 @@ contract DreamToken is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit, Ownable
         return _mintable;
     }
 
-    function _convertToWei(uint value) private view returns (uint) {
+    function _convertToWei(uint value) internal view returns (uint) {
         return value * decimals();
     }
 
-    function _mustBeMintable(uint amount) private view {
+    function _mustBeMintable(uint amount) internal view {
         require(
             amount <= _mintable,
             "Insufficient mintable amount. The requested amount exceeds the available mintable tokens."

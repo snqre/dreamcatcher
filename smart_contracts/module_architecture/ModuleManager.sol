@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: CC-BY-NC-SA-4.0
 pragma solidity ^0.8.9;
-
 import "deps/openzeppelin/utils/structs/EnumerableSet.sol";
 import "deps/openzeppelin/security/ReentrancyGuard.sol";
 
@@ -22,11 +21,14 @@ interface IModuleManager {
         string memory name,
         uint version
     ) external view returns (address);
+    
+    function getImplementations(string memory name) external view returns (address[] memory);
+    function getModules() external view returns (string[] memory);
 }
 
 contract ModuleManager is ReentrancyGuard {
     using EnumerableSet for EnumerableSet.AddressSet;
-    uint count;
+    uint public count; /// number of modules.
 
     /// @dev a Module is an abstraction for a group of contract addresses that do the same thing.
     struct Module {
@@ -36,9 +38,9 @@ contract ModuleManager is ReentrancyGuard {
             AddressSet implementations;
     }
 
-    /// storage.
+    /// main storage.
     mapping(uint => Module) private modules;
-    mapping(string => uint) private nameToIdentifier;
+    mapping(string => uint) public nameToIdentifier;
 
     event ModuleCreated(
         string indexed name,
@@ -201,10 +203,29 @@ contract ModuleManager is ReentrancyGuard {
         /// @dev return an array with all the implementations for a module.
         Module storage module = modules[nameToIdentifier[name]];
         address[] memory implementations = new address[](module.implementations.length());
-        for (uint i = 1; i < module.implementations.length(); i ++) {
+        for (
+            uint i = 1; 
+            i < module.implementations.length(); 
+            i ++
+        ) {
             implementations[i] = module.implementations.at(i);
         }
 
         return implementations;
+    }
+
+    function getModules() public view returns (string[] memory) {
+        /// @dev return an array with all the names of existing modules.
+        string[] memory names = new string[](count);
+        for (
+            uint i = 1;
+            i < count;
+            i++
+        ) {
+            Module storage module = modules[i];
+            names[i] = module.name;
+        }
+        /// return the array with all the names of existing modules.
+        return names;
     }
 }
