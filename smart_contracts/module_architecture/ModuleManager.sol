@@ -26,7 +26,7 @@ interface IModuleManager {
     function getModules() external view returns (string[] memory);
 }
 
-contract ModuleManager is ReentrancyGuard {
+contract ModuleManager is IModuleManager, ReentrancyGuard {
     using EnumerableSet for EnumerableSet.AddressSet;
     uint public count; /// number of modules.
 
@@ -178,7 +178,7 @@ contract ModuleManager is ReentrancyGuard {
         Module storage module = modules[nameToIdentifier[name]];
         return module.implementations.length();
     }
-
+    /// for some reason this doesnt work.
     function getLatestImplementation(string memory name) public view returns (address) {
         /// return the address to the active implementation for this module.
         Module storage module = modules[nameToIdentifier[name]];
@@ -198,14 +198,14 @@ contract ModuleManager is ReentrancyGuard {
         Module storage module = modules[nameToIdentifier[name]];
         return module.implementations.at(version);
     }
-
+    /// and this is return a zero address even when a module has been upgraded.
     function getImplementations(string memory name) public view returns (address[] memory) {
         /// @dev return an array with all the implementations for a module.
         Module storage module = modules[nameToIdentifier[name]];
         address[] memory implementations = new address[](module.implementations.length());
         for (
             uint i = 1; 
-            i < module.implementations.length(); 
+            i <= module.implementations.length(); 
             i ++
         ) {
             implementations[i] = module.implementations.at(i);
@@ -218,8 +218,8 @@ contract ModuleManager is ReentrancyGuard {
         /// @dev return an array with all the names of existing modules.
         string[] memory names = new string[](count);
         for (
-            uint i = 1;
-            i < count;
+            uint i = 0;
+            i <= count;
             i++
         ) {
             Module storage module = modules[i];
