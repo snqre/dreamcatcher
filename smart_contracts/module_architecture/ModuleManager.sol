@@ -61,17 +61,17 @@ contract ModuleManager is IModuleManager, ReentrancyGuard {
 
     constructor() {}
 
-    function _mustNotBeExistingModule(string memory name) private view {
-        /// check if module exists by name.
-        require(
+    function _mustNotBeExistingModule(string memory name) internal view {
+        /// check if module does not exist by name.
+        require( /// @dev zero is the default identifier of a non existent module.
             nameToIdentifier[name] == 0,
-            "Module name is already in use."
+            "Module is already in use."
         );
     }
 
-    function _mustBeExistingModule(string memory name) private view {
+    function _mustBeExistingModule(string memory name) internal view {
         /// check if module exists by name.
-        require(
+        require( /// @dev zero is the default identifier of a non existing module.
             nameToIdentifier[name] != 0,
             "Module does not exist."
         );
@@ -80,9 +80,9 @@ contract ModuleManager is IModuleManager, ReentrancyGuard {
     function _mustBeExistingVersion(
         string memory name,
         uint version
-    ) private view {
+    ) internal view {
         Module storage module = modules[nameToIdentifier[name]];
-        require(
+        require( /// @dev zero is address zero therefore not a real implementation.
             version >= 1 &&
             version <= module.implementations.length(),
             "Version does not point to an existing implementation."
@@ -92,7 +92,7 @@ contract ModuleManager is IModuleManager, ReentrancyGuard {
     function _mustNotBeDuplicateImplementation(
         string memory name,
         address newImplementation
-    ) private view {
+    ) internal view {
         /// @dev it is still possible to have duplicates using downgrade.
         Module storage module = modules[nameToIdentifier[name]];
         require(
@@ -213,7 +213,7 @@ contract ModuleManager is IModuleManager, ReentrancyGuard {
 
         return implementations;
     }
-
+    /// wtf is going on here?
     function getModules() public view returns (string[] memory) {
         /// @dev return an array with all the names of existing modules.
         string[] memory names = new string[](count);
