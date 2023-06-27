@@ -312,11 +312,11 @@
 			]
 		},
 		"smart_contracts/module_architecture/ModuleManager.sol": {
-			"keccak256": "0xe9514680f79c68f6697f0a73b2d43f95458eaba2be119cb0e422157e5d77df53",
+			"keccak256": "0x99b480d3c427eeeceaaaef99895b48df2e803515a5a54a2207a2436528b4c38f",
 			"license": "CC-BY-NC-SA-4.0",
 			"urls": [
-				"bzz-raw://a0c4e3b8967be510e331b8c159ba38f5c266d84a8961a6dae9e748b348364a17",
-				"dweb:/ipfs/QmeDkNjJ6HRy2HEixUP25quAKEVnhgnvyiVmzpMz5U37Qe"
+				"bzz-raw://14ac6a6f46c590d85e386989c3c39b2c8dff4be0794e0a332b4257f7e28952a3",
+				"dweb:/ipfs/QmSWC7eKu6YT6tSSBjBgpGVCaUkHV2iGWikFFgmXRg16M6"
 			]
 		}
 	},
