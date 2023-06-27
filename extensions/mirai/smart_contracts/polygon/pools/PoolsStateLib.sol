@@ -41,14 +41,6 @@ library PoolsStateLib { /// we found a way to get the price of assets using quic
         bool isWhitelisted;
     }
 
-    struct Account {
-        uint ownershipBasisPoints;
-        bool isAdmin;
-        bool isCreator;
-        bool isManager;
-        bool isOnWhitelist;
-    }
-
     struct Pool {
         uint identifier;
         string name;
@@ -59,9 +51,6 @@ library PoolsStateLib { /// we found a way to get the price of assets using quic
         Settings settings;
         bool hasBeenLaunched;
         bool hasBeenPaused;
-        address[] accountsAddress;
-        Account[] accounts;
-        uint numberOfAccounts;
     }
 
     struct Tracker { uint numberOfPools; }
