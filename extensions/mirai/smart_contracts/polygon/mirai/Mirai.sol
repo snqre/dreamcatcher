@@ -1,12 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.0;
+import "deps/openzeppelin/access/Ownable.sol";
 import "smart_contracts/module_architecture/ModuleManager.sol";
-import "smart_contracts/tokens/dream_token/DreamToken.sol";
-import "smart_contracts/tokens/ember_token/EmberToken.sol";
-import "smart_contracts/finance/vaults/vault/Vault.sol";
-import "extensions/mirai/smart_contracts/polygon/mirai/Mirai.sol";
 
-interface IDreamcatcher {
+interface IMirai {
     /// GOVERNANCE COMMANDS
     function connect(
         string memory module,
@@ -26,79 +23,25 @@ interface IDreamcatcher {
     );
 }
 
-contract Dreamcatcher is IDreamcatcher {
+/// note mirai has a seperate module manager.
+contract Mirai is IMirai {
     ModuleManager public moduleManager;
-    DreamToken public dreamToken;
-    EmberToken public emberToken;
-    Vault public vault;
-    Mirai public mirai;
 
-    modifier onlyModule(string memory module) {
-        /// only if the name identified is a valid module.
-        moduleManager.onlyModule(module);
-    }
-
-    modifier onlyGovernance(string memory module) {
-        /// only governance authorized can access this function.
-        moduleManager.onlyGovernance(module);
-        require(
-            msg.sender == moduleManager.getLatestImplementation(module),
-            "Caller is not a governance module or not the latest implementation of the module."
-        );
-    }
-
-    constructor() {
-        /// using module manager we keep track of any static upgrades.
+    constructor(address dreamcatcher) {
         moduleManager = new ModuleManager();
         moduleManager.create(
-            "dreamcatcher", 
+            "mirai",
             address(this)
         );
 
-        /// terminal is a governance module which can govern itself therefore it can call itself.
+        /// because seprate module manager.
+        moduleManager.create(
+            "dreamcatcher",
+            dreamcatcher
+        );
+
+        moduleManager.grantGovernance("mirai");
         moduleManager.grantGovernance("dreamcatcher");
-
-        vault = new Vault();
-        moduleManager.create(
-            "vault", 
-            address(vault)
-        );
-
-        dreamToken = new DreamToken();
-        moduleManager.create(
-            "dream-token",
-            address(dreamToken)
-        );
-
-        dreamToken.transfer(
-            address(vault), 
-            _convertToWei(200000000)
-        );
-
-        /// next time when refering to vault use moduleManager as it may be upgraded.
-        vault.transfer( /// in production this should be vesting wallets.
-            address(dreamToken), 
-            0x3945bBe12629671d1Dff6785758bdD6C18c28a83, 
-            _convertToWei(10000000)
-        );
-        
-        emberToken = new EmberToken();
-        moduleManager.create(
-            "ember-token",
-            address(emberToken)
-        );
-
-        mirai = new Mirai(address(this));
-        moduleManager.create(
-            "mirai",
-            address(mirai)
-        );
-    }
-
-    function _convertToWei(uint value) 
-    internal virtual 
-    returns (uint) {
-        return value * 10**18;
     }
 
     function _connect(

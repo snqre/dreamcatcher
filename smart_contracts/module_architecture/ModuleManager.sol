@@ -115,7 +115,7 @@ contract ModuleManager is IModuleManager, Ownable {
         _;
     }
 
-    constructor(address owner) Ownable(owner) {}
+    constructor() Ownable() { _transferOwnership(msg.sender); }
 
     function _getLatestVersion(string memory module)
     internal view virtual returns (uint) {

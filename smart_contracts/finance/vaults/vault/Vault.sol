@@ -1,31 +1,98 @@
-// SPDX-License-Identifier: CC-BY-NC-SA-4.0
+// SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.9;
+import "deps/openzeppelin/access/Ownable.sol";
 import "deps/openzeppelin/token/ERC20/IERC20.sol";
-import "deps/openzeppelin/utils/Address.sol";
-import "deps/openzeppelin/utils/Context.sol";
-import "deps/openzeppelin/security/ReentrancyGuard.sol";
-import "smart_contracts/module_architecture/ModuleManager.sol";
+import "deps/openzeppelin/utils/structs/EnumerableSet.sol";
 
-contract Vault is Context, ReentrancyGuard {
-    mapping(address => uint) public amountStaked;
+interface IVault {
+    /// OWNER COMMANDS
+    function transfer(
+        address target,
+        address to,
+        uint amount
+    ) public
+    returns (bool);
 
-    constructor(address moduleManager) {
-        /// using module manager we keep track of any static upgrades.
-        IModuleManager(moduleManager).create("vault");
-        IModuleManager(moduleManager).upgrade(
-            "vault",
-            address(this)
-        );
-    }
+    function transferFrom(
+        address target,
+        address from,
+        uint amount
+    ) public
+    returns (bool);
+}
 
-    function stake(uint amount) public {
-        /// transfer $dream from account to vault
-        IERC20(/** $dream contract address. */).transferFrom(
-            _msgSender(), 
-            address(this),
+contract Vault is IVault, Ownable {
+    using EnumerableSet for EnumerableSet.AddressSet;
+
+    constructor() Ownable() { _transferOwnership(msg.sender); }
+
+    function _transfer(
+        address target,
+        address to,
+        uint amount
+    ) internal virtual
+    returns (bool) {
+        /// transfer token.
+        bool success = IERC20(target).transfer(
+            to, 
             amount
         );
 
-        amountStaked[_msgSender()] += amount;
+        require(
+            success,
+            "Unable to make transfer."
+        );
+
+        return true;
     }
+
+    function _transferFrom(
+        address target,
+        address from,
+        uint amount
+    ) internal virtual
+    returns (bool) {
+        /// request tokens from account.
+        bool success = IERC20(target).transferFrom(
+            from,
+            address(this), 
+            amount
+        );
+
+        require(
+            success,
+            "Unable to receive tokens."
+        );
+
+        return true;
+    }
+
+    /// OWNER COMMANDS
+    function transfer(
+        address target,
+        address to,
+        uint amount
+    ) public onlyOwner
+    returns (bool) {
+        return _transfer(
+            target, 
+            to, 
+            amount
+        );
+    }
+
+    function transferFrom(
+        address target,
+        address from,
+        uint amount
+    ) public onlyOwner
+    returns (bool) {
+        return _transferFrom(
+            target, 
+            from, 
+            amount
+        );
+    }
+
+    fallback() public payable {}
 }

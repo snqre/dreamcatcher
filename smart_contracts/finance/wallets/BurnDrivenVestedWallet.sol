@@ -1,15 +1,10 @@
-// SPDX-License-Identifier: CC-BY-NC-SA-4.0
+// SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.9;
-
 import "deps/openzeppelin/finance/VestingWallet.sol";
 
+/// has a base rate but speeds up the more tokens are burnt.
 contract BurnDrivenVestedWallet is VestingWallet {
-
-    struct Settings {
-        address beneficiary;
-        uint64 startTimestamp;
-    }
-
+    uint tokenInitialSupply;
     constructor(
         address beneficiaryAddress,
         uint64 startTimestamp,
@@ -28,5 +23,4 @@ contract BurnDrivenVestedWallet is VestingWallet {
         else if (timestamp > end()) { return totalAllocation; }
         else {}
     }
-
 }
