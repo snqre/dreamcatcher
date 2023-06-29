@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 import "deps/openzeppelin/access/Ownable.sol";
 import "smart_contracts/module_architecture/ModuleManager.sol";
+import "extensions/mirai/smart_contracts/polygon/pools/Pools.sol";
 
 interface IMirai {
     /// GOVERNANCE COMMANDS
@@ -26,8 +27,12 @@ interface IMirai {
 /// note mirai has a seperate module manager.
 contract Mirai is IMirai {
     ModuleManager public moduleManager;
+    Pools private _pools;
 
-    constructor(address dreamcatcher) {
+    constructor(
+        address dreamcatcher,
+        address dreamToken
+    ) {
         moduleManager = new ModuleManager();
         moduleManager.create(
             "mirai",
@@ -42,6 +47,17 @@ contract Mirai is IMirai {
 
         moduleManager.grantGovernance("mirai");
         moduleManager.grantGovernance("dreamcatcher");
+
+        /// in the future access pools using latest implementation as it may be upgraded.
+        _pools = new Pools(
+            dreamToken,
+            address(moduleManager)
+        );
+
+        moduleManager.create(
+            "pools",
+            address(_pools)
+        );
     }
 
     function _connect(
