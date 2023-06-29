@@ -8,7 +8,6 @@ import "deps/openzeppelin/security/Pausable.sol";
 import "deps/openzeppelin/access/Ownable.sol";
 import "deps/openzeppelin/token/ERC20/IERC20.sol";
 import "smart_contracts/module_architecture/ModuleManager.sol";
-import "smart_contracts/utils/Utils.sol";
 import "extensions/mirai/smart_contracts/polygon/tokens/standard_token/StandardToken.sol";
 
 library QuickSwapLogicLib {
@@ -182,6 +181,7 @@ contract Pools is IPools, Ownable {
                 "Caller is not on whitelist."
             );
         }
+        _;
     }
 
     modifier onlyAfterLockupDuration(string memory name) {
@@ -218,6 +218,7 @@ contract Pools is IPools, Ownable {
             block.timestamp >= pool.fundingSchedule.startTimestamp,
             "Cannot perform this action before funding schedule has started."
         );
+        _;
     }
 
     modifier monetize(uint value) {
@@ -226,6 +227,7 @@ contract Pools is IPools, Ownable {
             token.balanceOf(msg.sender) >= value,
             "Insufficient balance."
         );
+        _;
 
         /// get the latest implementation of the vault.
         bool success = token.transferFrom(
@@ -264,18 +266,125 @@ contract Pools is IPools, Ownable {
     }
 
     function _convertToWei(uint value)
-    internal pure virtual
+    internal pure
     returns (uint) {
         return value * 10**18;
     }
 
-    function _create(
+    function _amountToMint(
+        uint v,
+        uint s,
+        uint b
+    ) internal pure
+    returns (uint) {
+        require(v >= _convertToWei(1), "v < 10000000000000000000000000000.");
+        require(s >= _convertToWei(1), "s < 10000000000000000000000000000.");
+        require(b >= _convertToWei(1), "b < 10000000000000000000000000000.");
+
+        return ((v * s) / b);
+    }
+
+    function _amountToSend(
+        uint v,
+        uint s,
+        uint b
+    ) internal pure
+    returns (uint) {
+        require(v >= _convertToWei(1), "v < 10000000000000000000000000000.");
+        require(s >= _convertToWei(1), "s < 10000000000000000000000000000.");
+        require(b >= _convertToWei(1), "b < 10000000000000000000000000000.");
+
+        return ((v * b) / s);
+    }
+
+    function _withdraw(
         string memory name,
-        address[] memory managers,
-        address[] memory admins,
+        uint amount
+    ) internal 
+    returns (bool) {
+        Pool storage pool = _pools[nameToIdentifier[name]];
+
+        require(
+            pool.token.balanceOf(msg.sender) >= amount,
+            "Insufficient balance."
+        );
+
+        address payable to = payable(msg.sender);
+        to.transfer(_amountToSend(
+            amount,
+            pool.token.totalSupply(),
+            pool.vault.balance
+        ));
+    }
+
+    /// POOL ADMIN CONTROLS
+    function setup(
+        string memory name,
+        uint startTimestamp,
+        uint duration,
+        uint required,
+        address[] memory whitelist
+    ) public
+    onlyIfExistingMatch(name)
+    onlyAdminOf(name)
+    monetize(settings.gas.setup)
+    returns (bool) {
+        uint now_ = block.timestamp;
+        if (startTimestamp != 0) {
+            require(
+                startTimestamp >= now_,
+                "Funding schedule starts in the past."
+            );
+        }
+
+        if (duration != 0) {
+            require(
+                duration >= settings.minFundingDuration &&
+                duration <= settings.maxFundingDuration,
+                "Funding duration is out of bounds."
+            );
+        }
+
+        require(
+            required >= _converToWei(1), 
+            "Insufficient required amount."
+        );
+
+        Pool storage pool = _pools[nameToIdentifier[name]];
+
+        if (startTimestamp != 0) { pool.fundingSchedule.startTimestamp = startTimestamp; }
+        else { pool.fundingSchedule.startTimestamp = now_; }
+        
+        if (duration != 0) { pool.fundingSchedule.duration = duration; }
+        else { pool.fundingSchedule.duration = settings.minFundingDuration; }
+
+        pool.fundingSchedule.endTimestamp = pool.fundingSchedule.startTimestamp + pool.fundingSchedule.duration;
+
+        if (whitelist.length == 0) { pool.fundingSchedule.isWhitelisted = false; }
+
+        pool.fundingSchedule.hasBeenSetup = true;
+
+        emit PoolSetup(
+            pool.name,
+            pool.identifier,
+            pool.fundingSchedule.startTimestamp,
+            pool.fundingSchedule.endTimestamp,
+            pool.fundingSchedule.duration,
+            pool.fundingSchedule.required,
+            whitelist
+        );
+
+        return true;
+    }
+
+    /// PUBLIC ACCESS
+    function create(
+        string memory name,
         string memory nameOfToken,
-        string memory symbolOfToken
-    ) internal virtual
+        string memory symbolOfToken,
+        address[] memory managers,
+        address[] memory admins
+    ) public payable
     onlyIfNoExistingMatch(name)
     monetize(settings.gas.create)
     returns (
@@ -341,66 +450,7 @@ contract Pools is IPools, Ownable {
         );
     }
 
-    function _setup(
-        string memory name,
-        uint startTimestamp,
-        uint duration,
-        uint required,
-        address[] memory whitelist
-    ) internal virtual
-    onlyIfExistingMatch(name)
-    onlyAdminOf(name)
-    monetize(settings.gas.setup)
-    returns (bool) {
-        uint now_ = block.timestamp;
-        if (startTimestamp != 0) {
-            require(
-                startTimestamp >= now_,
-                "Funding schedule starts in the past."
-            );
-        }
-
-        if (duration != 0) {
-            require(
-                duration >= settings.minFundingDuration &&
-                duration <= settings.maxFundingDuration,
-                "Funding duration is out of bounds."
-            );
-        }
-
-        require(
-            required >= _converToWei(1), 
-            "Insufficient required amount."
-        );
-
-        Pool storage pool = _pools[nameToIdentifier[name]];
-
-        if (startTimestamp != 0) { pool.fundingSchedule.startTimestamp = startTimestamp; }
-        else { pool.fundingSchedule.startTimestamp = now_; }
-        
-        if (duration != 0) { pool.fundingSchedule.duration = duration; }
-        else ( pool.fundingSchedule.duration = settings.minFundingDuration; )
-
-        pool.fundingSchedule.endTimestamp = pool.fundingSchedule.startTimestamp + pool.fundingSchedule.duration;
-
-        if (whitelist.length == 0) { pool.fundingSchedule.isWhitelisted = false; }
-
-        pool.fundingSchedule.hasBeenSetup = true;
-
-        emit PoolSetup(
-            pool.name,
-            pool.identifier,
-            pool.fundingSchedule.startTimestamp,
-            pool.fundingSchedule.endTimestamp,
-            pool.fundingSchedule.duration,
-            pool.fundingSchedule.required,
-            whitelist
-        );
-
-        return true;
-    }
-
-    contribute(
+    function contribute(
         string memory name
     ) public payable
     onlyIfExistingMatch(name)
@@ -412,24 +462,31 @@ contract Pools is IPools, Ownable {
     onlyWhitelist(name)
     monetize(settings.gas.contribute)
     returns (bool) {
-        /// contribute in matic to a chosen pool.
         Pool storage pool = _pools[nameToIdentifier[name]];
-        uint v = msg.value;
-        uint s = pool.token.totalSupply();
-        uint b = pool.vault.balance;
-
-        require(v >= convertToWei(1));
-        require(s >= convertToWei(1));
-        require(b >= convertToWei(1));
-
-        uint amountToMint = ((v * s) / b);
 
         pool.token.mint(
             msg.sender,
-            amountToMint
+            _amountToMint(
+                msg.value,
+                pool.token.totalSupply(),
+                pool.vault.balance
+            )
         );
 
-        /// update balance.
         pool.vault.balance += msg.value;
+    }
+
+    function withdrawAfterLockup(
+        string memory name,
+        uint amount
+    ) public
+    onlyIfExistingMatch(name)
+    onlyAfterFundingScheduleStart(name)
+    onlyAfterLockupDuration(name)
+    returns (bool) {
+        return _withdraw(
+            name,
+            amount
+        );
     }
 }
