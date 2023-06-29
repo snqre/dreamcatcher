@@ -1,97 +1,52 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.19;
 import "smart_contracts/module_architecture/ModuleManager.sol";
 import "smart_contracts/tokens/dream_token/DreamToken.sol";
 import "smart_contracts/tokens/ember_token/EmberToken.sol";
 import "smart_contracts/finance/vaults/vault/Vault.sol";
+import "smart_contracts/module_architecture/Key.sol";
 import "extensions/mirai/smart_contracts/polygon/mirai/Mirai.sol";
 
-interface IDreamcatcher {
-    /// GOVERNANCE COMMANDS
-    function connect(
-        string memory module,
-        string memory signature,
-        bytes memory args,
-        uint version
-    ) public 
-    returns (bytes memory);
+contract Dreamcatcher is Key {
+    DreamToken private _dreamToken;
+    EmberToken private _emberToken;
+    Vault private _vault;
+    Mirai private _mirai;
 
-    event Connect(
-        string indexed module,
-        string indexed signature,
-        bytes indexed args,
-        uint version,
-        address target,
-        bytes response
-    );
-}
-
-contract Dreamcatcher is IDreamcatcher {
-    ModuleManager public moduleManager;
-    DreamToken public dreamToken;
-    EmberToken public emberToken;
-    Vault public vault;
-    Mirai public mirai;
-
-    modifier onlyModule(string memory module) {
-        /// only if the name identified is a valid module.
-        moduleManager.onlyModule(module);
-    }
-
-    modifier onlyGovernance(string memory module) {
-        /// only governance authorized can access this function.
-        moduleManager.onlyGovernance(module);
-        require(
-            msg.sender == moduleManager.getLatestImplementation(module),
-            "Caller is not a governance module or not the latest implementation of the module."
-        );
-    }
-
-    constructor() {
-        /// using module manager we keep track of any static upgrades.
-        moduleManager = new ModuleManager();
-        moduleManager.create(
-            "dreamcatcher", 
-            address(this)
+    constructor() Key("Dreamcatcher") {
+        _vault = new Vault();
+        _moduleManager.aquire(
+            "vault",
+            address(_vault)
         );
 
-        /// terminal is a governance module which can govern itself therefore it can call itself.
-        moduleManager.grantGovernance("dreamcatcher");
-
-        vault = new Vault();
-        moduleManager.create(
-            "vault", 
-            address(vault)
-        );
-
-        dreamToken = new DreamToken();
-        moduleManager.create(
+        _dreamToken = new DreamToken();
+        moduleManager.aquire(
             "dream-token",
-            address(dreamToken)
+            address(_dreamToken)
         );
 
-        dreamToken.transfer(
-            address(vault), 
+        _dreamToken.transfer(
+            address(_vault), 
             _convertToWei(200000000)
         );
 
-        /// next time when refering to vault use moduleManager as it may be upgraded.
-        vault.transfer( /// in production this should be vesting wallets.
-            address(dreamToken), 
+        _vault.transfer(
+            address(_dreamToken), 
             0x3945bBe12629671d1Dff6785758bdD6C18c28a83, 
             _convertToWei(10000000)
         );
-        
-        emberToken = new EmberToken();
-        moduleManager.create(
+
+        _emberToken = new EmberToken();
+        _moduleManager.create(
             "ember-token",
-            address(emberToken)
+            address(_emberToken)
         );
 
-        mirai = new Mirai(address(this));
-        moduleManager.create(
+        _mirai = new Mirai(address(this));
+        _moduleManager.create(
             "mirai",
-            address(mirai)
+            address(_mirai)
         );
     }
 
@@ -99,72 +54,5 @@ contract Dreamcatcher is IDreamcatcher {
     internal virtual 
     returns (uint) {
         return value * 10**18;
-    }
-
-    function _connect(
-        string memory module,
-        string memory signature,
-        bytes memory args,
-        uint version /// input zero for latest implementation.
-    ) internal virtual
-    onlyModule(module) /// must be registered as a module
-    onlyGovernance(module) /// must be granted governance authorisation.
-    returns (bytes memory) {
-        bool success;
-        bytes memory response;
-        address implementation;
-        /// get specific implementation of this module.
-        if (version != 0) { 
-            target = moduleManager.getImplementation(
-                module,
-                version
-            );
-        }
-        
-        /// get the latest implementation of this module.
-        else { target = moduleManager.getLatestImplementation(module); }
-
-        (
-            success,
-            response
-        ) = (implementation).call(
-            abi.encodeWithSignature(
-                signature, 
-                args
-            )
-        );
-
-        require(
-            success,
-            "Unable to successfully execute function call."
-        );
-
-        emit Connect(
-            module, 
-            signature, 
-            args, 
-            version, 
-            target, 
-            response
-        );
-
-        /// return response as bytes.
-        return response;
-    }
-
-    /// GOVERNANCE COMMANDS
-    function connect(
-        string memory module,
-        string memory signature,
-        bytes memory args,
-        uint version
-    ) public 
-    returns (bytes memory) {
-        return _connect(
-            module, 
-            signature, 
-            args, 
-            version
-        );
     }
 }

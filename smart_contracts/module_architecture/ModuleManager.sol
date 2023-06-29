@@ -1,37 +1,43 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.19;
 import "deps/openzeppelin/utils/structs/EnumerableSet.sol";
 import "deps/openzeppelin/access/Ownable.sol";
 
 interface IModuleManager {
     /// OWNER COMMANDS
-    function create(
+    function aquire(
         string memory newModule,
-        address newImplementation
-    ) external returns (bool);
+        address implementation
+    ) external 
+    returns (bool);
 
     function upgrade(
         string memory module,
         address newImplementation
-    ) external returns (bool);
+    ) external 
+    returns (bool);
 
     function grantGovernance(string memory module)
-    public returns (bool);
+    public 
+    returns (bool);
 
     function revokeGovernance(string memory module)
-    public returns (bool);
+    public 
+    returns (bool);
 
     /// PUBLIC ACCESS
     function getLatestVersion(string memory module)
-    external view returns (uint);
+    external view 
+    returns (uint);
 
     function getLatestImplementation(string memory module)
-    external view returns (address);
+    external view 
+    returns (address);
 
     function onlyModule(string memory module) external view;
     function onlyGovernance(string memory module) external view;
 
-    event ModuleCreated(
+    event ModuleAquired(
         string indexed newModule,
         address indexed newImplementation
     );
@@ -118,13 +124,15 @@ contract ModuleManager is IModuleManager, Ownable {
     constructor() Ownable() { _transferOwnership(msg.sender); }
 
     function _getLatestVersion(string memory module)
-    internal view virtual returns (uint) {
+    internal view virtual 
+    returns (uint) {
         /// return the latest version of a module.
         return _implementations[module].length() - 1;
     }
 
     function _getLatestImplementation(string memory module)
-    internal view virtual returns (address) {
+    internal view virtual 
+    returns (address) {
         /// return the latest implementation address of a module.
         uint latestVersion = _getLatestVersion(module);
         return _implementations[module].at(latestVersion);
@@ -140,42 +148,6 @@ contract ModuleManager is IModuleManager, Ownable {
     ) returns (address) {
         /// return the implementation address of a specific version.
         return _implementations[module].at(previousVersion);
-    }
-
-    function _create(
-        string memory newModule,
-        address newImplementation
-    ) internal virtual
-    onlyIfNoExistingModuleMatch(newModule) 
-    returns (bool) {
-        /// create an instance of a new module.
-        numberOfModules += 1;
-        _implementations[newModule].add(newImplementation);
-
-        emit ModuleCreated(
-            newModule, 
-            newImplementation
-        );
-
-        modules.push(newModule);
-        return true;
-    }
-
-    function _upgrade(
-        string memory module,
-        address newImplementation
-    ) internal virtual
-    onlyIfExistingModuleMatch(module)
-    returns (bool) {
-        /// upgrade implementation of a module.
-        _implementations[module].add(newImplementation);
-
-        emit ModuleUpgraded(
-            module, 
-            newImplementation
-        );
-
-        return true;
     }
 
     function _grantGovernance(string memory module) 
@@ -196,47 +168,66 @@ contract ModuleManager is IModuleManager, Ownable {
         return true;
     }
 
-    /// OWNER COMMANDS
-    function create(
-        string memory newModule,
-        address newImplementation
-    ) public onlyOwner returns (bool) {
-        /// create a new module with a first implementation.
-        return _create(
-            newModule, 
-            newImplementation
+    function aquire(
+        string memory module,
+        address implementation
+    ) public
+    onlyOwner
+    onlyIfNoExistingModuleMatch(module)
+    returns (bool) {
+        numberOfModules += 1;
+        _implementations[module].add(implementation);
+
+        emit ModuleAquired(
+            module, 
+            implementation
         );
+
+        modules.push(module);
+        return true;
     }
 
     function upgrade(
         string memory module,
         address newImplementation
-    ) public onlyOwner returns (bool) {
-        /// upgrade existing module with new implementation.
-        return _upgrade(
+    ) public
+    onlyOwner
+    onlyIfExistingModuleMatch(module)
+    returns (bool) {
+        _implementations[module].add(newImplementation);
+
+        emit ModuleUpgraded(
             module, 
             newImplementation
         );
+
+        return true;
     }
 
-    function grantGovernance(string memory module)
-    public onlyOwner returns (bool) {
+    function grantGovernance(string memory module) 
+    public 
+    onlyOwner 
+    returns (bool) {
         return _grantGovernance(module);
     }
 
-    function revokeGovernance(string memory module)
-    public onlyOwner returns (bool) {
+    function revokeGovernance(
+        string memory module
+    ) public 
+    onlyOwner 
+    returns (bool) {
         return _revokeGovernance(module);
     }
 
-    /// PUBLIC ACCESS
     function getLatestVersion(string memory module)
-    public view returns (uint) {
+    public view 
+    returns (uint) {
         return _getLatestVersion(module);
     }
 
     function getLatestImplementation(string memory module)
-    public view returns (address) {
+    public view 
+    returns (address) {
         /// will get the latest implementation from the array.
         return _getLatestImplementation(module);
     }
@@ -244,7 +235,8 @@ contract ModuleManager is IModuleManager, Ownable {
     function getImplementation(
         string memory module,
         uint previousVersion
-    ) public view returns (address) {
+    ) public view 
+    returns (address) {
         /// will get the implementation version from the array.
         return _getImplementation(
             module, 
