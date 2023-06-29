@@ -146,6 +146,15 @@ contract Pools is IPools, Ownable {
         _;
     }
 
+    modifier onlyIfFundingScheduleHasBeenCancelled(string memory name) {
+        Pool storage pool = _pools[nameToIdentifier[name]];
+        require(
+            pool.fundingSchedule.hasBeenCancelled,
+            "Funding schedule has not been cancelled."
+        );
+        _;
+    }
+
     modifier onlyIfFundingScheduleHasNotBeenCompleted(string memory name) {
         Pool storage pool = _pools[nameToIdentifier[name]];
         require(
@@ -317,6 +326,47 @@ contract Pools is IPools, Ownable {
         ));
     }
 
+    /// can withdraw if funding schedule is still ongoing and lockup duration is over.
+    function _withdrawAfterLockup(
+        string memory name,
+        uint amount
+    ) internal
+    onlyIfFundingScheduleHasNotBeenCompleted(name)
+    onlyAfterLockupDuration(name)
+    returns (bool) {
+        return _withdraw(
+            name,
+            amount
+        );
+    }
+
+    /// can withdraw if funding schedule has ended and not been completed.
+    function _withdrawAfterFailedFundingSchedule(
+        string memory name,
+        uint amount
+    ) internal
+    onlyIfAfterFundingScheduleEnd(name)
+    onlyIfFundingScheduleHasNotBeenCompleted(name)
+    returns (bool) {
+        return _withdraw(
+            name,
+            amount
+        );
+    }
+
+    /// can withdraw if funding schedule has been cancelled.
+    function _withdrawAfterCancellation(
+        string memory name,
+        uint amount
+    ) internal
+    onlyIfFundingScheduleHasBeenCancelled(name)
+    returns (bool) {
+        return _withdraw(
+            name,
+            amount
+        );
+    }
+
     /// POOL ADMIN CONTROLS
     function setup(
         string memory name,
@@ -476,17 +526,51 @@ contract Pools is IPools, Ownable {
         pool.vault.balance += msg.value;
     }
 
-    function withdrawAfterLockup(
+    function withdraw(
         string memory name,
         uint amount
     ) public
     onlyIfExistingMatch(name)
     onlyAfterFundingScheduleStart(name)
-    onlyAfterLockupDuration(name)
     returns (bool) {
-        return _withdraw(
-            name,
-            amount
-        );
+        Pool storage pool = _pools[nameToIdentifier[name]];
+        uint now_ = block.timestamp;
+        bool scheduleHasStarted = now_ >= pool.fundingSchedule.startTimestamp;
+        bool scheduleHasEnded = now_ >= pool.fundingSchedule.endTimestamp;
+        bool scheduleIsOngoing = scheduleHasStarted == true && scheduleHasEnded == false;
+        bool lockupDurationIsOver = now_ >= pool.fundingSchedule.startTimestamp + settings.lockupDuration;
+        bool scheduleHasNotBeenCompleted = !pool.fundingSchedule.hasBeenCompleted;
+        bool scheduleHasBeenCancelled = pool.fundingSchedule.hasBeenCancelled;
+        
+        if (
+            scheduleIsOngoing &&
+            lockupDurationIsOver &&
+            scheduleHasNotBeenCompleted
+        ) {
+            return _withdrawAfterLockup(
+                name,
+                amount
+            );
+        }
+
+        else if (
+            scheduleHasEnded &&
+            scheduleHasNotBeenCompleted
+        ) {
+            return _withdrawAfterFailedFundingSchedule(
+                name,
+                amount
+            );
+        }
+
+        else if (
+            scheduleHasStarted &&
+            scheduleHasBeenCancelled
+        ) {
+            return _withdrawAfterCancellation(
+                name,
+                amount
+            );
+        }
     }
 }
