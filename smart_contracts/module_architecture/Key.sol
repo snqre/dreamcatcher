@@ -8,7 +8,7 @@ interface IKey {
         string memory signature,
         bytes memory args,
         uint version
-    ) public 
+    ) external 
     returns (bytes memory);
 
     event Connected(
@@ -109,7 +109,7 @@ contract Key is IKey {
         string memory signature,
         bytes memory args,
         uint version
-    ) public 
+    ) external 
     returns (bytes memory) {
         return _connect(
             module, 
