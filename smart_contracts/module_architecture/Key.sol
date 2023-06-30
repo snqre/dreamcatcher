@@ -23,7 +23,7 @@ interface IKey {
 
 contract Key is IKey {
     ModuleManager internal _moduleManager;
-
+    /// make internal
     modifier onlyModule(string memory module) {
         /// only if name points to a module.
         _moduleManager.onlyModule(module);
@@ -33,6 +33,12 @@ contract Key is IKey {
     modifier onlyGovernance(string memory module) {
         /// only governance authorized module.
         _moduleManager.onlyGovernance(module);
+
+        /// do this. custom errors. reduce contract side.
+        if () {
+            revert NoGovernanceModule();
+        }
+
         require(
             msg.sender == _moduleManager.getLatestImplementation(module),
             "Caller is not a governance module or not the latest implementation of the module."
