@@ -162,6 +162,44 @@
 			{
 				"inputs": [
 					{
+						"internalType": "string",
+						"name": "",
+						"type": "string"
+					}
+				],
+				"name": "hasGovernancePermission",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "",
+						"type": "bool"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "string",
+						"name": "module",
+						"type": "string"
+					}
+				],
+				"name": "hasGovernancePermission_",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "",
+						"type": "bool"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
 						"internalType": "uint256",
 						"name": "",
 						"type": "uint256"
@@ -272,7 +310,7 @@
 	},
 	"settings": {
 		"compilationTarget": {
-			"contracts/frameworks/modular_upgradeable/ModuleManager.sol": "ModuleManager"
+			"contracts/templates/modular_upgradeable/ModuleManager.sol": "ModuleManager"
 		},
 		"evmVersion": "paris",
 		"libraries": {},
@@ -310,12 +348,12 @@
 				"dweb:/ipfs/QmRLMrq6BiPS9wGu7ZC174SFYWCu6cxbU3agDw2XgJeDpT"
 			]
 		},
-		"contracts/frameworks/modular_upgradeable/ModuleManager.sol": {
-			"keccak256": "0xc091273bf2f292d3f89d9972765ec9292bd89bd5b11bd70a82b24c488e62a123",
+		"contracts/templates/modular_upgradeable/ModuleManager.sol": {
+			"keccak256": "0x0afa4753d3cb237e468c5d13566b96f3d2bc8192fe4e42fce18c3310ae9caa82",
 			"license": "Apache-2.0",
 			"urls": [
-				"bzz-raw://379da58d66e5ac8ad45a2e294bf06b1f10dbee55efff1a721344a63108168941",
-				"dweb:/ipfs/QmeuUPbyGidtL34dCaJXhgo22jJeKo9Jp5163ZBxHCS8aV"
+				"bzz-raw://98b172f413a5a4d0a78b4fbb50144318af05f8fe45fe00259034a4daeca029cb",
+				"dweb:/ipfs/QmdzzivRCY8Q8tKWdKj4NvdAEHgEwioXkWjmRBhVBWWiSz"
 			]
 		}
 	},

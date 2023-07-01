@@ -48,46 +48,138 @@
 			"sourceMap": ""
 		},
 		"gasEstimates": null,
-		"methodIdentifiers": {}
+		"methodIdentifiers": {
+			"aquire(string,address)": "54cbbd6e",
+			"getImplementation(string,uint256)": "e8009dda",
+			"getLatestImplementation(string)": "d285f839",
+			"getLatestVersion(string)": "cae96761",
+			"hasGovernancePermission_()": "9b7ddb13",
+			"upgrade(string,address)": "5332c74d"
+		}
 	},
 	"abi": [
 		{
-			"anonymous": false,
 			"inputs": [
 				{
-					"indexed": true,
 					"internalType": "string",
 					"name": "module",
 					"type": "string"
 				},
 				{
-					"indexed": false,
 					"internalType": "address",
 					"name": "implementation",
 					"type": "address"
 				}
 			],
-			"name": "ModuleAquired",
-			"type": "event"
+			"name": "aquire",
+			"outputs": [
+				{
+					"internalType": "bool",
+					"name": "",
+					"type": "bool"
+				}
+			],
+			"stateMutability": "nonpayable",
+			"type": "function"
 		},
 		{
-			"anonymous": false,
 			"inputs": [
 				{
-					"indexed": true,
 					"internalType": "string",
 					"name": "module",
 					"type": "string"
 				},
 				{
-					"indexed": false,
+					"internalType": "uint256",
+					"name": "version",
+					"type": "uint256"
+				}
+			],
+			"name": "getImplementation",
+			"outputs": [
+				{
+					"internalType": "address",
+					"name": "",
+					"type": "address"
+				}
+			],
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "string",
+					"name": "module",
+					"type": "string"
+				}
+			],
+			"name": "getLatestImplementation",
+			"outputs": [
+				{
+					"internalType": "address",
+					"name": "",
+					"type": "address"
+				}
+			],
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "string",
+					"name": "module",
+					"type": "string"
+				}
+			],
+			"name": "getLatestVersion",
+			"outputs": [
+				{
+					"internalType": "uint256",
+					"name": "",
+					"type": "uint256"
+				}
+			],
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"inputs": [],
+			"name": "hasGovernancePermission_",
+			"outputs": [
+				{
+					"internalType": "bool",
+					"name": "",
+					"type": "bool"
+				}
+			],
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "string",
+					"name": "module",
+					"type": "string"
+				},
+				{
 					"internalType": "address",
 					"name": "newImplementation",
 					"type": "address"
 				}
 			],
-			"name": "ModuleUpgraded",
-			"type": "event"
+			"name": "upgrade",
+			"outputs": [
+				{
+					"internalType": "bool",
+					"name": "",
+					"type": "bool"
+				}
+			],
+			"stateMutability": "nonpayable",
+			"type": "function"
 		}
 	]
 }
