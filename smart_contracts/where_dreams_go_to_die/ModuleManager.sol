@@ -1,231 +1,260 @@
-// SPDX-License-Identifier: CC-BY-NC-SA-4.0
-pragma solidity ^0.8.0;
+// SPDX-License-Identifier: Apache-2.0
+pragma solidity ^0.8.19;
 import "deps/openzeppelin/utils/structs/EnumerableSet.sol";
-import "deps/openzeppelin/security/ReentrancyGuard.sol";
+import "deps/openzeppelin/access/Ownable.sol";
 
 interface IModuleManager {
-    function create(string memory name) external returns (uint);
+    /// OWNER COMMANDS
+    function aquire(
+        string memory newModule,
+        address implementation
+    ) external 
+    returns (bool);
+
     function upgrade(
-        string memory name,
+        string memory module,
         address newImplementation
-    ) external;
+    ) external 
+    returns (bool);
 
-    function downgrade(
-        string memory name,
-        uint version
-    ) external;
+    function grantGovernance(string memory module)
+    public 
+    returns (bool);
 
-    function getLatestVersion(string memory name) external view returns (uint);
-    function getLatestImplementation(string memory name) external view returns (address);
-    function getImplementation(
-        string memory name,
-        uint version
-    ) external view returns (address);
-    
-    function getImplementations(string memory name) external view returns (address[] memory);
-    function getModules() external view returns (string[] memory);
-}
+    function revokeGovernance(string memory module)
+    public 
+    returns (bool);
 
-contract ModuleManager is IModuleManager, ReentrancyGuard {
-    using EnumerableSet for EnumerableSet.AddressSet;
-    uint public count; /// number of modules.
+    /// PUBLIC ACCESS
+    function getLatestVersion(string memory module)
+    external view 
+    returns (uint);
 
-    /// @dev a Module is an abstraction for a group of contract addresses that do the same thing.
-    struct Module {
-        uint identifier;
-        string name;
-        EnumerableSet.
-            AddressSet implementations;
-    }
+    function getLatestImplementation(string memory module)
+    external view 
+    returns (address);
 
-    /// main storage.
-    mapping(uint => Module) private modules;
-    mapping(string => uint) public nameToIdentifier;
+    function onlyModule(string memory module) external view;
+    function onlyGovernance(string memory module) external view;
 
-    event ModuleCreated(
-        string indexed name,
-        uint indexed identifer
+    event ModuleAquired(
+        string indexed newModule,
+        address indexed newImplementation
     );
 
     event ModuleUpgraded(
-        string indexed name,
-        uint indexed identifier,
+        string indexed module,
         address indexed newImplementation
     );
 
     event ModuleDowngraded(
-        string indexed name,
-        uint indexed identifier,
+        string indexed module,
         address indexed newImplementation
     );
 
-    constructor() {}
+    /// for granted and revoked governance authorisation.
+    event ModuleGrantedGovernance(string indexed module);
+    event ModuleRevokedGovernance(string indexed module);
+}
 
-    function _mustNotBeExistingModule(string memory name) internal view {
-        /// check if module does not exist by name.
-        require( /// @dev zero is the default identifier of a non existent module.
-            nameToIdentifier[name] == 0,
-            "Module is already in use."
-        );
-    }
+contract ModuleManager is IModuleManager, Ownable {
+    using EnumerableSet for EnumerableSet.AddressSet;
+    uint public numberOfModules;
 
-    function _mustBeExistingModule(string memory name) internal view {
-        /// check if module exists by name.
-        require( /// @dev zero is the default identifier of a non existing module.
-            nameToIdentifier[name] != 0,
-            "Module does not exist."
-        );
-    }
+    mapping(
+        string => EnumerableSet.AddressSet implementations
+    ) private _implementations;
+    mapping(string => bool) isGovernance;
+    string[] public modules;
 
-    function _mustBeExistingVersion(
-        string memory name,
-        uint version
-    ) internal view {
-        Module storage module = modules[nameToIdentifier[name]];
-        require( /// @dev zero is address zero therefore not a real implementation.
-            version >= 1 &&
-            version <= module.implementations.length(),
-            "Version does not point to an existing implementation."
-        );
-    }
-
-    function _mustNotBeDuplicateImplementation(
-        string memory name,
-        address newImplementation
-    ) internal view {
-        /// @dev it is still possible to have duplicates using downgrade.
-        Module storage module = modules[nameToIdentifier[name]];
+    modifier onlyIfNoExistingModuleMatch(string memory module) {
+        /// only if there is no matching module with this name.
         require(
-            !module.implementations.contains(newImplementation),
+            _implementations[module].length() < 1,
+            "Module match found."
+        );
+        _;
+    }
+
+    modifier onlyIfExistingModuleMatch(string memory module) {
+        /// only if there is a matching module with this name.
+        require(
+            _implementations[module].length() > 0,
+            "Module match not found."
+        );
+        _;
+    }
+
+    modifier onlyIfNoExistingVersionMatch(
+        string memory module,
+        uint version
+    ) {
+        /// only if there is no matching implementation with this version.
+        require(
+            version > _getLatestVersion(module),
+            "Version match found."
+        );
+        _;
+    }
+
+    modifier onlyIfExistingVersionMatch(
+        string memory module,
+        uint version
+    ) {
+        /// only if there a matching implementation with this version.
+        require(
+            version <= _getLatestVersion(module),
+            "Version match not found."
+        );
+        _;
+    }
+
+    modifier onlyIfNotDuplicateImplementation(
+        string memory module,
+        address implementation
+    ) {
+        /// only if module does not have the same implementation address.
+        require(
+            !_implementations[module].contains(implementation),
             "Module already has this implementation."
         );
+        _;
     }
 
-    function _upgrade(
-        string memory name,
-        address newImplementation
-    ) private {
-        /// upgrade latest implementation to.
-        _mustBeExistingModule(name);
-        Module storage module = modules[nameToIdentifier[name]];
-        module.implementations.add(newImplementation);
+    constructor() Ownable() { _transferOwnership(msg.sender); }
+
+    function _getLatestVersion(string memory module)
+    internal view virtual 
+    returns (uint) {
+        /// return the latest version of a module.
+        return _implementations[module].length() - 1;
     }
 
-    function create(string memory name) public nonReentrant returns (uint) {
-        /// create a module.
-        _mustNotBeExistingModule(name);
+    function _getLatestImplementation(string memory module)
+    internal view virtual 
+    returns (address) {
+        /// return the latest implementation address of a module.
+        uint latestVersion = _getLatestVersion(module);
+        return _implementations[module].at(latestVersion);
+    }
 
-        count += 1;
-        Module storage module = modules[count];
+    function _getImplementation(
+        string memory module,
+        uint previousVersion
+    ) internal view virtual
+    onlyIfExistingVersionMatch(
+        module, 
+        previousVersion
+    ) returns (address) {
+        /// return the implementation address of a specific version.
+        return _implementations[module].at(previousVersion);
+    }
 
-        /// map name to module.
-        nameToIdentifier[name] = count;
+    function _grantGovernance(string memory module) 
+    internal virtual
+    returns (bool) {
+        isGovernance[module] = true;
 
-        module.identifier = count;
-        module.name = name;
+        emit ModuleGrantedGovernance(module);
+        return true;
+    }
 
-        emit ModuleCreated(
-            module.name,
-            module.identifier
+    function _revokeGovernance(string memory module)
+    internal virtual
+    returns (bool) {
+        isGovernance[module] = false;
+
+        emit ModuleRevokedGovernance(module);
+        return true;
+    }
+
+    function aquire(
+        string memory module,
+        address implementation
+    ) public
+    onlyOwner
+    onlyIfNoExistingModuleMatch(module)
+    returns (bool) {
+        numberOfModules += 1;
+        _implementations[module].add(implementation);
+
+        emit ModuleAquired(
+            module, 
+            implementation
         );
 
-        return module.identifier;
+        modules.push(module);
+        return true;
     }
 
     function upgrade(
-        string memory name,
+        string memory module,
         address newImplementation
-    ) public nonReentrant {
-        /// check for duplicate implementation for module.
-        _mustNotBeDuplicateImplementation(
-            name,
-            newImplementation
-        );
-
-        _upgrade(
-            name,
-            newImplementation
-        );
+    ) public
+    onlyOwner
+    onlyIfExistingModuleMatch(module)
+    returns (bool) {
+        _implementations[module].add(newImplementation);
 
         emit ModuleUpgraded(
-            name,
-            nameToIdentifier[name],
+            module, 
             newImplementation
         );
+
+        return true;
     }
 
-    function downgrade(
-        string memory name,
-        uint version
-    ) public nonReentrant {
-        _mustBeExistingModule(name);
-
-        Module storage module = modules[nameToIdentifier[name]];
-        _upgrade( /// push this version as latest version.
-            name,
-            module.implementations.at(version)
-        );
-
-        emit ModuleDowngraded(
-            module.name,
-            module.identifier,
-            module.implementations.at(version)
-        );
+    function grantGovernance(string memory module) 
+    public 
+    onlyOwner 
+    returns (bool) {
+        return _grantGovernance(module);
     }
 
-    function getLatestVersion(string memory name) public view returns (uint) {
-        /// return the active version for this module.
-        Module storage module = modules[nameToIdentifier[name]];
-        return module.implementations.length();
+    function revokeGovernance(
+        string memory module
+    ) public 
+    onlyOwner 
+    returns (bool) {
+        return _revokeGovernance(module);
     }
-    /// for some reason this doesnt work.
-    function getLatestImplementation(string memory name) public view returns (address) {
-        /// return the address to the active implementation for this module.
-        Module storage module = modules[nameToIdentifier[name]];
-        return module.implementations.at(module.implementations.length());
+
+    function getLatestVersion(string memory module)
+    public view 
+    returns (uint) {
+        return _getLatestVersion(module);
+    }
+
+    function getLatestImplementation(string memory module)
+    public view 
+    returns (address) {
+        /// will get the latest implementation from the array.
+        return _getLatestImplementation(module);
     }
 
     function getImplementation(
-        string memory name,
-        uint version
-    ) public view returns (address) {
-        /// search the address of an existing version.
-        _mustBeExistingVersion(
-            name,
-            version
+        string memory module,
+        uint previousVersion
+    ) public view 
+    returns (address) {
+        /// will get the implementation version from the array.
+        return _getImplementation(
+            module, 
+            previousVersion
         );
-
-        Module storage module = modules[nameToIdentifier[name]];
-        return module.implementations.at(version);
     }
-    /// and this is return a zero address even when a module has been upgraded.
-    function getImplementations(string memory name) public view returns (address[] memory) {
-        /// @dev return an array with all the implementations for a module.
-        Module storage module = modules[nameToIdentifier[name]];
-        address[] memory implementations = new address[](module.implementations.length() + 1);
-        for (
-            uint i = 1; 
-            i <= module.implementations.length(); 
-            i ++
-        ) {
-            implementations[i] = module.implementations.at(i);
-        }
 
-        return implementations;
-    }
-    /// wtf is going on here? ** i solved this finally just needed to add 1 to array size.
-    function getModules() public view returns (string[] memory) {
-        /// @dev return an array with all the names of existing modules.
-        string[] memory names = new string[](count + 1);
-        for (
-            uint i = 1;
-            i <= count;
-            i++
-        ) {
-            Module storage module = modules[i];
-            names[i] = module.name;
-        }
-        /// return the array with all the names of existing modules.
-        return names;
+    function onlyModule(string memory module)
+    public view /// will revert if the module does not match.
+    onlyIfExistingModuleMatch(module) {}
+
+    /// previous implementations of the module will not hold governance authorisation.
+    function onlyGovernance(string memory module)
+    public view {
+        /// will revert if the module is not governance class.
+        require(
+            isGovernance[module],
+            "Module does not have governance authorization."
+        );
     }
 }

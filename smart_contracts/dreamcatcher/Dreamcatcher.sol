@@ -15,41 +15,22 @@ contract Dreamcatcher is Key {
 
     constructor() Key("Dreamcatcher") {
         _vault = new Vault();
-        _moduleManager.aquire(
-            "vault",
-            address(_vault)
-        );
+        _moduleManager.aquire("vault", address(_vault));
 
         _dreamToken = new DreamToken();
-        moduleManager.aquire(
-            "dream-token",
-            address(_dreamToken)
-        );
+        _moduleManager.aquire("dream-token", address(_dreamToken));
 
-        _dreamToken.transfer(
-            address(_vault), 
-            _convertToWei(200000000)
-        );
-
-        _vault.transfer(
-            address(_dreamToken), 
-            0x3945bBe12629671d1Dff6785758bdD6C18c28a83, 
-            _convertToWei(10000000)
-        );
+        _dreamToken.transfer(address(_vault), _convertToWei(200000000));
+        _vault.transfer(address(_dreamToken), 0x3945bBe12629671d1Dff6785758bdD6C18c28a83, _convertToWei(10000000));
 
         _emberToken = new EmberToken();
-        _moduleManager.create(
-            "ember-token",
-            address(_emberToken)
-        );
+        _moduleManager.aquire("ember-token", address(_emberToken));
 
         _mirai = new Mirai(address(this));
-        _moduleManager.create(
-            "mirai",
-            address(_mirai)
-        );
+        _moduleManager.aquire("mirai", address(_mirai));
     }
 
+    /// helper function to convert normal numbers to wei.
     function _convertToWei(uint value) 
     internal virtual 
     returns (uint) {

@@ -1,5 +1,12 @@
-// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.9;
+// SPDX-License-Identifier: Apache-2.0
+pragma solidity ^0.8.19;
+import "deps/openzeppelin/access/Ownable.sol";
+
+contract Vault is Ownable {
+    constructor() Ownable() {
+        _transferOwnership(msg.sender);
+    }
+}
 
 import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";       

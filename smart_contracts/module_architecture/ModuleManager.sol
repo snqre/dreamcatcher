@@ -4,257 +4,138 @@ import "deps/openzeppelin/utils/structs/EnumerableSet.sol";
 import "deps/openzeppelin/access/Ownable.sol";
 
 interface IModuleManager {
-    /// OWNER COMMANDS
-    function aquire(
-        string memory newModule,
-        address implementation
-    ) external 
-    returns (bool);
+    /// custom error messages.
+    error ModuleFound(string module);
+    error ModuleNotFound(string module);
+    error VersionFound(string module, uint version);
+    error VersionNotFound(string module, uint version);
+    error ImplementationFound(string module, address implementation);
 
-    function upgrade(
-        string memory module,
-        address newImplementation
-    ) external 
-    returns (bool);
-
-    function grantGovernance(string memory module)
-    public 
-    returns (bool);
-
-    function revokeGovernance(string memory module)
-    public 
-    returns (bool);
-
-    /// PUBLIC ACCESS
-    function getLatestVersion(string memory module)
-    external view 
-    returns (uint);
-
-    function getLatestImplementation(string memory module)
-    external view 
-    returns (address);
-
-    function onlyModule(string memory module) external view;
-    function onlyGovernance(string memory module) external view;
-
-    event ModuleAquired(
-        string indexed newModule,
-        address indexed newImplementation
-    );
-
-    event ModuleUpgraded(
-        string indexed module,
-        address indexed newImplementation
-    );
-
-    event ModuleDowngraded(
-        string indexed module,
-        address indexed newImplementation
-    );
-
-    /// for granted and revoked governance authorisation.
-    event ModuleGrantedGovernance(string indexed module);
-    event ModuleRevokedGovernance(string indexed module);
+    /// events.
+    event ModuleAquired(string indexed module, address indexed implementation);
+    event ModuleUpgraded(string indexed module, address indexed newImplementation);
 }
 
 contract ModuleManager is IModuleManager, Ownable {
     using EnumerableSet for EnumerableSet.AddressSet;
-    uint public numberOfModules;
-
+    uint public count; /// number of aquired modules.
+    
     mapping(
-        string => EnumerableSet.AddressSet implementations
+        string => EnumerableSet.AddressSet
     ) private _implementations;
-    mapping(string => bool) isGovernance;
     string[] public modules;
-
-    modifier onlyIfNoExistingModuleMatch(string memory module) {
-        /// only if there is no matching module with this name.
-        require(
-            _implementations[module].length() < 1,
-            "Module match found."
-        );
+    
+    /// revert if given module name does point to a module.
+    modifier onlyIfModuleNotFound(string memory module) {
+        if (_implementations[module].length() == 0) { 
+            revert ModuleFound(module); 
+        }
         _;
     }
 
-    modifier onlyIfExistingModuleMatch(string memory module) {
-        /// only if there is a matching module with this name.
-        require(
-            _implementations[module].length() > 0,
-            "Module match not found."
-        );
+    /// revert if given module name does not point to a module.
+    modifier onlyIfModuleFound(string memory module) {
+        if (_implementations[module].length() >= 1) { 
+            revert ModuleNotFound(module); 
+        }
         _;
     }
 
-    modifier onlyIfNoExistingVersionMatch(
-        string memory module,
-        uint version
-    ) {
-        /// only if there is no matching implementation with this version.
-        require(
-            version > _getLatestVersion(module),
-            "Version match found."
-        );
+    /// revert if version does point to an actual version.
+    modifier onlyIfVersionNotFound(string memory module, uint version) {
+        if (version > _getLatestVersion(module)) { 
+            revert VersionFound(module, version);
+        }
         _;
     }
 
-    modifier onlyIfExistingVersionMatch(
-        string memory module,
-        uint version
-    ) {
-        /// only if there a matching implementation with this version.
-        require(
-            version <= _getLatestVersion(module),
-            "Version match not found."
-        );
+    /// revert if version does not point to an actual version.
+    modifier onlyIfVersionFound(string memory module, uint version) {
+        if (version <= _getLatestVersion(module)) { 
+            revert VersionNotFound(module, version); 
+        }
         _;
     }
 
-    modifier onlyIfNotDuplicateImplementation(
-        string memory module,
-        address implementation
-    ) {
-        /// only if module does not have the same implementation address.
-        require(
-            !_implementations[module].contains(implementation),
-            "Module already has this implementation."
-        );
+    /// revert if implementation does point to an already existing implementation.
+    modifier onlyIfImplementationNotFound(string memory module, address implementation) {
+        if (_implementations[module].contains(implementation)) {
+            revert ImplementationFound(module, implementation);
+        }
         _;
     }
 
-    constructor() Ownable() { _transferOwnership(msg.sender); }
+    constructor() Ownable() {
+        _transferOwnership(msg.sender);
+    }
 
-    function _getLatestVersion(string memory module)
-    internal view virtual 
+    /// get the latest version of a module.
+    function _getLatestVersion(string memory module) 
+    internal view virtual
+    onlyIfModuleFound(module)
     returns (uint) {
-        /// return the latest version of a module.
         return _implementations[module].length() - 1;
     }
 
-    function _getLatestImplementation(string memory module)
-    internal view virtual 
+    /// get the latest address of module's implementation.
+    function _getLatestImplementation(string memory module) 
+    internal view virtual
+    onlyIfModuleFound(module)
     returns (address) {
-        /// return the latest implementation address of a module.
         uint latestVersion = _getLatestVersion(module);
         return _implementations[module].at(latestVersion);
     }
 
-    function _getImplementation(
-        string memory module,
-        uint previousVersion
-    ) internal view virtual
-    onlyIfExistingVersionMatch(
-        module, 
-        previousVersion
-    ) returns (address) {
-        /// return the implementation address of a specific version.
-        return _implementations[module].at(previousVersion);
+    /// get any address of the module's implementation.
+    function _getImplementation(string memory module, uint version)
+    internal view virtual
+    onlyIfVersionFound(module, version)
+    returns (address) {
+        return _implementations[module].at(version);
     }
 
-    function _grantGovernance(string memory module) 
-    internal virtual
-    returns (bool) {
-        isGovernance[module] = true;
-
-        emit ModuleGrantedGovernance(module);
-        return true;
-    }
-
-    function _revokeGovernance(string memory module)
-    internal virtual
-    returns (bool) {
-        isGovernance[module] = false;
-
-        emit ModuleRevokedGovernance(module);
-        return true;
-    }
-
-    function aquire(
-        string memory module,
-        address implementation
-    ) public
+    /// create a new module construct.
+    function aquire(string memory module, address implementation)
+    external
     onlyOwner
-    onlyIfNoExistingModuleMatch(module)
+    onlyIfModuleFound(module)
     returns (bool) {
-        numberOfModules += 1;
+        count ++;
         _implementations[module].add(implementation);
-
-        emit ModuleAquired(
-            module, 
-            implementation
-        );
-
+        emit ModuleAquired(module, implementation);
         modules.push(module);
         return true;
     }
 
-    function upgrade(
-        string memory module,
-        address newImplementation
-    ) public
+    /// upgrade to the new implementation.
+    function upgrade(string memory module, address newImplementation)
+    public
     onlyOwner
-    onlyIfExistingModuleMatch(module)
+    onlyIfModuleFound(module)
     returns (bool) {
         _implementations[module].add(newImplementation);
-
-        emit ModuleUpgraded(
-            module, 
-            newImplementation
-        );
-
+        emit ModuleUpgraded(module, newImplementation);
         return true;
     }
 
-    function grantGovernance(string memory module) 
-    public 
-    onlyOwner 
-    returns (bool) {
-        return _grantGovernance(module);
-    }
-
-    function revokeGovernance(
-        string memory module
-    ) public 
-    onlyOwner 
-    returns (bool) {
-        return _revokeGovernance(module);
-    }
-
+    /// public access view function to check latest version.
     function getLatestVersion(string memory module)
-    public view 
+    public view
     returns (uint) {
         return _getLatestVersion(module);
     }
 
+    /// public access points to latest implementation address.
     function getLatestImplementation(string memory module)
-    public view 
+    public view
     returns (address) {
-        /// will get the latest implementation from the array.
         return _getLatestImplementation(module);
     }
 
-    function getImplementation(
-        string memory module,
-        uint previousVersion
-    ) public view 
+    /// public access points to implementation address.
+    function getImplementation(string memory module, uint version)
+    public view
     returns (address) {
-        /// will get the implementation version from the array.
-        return _getImplementation(
-            module, 
-            previousVersion
-        );
-    }
-
-    function onlyModule(string memory module)
-    public view /// will revert if the module does not match.
-    onlyIfExistingModuleMatch(module) {}
-
-    /// previous implementations of the module will not hold governance authorisation.
-    function onlyGovernance(string memory module)
-    public view {
-        /// will revert if the module is not governance class.
-        require(
-            isGovernance[module],
-            "Module does not have governance authorization."
-        );
+        return _getImplementation(module, version);
     }
 }
