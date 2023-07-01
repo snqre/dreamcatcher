@@ -1,13 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
-import "contracts/deps/openzeppelin/access/Ownable.sol";
 import "contracts/deps/openzeppelin/token/ERC20/extensions/draft-ERC20Permit.sol";
 import "contracts/deps/openzeppelin/token/ERC20/extensions/ERC20Snapshot.sol";
 import "contracts/deps/openzeppelin/token/ERC20/extensions/ERC20Burnable.sol";
 import "contracts/deps/openzeppelin/token/ERC20/ERC20.sol";
 import "contracts/templates/libraries/Utils.sol";
 
-contract DreamToken is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit, Ownable {
+contract DreamToken is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit {
     uint256 private _mintable;
     uint256 private _maxSupply;
 
@@ -19,14 +18,13 @@ contract DreamToken is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit, Ownable
         _;
     }
 
-    constructor(address owner)
+    constructor(address vault)
     ERC20("DreamToken", "DREAM")
-    ERC20Permit("DreamToken")
-    Ownable(owner) {
+    ERC20Permit("DreamToken") {
         uint256 initialSupply = 200_000_000;
         _mintable = Utils.convertToWei(initialSupply);
         _maxSupply = Utils.convertToWei(initialSupply);
-        _mint(owner, Utils.convertToWei(initialSupply));
+        _mint(vault, Utils.convertToWei(initialSupply));
     }
 
     function snapshot_()
