@@ -8,7 +8,7 @@ contract SimpleVault is Ownable {
     constructor() Ownable() {}
 
     function transfer(address target, address to, uint256 amount)
-    external
+    external virtual
     returns (bool) {
         bool success = IERC20(target).transfer(to, amount);
         require(success, "SimpleVault: Unable to make transfer.");
@@ -16,7 +16,7 @@ contract SimpleVault is Ownable {
     }
 
     function transferFrom(address target, address from, uint256 amount)
-    external
+    external virtual
     returns (bool) {
         bool success = IERC20(target).transferFrom(from, to, amount);
         require(success, "SimpleVault: Unable to make transfer.");
