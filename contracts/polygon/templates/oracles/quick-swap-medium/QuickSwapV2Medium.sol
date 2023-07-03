@@ -2,6 +2,22 @@
 pragma solidity ^0.8.19;
 import "contracts/polygon/deps/openzeppelin/utils/structs/EnumerableSet.sol";
 
+interface IUniswapV2Factory {
+    event PairCreated(address indexed token0, address indexed token1, address pair, uint);
+
+    function feeTo() external view returns (address);
+    function feeToSetter() external view returns (address);
+
+    function getPair(address tokenA, address tokenB) external view returns (address pair);
+    function allPairs(uint) external view returns (address pair);
+    function allPairsLength() external view returns (uint);
+
+    function createPair(address tokenA, address tokenB) external returns (address pair);
+
+    function setFeeTo(address) external;
+    function setFeeToSetter(address) external;
+}
+
 interface IUniswapV2Router01 {
     function factory() external pure returns (address);
     function WETH() external pure returns (address);
@@ -163,25 +179,24 @@ interface IERC20 {
     function transferFrom(address from, address to, uint value) external returns (bool);
 }
 
-interface IWETH {
-    function deposit() external payable;
-    function transfer(address to, uint value) external returns (bool);
-    function withdraw(uint) external;
-}
-
 contract QuickSwapV2Medium {
     using EnumerableSet for EnumerableSet.AddressSet;
     IUniswapV2Router01 quickSwapRouter = IUniswapV2Router01(0xa5E0829CaCEd8fFDD4De3c43696c57F7D7A678ff);
+    IUniswapV2Factory quickSwapFactory = IUniswapV2Factory(0x5757371414417b8C6CAad45bAeF941aBc7d3Ab32);
     IUniswapV2Router01 quickSwapRouterTestnet = IUniswapV2Router01(0x8954AfA98594b838bda56FE4C12a09D7739D179b);
+    IUniswapV2Factory quickSwapFactoryTestnet = IUniswapV2Factory(0x5757371414417b8C6CAad45bAeF941aBc7d3Ab32);
 
     constructor() {}
 
-    function getTokenPrice(address token0, address token1, uint amountIn)
+    function getTokenPrice(address tokenA, address tokenB, uint amountIn)
     public view
     returns (uint) {
+        address pair = quickSwapFactoryTestnet.getPair(tokenA, tokenB);
+        require(pair != address(0), "QuickSwapV2Medium: No pair has been found.");
+
         address[] memory path = new address[](2);
-        path[0] = token0;
-        path[1] = token1;
+        path[0] = tokenA;
+        path[1] = tokenB;
 
         uint[] memory amountsOut = quickSwapRouterTestnet.getAmountsOut(amountIn, path);
         return amountsOut[1];
