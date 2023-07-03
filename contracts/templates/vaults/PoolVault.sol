@@ -10,8 +10,8 @@ contract PoolVault is Ownable {
 
     mapping(address => uint256) public contribution;
 
-    constructor(address nativeToken) payable
-    Ownable() {
+    constructor(address nativeToken, address owner) payable
+    Ownable(owner) {
         token = IERC20(nativeToken);
         contribute();
     }
@@ -37,7 +37,7 @@ contract PoolVault is Ownable {
     }
 
     function contribute()
-    external virtual payable
+    public virtual payable
     returns (bool) {
         uint256 v = msg.value;
         uint256 s = token.totalSupply();
@@ -54,7 +54,7 @@ contract PoolVault is Ownable {
     external virtual
     returns (bool) {
         uint256 v = msg.value;
-        uint256 s = toke.totalSupply();
+        uint256 s = token.totalSupply();
         uint256 b = address(this).balance;
 
         contribution[msg.sender] -= msg.value;
