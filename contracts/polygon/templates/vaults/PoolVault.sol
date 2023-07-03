@@ -50,7 +50,7 @@ contract PoolVault is Ownable {
         return true;
     }
 
-    function withdraw()
+    function withdraw(uint256 amount)
     external virtual
     returns (bool) {
         uint256 v = msg.value;
@@ -59,6 +59,9 @@ contract PoolVault is Ownable {
 
         contribution[msg.sender] -= msg.value;
 
+        token.transferFrom(msg.sender, address(this), amount);
+        token.burn(amount);
+        
         address payable to = payable(msg.sender);
         to.transfer(_amountToSend(v, s, b));
         return true;
