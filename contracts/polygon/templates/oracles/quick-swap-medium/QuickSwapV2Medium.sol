@@ -176,13 +176,12 @@ contract QuickSwapV2Medium {
 
     constructor() {}
 
-    function getTokenPrice(address[] memory tokens, uint amountIn)
+    function getTokenPrice(address token0, address token1, uint amountIn)
     public view
     returns (uint) {
-        require(tokens.length == 2, "QuickSwapV2Medium: Two tokens must be provided.");
         address[] memory path = new address[](2);
-        path[0] = tokens[0];
-        path[1] = tokens[1];
+        path[0] = token0;
+        path[1] = token1;
 
         uint[] memory amountsOut = quickSwapRouterTestnet.getAmountsOut(amountIn, path);
         return amountsOut[1];
