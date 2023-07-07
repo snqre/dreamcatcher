@@ -1,18 +1,19 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
-import "contracts/templates/modular_upgradeable/ModuleManager.sol";
+import "contracts/polygon/templates/modular-upgradeable/ModuleManager.sol";
+import "contracts/polygon/deps/openzeppelin/access/AccessControl.sol";
 
-contract Key {
+interface IKey {
+    event Connected(string indexed module, string indexed signature, bytes indexed args, uint version, address target, bytes response);
+
+    error FailedFunctionCall();
+    error ModuleDoesNotHaveGovernancePermission(string module);
+
+    function connect(string memory module, string memory signature, bytes memory args, uint version) external returns (bytes memory);
+}
+
+contract Key is IKey {
     ModuleManager public moduleManager;
-
-    event Connected(
-        string indexed module,
-        string indexed signature,
-        bytes indexed args,
-        uint256 version,
-        address target,
-        bytes response
-    );
 
     constructor(string memory nameOfKey, address governor) {
         moduleManager = new ModuleManager(address(this));
@@ -20,43 +21,23 @@ contract Key {
         moduleManager.aquire("governor", governor);
     }
 
-    function _connect(
-        string memory module,
-        string memory signature,
-        bytes memory args,
-        uint256 version
-    ) internal virtual returns (bytes memory) {
-        bool hasGovernancePermission = moduleManager.hasGovernancePermission_(
-            module
-        );
-        require(
-            hasGovernancePermission,
-            "Key: Module does not have governance permission or is not its latest implementation."
-        );
-
-        address target;
-        if (version != 0) {
-            target = moduleManager.getImplementation(module, version);
-        } else {
-            target = moduleManager.getLatestImplementation(module);
+    function connect(string memory module, string memory signature, bytes memory args, uint version)
+    external
+    returns (bytes memory) {
+        if (!moduleManager.hasGovernancePermission_(module)) {
+            revert ModuleDoesNotHaveGovernancePermission(module);
         }
 
-        (bool success, bytes memory response) = (target).call(
-            abi.encodeWithSignature(signature, args)
-        );
+        address target;
+        if (version != 0) { target = moduleManager.getImplementation(module, version); }
+        else { target = moduleManager.getLatestImplementation(module); }
 
-        require(success, "Key: Failed function call.");
+        (bool success, bytes memory response) = (target).call(abi.encodeWithSignature(signature, args));
+        if (!success) {
+            revert FailedFunctionCall();
+        }
 
         emit Connected(module, signature, args, version, target, response);
         return response;
-    }
-
-    function connect(
-        string memory module,
-        string memory signature,
-        bytes memory args,
-        uint256 version
-    ) external returns (bytes memory) {
-        return _connect(module, signature, args, version);
     }
 }

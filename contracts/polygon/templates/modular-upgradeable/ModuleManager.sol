@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
-import "contracts/deps/openzeppelin/access/Ownable.sol";
-import "contracts/deps/openzeppelin/utils/structs/EnumerableSet.sol";
+import "contracts/polygon/deps/openzeppelin/access/Ownable.sol";
+import "contracts/polygon/deps/openzeppelin/utils/structs/EnumerableSet.sol";
 
 interface IModuleManager {
     function aquire(
