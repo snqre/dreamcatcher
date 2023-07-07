@@ -3,9 +3,88 @@ pragma solidity ^0.8.19;
 import "contracts/polygon/deps/openzeppelin/access/Ownable.sol";
 import "contracts/polygon/deps/openzeppelin/utils/structs/EnumerableSet.sol";
 
-interface IAuthenticator {
-    event NewRoleCreated(string indexed caption, uint indexed access, uint indexed requiredGrantorAccess, uint max);
+interface IAuthenticator {}
 
+contract Authenticator is IAuthenticator, Ownable {
+    using EnumerableSet for EnumerableSet.AddressSet;
+
+    struct Role {
+        bool isKeyHolder;
+        bool isChancellor;
+        bool isDirector;
+        bool isSyndicate;
+        bool isMember;
+    }
+
+    mapping(address => Role) public roles;
+
+    constructor() Ownable() {}
+
+    function config(address account, bool isKeyHolder, bool isChancellor, bool isDirector, bool isSyndicate, bool isMember)
+    external
+    onlyOwner
+    returns (bool) {
+        require(
+            account != address(0),
+            "Authenticator: ADDRESS_ZERO"
+        );
+
+        Role storage role    = roles[account];
+
+        role.isKeyHolder     = false;
+        role.isChancellor    = false;
+        role.isDirector      = false;
+        role.isSyndicate     = false;
+        role.isMember        = false;
+
+        /// only one can be true at a time.
+        require(
+            (isKeyHolder     ? 1 : 0) +
+            (isChancellor    ? 1 : 0) +
+            (isDirector      ? 1 : 0) +
+            (isSyndicate     ? 1 : 0) +
+            (isMember        ? 1 : 0) == 1,
+            "Authenticator: INVALID_FLAG_CONFIG"
+        );
+
+        role.isKeyHolder     = isKeyHolder;
+        role.isChancellor    = isChancellor;
+        role.isDirector      = isDirector;
+        role.isSyndicate     = isSyndicate;
+        role.isMember        = isMember;
+
+        return true;
+    }
+
+    function revoke(address account)
+    external
+    onlyOwner
+    returns (bool) {
+        require(
+            account != address(0),
+            "Authenticator: ADDRESS_ZERO"
+        );
+
+        Role storage role = roles[account];
+
+        role.isKeyHolder     = false;
+        role.isChancellor    = false;
+        role.isDirector      = false;
+        role.isSyndicate     = false;
+        role.isMember        = false;
+
+        return true;
+    }
+
+    function authenticate(address account, bool requireKeyHolder, bool requireChancellor, bool requireDirector, bool requireSyndicate, bool requireMember)
+    public
+    returns (bool) {
+        Role storage role = roles[account];
+
+        if (requireKeyHolder)    { require(role.isKeyHolder, "Authenticator: IS_NOT_KEY_HOLDER"); }
+        if (requireChancellor)   { require(role.isChancellor, "Authenticator: IS_NOT_CHANCELLOR"); }
+        if (requireDirector)     { require()}
+    }
 }
 
 contract Authenticator is IAuthenticator, Ownable {
@@ -23,28 +102,9 @@ contract Authenticator is IAuthenticator, Ownable {
     *               access lvl 9:     send instructions to key.
     * key           access lvl 10:    ownership.
      */
-    
-    EnumerableSet.AddressSet public tier_1;
-    EnumerableSet.AddressSet public tier_2;
-    EnumerableSet.AddressSet public tier_3;
-    EnumerableSet.AddressSet public tier_4;
-    EnumerableSet.AddressSet public tier_5;
-    EnumerableSet.AddressSet public tier_6;
-    EnumerableSet.AddressSet public tier_7;
-    EnumerableSet.AddressSet public tier_8;
-    EnumerableSet.AddressSet public tier_9;
 
-    
-    
-    struct Role {
-        string caption;
-        uint access;
-        EnumerableSet.AddressSet members;
-        uint max;
-
-        /// the access level required to grant this role.
-        uint requiredGrantorAccess;
-    }
+    mapping(uint => EnumerableSet.AddressSet) public tier;
+    uint public maxTier;
 
     /// highest access an account has been granted. ie. if they are a member but also a chancellor they gain chancellor access.
     mapping(address => uint) public access;
@@ -64,26 +124,15 @@ contract Authenticator is IAuthenticator, Ownable {
     * public        access lvl 10:    upgrade. execute 4040s. execute 7777s.
      */
 
-    mapping(string => Role) public roles;
-
-    constructor(address owner) Ownable (owner) {
-        
+    constructor() Ownable () {
+        maxTier = 9;
     }
 
     function _getHighestAccess(address account)
     private view
     returns (uint) {
-        if (tier_9.contains(account)) { return 9; }
-        else if (tier_8.contains(account)) { return 8; }
-        else if (tier_7.contains(account)) { return 7; }
-        else if (tier_6.contains(account)) { return 6; }
-        else if (tier_5.contains(account)) { return 5; }
-        else if (tier_4.contains(account)) { return 4; }
-        else if (tier_3.contains(account)) { return 3; }
-        else if (tier_2.contains(account)) { return 2; }
-        else if (tier_1.contains(account)) { return 1; }
-        else {
-            return 0;
+        for (uint i = maxTier; i == 1; i--) {
+            if (tier[i].contains(account)) { return i; }
         }
     }
 
@@ -123,6 +172,11 @@ contract Authenticator is IAuthenticator, Ownable {
     external
     returns (bool) {
         authenticate(msg.sender, 8);
+        if (tier_1.contains(account)) { tier_1.remove(account); }
+        if (tier_2.contains(account)) { tier_2.remove(account); }
+        if (tier_3.contains(account)) { tier_3.remove(account); }
+        if (tier_4.contains(account)) { tier_4.remove(account); }
+        
         tier_1.remove(account);
         tier_2.remove(account);
         tier_3.remove(account);
