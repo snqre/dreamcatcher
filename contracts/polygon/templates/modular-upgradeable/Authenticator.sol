@@ -134,6 +134,10 @@ contract Authenticator is IAuthenticator, Ownable {
     * public        access lvl 10:    upgrade. execute 4040s. execute 7777s.
      */
 
+
+    mapping(address => string)
+
+
     constructor() Ownable () {
         maxTier = 9;
     }
@@ -203,12 +207,24 @@ contract Authenticator is IAuthenticator, Ownable {
         tier_9.remove(account);
     }
 
-    function upgrade(address newImplementation)
+    function upgrade(uint start, uint end)
     external
     returns (bool) {
         authenticate(msg.sender, 9);
         moduleManager.upgrade("authenticator", newImplementation);
         /// ... copy existing data
+        EnumerableSet.AddressSet aList;
+
+        address[] memory copyData;
+        for (uint i = start; i < end; i++) {
+            copyData[i] = aList[i];
+        }
+
+        
+        /// ........ | ........ | ....... | ..................................................
+
+        return copyData /// from range start to range end.
+
     }
 
 }
