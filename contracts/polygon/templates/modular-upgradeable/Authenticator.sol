@@ -8,6 +8,16 @@ interface IAuthenticator {}
 contract Authenticator is IAuthenticator, Ownable {
     using EnumerableSet for EnumerableSet.AddressSet;
 
+    enum Role {
+        KEY_HOLDER,
+        CHANCELLOR,
+        DIRECTOR,
+        SYNDICATE,
+        MEMBER
+    }
+
+    Role.KEY_HOLDER;
+
     struct Role {
         bool isKeyHolder;
         bool isChancellor;
@@ -168,10 +178,15 @@ contract Authenticator is IAuthenticator, Ownable {
         return true;
     }
 
+    function eatCake()
+    external {
+        isRole();
+    }
+
     function revoke(address account)
     external
     returns (bool) {
-        authenticate(msg.sender, 8);
+        authenticate(msg.sender, 3);
         if (tier_1.contains(account)) { tier_1.remove(account); }
         if (tier_2.contains(account)) { tier_2.remove(account); }
         if (tier_3.contains(account)) { tier_3.remove(account); }
