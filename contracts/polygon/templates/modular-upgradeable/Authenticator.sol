@@ -61,9 +61,12 @@ interface IAuthenticator {
     event TimedKeyRevoked(address indexed to, string indexed timedKey);
     event TimedApproved(address indexed from, string indexed timedKey);
 
+    event RoleCreated(string caption, string[] indexed keys_, string[] indexed consumableKeys_, string[] indexed timeKeys_, uint[] startTimestamps, uint[] durations);
+
     error KeyNotAvailable(address caller, string requiredKey);
     error UnableToGrantKey(address to, string key, bool consumable, bool timed);
     error UnableToRevokeKey(address from, string key, bool consumable, bool timed);
+    error LengthMismatch(uint len1, uint len2, uint len3);
 }
 
 /** KEY NAMING CONVENSION
@@ -87,9 +90,20 @@ Advantages.
  */
 contract Authenticator is IAuthenticator, Ownable {
 
-    mapping(address => string[]) public consumableKeys;
-    mapping(address => string[]) public keys;
+    /// allows to create custom roles with pre existing key access.
+    struct Role {
+        string caption;
+        string[] keys;
+        string[] consumableKeys;
+        string[] timedKeys;
+        uint[] timedKeysStartTimestamp;
+        uint[] timedKeysDurations;
+    }
 
+    mapping(string => Role) public roles;
+
+    mapping(address => string[]) public keys;
+    mapping(address => string[]) public consumableKeys;
     mapping(address => string[]) public timedKeys;
     mapping(address => mapping(string => uint)) public timedKeysStartTimestamp;
     mapping(address => mapping(string => uint)) public timedKeysEndTimestamp;
@@ -369,5 +383,43 @@ contract Authenticator is IAuthenticator, Ownable {
         returns (bool success) {
         authenticate(msg.sender, "authenticator-revoke-timed", true, true);
         _revokeTimed(to, timedKey);
+    }
+
+    /// -----
+    /// ROLES.
+    /// -----
+
+    function _createRole(string caption, string[] memory keys_, string[] memory consumableKeys_, string[] memory timedKeys_, uint[] memory startTimestamps, uint[] memory durations) 
+        private
+        returns (bool success) {
+        bool success;
+        Role storage role = roles[caption];
+        role.caption = caption;
+        
+        for (uint i = 0; i < keys_.length; i ++) {
+            role.keys.push(keys_[i]);
+        }
+
+        for (uint i = 0; i < consumableKeys_.length; i ++) {
+            role.consumableKeys.push(consumableKeys_[i]);
+        }
+
+        /// check that the last three arrays must be equal in length or caller has made a mistake.
+        uint lenTimedKeys = timedKeys_.length;
+        uint lenTimestamps = startTimestamps.length;
+        uint lenDurations = durations.length;
+        bool allEqualToEachOther = lenTimedKeys == lenTimestamps && lenTimestamps == lenDurations && lenDurations == lenTimedKeys;
+        if (!allEqualToEachOther) { revert LengthMismatch(lenTimedKeys, lenTimestamps, lenDurations); }
+        
+        /// push params.
+        for (uint i = 0; i < timedKeys_.length; i ++) {
+            role.timedKeys.push(timedKeys_[i]);
+            role.timedKeysStartTimestamp.push(startTimestamps[i]);
+            role.timedKeysDurations.push(durations[i]);
+        }
+
+        emit RoleCreated(caption, keys_, consumableKeys_, timeKeys_, startTimestamps, durations);
+        success = true;
+        return success;
     }
 }
