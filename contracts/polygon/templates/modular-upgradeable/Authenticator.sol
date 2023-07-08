@@ -2,8 +2,64 @@
 pragma solidity ^0.8.19;
 import "contracts/polygon/deps/openzeppelin/access/Ownable.sol";
 
+/// authenticator allows to lock every function within the ecosystem behind three types of keys.
+/// allows for more flexibility.
+
 interface IAuthenticator {
+    /// standard key.
+    function authenticate(address from, string memory key, bool canBeConsumable, bool canBeTimed) 
+    external view
+    returns (bool success);
+
+    /// authenticator-grant-key
+    function grantKey(address to, string memory key)
+    external
+    returns (bool success);
+
+    /// authenticator-revoke-key
+    function revokeKey(address from, string memory key)
+    external
+    returns (bool success);
+
+    function authenticateConsumable(address from, string memory consumableKey)
+    external
+    returns (bool success);
+
+    /// authenticator-grant-consumable
+    function grantConsumable(address to, string memory consumableKey)
+    external
+    returns (bool success);
+
+    /// authenticator-consume
+    function consume(address from, string memory consumableKey)
+    external
+    returns (bool success);
+
+    function authenticateTimed(address from, string memory timedKey)
+    external view
+    returns (bool success);
+
+    /// authenticator-grant-timed
+    function grantTimed(address to, string memory timedKey, uint startTimestamp, uint duration)
+    external
+    returns (bool success);
+
+    /// authenticator-revoke-timed
+    function revokeTimed(address to, string memory timedKey)
+    external
+    returns (bool success);
+
+    event KeyGranted(address indexed to, string indexed key);
+    event KeyRevoked(address indexed from, string indexed key);
+    event Approved(address indexed from, string indexed requiredKey);
+
     event ConsumableKeyGranted(address indexed to, string indexed consumableKey);
+    event ConsumableKeyConsumed(address from, string indexed consumableKey);
+    event ConsumableApproved(address indexed from, string indexed consumableKey);
+
+    event TimedKeyGranted(address indexed to, string indexed timedKey, uint startTimestamp, uint endTimestamp, uint duration);
+    event TimedKeyRevoked(address indexed to, string indexed timedKey);
+    event TimedApproved(address indexed from, string indexed timedKey);
 
     error KeyNotAvailable(address caller, string requiredKey);
     error UnableToGrantKey(address to, string key, bool consumable, bool timed);
@@ -12,7 +68,7 @@ interface IAuthenticator {
 
 /** KEY NAMING CONVENSION
 ** key intended to be used as standard, consumable, and timed.
-    <contract name>-<function name>
+    <contract name>-<function-name>
 
 ** keys intended to only be used for one specific type.
     <type>-<contract name>-<function name>
@@ -43,6 +99,8 @@ contract Authenticator is IAuthenticator, Ownable {
         _grantKey(msg.sender, "authenticator-revoke-key");
         _grantKey(msg.sender, "authenticator-consume");
         _grantKey(msg.sender, "authenticator-grant-consumable");
+        _grantKey(msg.sender, "authenticator-grant-timed");
+        _grantKey(msg.sender, "authenticator-revoke-timed");
     }
 
     /// ------
@@ -69,6 +127,8 @@ contract Authenticator is IAuthenticator, Ownable {
         }
 
         if (!success) { revert UnableToGrantKey(to, key, false, false); }
+
+        emit KeyGranted(to, key);
         return success;
     }
 
@@ -86,6 +146,8 @@ contract Authenticator is IAuthenticator, Ownable {
         }
 
         if (!success) { revert UnableToRevokeKey(from, key, false, false); }
+
+        emit KeyRevoked(from, key);
         return success;
     }
 
@@ -124,13 +186,15 @@ contract Authenticator is IAuthenticator, Ownable {
 
         /// if no key was found in both then send revert error.
         if (!success) { revert KeyNotAvailable(msg.sender, key); }
+
+        emit Approved(from, key);
         return success;
     }
 
     function grantKey(address to, string memory key)
         external
         returns (bool success) {
-        authenticate(msg.sender, "authenticator-grant-key", true);
+        authenticate(msg.sender, "authenticator-grant-key", true, true);
         bool success = _grantKey(to, key);
         return success;
     }
@@ -138,7 +202,7 @@ contract Authenticator is IAuthenticator, Ownable {
     function revokeKey(address from, string memory key)
         external
         returns (bool success) {
-        authenticate(msg.sender, "authenticator-revoke-key", true);
+        authenticate(msg.sender, "authenticator-revoke-key", true, true);
         bool success = _revokeKey(from, key);
         return success;
     }
@@ -167,6 +231,8 @@ contract Authenticator is IAuthenticator, Ownable {
         }
 
         if (!success) { revert UnableToGrantKey(to, consumableKey, true, false); }
+
+        emit ConsumableKeyGranted(to, consumableKey);
         return success;
     }
 
@@ -188,7 +254,7 @@ contract Authenticator is IAuthenticator, Ownable {
 
         if (!success) { revert UnableToRevokeKey(from, consumableKey, true, false); }
 
-        /// is false if no match of the key was found.
+        emit ConsumableKeyConsumed(from, consumableKey);
         return success;
     }
 
@@ -197,13 +263,14 @@ contract Authenticator is IAuthenticator, Ownable {
         returns (bool success) {
         bool success = _consume(from, consumableKey);
         if (!success) { revert KeyNotAvailable(from, consumableKey); }
+        emit ConsumableApproved(from, consumableKey);
         return success;
     }
 
     function grantConsumable(address to, string memory consumableKey)
         external
         returns (bool success) {
-        authenticate(msg.sender, "authenticator-grant-consumable", true);
+        authenticate(msg.sender, "authenticator-grant-consumable", true, true);
         bool success = _grantConsumable(to, consumableKey);
         return success;
     }
@@ -211,7 +278,7 @@ contract Authenticator is IAuthenticator, Ownable {
     function consume(address from, string memory consumableKey)
         external
         returns (bool success) {
-        authenticate(msg.sender, "authenticator-consume", true);
+        authenticate(msg.sender, "authenticator-consume", true, true);
         bool success = _consume(from, consumableKey);
         return success;
     }
@@ -220,7 +287,7 @@ contract Authenticator is IAuthenticator, Ownable {
     /// TIMED ACCESS.
     /// ------------
 
-    function _grantTimedKey(address to, string memory timedKey, uint startTimestamp, uint duration)
+    function _grantTimed(address to, string memory timedKey, uint startTimestamp, uint duration)
         private
         returns (bool success) {
         /// looks for an empty result to store new key at.
@@ -244,10 +311,12 @@ contract Authenticator is IAuthenticator, Ownable {
         /// set start and end of access.
         timedKeysStartTimestamp[to][timedKey] = startTimestamp;
         timedKeysEndTimestamp[to][timedKey] = startTimestamp + duration;
+
+        emit TimedKeyGranted(to, timedKey, startTimestamp, timedKeysEndTimestamp[to][timedKey], duration);
         return success;
     }
 
-    function _revokeTimedKey(address to, string memory timedKey)
+    function _revokeTimed(address to, string memory timedKey)
         private
         returns (bool success) {
         bool success;
@@ -261,6 +330,8 @@ contract Authenticator is IAuthenticator, Ownable {
         }
 
         if (!success) { revert UnableToRevokeKey(from, timedKey, false, true); }
+
+        emit TimedKeyRevoked(to, timedKey);
         return success;
     }
 
@@ -281,12 +352,22 @@ contract Authenticator is IAuthenticator, Ownable {
         }
 
         if (!success) { revert KeyNotAvailable(from, timedKey); }
+
+        emit TimedApproved(from, timedKey);
         return success;
     }
 
     function grantTimed(address to, string memory timedKey, uint startTimestamp, uint duration)
         external
         returns (bool success) {
-        authenticate(from, key, canBeConsumable, canBeTimed);
+        authenticate(msg.sender, "authenticator-grant-timed", true, true);
+        _grantTimedKey(to, timedKey, startTimestamp, duration);
+    }
+
+    function revokeTimed(address to, string memory timedKey)
+        external
+        returns (bool success) {
+        authenticate(msg.sender, "authenticator-revoke-timed", true, true);
+        _revokeTimed(to, timedKey);
     }
 }
