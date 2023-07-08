@@ -161,7 +161,7 @@ contract Authenticator is IAuthenticator, Ownable {
     * it will prioritize normal key search first -
     * when naming keys please refer to naming convention.
      */
-    /// it is preferable to use the specialized authenticators for each case but a general one can be used.
+    /// it is preferable to use the specialized authenticators for each case but a general one can be used if any type is accepted.
     function authenticate(address from, string memory key, bool canBeConsumable, bool canBeTimed)
         public view
         returns (bool success) {
