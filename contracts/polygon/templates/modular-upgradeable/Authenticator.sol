@@ -72,7 +72,7 @@ interface IAuthenticator {
 
 ** keys intended to only be used for one specific type.
     <type>-<contract name>-<function name>
-    ie. timed-authenticator-grantTimed
+    ie. timed-authenticator-grant-timed
 
 ** please pay attention to naming convention.
  */
