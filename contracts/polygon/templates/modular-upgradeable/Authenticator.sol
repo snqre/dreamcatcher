@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
-import "contracts/polygon/deps/openzeppelin/access/Ownable.sol";
 
 /// authenticator allows to lock every function within the ecosystem behind three types of keys.
 /// allows for more flexibility.
@@ -111,7 +110,7 @@ Current Limitations.
 Advantages.
     - ability to transfer data as array to future upgraded contract.
  */
-contract Authenticator is IAuthenticator, Ownable {
+contract Authenticator is IAuthenticator {
 
     /// allows to create custom roles with pre existing key access.
     struct Role {
@@ -131,7 +130,7 @@ contract Authenticator is IAuthenticator, Ownable {
     mapping(address => mapping(string => uint)) public timedKeysStartTimestamp;
     mapping(address => mapping(string => uint)) public timedKeysEndTimestamp;
 
-    constructor() Ownable(msg.sender) {
+    constructor() {
         _grantKey(msg.sender, "authenticator-grant-key");
         _grantKey(msg.sender, "authenticator-revoke-key");
         _grantKey(msg.sender, "authenticator-consume");
@@ -150,13 +149,13 @@ contract Authenticator is IAuthenticator, Ownable {
 
     function _grantKey(address to, string memory key)
         private
-        returns (bool success) {
+        returns (bool) {
         /// looks for an empty result to store new key at.
         bool success;
-        for (uint i = 0; i < keys.length; i ++) {
-            string memory result = keys[from][i];
+        for (uint i = 0; i < keys[to].length; i ++) {
+            string memory result = keys[to][i];
             if (keccak256(abi.encodePacked(result)) == keccak256(abi.encodePacked(""))) {
-                keys[from][i] = key;
+                keys[to][i] = key;
                 success = true;
             }
         }
@@ -175,9 +174,9 @@ contract Authenticator is IAuthenticator, Ownable {
 
     function _revokeKey(address from, string memory key)
         private
-        returns (bool success) {
+        returns (bool) {
         bool success;
-        for (uint i = 0; keys.length; i ++) {
+        for (uint i = 0; i < keys[from].length; i ++) {
             string memory result = keys[from][i];
             if (keccak256(abi.encodePacked(result)) == keccak256(abi.encodePacked(key))) {
                 keys[from][i] = "";
@@ -205,9 +204,9 @@ contract Authenticator is IAuthenticator, Ownable {
     /// it is preferable to use the specialized authenticators for each case but a general one can be used if any type is accepted.
     function authenticate(address from, string memory key, bool canBeConsumable, bool canBeTimed)
         public view
-        returns (bool success) {
+        returns (bool) {
         bool success;
-        for (uint i = 0; keys.length; i ++) {
+        for (uint i = 0; i < keys[from].length; i ++) {
             string memory result = keys[from][i];
             if (keccak256(abi.encodePacked(result)) == keccak256(abi.encodePacked(key))) {
                 success = true;
@@ -234,7 +233,7 @@ contract Authenticator is IAuthenticator, Ownable {
 
     function grantKey(address to, string memory key)
         external
-        returns (bool success) {
+        returns (bool) {
         authenticate(msg.sender, "authenticator-grant-key", true, true);
         bool success = _grantKey(to, key);
         return success;
@@ -242,7 +241,7 @@ contract Authenticator is IAuthenticator, Ownable {
 
     function revokeKey(address from, string memory key)
         external
-        returns (bool success) {
+        returns (bool) {
         authenticate(msg.sender, "authenticator-revoke-key", true, true);
         bool success = _revokeKey(from, key);
         return success;
@@ -254,13 +253,13 @@ contract Authenticator is IAuthenticator, Ownable {
 
     function _grantConsumable(address to, string memory consumableKey)
         private
-        returns (bool success) {
+        returns (bool) {
         /// looks for an empty result to store new key at.
         bool success;
-        for (uint i = 0; i < consumableKeys.length; i ++) {
-            string memory result = consumableKeys[from][i];
+        for (uint i = 0; i < consumableKeys[to].length; i ++) {
+            string memory result = consumableKeys[to][i];
             if (keccak256(abi.encodePacked(result)) == keccak256(abi.encodePacked(""))) {
-                consumableKeys[from][i] = consumableKey;
+                consumableKeys[to][i] = consumableKey;
                 success = true;
             }
         }
@@ -279,11 +278,11 @@ contract Authenticator is IAuthenticator, Ownable {
 
     function _consume(address from, string memory consumableKey)
         private
-        returns (bool success) {
+        returns (bool) {
         /// looks for a matching result and removes the first matching result found.
         /// note if there are multiple keys of the same type it will only consume one.
         bool success;
-        for (uint i = 0; i < consumableKey.length; i ++) {
+        for (uint i = 0; i < consumableKeys[from].length; i ++) {
             string memory result = consumableKeys[from][i];
             if (keccak256(abi.encodePacked(result)) == keccak256(abi.encodePacked(consumableKey))) {
                 /// remove.
@@ -301,7 +300,7 @@ contract Authenticator is IAuthenticator, Ownable {
 
     function authenticateConsumable(address from, string memory consumableKey)
         public
-        returns (bool success) {
+        returns (bool) {
         bool success = _consume(from, consumableKey);
         if (!success) { revert KeyNotAvailable(from, consumableKey); }
         emit ConsumableApproved(from, consumableKey);
@@ -310,7 +309,7 @@ contract Authenticator is IAuthenticator, Ownable {
 
     function grantConsumable(address to, string memory consumableKey)
         external
-        returns (bool success) {
+        returns (bool) {
         authenticate(msg.sender, "authenticator-grant-consumable", true, true);
         bool success = _grantConsumable(to, consumableKey);
         return success;
@@ -318,7 +317,7 @@ contract Authenticator is IAuthenticator, Ownable {
 
     function consume(address from, string memory consumableKey)
         external
-        returns (bool success) {
+        returns (bool) {
         authenticate(msg.sender, "authenticator-consume", true, true);
         bool success = _consume(from, consumableKey);
         return success;
@@ -330,13 +329,13 @@ contract Authenticator is IAuthenticator, Ownable {
 
     function _grantTimed(address to, string memory timedKey, uint startTimestamp, uint duration)
         private
-        returns (bool success) {
+        returns (bool) {
         /// looks for an empty result to store new key at.
         bool success;
-        for (uint i = 0; i < timedKeys.length; i ++) {
-            string memory result = timedKeys[from][i];
+        for (uint i = 0; i < timedKeys[to].length; i ++) {
+            string memory result = timedKeys[to][i];
             if (keccak256(abi.encodePacked(result)) == keccak256(abi.encodePacked(""))) {
-                timedKeys[from][i] = timedKey;
+                timedKeys[to][i] = timedKey;
                 success = true;
             }
         }
@@ -357,11 +356,11 @@ contract Authenticator is IAuthenticator, Ownable {
         return success;
     }
 
-    function _revokeTimed(address to, string memory timedKey)
+    function _revokeTimed(address from, string memory timedKey)
         private
-        returns (bool success) {
+        returns (bool) {
         bool success;
-        for (uint i = 0; timedKeys.length; i ++) {
+        for (uint i = 0; i < timedKeys[from].length; i ++) {
             string memory result = timedKeys[from][i];
             if (keccak256(abi.encodePacked(result)) == keccak256(abi.encodePacked(timedKey))) {
                 timedKeys[from][i] = "";
@@ -372,15 +371,15 @@ contract Authenticator is IAuthenticator, Ownable {
 
         if (!success) { revert UnableToRevokeKey(from, timedKey, false, true); }
 
-        emit TimedKeyRevoked(to, timedKey);
+        emit TimedKeyRevoked(from, timedKey);
         return success;
     }
 
     function authenticateTimed(address from, string memory timedKey)
         public view
-        returns (bool success) {
+        returns (bool) {
         bool success;
-        for (uint i = 0; timedKeys.length; i ++) {
+        for (uint i = 0; i < timedKeys[from].length; i ++) {
             string memory result = timedKeys[from][i];
             if (keccak256(abi.encodePacked(result)) == keccak256(abi.encodePacked(timedKey))) {
                 /// also check if access has started or has expired.
@@ -402,7 +401,7 @@ contract Authenticator is IAuthenticator, Ownable {
         external
         returns (bool success) {
         authenticate(msg.sender, "authenticator-grant-timed", true, true);
-        _grantTimedKey(to, timedKey, startTimestamp, duration);
+        _grantTimed(to, timedKey, startTimestamp, duration);
     }
 
     function revokeTimed(address to, string memory timedKey)
@@ -445,7 +444,7 @@ contract Authenticator is IAuthenticator, Ownable {
             role.timedKeysDurations.push(durations[i]);
         }
 
-        emit RoleCreated(caption, keys_, consumableKeys_, timeKeys_, startTimestamps, durations);
+        emit RoleCreated(caption, keys_, consumableKeys_, timedKeys_, startTimestamps, durations);
         return true;
     }
 
@@ -470,6 +469,9 @@ contract Authenticator is IAuthenticator, Ownable {
         delete keys[to];
         delete consumableKeys[to];
         delete timedKeys[to];
+
+        /// ... iterate over and delete each.
+
         delete timedKeysStartTimestamp[to];
         delete timedKeysEndTimestamp[to];
 
@@ -477,13 +479,13 @@ contract Authenticator is IAuthenticator, Ownable {
         return true;
     }
 
-    function _grantRole(address to, string memory caption, bool reset)
+    function _grantRole(address to, string memory caption, bool reset_)
         private
-        returns (bool success) {
+        returns (bool) {
         Role memory role = roles[caption];
 
         /// option to reset all keys before role is granted.
-        if (reset) { _reset(to); }
+        if (reset_) { _reset(to); }
         
         for (uint i = 0; i < role.keys.length; i ++) {
             keys[to].push(role.keys[i]);
@@ -494,19 +496,19 @@ contract Authenticator is IAuthenticator, Ownable {
         }
 
         for (uint i = 0; i < role.timedKeys.length; i ++) {
-            string memory key = role.timedKeys[i];
+            string memory key_ = role.timedKeys[i];
             timedKeys[to].push(key_);
             timedKeysStartTimestamp[to][key_] = role.timedKeysStartTimestamp[i];
             timedKeysEndTimestamp[to][key_] = role.timedKeysStartTimestamp[i] + role.timedKeysDurations[i];
         }
 
-        emit RoleGranted(to, caption, reset);
+        emit RoleGranted(to, caption, reset_);
         return true;
     }
 
     function createRole(string memory caption, string[] memory keys_, string[] memory consumableKeys_, string[] memory timedKeys_, uint[] memory startTimestamps, uint[] memory durations)
         external
-        returns (bool success) {
+        returns (bool) {
         authenticate(msg.sender, "authenticator-create-role", true, true);
         _createRole(caption, keys_, consumableKeys_, timedKeys_, startTimestamps, durations);
     }
@@ -525,10 +527,10 @@ contract Authenticator is IAuthenticator, Ownable {
         _reset(to);
     }
 
-    function grantRole(address to, string memory caption, bool reset)
+    function grantRole(address to, string memory caption, bool reset_)
         external
         returns (bool success) {
         authenticate(msg.sender, "authenticator-grant-role", true, true);
-        _grantRole(to, caption, reset);
+        _grantRole(to, caption, reset_);
     }
 }
