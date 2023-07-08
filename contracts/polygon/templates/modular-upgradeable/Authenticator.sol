@@ -49,6 +49,26 @@ interface IAuthenticator {
     external
     returns (bool success);
 
+    /// authenticator-create-role
+    function createRole(string memory caption, string[] memory keys_, string[] memory consumableKeys_, string[] memory timedKeys_, uint[] memory startTimestamps, uint[] memory durations)
+    external
+    returns (bool success);
+
+    /// authenticator-delete-role
+    function deleteRole(string memory caption)
+    external
+    returns (bool success);
+
+    /// authenticator-reset
+    function reset(address to)
+    external
+    returns (bool success);
+
+    /// authenticator-grant-role
+    function grantRole(address to, string memory caption, bool reset)
+    external
+    returns (bool success);
+
     event KeyGranted(address indexed to, string indexed key);
     event KeyRevoked(address indexed from, string indexed key);
     event Approved(address indexed from, string indexed requiredKey);
