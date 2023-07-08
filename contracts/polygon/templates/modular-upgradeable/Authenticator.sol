@@ -138,6 +138,10 @@ contract Authenticator is IAuthenticator, Ownable {
         _grantKey(msg.sender, "authenticator-grant-consumable");
         _grantKey(msg.sender, "authenticator-grant-timed");
         _grantKey(msg.sender, "authenticator-revoke-timed");
+        _grantKey(msg.sender, "authenticator-create-role");
+        _grantKey(msg.sender, "authenticator-delete-role");
+        _grantKey(msg.sender, "authenticator-reset");
+        _grantKey(msg.sender, "authenticator-grant-role");
     }
 
     /// ------
