@@ -3,228 +3,35 @@ pragma solidity ^0.8.19;
 import "contracts/polygon/deps/openzeppelin/access/Ownable.sol";
 import "contracts/polygon/deps/openzeppelin/utils/structs/EnumerableSet.sol";
 
-interface IAuthenticator {}
-
-contract Authenticator is IAuthenticator, Ownable {
-    using EnumerableSet for EnumerableSet.AddressSet;
-
-    enum Role {
-        KEY_HOLDER,
-        CHANCELLOR,
-        DIRECTOR,
-        SYNDICATE,
-        MEMBER
-    }
-
-    Role.KEY_HOLDER;
-
-    struct Role {
-        bool isKeyHolder;
-        bool isChancellor;
-        bool isDirector;
-        bool isSyndicate;
-        bool isMember;
-    }
-
-    mapping(address => Role) public roles;
-
-    constructor() Ownable() {}
-
-    function config(address account, bool isKeyHolder, bool isChancellor, bool isDirector, bool isSyndicate, bool isMember)
-    external
-    onlyOwner
-    returns (bool) {
-        require(
-            account != address(0),
-            "Authenticator: ADDRESS_ZERO"
-        );
-
-        Role storage role    = roles[account];
-
-        role.isKeyHolder     = false;
-        role.isChancellor    = false;
-        role.isDirector      = false;
-        role.isSyndicate     = false;
-        role.isMember        = false;
-
-        /// only one can be true at a time.
-        require(
-            (isKeyHolder     ? 1 : 0) +
-            (isChancellor    ? 1 : 0) +
-            (isDirector      ? 1 : 0) +
-            (isSyndicate     ? 1 : 0) +
-            (isMember        ? 1 : 0) == 1,
-            "Authenticator: INVALID_FLAG_CONFIG"
-        );
-
-        role.isKeyHolder     = isKeyHolder;
-        role.isChancellor    = isChancellor;
-        role.isDirector      = isDirector;
-        role.isSyndicate     = isSyndicate;
-        role.isMember        = isMember;
-
-        return true;
-    }
-
-    function revoke(address account)
-    external
-    onlyOwner
-    returns (bool) {
-        require(
-            account != address(0),
-            "Authenticator: ADDRESS_ZERO"
-        );
-
-        Role storage role = roles[account];
-
-        role.isKeyHolder     = false;
-        role.isChancellor    = false;
-        role.isDirector      = false;
-        role.isSyndicate     = false;
-        role.isMember        = false;
-
-        return true;
-    }
-
-    function authenticate(address account, bool requireKeyHolder, bool requireChancellor, bool requireDirector, bool requireSyndicate, bool requireMember)
-    public
-    returns (bool) {
-        Role storage role = roles[account];
-
-        if (requireKeyHolder)    { require(role.isKeyHolder, "Authenticator: IS_NOT_KEY_HOLDER"); }
-        if (requireChancellor)   { require(role.isChancellor, "Authenticator: IS_NOT_CHANCELLOR"); }
-        if (requireDirector)     { require()}
-    }
+interface IAuthenticator {
+    error TAG_NOT_FOUND(bytes tag);
 }
 
 contract Authenticator is IAuthenticator, Ownable {
     using EnumerableSet for EnumerableSet.AddressSet;
 
-    /** ROLE ACCESS PERMISSIONS.
-    * member        access lvl 1:     participate in elections and vote.
-    *               access lvl 2:
-    * syndicate     access lvl 3:     create multiSig proposal to directors, chancellor.
-    * director      access lvl 4:     can sign multiSig proposals to transfer to public proposals.
-    * chancellor    access lvl 5:     
-    *               access lvl 6:
-    *               access lvl 7:     
-    *               access lvl 8:
-    *               access lvl 9:     send instructions to key.
-    * key           access lvl 10:    ownership.
-     */
+    mapping(address => EnumerableSet.Bytes32Set) public tags;
 
-    mapping(uint => EnumerableSet.AddressSet) public tier;
-    uint public maxTier;
+    constructor() Ownable() {}
 
-    /// highest access an account has been granted. ie. if they are a member but also a chancellor they gain chancellor access.
-    mapping(address => uint) public access;
-
-    /** PROPOSAL ACCESS PERMISSIONS.
-    sent with payload with proposals.
-    higher level access require either longer timelock or more conditional checks. ie.
-    * msg 50%, ch   access lvl 1:     temporarily pause non native modules for a few hours.
-    * msg 60%, ch   access lvl 2:     allocate a 1% of the vault to a budget.
-    * msg 75%, ch   access lvl 3:     raise or lower fees on mirai. change business settings on products. pause all modules for a day. ability to enact 7777 protocol assuming public concern.
-    * public, msg   access lvl 4:     allocate a portion of the vault to budget.
-    * public, msg   access lvl 5:
-    * public, msg   access lvl 6:
-    * public        access lvl 7:     select re election. allocate any amount of  vault to budget.
-    * public        access lvl 8:     full re election. execute 1984s.
-    * public        access lvl 9:    
-    * public        access lvl 10:    upgrade. execute 4040s. execute 7777s.
-     */
-
-
-    mapping(address => string)
-
-
-    constructor() Ownable () {
-        maxTier = 9;
+    function _convertStrToByt(string memory str)
+        private pure returns (bytes memory) {
+            return bytes(string);
     }
 
-    function _getHighestAccess(address account)
-    private view
-    returns (uint) {
-        for (uint i = maxTier; i == 1; i--) {
-            if (tier[i].contains(account)) { return i; }
-        }
+    function _convertBytToStr(bytes memory byt)
+        private pure returns (string memory) {
+            return string(byt);
     }
 
-    function authenticate(address account, uint requiredAccess)
-    public view
-    returns (bool) {
-        
-        require(
-            _getHighestAccess(account) >= requredAccess,
-            "Authenticator: INSUFFICIENT_ACCESS"
-        );
-
-        return true;
+    function _pushTag(address to, string memory tag)
+        private {
+            tags[to].add(_convertStrToByt(tag));
     }
 
-    function grant(address account, uint access)
-    external
-    returns (bool) {
-        authenticate(msg.sender, 8);
-        if (access == 1) { tier_1.add(account); }
-        else if (access == 2) { tier_2.add(account); }
-        else if (access == 3) { tier_3.add(account); }
-        else if (access == 4) { tier_4.add(account); }
-        else if (access == 5) { tier_5.add(account); }
-        else if (access == 6) { tier_6.add(account); }
-        else if (access == 7) { tier_7.add(account); }
-        else if (access == 8) { tier_8.add(account); }
-        else if (access == 9) { tier_9.add(account); }
-        else {
-            revert("Authenticator: UNRECOGNIZED_ACCESS_VALUE");
-        }
-
-        return true;
-    }
-
-    function eatCake()
-    external {
-        isRole();
-    }
-
-    function revoke(address account)
-    external
-    returns (bool) {
-        authenticate(msg.sender, 3);
-        if (tier_1.contains(account)) { tier_1.remove(account); }
-        if (tier_2.contains(account)) { tier_2.remove(account); }
-        if (tier_3.contains(account)) { tier_3.remove(account); }
-        if (tier_4.contains(account)) { tier_4.remove(account); }
-        
-        tier_1.remove(account);
-        tier_2.remove(account);
-        tier_3.remove(account);
-        tier_4.remove(account);
-        tier_5.remove(account);
-        tier_6.remove(account);
-        tier_7.remove(account);
-        tier_8.remove(account);
-        tier_9.remove(account);
-    }
-
-    function upgrade(uint start, uint end)
-    external
-    returns (bool) {
-        authenticate(msg.sender, 9);
-        moduleManager.upgrade("authenticator", newImplementation);
-        /// ... copy existing data
-        EnumerableSet.AddressSet aList;
-
-        address[] memory copyData;
-        for (uint i = start; i < end; i++) {
-            copyData[i] = aList[i];
-        }
-
-        
-        /// ........ | ........ | ....... | ..................................................
-
-        return copyData /// from range start to range end.
-
-    }
-
+    function _pullTag(address from, string memory tag)
+        private {
+            if (!tags[from].contains(_convertStrToByt(tag))) { revert TAG_NOT_FOUND(tag); }
+            tags[from].remove(_convertStrToByt(tag));
+        } 
 }
