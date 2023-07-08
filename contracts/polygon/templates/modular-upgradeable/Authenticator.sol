@@ -62,6 +62,9 @@ interface IAuthenticator {
     event TimedApproved(address indexed from, string indexed timedKey);
 
     event RoleCreated(string caption, string[] indexed keys_, string[] indexed consumableKeys_, string[] indexed timeKeys_, uint[] startTimestamps, uint[] durations);
+    event RoleDeleted(string caption);
+    event Reset(address to);
+    event RoleGranted(address indexed to, string indexed caption, bool indexed reset);
 
     error KeyNotAvailable(address caller, string requiredKey);
     error UnableToGrantKey(address to, string key, bool consumable, bool timed);
@@ -389,10 +392,10 @@ contract Authenticator is IAuthenticator, Ownable {
     /// ROLES.
     /// -----
 
-    function _createRole(string caption, string[] memory keys_, string[] memory consumableKeys_, string[] memory timedKeys_, uint[] memory startTimestamps, uint[] memory durations) 
+    function _createRole(string memory caption, string[] memory keys_, string[] memory consumableKeys_, string[] memory timedKeys_, uint[] memory startTimestamps, uint[] memory durations) 
         private
         returns (bool success) {
-        bool success;
+        /// creates a role with preset keys.
         Role storage role = roles[caption];
         role.caption = caption;
         
@@ -419,7 +422,89 @@ contract Authenticator is IAuthenticator, Ownable {
         }
 
         emit RoleCreated(caption, keys_, consumableKeys_, timeKeys_, startTimestamps, durations);
-        success = true;
-        return success;
+        return true;
+    }
+
+    function _deleteRole(string memory caption)
+        private
+        returns (bool success) {
+        /// deletes all preset keys.
+        Role storage role = roles[caption];
+        delete role.keys;
+        delete role.consumableKeys;
+        delete role.timedKeys;
+        delete role.timedKeysStartTimestamp;
+        delete role.timedKeysDurations;
+
+        emit RoleDeleted(caption);
+        return true;
+    }
+
+    function _reset(address to)
+        private
+        returns (bool success) {
+        delete keys[to];
+        delete consumableKeys[to];
+        delete timedKeys[to];
+        delete timedKeysStartTimestamp[to];
+        delete timedKeysEndTimestamp[to];
+
+        emit Reset(to);
+        return true;
+    }
+
+    function _grantRole(address to, string memory caption, bool reset)
+        private
+        returns (bool success) {
+        Role memory role = roles[caption];
+
+        /// option to reset all keys before role is granted.
+        if (reset) { _reset(to); }
+        
+        for (uint i = 0; i < role.keys.length; i ++) {
+            keys[to].push(role.keys[i]);
+        }
+
+        for (uint i = 0; i < role.consumableKeys.length; i ++) {
+            consumableKeys[to].push(role.consumableKeys[i]);
+        }
+
+        for (uint i = 0; i < role.timedKeys.length; i ++) {
+            string memory key = role.timedKeys[i];
+            timedKeys[to].push(key_);
+            timedKeysStartTimestamp[to][key_] = role.timedKeysStartTimestamp[i];
+            timedKeysEndTimestamp[to][key_] = role.timedKeysStartTimestamp[i] + role.timedKeysDurations[i];
+        }
+
+        emit RoleGranted(to, caption, reset);
+        return true;
+    }
+
+    function createRole(string memory caption, string[] memory keys_, string[] memory consumableKeys_, string[] memory timedKeys_, uint[] memory startTimestamps, uint[] memory durations)
+        external
+        returns (bool success) {
+        authenticate(msg.sender, "authenticator-create-role", true, true);
+        _createRole(caption, keys_, consumableKeys_, timedKeys_, startTimestamps, durations);
+    }
+
+    function deleteRole(string memory caption)
+        external
+        returns (bool success) {
+        authenticate(msg.sender, "authenticator-delete-role", true, true);
+        _deleteRole(caption);
+    }
+
+    function reset(address to)
+        external
+        returns (bool success) {
+        authenticate(msg.sender, "authenticator-reset", true, true);
+        _reset(to);
+    }
+
+    function grantRole(address to, string memory caption, bool reset)
+        external
+        returns (bool success) {
+        authenticate(msg.sender, "authenticator-grant-role", true, true);
+        _grantRole(to, caption, reset);
     }
 }
