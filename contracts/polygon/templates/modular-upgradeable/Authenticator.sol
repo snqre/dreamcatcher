@@ -34,4 +34,21 @@ contract Authenticator is IAuthenticator, Ownable {
             if (!tags[from].contains(_convertStrToByt(tag))) { revert TAG_NOT_FOUND(tag); }
             tags[from].remove(_convertStrToByt(tag));
         } 
+
+    /// testing
+    function push(address to, string memory tag)
+        public {
+            _pushTag(to, tag);
+    }
+
+    function pull(address from, string memory tag)
+        public {
+            _pullTag(from, tag);
+    }
+
+    function get(address from, uint spot)
+        public view returns (string memory) {
+            return _convertBytToStr(tags[from].at(spot));
+            
+        }
 }
