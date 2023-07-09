@@ -59,6 +59,7 @@ contract Key is IKey {
         return true;
     }
 
+    /// if everything is working this should be able to access all functions from new modules and all the ecosystem.
     function connect(string memory module, string memory signature, bytes memory args, uint version)
         external
         returns (bytes memory) {
