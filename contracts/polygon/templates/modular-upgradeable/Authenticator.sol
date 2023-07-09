@@ -1,6 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
+/// @author Marco Bizzaro
 
+/**
+1) Can create key for every function within a contract in a dynamic way.
+2) Can create 3 types of keys: standard key, consumable key, and timed key.
+ */
 /// authenticator allows to lock every function within the ecosystem behind three types of keys.
 /// allows for more flexibility.
 
@@ -89,6 +94,226 @@ interface IAuthenticator {
     error UnableToGrantKey(address to, string key, bool consumable, bool timed);
     error UnableToRevokeKey(address from, string key, bool consumable, bool timed);
     error LengthMismatch(uint len1, uint len2, uint len3);
+
+    error RoleIsAlreadyInUse(string caption);
+}
+
+library Lib {
+    struct TimedKey {
+        string key;
+        uint startTimestamp;
+        uint endTimestamp;
+        uint duration;
+    }
+
+    struct Bundle {
+        string caption;
+        string[] keys;
+        string[] consumableKeys;
+        TimedKey[] timedKeys;
+    }
+
+    struct Account {
+        string[] keys;
+        string[] consumableKeys;
+        TimedKey[] timedKeys;
+    }
+
+    // ---------
+    // UTILITIES.
+    // ---------
+
+    function compare(string memory stringA, string memory stringB)
+        public pure
+        returns (bool) {
+        return keccak256(abi.encodePacked(stringA)) == keccak256(abi.encodePacked(stringB));
+    }
+
+    // -------------
+    // STANDARD KEYS.
+    // -------------
+
+    function grantStandardKey(Account storage account, string memory key)
+        public
+        returns (bool) {
+        bool matchWasFound;
+        bool success;
+
+        uint len = account.keys.length;
+
+        // check for a match.
+        for (uint i = 0; i < len; i++) {
+            matchWasFound = compare(account.keys[i], key);
+            if (matchWasFound) {
+                success = true;
+                break;
+            }
+        }
+
+        // if a match was not found.
+        if (!matchWasFound) {
+
+            // look for empty string.
+            for (uint i = 0; i < len; i++) {
+                if (compare(account.keys[i], "")) {
+                    account.keys[i] = key;
+                    success = true;
+                    break;
+                }
+            }
+
+            // if no empty string then push.
+            if (!success) {
+                account.keys.push(key);
+                success = true;
+            }
+        }
+
+        require(
+            success,
+            "Authenticator: FAILED_TO_GRANT_STANDARD_KEY"
+        );
+
+        return success;
+    }
+
+    function revokeStandardKey(Account storage account, string memory key)
+        public
+        returns (bool) {
+        bool success;
+        
+        for (uint i = 0; i < account.keys.length; i++) {
+            if (compare(account.keys[i], key)) {
+                account.keys[i] = "";
+                success = true;
+                break;
+            }
+        }
+
+        require(
+            success,
+            "Authenticator: FAILED_TO_REVOKE_STANDARD_KEY"
+        );
+
+        return success;
+    }
+
+    function authenticate(Account storage account, string memory requiredKey, bool lookForConsumableKey, bool lookForTimedKey)
+        public view
+        returns (bool) {
+        bool success;
+        
+        for (uint i = 0; i < account.keys.length; i++) {
+            if (compare(account.keys[i], requiredKey)) {
+                success = true;
+                break;
+            }
+        }
+
+        // ... authenticateConsumableKey
+
+        // ... authenticateTimedKey
+
+        require(
+            success,
+            "Authenticator: INSUFFICIENT_AUTHORIZATION"
+        );
+
+        return success;
+    }
+
+    // ---------------
+    // CONSUMABLE KEYS.
+    // ---------------
+
+    function grantConsumableKey(Account storage account, string memory key)
+        public
+        returns (bool) {
+        bool matchWasFound;
+        bool success;
+
+        uint len = account.consumableKeys.length;
+
+        // check for a match.
+        for (uint i = 0; i < len; i++) {
+            matchWasFound = compare(account.consumableKeys[i], key);
+            if (matchWasFound) {
+                success = true;
+                break;
+            }
+        }
+
+        // if a match was not found.
+        if (!matchWasFound) {
+
+            // look for empty string.
+            for (uint i = 0; i < len; i++) {
+                if (compare(account.consumableKeys[i], "")) {
+                    account.keys[i] = key;
+                    success = true;
+                    break;
+                }
+            }
+
+            // if no empty string then push.
+            if (!success) {
+                account.consumableKeys.push(key);
+                success = true;
+            }
+        }
+
+        require(
+            success,
+            "Authenticator: FAILED_TO_GRANT_CONSUMABLE_KEY"
+        );
+
+        return success;
+    }
+
+    function consume(Account storage account, string memory key)
+        public
+        returns (bool) {
+        bool success;
+        for (uint i = 0; i < account.consumableKeys.length; i++) {
+            if (compare(account.consumableKeys[i], key)) {
+                // remove.
+                account.consumableKeys[i] = "";
+                success = true;
+                break;
+            }
+        }
+
+        require(
+            success,
+            "Authenticator: FAILED_TO_CONSUME_CONSUMABLE_KEY"
+        );
+
+        return success;
+    }
+
+    function authenticateConsumableKey(Account storage account, string memory key)
+        public
+        returns (bool) {
+        bool success = consume(account, key);
+        
+        require(
+            success,
+            "Authenticator: INSUFFICIENT_AUTHORIZATION"
+        );
+
+        return success;
+    }
+
+    // ... wip
+    
+}
+
+contract Authenticator2 {
+    Lib.Account[] private _accounts;
+
+    mapping(address => uint) public addressToAccountsMapping;
+
+
 }
 
 /** KEY NAMING CONVENSION
@@ -461,11 +686,30 @@ contract Authenticator is IAuthenticator {
         It is a neat way of organizing groups of functions and can grant temp access or single use access.
     */
 
+    /**
+    * @param caption - unique name for the role.
+    * 
+    *
+    *
+     */
     function _createRole(string memory caption, string[] memory keys_, string[] memory consumableKeys_, string[] memory timedKeys_, uint[] memory startTimestamps, uint[] memory durations) 
         private
         returns (bool success) {
         Role storage role = roles[caption];
         role.caption = caption;
+
+        /// check if role is already in use.
+        uint len1 = role.keys.length;
+        uint len2 = role.consumableKeys.length;
+        uint len3 = role.timedKeys.length;
+        if (len1 == 0 && len2 == 0 && len3 == 0) {
+            revert RoleIsAlreadyInUse(caption);
+        }
+
+        /// make space.
+        delete len1;
+        delete len2;
+        delete len3;
         
         for (uint i = 0; i < keys_.length; i ++) {
             role.keys.push(keys_[i]);
