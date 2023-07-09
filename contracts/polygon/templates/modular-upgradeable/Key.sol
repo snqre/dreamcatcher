@@ -5,6 +5,8 @@ import "contracts/polygon/templates/modular-upgradeable/ModuleManager.sol";
 
 interface IKey {
     event Connected(address indexed target, string indexed signature, bytes indexed args);
+    event ModuledCreated(string indexed module, address indexed implementation, string[] indexed keys);
+    event ModuleUpgraded(string indexed module, address indexed newImplementation, string[] indexed keys);
 
     error UnableToMakeCall();
 }
@@ -43,6 +45,7 @@ contract Key is IKey {
             authenticator.grantKey(address(this), keys[i]);
         }
 
+        emit ModuledCreated(module, implementation, keys);
         return true;
     }
 
@@ -56,6 +59,7 @@ contract Key is IKey {
             authenticator.grantKey(address(this), keys[i]);
         }
 
+        emit ModuleUpgraded(module, newImplementation, keys);
         return true;
     }
 
