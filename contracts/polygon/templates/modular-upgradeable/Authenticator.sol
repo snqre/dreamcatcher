@@ -146,6 +146,22 @@ contract Authenticator is IAuthenticator {
         _grantRole(msg.sender, "authenticator", false);
     }
 
+    /// ---------
+    /// UTILITIES.
+    /// ---------
+
+    /// compare 2 strings.
+    function _compare(string memory stringA, string memory stringB)
+        private pure
+        returns (bool) {
+        bool matchWasFound;
+        if (keccak256(abi.encodePacked(stringA)) == keccak256(abi.encodePacked(stringB))) {
+            matchWasFound = true;
+        }
+
+        return matchWasFound;
+    }
+
     /// ------
     /// ACCESS.
     /// ------
@@ -153,24 +169,43 @@ contract Authenticator is IAuthenticator {
     function _grantKey(address to, string memory key)
         private
         returns (bool) {
-        /// looks for an empty result to store new key at.
+        bool matchWasFound;
         bool success;
-        for (uint i = 0; i < keys[to].length; i ++) {
+        /// check for a match.
+        for (uint i = 0; i < keys[to].length; i++) {
             string memory result = keys[to][i];
-            if (keccak256(abi.encodePacked(result)) == keccak256(abi.encodePacked(""))) {
-                keys[to][i] = key;
+            bool isDuplicate = _compare(result, key);
+            if (isDuplicate) {
+                matchWasFound = true;
+                success = true;
+                break;
+            }
+        }
+
+        /// if a match was not found then we push one.
+        if (!matchWasFound) {
+            
+            /// first we try to push one into an empty spot.
+            for (uint i = 0; i < keys[to].length; i++) {
+                string memory result = keys[to][i];
+                bool isEmpty = _compare(result, "");
+                if (isEmpty) {
+                    keys[to][i] = key;
+                    success = true;
+                    break;
+                }
+            }
+
+            /// if no empty spot was found then we push the key.
+            if (!success) {
+                keys[to].push(key);
                 success = true;
             }
         }
 
-        /// no empty result was found then push as is to array.
-        if (!success) {
-            keys[to].push(key);
-            success = true;
-        }
-
+        /// if something went wrong throw costum error.
         if (!success) { revert UnableToGrantKey(to, key, false, false); }
-
+        
         emit KeyGranted(to, key);
         return success;
     }
@@ -179,15 +214,17 @@ contract Authenticator is IAuthenticator {
         private
         returns (bool) {
         bool success;
+        /// if found will remove and set entry as "".
         for (uint i = 0; i < keys[from].length; i ++) {
             string memory result = keys[from][i];
-            if (keccak256(abi.encodePacked(result)) == keccak256(abi.encodePacked(key))) {
+            if (_compare(result, key)) {
                 keys[from][i] = "";
                 success = true;
                 break;
             }
         }
 
+        /// if something went wrong throw costum error.
         if (!success) { revert UnableToRevokeKey(from, key, false, false); }
 
         emit KeyRevoked(from, key);
@@ -209,9 +246,10 @@ contract Authenticator is IAuthenticator {
         public
         returns (bool) {
         bool success;
+        /// look for a match.
         for (uint i = 0; i < keys[from].length; i ++) {
             string memory result = keys[from][i];
-            if (keccak256(abi.encodePacked(result)) == keccak256(abi.encodePacked(key))) {
+            if (_compare(result, key)) {
                 success = true;
                 break;
             }
@@ -418,10 +456,14 @@ contract Authenticator is IAuthenticator {
     /// ROLES.
     /// -----
 
+    /** ROLES
+        A role is like is a set of keys that are passed on to anyone with that role.
+        It is a neat way of organizing groups of functions and can grant temp access or single use access.
+    */
+
     function _createRole(string memory caption, string[] memory keys_, string[] memory consumableKeys_, string[] memory timedKeys_, uint[] memory startTimestamps, uint[] memory durations) 
         private
         returns (bool success) {
-        /// creates a role with preset keys.
         Role storage role = roles[caption];
         role.caption = caption;
         
@@ -456,36 +498,58 @@ contract Authenticator is IAuthenticator {
         returns (bool success) {
         /// deletes all preset keys.
         Role storage role = roles[caption];
-        delete role.keys;
-        delete role.consumableKeys;
-        delete role.timedKeys;
-        delete role.timedKeysStartTimestamp;
-        delete role.timedKeysDurations;
+
+        /// reset keys.
+        for (uint i = 0; i < role.keys.length; i ++) {
+            role.keys[i] = "";
+        }
+
+        /// reset consumables.
+        for (uint i = 0; i < role.consumableKeys.length; i ++) {
+            role.consumableKeys[i] = "";
+        }
+
+        /// reset timed keys.
+        for (uint i = 0; i < role.timedKeys.length; i ++) {
+            role.timedKeysStartTimestamp[i] = 0;
+            role.timedKeysDurations[i] = 0;
+            role.timedKeys[i] = "";
+        }
 
         emit RoleDeleted(caption);
         return true;
     }
 
+    /// removes all keys from an account.
     function _reset(address to)
         private
         returns (bool success) {
-        delete keys[to];
-        delete consumableKeys[to];
-
-        /// iterate over each timestamp data for timed key before deletion.
-        for (uint i = 0; i < timedKeys[to].length; i ++) {
-            string memory result = timedKeys[to][i];
-            delete timedKeysStartTimestamp[to][result];
-            delete timedKeysEndTimestamp[to][result];
+        /// reset keys.
+        for (uint i = 0; i < keys[to].length; i ++) {
+            keys[to][i] = "";
         }
 
-        /// delete timedKeys.
-        delete timedKeys[to];
+        /// reset consumable keys.
+        for (uint i = 0; i < consumableKeys[to].length; i ++) {
+            consumableKeys[to][i] = "";
+        }
+
+        /// reset timed keys and timestamps.
+        for (uint i = 0; i < timedKeys[to].length; i ++) {
+            timedKeysStartTimestamp[to][timedKeys[to][i]] = 0;
+            timedKeysEndTimestamp[to][timedKeys[to][i]] = 0;
+            timedKeys[to][i] = "";
+        }
 
         emit Reset(to);
         return true;
     }
 
+    /**
+    * @param to      - address of grantee.
+    * @param caption - role name.
+    * @param reset_  - reset all keys for the address before granting role.
+     */
     function _grantRole(address to, string memory caption, bool reset_)
         private
         returns (bool) {
@@ -495,7 +559,11 @@ contract Authenticator is IAuthenticator {
         if (reset_) { _reset(to); }
         
         for (uint i = 0; i < role.keys.length; i ++) {
-            keys[to].push(role.keys[i]);
+            /// if key is not an empty string.
+            bool isEmpty = _compare(role.keys[i], "");
+            if (!isEmpty) {
+                keys[to].push(role.keys[i]);
+            }
         }
 
         for (uint i = 0; i < role.consumableKeys.length; i ++) {
