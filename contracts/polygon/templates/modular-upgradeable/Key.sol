@@ -42,6 +42,9 @@ contract Key is IKey {
         /// grant keys to itself.
         authenticator.grantKey(address(this), "key-create-new-module");
         authenticator.grantKey(address(this), "key-upgrade-module");
+
+        /// FOR TESTING
+        authenticator.grantRole(msg.sender, "authenticator", false);
     }
 
     /** IT IS MORE IDEAL TO CREATE MODULES THROUGH THIS FUNCTION.
