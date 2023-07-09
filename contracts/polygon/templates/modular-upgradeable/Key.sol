@@ -5,7 +5,7 @@ import "contracts/polygon/templates/modular-upgradeable/ModuleManager.sol";
 
 interface IKey {
     event Connected(address indexed target, string indexed signature, bytes indexed args);
-    event ModuledCreated(string indexed module, address indexed implementation, string[] indexed keys);
+    event ModuledCreated(string indexed module, address indexed implementation, bool isImmutable, string[] indexed keys);
     event ModuleUpgraded(string indexed module, address indexed newImplementation, string[] indexed keys);
 
     error UnableToMakeCall();
@@ -36,16 +36,16 @@ contract Key is IKey {
     
     automatically grants access to new module's keys to key - same with upgrade function.
      */
-    function createNewModule(string memory module, address implementation, string[] memory keys)
+    function createNewModule(string memory module, address implementation, bool isImmutable, string[] memory keys)
         public
         returns (bool) {
         authenticator.authenticate(msg.sender, "key-create-new-module", true, true);
-        moduleManager.aquire(module, implementation);
+        moduleManager.aquire(module, implementation, isImmutable);
         for (uint i = 0; i < keys.length; i ++) {
             authenticator.grantKey(address(this), keys[i]);
         }
 
-        emit ModuledCreated(module, implementation, keys);
+        emit ModuledCreated(module, implementation, isImmutable, keys);
         return true;
     }
 
@@ -64,6 +64,7 @@ contract Key is IKey {
     }
 
     /// if everything is working this should be able to access all functions from new modules and all the ecosystem.
+    /// connect will also have a timelock associated to it.
     function connect(string memory module, string memory signature, bytes memory args, uint version)
         external
         returns (bytes memory) {

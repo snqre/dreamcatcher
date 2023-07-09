@@ -5,10 +5,11 @@ import "contracts/polygon/projects/dreamcatcher/tokens/DreamToken.sol";
 
 contract Dreamcatcher is Key {
     DreamToken public dreamToken;
-    Authenticator public authenticator;
 
-    constructor() Key("Dreamcatcher") {
+    constructor() Key() {
         dreamToken = new DreamToken(/** vault */);
         authenticator = new Authenticator();
+        
+        createNewModule("dream-token", address(dreamToken), true, []);
     }
 }

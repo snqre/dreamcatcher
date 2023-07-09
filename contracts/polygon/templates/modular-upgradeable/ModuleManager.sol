@@ -17,7 +17,7 @@ interface IModuleManager {
     returns (address);
 
     /// module-manager-aquire
-    function aquire(string memory module, address implementation)
+    function aquire(string memory module, address implementation, bool isImmutable_)
     external
     returns (bool);
 
@@ -26,7 +26,7 @@ interface IModuleManager {
     external
     returns (bool);
 
-    event ModuleAquired(string indexed module, address indexed implementation);
+    event ModuleAquired(string indexed module, address indexed implementation, bool isImmutable_);
     event ModuleUpgraded(string indexed module, address newImplementation);
 
     error ModuleWasFound(string module);
@@ -34,6 +34,7 @@ interface IModuleManager {
     error VersionWasFound(string module, uint version);
     error VersionWasNotFound(string module, uint version);
     error ImplementationWasFound(string module, address implementation);
+    error ModuleIsImmutable(string module);
 }
 
 contract ModuleManager is IModuleManager {
@@ -42,6 +43,7 @@ contract ModuleManager is IModuleManager {
     uint public count;
 
     mapping(string => EnumerableSet.AddressSet) private _implementations;
+    mapping(string => bool) public isImmutable;
 
     constructor(address addressAuthenticator) {
         authenticator = IAuthenticator(addressAuthenticator);
@@ -86,6 +88,11 @@ contract ModuleManager is IModuleManager {
         }
     }
 
+    function _onlyIfModuleIsNotImmutable(string memory module)
+        private view {
+        if (isImmutable[module]) { revert ModuleIsImmutable(module); }
+    }
+
     /// ------
     /// PUBLIC.
     /// ------
@@ -114,7 +121,7 @@ contract ModuleManager is IModuleManager {
     }
 
     /// use to add a new module to the ecosystem.
-    function aquire(string memory module, address implementation)
+    function aquire(string memory module, address implementation, bool isImmutable_)
         external
         returns (bool) {
         /// check to make sure module is not already being used.
@@ -122,7 +129,8 @@ contract ModuleManager is IModuleManager {
         authenticator.authenticate(msg.sender, "module-manager-aquire", true, true);
         count ++;
         _implementations[module].add(implementation);
-        emit ModuleAquired(module, implementation);
+        isImmutable[module] = isImmutable_;
+        emit ModuleAquired(module, implementation, isImmutable_);
         return true;
     }
 
@@ -131,6 +139,7 @@ contract ModuleManager is IModuleManager {
         returns (bool) {
         /// check to make sure module is real.
         _onlyIfModuleWasFound(module);
+        _onlyIfModuleIsNotImmutable(module);
         authenticator.authenticate(msg.sender, "module-manager-upgrade", true, true);
         _implementations[module].add(newImplementation);
         emit ModuleUpgraded(module, newImplementation);
