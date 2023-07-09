@@ -7,6 +7,10 @@ import "contracts/polygon/deps/openzeppelin/token/ERC20/ERC20.sol";
 import "contracts/polygon/templates/libraries/Utils.sol";
 import "contracts/polygon/templates/modular-upgradeable/Authenticator.sol";
 
+/** NOTE
+    dream token is completely decentralized hence there are no commands we can use on it.
+ */
+
 interface IDreamToken {
     error InsufficientMintableBalance();
 }
@@ -15,17 +19,13 @@ contract DreamToken is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit {
     uint256 private _mintable;
     uint256 private _maxSupply;
 
-    IAuthenticator public authenticator;
-
-    constructor(address addressAuthenticator, address vault)
+    constructor(address vault)
         ERC20("DreamToken", "DREAM")
         ERC20Permit("DreamToken") {
         uint256 initialSupply = 200000000;
         _mintable = Utils.convertToWei(initialSupply);
         _maxSupply = Utils.convertToWei(initialSupply);
         _mint(vault, Utils.convertToWei(initialSupply));
-
-        authenticator = IAuthenticator(addressAuthenticator);
     }
 
     function _beforeTokenTransfer(address from, address to, uint256 amount)

@@ -4,6 +4,21 @@ import "contracts/polygon/templates/modular-upgradeable/Authenticator.sol";
 import "contracts/polygon/templates/modular-upgradeable/ModuleManager.sol";
 
 interface IKey {
+    /// key-create-new-module
+    function createNewModule(string memory module, address implementation, bool isImmutable, string[] memory keys)
+    external
+    returns (bool);
+
+    /// key-upgrade-module
+    function upgradeModule(string memory module, address newImplementation, string[] memory keys)
+    external
+    returns (bool);
+
+    /// key-connect
+    function connect(string memory module, string memory signature, bytes memory args, uint verison)
+    external
+    returns (bytes memory);
+
     event Connected(address indexed target, string indexed signature, bytes indexed args);
     event ModuledCreated(string indexed module, address indexed implementation, bool isImmutable, string[] indexed keys);
     event ModuleUpgraded(string indexed module, address indexed newImplementation, string[] indexed keys);
