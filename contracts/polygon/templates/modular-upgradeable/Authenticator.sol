@@ -7,7 +7,7 @@ pragma solidity ^0.8.19;
 interface IAuthenticator {
     /// standard key.
     function authenticate(address from, string memory key, bool canBeConsumable, bool canBeTimed) 
-    external view
+    external
     returns (bool success);
 
     /// authenticator-grant-key
@@ -35,7 +35,7 @@ interface IAuthenticator {
     returns (bool success);
 
     function authenticateTimed(address from, string memory timedKey)
-    external view
+    external
     returns (bool success);
 
     /// authenticator-grant-timed
@@ -123,7 +123,6 @@ contract Authenticator is IAuthenticator {
     }
 
     mapping(string => Role) public roles;
-
     mapping(address => string[]) public keys;
     mapping(address => string[]) public consumableKeys;
     mapping(address => string[]) public timedKeys;
@@ -203,7 +202,7 @@ contract Authenticator is IAuthenticator {
      */
     /// it is preferable to use the specialized authenticators for each case but a general one can be used if any type is accepted.
     function authenticate(address from, string memory key, bool canBeConsumable, bool canBeTimed)
-        public view
+        public
         returns (bool) {
         bool success;
         for (uint i = 0; i < keys[from].length; i ++) {
@@ -227,7 +226,7 @@ contract Authenticator is IAuthenticator {
         /// if no key was found in both then send revert error.
         if (!success) { revert KeyNotAvailable(msg.sender, key); }
 
-        emit Approved(from, key);
+        /// emit Approved(from, key);
         return success;
     }
 
@@ -376,7 +375,7 @@ contract Authenticator is IAuthenticator {
     }
 
     function authenticateTimed(address from, string memory timedKey)
-        public view
+        public
         returns (bool) {
         bool success;
         for (uint i = 0; i < timedKeys[from].length; i ++) {
@@ -401,14 +400,14 @@ contract Authenticator is IAuthenticator {
         external
         returns (bool success) {
         authenticate(msg.sender, "authenticator-grant-timed", true, true);
-        _grantTimed(to, timedKey, startTimestamp, duration);
+        return _grantTimed(to, timedKey, startTimestamp, duration);
     }
 
     function revokeTimed(address to, string memory timedKey)
         external
         returns (bool success) {
         authenticate(msg.sender, "authenticator-revoke-timed", true, true);
-        _revokeTimed(to, timedKey);
+        return _revokeTimed(to, timedKey);
     }
 
     /// -----
@@ -468,12 +467,16 @@ contract Authenticator is IAuthenticator {
         returns (bool success) {
         delete keys[to];
         delete consumableKeys[to];
+
+        /// iterate over each timestamp data for timed key before deletion.
+        for (uint i = 0; i < timedKeys[to].length; i ++) {
+            string memory result = timedKeys[to][i];
+            delete timedKeysStartTimestamp[to][result];
+            delete timedKeysEndTimestamp[to][result];
+        }
+
+        /// delete timedKeys.
         delete timedKeys[to];
-
-        /// ... iterate over and delete each.
-
-        delete timedKeysStartTimestamp[to];
-        delete timedKeysEndTimestamp[to];
 
         emit Reset(to);
         return true;
@@ -510,27 +513,27 @@ contract Authenticator is IAuthenticator {
         external
         returns (bool) {
         authenticate(msg.sender, "authenticator-create-role", true, true);
-        _createRole(caption, keys_, consumableKeys_, timedKeys_, startTimestamps, durations);
+        return _createRole(caption, keys_, consumableKeys_, timedKeys_, startTimestamps, durations);
     }
 
     function deleteRole(string memory caption)
         external
         returns (bool success) {
         authenticate(msg.sender, "authenticator-delete-role", true, true);
-        _deleteRole(caption);
+        return _deleteRole(caption);
     }
 
     function reset(address to)
         external
         returns (bool success) {
         authenticate(msg.sender, "authenticator-reset", true, true);
-        _reset(to);
+        return _reset(to);
     }
 
     function grantRole(address to, string memory caption, bool reset_)
         external
         returns (bool success) {
         authenticate(msg.sender, "authenticator-grant-role", true, true);
-        _grantRole(to, caption, reset_);
+        return _grantRole(to, caption, reset_);
     }
 }
