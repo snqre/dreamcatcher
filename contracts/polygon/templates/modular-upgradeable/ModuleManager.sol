@@ -97,6 +97,7 @@ contract ModuleManager is IModuleManager {
         return _implementations[module].length() - 1;
     }
 
+    /// this is meant to be used as Interface(getLatestImplementation) - will always point towards the latest address of the module.
     function getLatestImplementation(string memory module)
         public view
         returns (address) {
@@ -112,6 +113,7 @@ contract ModuleManager is IModuleManager {
         return _implementations[module].at(version);
     }
 
+    /// use to add a new module to the ecosystem.
     function aquire(string memory module, address implementation)
         external
         returns (bool) {
