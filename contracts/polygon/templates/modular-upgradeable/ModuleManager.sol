@@ -93,24 +93,30 @@ contract ModuleManager is IModuleManager {
     function getLatestVersion(string memory module)
         public view
         returns (uint) {
+        _onlyIfModuleWasFound(module);
         return _implementations[module].length() - 1;
     }
 
     function getLatestImplementation(string memory module)
         public view
         returns (address) {
+        _onlyIfModuleWasFound(module);
         return _implementations[module].at(getLatestVersion(module));
     }
 
     function getImplementation(string memory module, uint version)
         public view
         returns (address) {
+        _onlyIfModuleWasFound(module);
+        _onlyIfVersionWasFound(module, version);
         return _implementations[module].at(version);
     }
 
     function aquire(string memory module, address implementation)
         external
         returns (bool) {
+        /// check to make sure module is not already being used.
+        _onlyIfModuleWasNotFound(module);
         authenticator.authenticate(msg.sender, "module-manager-aquire", true, true);
         count ++;
         _implementations[module].add(implementation);
@@ -121,6 +127,8 @@ contract ModuleManager is IModuleManager {
     function upgrade(string memory module, address newImplementation)
         external
         returns (bool) {
+        /// check to make sure module is real.
+        _onlyIfModuleWasFound(module);
         authenticator.authenticate(msg.sender, "module-manager-upgrade", true, true);
         _implementations[module].add(newImplementation);
         emit ModuleUpgraded(module, newImplementation);
