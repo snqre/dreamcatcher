@@ -130,16 +130,20 @@ contract Authenticator is IAuthenticator {
     mapping(address => mapping(string => uint)) public timedKeysEndTimestamp;
 
     constructor() {
-        _grantKey(msg.sender, "authenticator-grant-key");
-        _grantKey(msg.sender, "authenticator-revoke-key");
-        _grantKey(msg.sender, "authenticator-consume");
-        _grantKey(msg.sender, "authenticator-grant-consumable");
-        _grantKey(msg.sender, "authenticator-grant-timed");
-        _grantKey(msg.sender, "authenticator-revoke-timed");
-        _grantKey(msg.sender, "authenticator-create-role");
-        _grantKey(msg.sender, "authenticator-delete-role");
-        _grantKey(msg.sender, "authenticator-reset");
-        _grantKey(msg.sender, "authenticator-grant-role");
+        /// create authenticator role.
+        string[] memory keys_;
+        keys_[0] = "authenticator-grant-key";
+        keys_[1] = "authenticator-revoke-key";
+        keys_[2] = "authenticator-consume";
+        keys_[3] = "authenticator-grant-consumable";
+        keys_[4] = "authenticator-grant-timed";
+        keys_[5] = "authenticator-revoke-timed";
+        keys_[6] = "authenticator-create-role";
+        keys_[7] = "authenticator-delete-role";
+        keys_[8] = "authenticator-reset";
+        keys_[9] = "authenticator-grant-role";
+        _createRole("authenticator", keys_, new string[](0), new string[](0), new uint[](0), new uint[](0));
+        _grantRole(msg.sender, "authenticator", false);
     }
 
     /// ------
