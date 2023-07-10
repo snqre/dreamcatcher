@@ -1,102 +1,114 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 import "contracts/polygon/deps/openzeppelin/utils/structs/EnumerableSet.sol";
-/// @author Marco Bizzaro
-
-/**
-1) Can create key for every function within a contract in a dynamic way.
-2) Can create 3 types of keys: standard key, consumable key, and timed key.
- */
-/// authenticator allows to lock every function within the ecosystem behind three types of keys.
-/// allows for more flexibility.
 
 interface IAuthenticator {
-    /// standard key.
-    function authenticate(address from, string memory key, bool canBeConsumable, bool canBeTimed) 
-    external
-    returns (bool success);
+    // -------------
+    // STANDARD KEYS.
+    // -------------
 
-    /// authenticator-grant-key
-    function grantKey(address to, string memory key)
-    external
-    returns (bool success);
+    // key: authenticator-grant-standard-key
+    function grantStandardKey(address to, string memory key)
+        external
+        returns (bool);
 
-    /// authenticator-revoke-key
-    function revokeKey(address from, string memory key)
-    external
-    returns (bool success);
+    // key: authenticator-revoke-standard-key
+    function revokeStandardKey(address from, string memory key)
+        external
+        returns (bool);
 
-    function authenticateConsumable(address from, string memory consumableKey)
-    external
-    returns (bool success);
+    /// @dev **prefered means of authentication.
+    function authenticate(address from, string memory requiredKey, bool lookForStandardKey, bool lookForConsumableKey, bool lookForTimedKey)
+        external
+        returns (bool);
 
-    /// authenticator-grant-consumable
-    function grantConsumable(address to, string memory consumableKey)
-    external
-    returns (bool success);
+    // ---------------
+    // CONSUMABLE KEYS.
+    // ---------------
 
-    /// authenticator-consume
-    function consume(address from, string memory consumableKey)
-    external
-    returns (bool success);
+    // key: authenticator-grant-consumable-key
+    function grantConsumableKey(address to, string memory key)
+        external
+        returns (bool);
+    
+    // key: authenticator-consume
+    function consume(address from, string memory key)
+        external
+        returns (bool);
 
-    function authenticateTimed(address from, string memory timedKey)
-    external
-    returns (bool success);
+    /// @dev **for most cases authenticate will be enough but its much faster to use specialized authentication.
+    function authenticateConsumableKey(address from, string memory requiredKey)
+        external
+        returns (bool);
+    
+    // ----------
+    // TIMED KEYS.
+    // ----------
+    
+    // key: authenticator-grant-timed-key
+    function grantTimedKey(address to, string memory key, uint startTimestamp, uint duration)
+        external
+        returns (bool);
 
-    /// authenticator-grant-timed
-    function grantTimed(address to, string memory timedKey, uint startTimestamp, uint duration)
-    external
-    returns (bool success);
+    // key: authenticator-revoke-timed-key
+    function revokeTimedKey(address from, string memory key)
+        external
+        returns (bool);
+    
+    /// @dev **for most cases authenticate will be enough but its much faster to use specialized authentication.
+    function authenticateTimedKey(address from, string memory requiredKey)
+        external
+        returns (bool);
+    
+    // -------
+    // BUNDLES.
+    // -------
 
-    /// authenticator-revoke-timed
-    function revokeTimed(address to, string memory timedKey)
-    external
-    returns (bool success);
+    // key: authenticator-create-bundle
+    function createBundle(string memory label, string[] memory keys, string[] memory consumableKeys, Lib.TimedKey[] memory timedKeys)
+        external
+        returns (bool, uint);
+    
+    // key: authenticator-grant-bundle
+    function grantBundle(address to, string memory label)
+        external
+        returns (bool);
+    
+    // key: authenticator-revoke-bundle
+    function revokeBundle(address from, string memory label)
+        external
+        returns (bool);
+    
+    // key: authenticator-delete-bundle
+    function deleteBundle(string memory label)
+        external
+        returns (bool);
+    
+    // key: authenticator-copy-bundle
+    function copyBundle(string memory labelA, string memory labelB)
+        external
+        returns (bool, uint);
+    
+    // key: authenticator-merge-bundles
+    function mergeBundles(string[] memory mergedBundlesLabels, string memory label)
+        external
+        returns (bool, uint);
 
-    /// authenticator-create-role
-    function createRole(string memory caption, string[] memory keys_, string[] memory consumableKeys_, string[] memory timedKeys_, uint[] memory startTimestamps, uint[] memory durations)
-    external
-    returns (bool success);
-
-    /// authenticator-delete-role
-    function deleteRole(string memory caption)
-    external
-    returns (bool success);
-
-    /// authenticator-reset
-    function reset(address to)
-    external
-    returns (bool success);
-
-    /// authenticator-grant-role
-    function grantRole(address to, string memory caption, bool reset)
-    external
-    returns (bool success);
-
-    event KeyGranted(address indexed to, string indexed key);
-    event KeyRevoked(address indexed from, string indexed key);
-    event Approved(address indexed from, string indexed requiredKey);
-
-    event ConsumableKeyGranted(address indexed to, string indexed consumableKey);
-    event ConsumableKeyConsumed(address from, string indexed consumableKey);
-    event ConsumableApproved(address indexed from, string indexed consumableKey);
-
-    event TimedKeyGranted(address indexed to, string indexed timedKey, uint startTimestamp, uint endTimestamp, uint duration);
-    event TimedKeyRevoked(address indexed to, string indexed timedKey);
-    event TimedApproved(address indexed from, string indexed timedKey);
-
-    event RoleCreated(string caption, string[] indexed keys_, string[] indexed consumableKeys_, string[] indexed timeKeys_, uint[] startTimestamps, uint[] durations);
-    event RoleDeleted(string caption);
-    event Reset(address to);
-    event RoleGranted(address indexed to, string indexed caption, bool indexed reset);
-
-    error KeyNotAvailable(address caller, string requiredKey);
-    error UnableToGrantKey(address to, string key, bool consumable, bool timed);
-    error UnableToRevokeKey(address from, string key, bool consumable, bool timed);
-    error LengthMismatch(uint len1, uint len2, uint len3);
-
-    error RoleIsAlreadyInUse(string caption);
+    event StandardKeyGranted(address indexed to, string indexed key);
+    event StandardKeyRevoked(address indexed from, string indexed key);
+    event Authenticated(address indexed from, string indexed requiredKey);
+    event ConsumableKeyGranted(address indexed to, string indexed key);
+    event ConsumableKeyConsumed(address indexed from, string indexed key);
+    event AuthenticatedConsumableKey(address indexed from, string indexed requiredKey);
+    event TimedKeyGranted(address indexed to, string indexed key, uint startTimestamp, uint duration);
+    event TimedKeyRevoked(address indexed from, string indexed key);
+    event AuthenticatedTimedKey(address indexed from, string indexed requiredKey);
+    event BundleCreated(string indexed label, string[] indexed keys, string[] indexed consumableKeys, Lib.TimedKey[] timedKeys);
+    event BundleGranted(address indexed to, string indexed label);
+    event BundleRevoked(address indexed from, string indexed label);
+    event BundleDeleted(string indexed label);
+    event BundleCopied(string indexed labelA, string indexed labelB);
+    event BundleMerged(string[] indexed mergedBundlesLabels, string indexed label);
 }
 
 library Lib {
@@ -216,7 +228,7 @@ library Lib {
         // will look for timed key as valid authentication.
         if (!success && lookForTimedKey) { success = authenticateTimedKey(account, requiredKey); }
 
-        require(success, "Authenticator: INSUFFICIENT_AUTHENTICATION");
+        require(success, "Authenticator: Unable to approve due to insufficient authorization.");
 
         return success;
     }
@@ -371,7 +383,12 @@ library Lib {
 
         for (uint i = 0; i < account.timedKeys.length; i++) {
             if (compare(account.timedKeys[i].key, requiredKey)) {
-                success = true;
+
+                // check timestamps.
+                bool isAfterStart = block.timestamp >= account.timedKeys[i].startTimestamp;
+                bool isBeforeEnd = block.timestamp < account.timedKeys[i].endTimestamp;
+                
+                if (isAfterStart && isBeforeEnd) { success = true; }
                 break;
             }
         }
@@ -544,7 +561,7 @@ library Lib {
     }
 }
 
-contract Authenticator {
+contract Authenticator is IAuthenticator {
     using EnumerableSet for EnumerableSet.AddressSet;
     Lib.Account[] private _accounts;
     Lib.Account[] private _bundles;
@@ -556,7 +573,30 @@ contract Authenticator {
     mapping(address => uint) public addressToAccountsMapping;
     mapping(string => uint) public labelToBundlesMapping;
 
-    constructor() {}
+    constructor() {
+        // for testing.
+    }
+
+    // for internal access.
+    function _grantStandardKey(address to, string memory key)
+        private
+        returns (bool) {
+        
+        if (_accountsAddresses.contains(to)) {
+            Lib.Account storage account = _accounts[addressToAccountsMapping[to]];
+            Lib.grantStandardKey(account, key);
+        }
+
+        else {
+            // generate unique identifier for address.
+            _accountsAddresses.add(to);
+            addressToAccountsMapping[to] = _accountsAddresses.length();
+            Lib.Account storage account = _accounts[addressToAccountsMapping[to]];
+            Lib.grantStandardKey(account, key);            
+        }
+        
+        return true;
+    }
 
     // -------------
     // STANDARD KEYS.
@@ -581,6 +621,7 @@ contract Authenticator {
             Lib.grantStandardKey(account, key);            
         }
         
+        emit StandardKeyGranted(to, key);
         return true;
     }
 
@@ -603,6 +644,7 @@ contract Authenticator {
             Lib.revokeStandardKey(account, key);
         }
 
+        emit StandardKeyRevoked(from, key);
         return true;
     }
 
@@ -625,6 +667,7 @@ contract Authenticator {
             success = Lib.authenticate(account, requiredKey, lookForStandardKey, lookForConsumableKey, lookForTimedKey);
         }
 
+        emit Authenticated(from, requiredKey);
         return success;
     }
 
@@ -651,6 +694,7 @@ contract Authenticator {
             Lib.grantConsumableKey(account, key);           
         }
         
+        emit ConsumableKeyGranted(to, key);
         return true;
     }
 
@@ -673,6 +717,7 @@ contract Authenticator {
             Lib.consume(account, key);         
         }
 
+        emit ConsumableKeyConsumed(from, key);
         return true;
     }
 
@@ -695,6 +740,9 @@ contract Authenticator {
             success = Lib.authenticateConsumableKey(account, requiredKey);
         }
 
+        require(success, "Authenticator: Unable to approve due to insufficient authorization.");
+
+        emit AuthenticatedConsumableKey(from, requiredKey);
         return success;
     }
 
@@ -721,6 +769,7 @@ contract Authenticator {
             Lib.grantTimedKey(account, key, startTimestamp, duration);          
         }
         
+        emit TimedKeyGranted(to, key, startTimestamp, duration);
         return true;
     }
 
@@ -743,7 +792,32 @@ contract Authenticator {
             Lib.revokeTimedKey(account, key);          
         }
         
+        emit TimedKeyRevoked(from, key);
         return true;
+    }
+
+    function authenticateTimedKey(address from, string memory requiredKey)
+        external
+        returns (bool) {
+        bool success;
+
+        if (_accountsAddresses.contains(from)) {
+            Lib.Account storage account = _accounts[addressToAccountsMapping[from]];
+            success = Lib.authenticateTimedKey(account, requiredKey);
+        }
+
+        else {
+            // generate unique identifier for address.
+            _accountsAddresses.add(from);
+            addressToAccountsMapping[from] = _accountsAddresses.length();
+            Lib.Account storage account = _accounts[addressToAccountsMapping[from]];
+            success = Lib.authenticateTimedKey(account, requiredKey);
+        }
+
+        require(success, "Authenticator: Unable to approve due to insufficient authorization.");
+
+        emit AuthenticatedTimedKey(from, requiredKey);
+        return success;
     }
 
     // -------
@@ -766,6 +840,8 @@ contract Authenticator {
 
         (bool success, uint identifier) = Lib.createBundle(_bundles, tracker, keys, consumableKeys, timedKeys);
         labelToBundlesMapping[label] = identifier;
+
+        emit BundleCreated(label, keys, consumableKeys, timedKeys);
         return (success, identifier);
     }
 
@@ -815,6 +891,7 @@ contract Authenticator {
             success = Lib.revokeBundle(account, _bundles, labelToBundlesMapping[label]);        
         }
 
+        emit BundleRevoked(from, label);
         return success;
     }
 
@@ -830,6 +907,7 @@ contract Authenticator {
         require(success, "Authenticator: Unable to delete bundle due to unsuccessful execution.");
 
         labelToBundlesMapping[label] = 0;
+        emit BundleDeleted(label);
         return success;
     }
 
@@ -845,6 +923,7 @@ contract Authenticator {
 
         require(success, "Authenticator: Unable to copy bundle due to unsuccessful execution.");
         labelToBundlesMapping[labelB] = newIdentifier;
+        emit BundleCopied(labelA, labelB);
         return (success, newIdentifier);
     }
 
@@ -864,6 +943,7 @@ contract Authenticator {
 
         require(success, "Authenticator: Unable to merge bundles due to unsuccessful execution.");
         labelToBundlesMapping[label] = newIdentifier;
+        emit BundleMerged(mergedBundlesLabels, label);
         return (success, newIdentifier);
     }
 }
