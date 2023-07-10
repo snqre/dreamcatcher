@@ -106,13 +106,6 @@ library Lib {
         uint duration;
     }
 
-    struct Bundle {
-        string caption;
-        string[] keys;
-        string[] consumableKeys;
-        TimedKey[] timedKeys;
-    }
-
     struct Account {
         string[] keys;
         string[] consumableKeys;
@@ -129,10 +122,19 @@ library Lib {
         return keccak256(abi.encodePacked(stringA)) == keccak256(abi.encodePacked(stringB));
     }
 
+    function allThreeAreEqual(uint a, uint b, uint c)
+        public pure
+        returns (bool, uint) {
+        bool isEqual = a == b && b == c && c == a;
+        uint sum = a + b + c;
+        return (isEqual, sum);
+    }
+
     // -------------
     // STANDARD KEYS.
     // -------------
 
+    /// @dev function does not revert if false.
     function grantStandardKey(Account storage account, string memory key)
         public
         returns (bool) {
@@ -169,14 +171,10 @@ library Lib {
             }
         }
 
-        require(
-            success,
-            "Authenticator: FAILED_TO_GRANT_STANDARD_KEY"
-        );
-
         return success;
     }
 
+    /// @dev function does not revert if false.
     function revokeStandardKey(Account storage account, string memory key)
         public
         returns (bool) {
@@ -190,16 +188,11 @@ library Lib {
             }
         }
 
-        require(
-            success,
-            "Authenticator: FAILED_TO_REVOKE_STANDARD_KEY"
-        );
-
         return success;
     }
 
     function authenticate(Account storage account, string memory requiredKey, bool lookForConsumableKey, bool lookForTimedKey)
-        public view
+        public
         returns (bool) {
         bool success;
         
@@ -210,9 +203,12 @@ library Lib {
             }
         }
 
-        // ... authenticateConsumableKey
+        // will look for consumable key as valid authentication.
+        if (!success && lookForConsumableKey) { success = authenticateConsumableKey(account, requiredKey); }
+        
 
-        // ... authenticateTimedKey
+        // will look for timed key as valid authentication.
+        if (!success && lookForTimedKey) { success = authenticateTimedKey(account, requiredKey); }
 
         require(
             success,
@@ -226,6 +222,7 @@ library Lib {
     // CONSUMABLE KEYS.
     // ---------------
 
+    /// @dev function does not revert if false.
     function grantConsumableKey(Account storage account, string memory key)
         public
         returns (bool) {
@@ -262,14 +259,10 @@ library Lib {
             }
         }
 
-        require(
-            success,
-            "Authenticator: FAILED_TO_GRANT_CONSUMABLE_KEY"
-        );
-
         return success;
     }
 
+    /// @dev function does not revert if false.
     function consume(Account storage account, string memory key)
         public
         returns (bool) {
@@ -283,33 +276,137 @@ library Lib {
             }
         }
 
-        require(
-            success,
-            "Authenticator: FAILED_TO_CONSUME_CONSUMABLE_KEY"
-        );
-
         return success;
     }
 
-    function authenticateConsumableKey(Account storage account, string memory key)
+    /// @dev function does not revert if false.
+    function authenticateConsumableKey(Account storage account, string memory requiredKey)
         public
         returns (bool) {
-        bool success = consume(account, key);
-        
-        require(
-            success,
-            "Authenticator: INSUFFICIENT_AUTHORIZATION"
-        );
+        bool success = consume(account, requiredKey);
 
         return success;
     }
 
-    // ... wip
+    // ----------
+    // TIMED KEYS.
+    // ----------
+
+    /// @dev function does not revert if false.
+    function grantTimedKey(Account storage account, string memory key, uint startTimestamp, uint duration)
+        public
+        returns (bool) {
+        // look for match.
+        bool matchWasFound;
+        bool success;
+
+        uint len = account.timedKeys.length;
+
+        TimedKey memory timedKey = TimedKey({
+            key: key,
+            startTimestamp: startTimestamp,
+            endTimestamp: startTimestamp + duration,
+            duration: duration
+        });
+
+        // check for a match.
+        for (uint i = 0; i < len; i++) {
+            matchWasFound = compare(account.timedKeys[i].key, key);
+            if (matchWasFound) {
+                success = true;
+                break;
+            }
+        }
+
+        // if a match was not found.
+        if (!matchWasFound) {
+
+            // look for empty string.
+            for (uint i = 0; i < len; i++) {
+                if (compare(account.timedKeys[i].key, "")) {
+                    account.timedKeys[i] = timedKey;
+                    success = true;
+                    break;
+                }
+            }
+
+            // if no empty string then push.
+            if (!success) {
+                account.timedKeys.push(timedKey);
+                success = true;
+            }
+        }
+
+        return success;
+    }
+
+    /// @dev function does not revert if false.
+    function revokeTimedKey(Account storage account, string memory key)
+        public
+        returns (bool) {
+        bool success;
+        
+        for (uint i = 0; i < account.timedKeys.length; i++) {
+            if (compare(account.timedKeys[i].key, key)) {
+                account.keys[i] = "";
+                success = true;
+                break;
+            }
+        }
+
+        return success;
+    }
+
+    /// @dev function does not revert if false.
+    function authenticateTimedKey(Account storage account, string memory requiredKey)
+        public view
+        returns (bool) {
+        bool success;
+
+        for (uint i = 0; i < account.timedKeys.length; i++) {
+            if (compare(account.keys[i], requiredKey)) {
+                success = true;
+                break;
+            }
+        }
+
+        return success;
+    }
     
+    // -------
+    // BUNDLES.
+    // -------
+    
+    /// @dev function does not revert if false.
+    function createBundle(Account[] storage accounts, uint identifier, string[] memory keys, string[] memory consumableKeys, TimedKey[] memory timedKeys)
+        public
+        returns (bool) {
+        // check if it is in use.
+        (bool success, uint sum) = allThreeAreEqual(keys.length, consumableKeys.length, timedKeys.length);
+        
+        if (success && sum == 0) {
+            Account storage account = accounts[identifier];
+
+            for (uint i = 0; i < keys.length; i++) {
+                grantStandardKey(account, keys[i]);
+            }
+
+            for (uint i = 0; i < consumableKeys.length; i++) {
+                grantConsumableKey(account, consumableKeys[i]);
+            }
+
+            for (uint i = 0; i < timedKeys.length; i++) {
+                grantTimedKey(account, timedKeys[i].key, timedKeys[i].startTimestamp, timedKeys[i].duration);
+            }
+        }
+        
+        return success;
+    }
 }
 
 contract Authenticator2 {
     Lib.Account[] private _accounts;
+    Lib.Account[] private _bundles;
 
     mapping(address => uint) public addressToAccountsMapping;
 
