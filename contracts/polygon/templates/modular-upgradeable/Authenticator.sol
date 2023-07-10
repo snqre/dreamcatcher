@@ -575,6 +575,19 @@ contract Authenticator is IAuthenticator {
 
     constructor() {
         // for testing.
+        address to = address(this);
+        _grantStandardKey(to, "authenticator-grant-standard-key");
+        _grantStandardKey(to, "authenticator-revoke-standard-key");
+        _grantStandardKey(to, "authenticator-consumable-key");
+        _grantStandardKey(to, "authenticator-consume");
+        _grantStandardKey(to, "authenticator-grant-timed-key");
+        _grantStandardKey(to, "authenticator-revoke-timed-key");
+        _grantStandardKey(to, "authenticator-create-bundle");
+        _grantStandardKey(to, "authenticator-grant-bundle");
+        _grantStandardKey(to, "authenticator-revoke-bundle");
+        _grantStandardKey(to, "authenticator-delete-bundle");
+        _grantStandardKey(to, "authenticator-copy-bundle");
+        _grantStandardKey(to, "authenticator-merge-bundles");
     }
 
     // for internal access.
