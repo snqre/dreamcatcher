@@ -764,12 +764,6 @@ contract Authenticator {
         
         authenticate(msg.sender, "authenticator-create-bundle", true, true, true);
 
-        // if label is not being used.
-        if (labelToBundlesMapping[label] != 0) {
-            (bool success, uint identifier) = Lib.createBundle(_bundles, tracker, keys, consumableKeys, timedKeys);
-            labelToBundlesMapping[label] = identifier;
-
-
         (bool success, uint identifier) = Lib.createBundle(_bundles, tracker, keys, consumableKeys, timedKeys);
         labelToBundlesMapping[label] = identifier;
         return (success, identifier);
@@ -782,9 +776,10 @@ contract Authenticator {
 
         authenticate(msg.sender, "authenticator-grant-bundle", true, true, true);
 
+        bool success;
         if (_accountsAddresses.contains(to)) {
             Lib.Account storage account = _accounts[addressToAccountsMapping[to]];
-            bool success = Lib.grantBundle(account, _bundles, labelToBundlesMapping[label]);
+            success = Lib.grantBundle(account, _bundles, labelToBundlesMapping[label]);
         }
 
         else {
@@ -792,7 +787,7 @@ contract Authenticator {
             _accountsAddresses.add(to);
             addressToAccountsMapping[to] = _accountsAddresses.length();
             Lib.Account storage account = _accounts[addressToAccountsMapping[to]];
-            bool success = Lib.grantBundle(account, _bundles, labelToBundlesMapping[label]);        
+            success = Lib.grantBundle(account, _bundles, labelToBundlesMapping[label]);        
         }
 
         require(success, "Authenticator: Unable to grant bundle due to unsuccessful execution.");
@@ -806,18 +801,21 @@ contract Authenticator {
 
         authenticate(msg.sender, "authenticator-revoke-bundle", true, true, true);
 
-        if (_accountsAddresses.contains(to)) {
-            Lib.Account storage account = _accounts[addressToAccountsMapping[to]];
-            bool success = Lib.revokeBundle(account, _bundles, labelToBundlesMapping[label]);
+        bool success;
+        if (_accountsAddresses.contains(from)) {
+            Lib.Account storage account = _accounts[addressToAccountsMapping[from]];
+            success = Lib.revokeBundle(account, _bundles, labelToBundlesMapping[label]);
         }
 
         else {
             // generate unique identifier for address.
-            _accountsAddresses.add(to);
-            addressToAccountsMapping[to] = _accountsAddresses.length();
-            Lib.Account storage account = _accounts[addressToAccountsMapping[to]];
-            bool success = Lib.revokeBundle(account, _bundles, labelToBundlesMapping[label]);        
+            _accountsAddresses.add(from);
+            addressToAccountsMapping[from] = _accountsAddresses.length();
+            Lib.Account storage account = _accounts[addressToAccountsMapping[from]];
+            success = Lib.revokeBundle(account, _bundles, labelToBundlesMapping[label]);        
         }
+
+        return success;
     }
 
     function deleteBundle(string memory label)
