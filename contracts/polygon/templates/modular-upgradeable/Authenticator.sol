@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
+import "contracts/polygon/deps/openzeppelin/utils/structs/EnumerableSet.sol";
 /// @author Marco Bizzaro
 
 /**
@@ -112,6 +113,8 @@ library Lib {
         TimedKey[] timedKeys;
     }
 
+    struct Tracker { uint numBundles; }
+
     // ---------
     // UTILITIES.
     // ---------
@@ -191,15 +194,19 @@ library Lib {
         return success;
     }
 
-    function authenticate(Account storage account, string memory requiredKey, bool lookForConsumableKey, bool lookForTimedKey)
+    /// @dev function does not revert if false.
+    function authenticate(Account storage account, string memory requiredKey, bool lookForStandardKey, bool lookForConsumableKey, bool lookForTimedKey)
         public
         returns (bool) {
         bool success;
         
-        for (uint i = 0; i < account.keys.length; i++) {
-            if (compare(account.keys[i], requiredKey)) {
-                success = true;
-                break;
+        // will look for a standard key as valid authentication.
+        if (!success && lookForStandardKey) {
+            for (uint i = 0; i < account.keys.length; i++) {
+                if (compare(account.keys[i], requiredKey)) {
+                    success = true;
+                    break;
+                }
             }
         }
 
@@ -209,11 +216,6 @@ library Lib {
 
         // will look for timed key as valid authentication.
         if (!success && lookForTimedKey) { success = authenticateTimedKey(account, requiredKey); }
-
-        require(
-            success,
-            "Authenticator: INSUFFICIENT_AUTHORIZATION"
-        );
 
         return success;
     }
@@ -348,7 +350,10 @@ library Lib {
         
         for (uint i = 0; i < account.timedKeys.length; i++) {
             if (compare(account.timedKeys[i].key, key)) {
-                account.keys[i] = "";
+                account.timedKeys[i].key = "";
+                account.timedKeys[i].startTimestamp = 0;
+                account.timedKeys[i].endTimestamp = 0;
+                account.timedKeys[i].duration = 0;
                 success = true;
                 break;
             }
@@ -364,7 +369,7 @@ library Lib {
         bool success;
 
         for (uint i = 0; i < account.timedKeys.length; i++) {
-            if (compare(account.keys[i], requiredKey)) {
+            if (compare(account.timedKeys[i].key, requiredKey)) {
                 success = true;
                 break;
             }
@@ -378,12 +383,13 @@ library Lib {
     // -------
     
     /// @dev function does not revert if false.
-    function createBundle(Account[] storage accounts, uint identifier, string[] memory keys, string[] memory consumableKeys, TimedKey[] memory timedKeys)
+    function createBundle(Account[] storage accounts, Tracker storage tracker, string[] memory keys, string[] memory consumableKeys, TimedKey[] memory timedKeys)
         public
-        returns (bool) {
+        returns (bool, uint) {
         // check if it is in use.
         (bool success, uint sum) = allThreeAreEqual(keys.length, consumableKeys.length, timedKeys.length);
-        
+        tracker.numBundles ++;
+        uint identifier = tracker.numBundles;
         if (success && sum == 0) {
             Account storage account = accounts[identifier];
 
@@ -400,16 +406,274 @@ library Lib {
             }
         }
         
-        return success;
+        // return success and unique identifier for new bundle.
+        return (success, identifier);
+    }
+
+    /// @dev function does not revert if false.
+    function grantBundle(Account storage account, Account[] storage accounts, uint identifier)
+        public
+        returns (bool) {
+        Account storage bundle = accounts[identifier];
+        
+        for (uint i = 0; i < bundle.keys.length; i++) {
+            grantStandardKey(account, bundle.keys[i]);
+        }
+
+        for (uint i = 0; i < bundle.consumableKeys.length; i++) {
+            grantConsumableKey(account, bundle.consumableKeys[i]);
+        }
+
+        for (uint i = 0; i < bundle.timedKeys.length; i++) {
+            grantTimedKey(account, bundle.timedKeys[i].key, bundle.timedKeys[i].startTimestamp, bundle.timedKeys[i].duration);
+        }
+
+        return true;
+    }
+
+    /// @dev function does not revert if false.
+    function revokeBundle(Account storage account, Account[] storage accounts, uint identifier)
+        public
+        returns (bool) {
+        Account storage bundle = accounts[identifier];
+
+        for (uint i = 0; i < bundle.keys.length; i++) {
+            revokeStandardKey(account, bundle.keys[i]);
+        }
+
+        for (uint i = 0; i < bundle.consumableKeys.length; i++) {
+
+            // consume only consumes the first match found so we try to consume every key within the account.
+            for (uint x = 0; x < account.consumableKeys.length; x++) {
+                consume(account, bundle.consumableKeys[i]);
+            }
+        }
+
+        for (uint i = 0; i < bundle.timedKeys.length; i++) {
+            revokeTimedKey(account, bundle.timedKeys[i].key);
+        }
+
+        return true;
+    }
+
+    /// @dev function does not revert if false.
+    function deleteBundle(Account[] storage accounts, uint identifier)
+        public
+        returns (bool) {
+        Account storage bundle = accounts[identifier];
+        
+        // completely reset the bundle.
+        for (uint i = 0; i < bundle.keys.length; i++) {
+            bundle.keys[i] = "";
+        }
+
+        for (uint i = 0; i < bundle.consumableKeys.length; i++) {
+            bundle.consumableKeys[i] = "";
+        }
+
+        for (uint i = 0; i < bundle.timedKeys.length; i++) {
+            bundle.timedKeys[i].key = "";
+            bundle.timedKeys[i].startTimestamp = 0;
+            bundle.timedKeys[i].endTimestamp = 0;
+            bundle.timedKeys[i].duration = 0;
+        }
+
+        return true;
+    }
+
+    /// @dev function does not revert if false.
+    function copyBundle(uint identifier, Account[] storage accounts, Tracker storage tracker)
+        public
+        returns (bool, uint) {
+        string[] memory keys;
+        string[] memory consumableKeys;
+        TimedKey[] memory timedKeys;
+
+        Account storage copiedBundle = accounts[identifier];
+
+        // create empty bundle.
+        (, identifier) = createBundle(accounts, tracker, keys, consumableKeys, timedKeys);
+        Account storage newBundle = accounts[identifier];
+
+        for (uint i = 0; i < copiedBundle.keys.length; i++) {
+            grantStandardKey(newBundle, copiedBundle.keys[i]);
+        }
+
+        for (uint i = 0; i < copiedBundle.consumableKeys.length; i++) {
+            grantConsumableKey(newBundle, copiedBundle.consumableKeys[i]);
+        }
+
+        for (uint i = 0; i < copiedBundle.timedKeys.length; i++) {
+            grantTimedKey(newBundle, copiedBundle.timedKeys[i].key, copiedBundle.timedKeys[i].startTimestamp, copiedBundle.timedKeys[i].duration);
+        }
+
+        return (true, identifier);
+    }
+
+    /// @dev function does not revert if false.
+    function mergeBundles(uint[] memory mergedBundles, Account[] storage accounts, Tracker storage tracker)
+        public
+        returns (bool, uint) {
+        string[] memory keys;
+        string[] memory consumableKeys;
+        TimedKey[] memory timedKeys;
+
+        // create empty bundle.
+        (, uint identifier) = createBundle(accounts, tracker, keys, consumableKeys, timedKeys);
+        Account storage newBundle = accounts[identifier];
+
+        // merge bundles into a new bundle.
+        for (uint i = 0; i < mergedBundles.length; i++) {
+            Account storage bundle = accounts[mergedBundles[i]];
+
+            for (uint x = 0; x < bundle.keys.length; x++) {
+                grantStandardKey(newBundle, bundle.keys[x]);
+            }
+
+            for (uint x = 0; x < bundle.consumableKeys.length; x++) {
+                grantConsumableKey(newBundle, bundle.consumableKeys[x]);
+            }
+
+            for (uint x = 0; x < bundle.timedKeys.length; x++) {
+                grantTimedKey(newBundle, bundle.timedKeys[x].key, bundle.timedKeys[x].startTimestamp, bundle.timedKeys[x].duration);
+            }
+        }
+
+        return (true, identifier);
     }
 }
 
 contract Authenticator2 {
+    using EnumerableSet for EnumerableSet.AddressSet;
     Lib.Account[] private _accounts;
     Lib.Account[] private _bundles;
 
-    mapping(address => uint) public addressToAccountsMapping;
+    Lib.Tracker public tracker;
 
+    EnumerableSet.AddressSet private _accountsAddresses;
+
+    mapping(address => uint) public addressToAccountsMapping;
+    mapping(string => uint) public labelToBundlesMapping;
+
+    constructor() {}
+
+    // -------------
+    // STANDARD KEYS.
+    // -------------
+    
+    function grantStandardKey(address to, string memory key)
+        external
+        returns (bool) {
+        authenticate(msg.sender, "authenticator-grant-standard-key", true, true, true);
+
+        if (_accountsAddresses.contains(to)) {
+            Lib.Account storage account = _accounts[addressToAccountsMapping[to]];
+            Lib.grantStandardKey(account, key);
+        }
+
+        else {
+            // generate unique identifier for address.
+            _accountsAddresses.add(to);
+            addressToAccountsMapping[to] = _accountsAddresses.length();
+            Lib.Account storage account = _accounts[addressToAccountsMapping[to]];
+            Lib.grantStandardKey(account, key);            
+        }
+        
+        return true;
+    }
+
+    function revokeStandardKey(address from, string memory key)
+        external
+        returns (bool) {
+        authenticate(msg.sender, "authenticator-revoke-standard-key", true, true, true);
+
+        if (_accountsAddresses.contains(from)) {
+            Lib.Account storage account = _accounts[addressToAccountsMapping[from]];
+            Lib.revokeStandardKey(account, key);
+        }
+
+        else {
+            // generate unique identifier for address.
+            _accountsAddresses.add(from);
+            addressToAccountsMapping[from] = _accountsAddresses.length();
+            Lib.Account storage account = _accounts[addressToAccountsMapping[from]];
+            Lib.revokeStandardKey(account, key);
+        }
+
+        return true;
+    }
+
+    function authenticate(address from, string memory requiredKey, bool lookForStandardKey, bool lookForConsumableKey, bool lookForTimedKey)
+        public
+        returns (bool) {
+        bool success;
+
+        if (_accountsAddresses.contains(from)) {
+            Lib.Account storage account = _accounts[addressToAccountsMapping[from]];
+            success = Lib.authenticate(account, requiredKey, lookForStandardKey, lookForConsumableKey, lookForTimedKey);
+        }
+
+        else {
+            // generate unique identifier for address.
+            _accountsAddresses.add(from);
+            addressToAccountsMapping[from] = _accountsAddresses.length();
+            Lib.Account storage account = _accounts[addressToAccountsMapping[from]];
+            success = Lib.authenticate(account, requiredKey, lookForStandardKey, lookForConsumableKey, lookForTimedKey);
+        }
+
+        require(
+            success,
+            "Authenticator: INSUFFICIENT_AUTHENTICATION"
+        );
+
+        return success;
+    }
+
+    // ---------------
+    // CONSUMABLE KEYS.
+    // ---------------
+
+    function grantConsumableKey(address to, string memory key)
+        external
+        returns (bool) {
+        authenticate(msg.sender, "authenticator-grant-consumable-key", true, true, true);
+
+        if (_accountsAddresses.contains(to)) {
+            Lib.Account storage account = _accounts[addressToAccountsMapping[to]];
+            Lib.grantConsumableKey(account, key);
+        }
+
+        else {
+            // generate unique identifier for address.
+            _accountsAddresses.add(to);
+            addressToAccountsMapping[to] = _accountsAddresses.length();
+            Lib.Account storage account = _accounts[addressToAccountsMapping[to]];
+            Lib.grantConsumableKey(account, key);           
+        }
+        
+        return true;
+    }
+
+    function consume(address from, string memory key)
+        external
+        returns (bool) {
+        if (_accountsAddresses.contains(from)) {
+            Lib.Account storage account = _accounts[addressToAccountsMapping[from]];
+            Lib.consume(account, key);
+        }
+
+        else {
+            // generate unique identifier for address.
+            _accountsAddresses.add(from);
+            addressToAccountsMapping[from] = _accountsAddresses.length();
+            Lib.Account storage account = _accounts[addressToAccountsMapping[from]];
+            Lib.consume(account, key);         
+        }
+
+        return true;
+    }
+
+    // ... wip
 
 }
 
