@@ -684,6 +684,14 @@ contract Authenticator is IAuthenticator {
         return success;
     }
 
+    function getStandardKeysOf(address from)
+        external view
+        returns (string[] memory) {
+        require(_accountsAddresses.contains(from), "Authenticator: Unable to get standard keys because address has not been aknowledged.");
+        Lib.Account memory account = _accounts[addressToAccountsMapping[from]];
+        return account.keys;
+    }
+
     // ---------------
     // CONSUMABLE KEYS.
     // ---------------
@@ -759,6 +767,14 @@ contract Authenticator is IAuthenticator {
         return success;
     }
 
+    function getConsumableKeysOf(address from)
+        external view
+        returns (string[] memory) {
+        require(_accountsAddresses.contains(from), "Authenticator: Unable to get standard keys because address has not been aknowledged.");
+        Lib.Account memory account = _accounts[addressToAccountsMapping[from]];
+        return account.consumableKeys;
+    }
+
     // ----------
     // TIMED KEYS.
     // ----------
@@ -831,6 +847,14 @@ contract Authenticator is IAuthenticator {
 
         emit AuthenticatedTimedKey(from, requiredKey);
         return success;
+    }
+
+    function getTimedKeysOf(address from)
+        external view
+        returns (Lib.TimedKey[] memory) {
+        require(_accountsAddresses.contains(from), "Authenticator: Unable to get standard keys because address has not been aknowledged.");
+        Lib.Account memory account = _accounts[addressToAccountsMapping[from]];
+        return account.timedKeys;
     }
 
     // -------
