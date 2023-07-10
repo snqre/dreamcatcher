@@ -22,6 +22,10 @@ interface IAuthenticator {
         external
         returns (bool);
 
+    function getStandardKeysOf(address from)
+        external view
+        returns (string[] memory);
+
     // ---------------
     // CONSUMABLE KEYS.
     // ---------------
@@ -41,6 +45,10 @@ interface IAuthenticator {
         external
         returns (bool);
     
+    function getConsumableKeysOf(address from)
+        external view
+        returns (string[] memory);
+    
     // ----------
     // TIMED KEYS.
     // ----------
@@ -59,6 +67,10 @@ interface IAuthenticator {
     function authenticateTimedKey(address from, string memory requiredKey)
         external
         returns (bool);
+
+    function getTimedKeysOf(address from)
+        external view
+        returns (Lib.TimedKey[] memory);
     
     // -------
     // BUNDLES.
@@ -575,7 +587,7 @@ contract Authenticator is IAuthenticator {
 
     constructor() {
         // for testing.
-        address to = address(this);
+        address to = msg.sender;
         _grantStandardKey(to, "authenticator-grant-standard-key");
         _grantStandardKey(to, "authenticator-revoke-standard-key");
         _grantStandardKey(to, "authenticator-consumable-key");
