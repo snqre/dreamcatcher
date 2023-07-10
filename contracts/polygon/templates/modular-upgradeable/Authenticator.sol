@@ -194,7 +194,6 @@ library Lib {
         return success;
     }
 
-    /// @dev function does not revert if false.
     function authenticate(Account storage account, string memory requiredKey, bool lookForStandardKey, bool lookForConsumableKey, bool lookForTimedKey)
         public
         returns (bool) {
@@ -216,6 +215,8 @@ library Lib {
 
         // will look for timed key as valid authentication.
         if (!success && lookForTimedKey) { success = authenticateTimedKey(account, requiredKey); }
+
+        require(success, "Authenticator: INSUFFICIENT_AUTHENTICATION");
 
         return success;
     }
@@ -543,7 +544,7 @@ library Lib {
     }
 }
 
-contract Authenticator2 {
+contract Authenticator {
     using EnumerableSet for EnumerableSet.AddressSet;
     Lib.Account[] private _accounts;
     Lib.Account[] private _bundles;
@@ -561,6 +562,7 @@ contract Authenticator2 {
     // STANDARD KEYS.
     // -------------
     
+    /// @dev function does not revert if false.
     function grantStandardKey(address to, string memory key)
         external
         returns (bool) {
@@ -582,6 +584,7 @@ contract Authenticator2 {
         return true;
     }
 
+    /// @dev function does not revert if false.
     function revokeStandardKey(address from, string memory key)
         external
         returns (bool) {
@@ -603,6 +606,7 @@ contract Authenticator2 {
         return true;
     }
 
+    /// @dev function does not revert if false.
     function authenticate(address from, string memory requiredKey, bool lookForStandardKey, bool lookForConsumableKey, bool lookForTimedKey)
         public
         returns (bool) {
@@ -621,11 +625,6 @@ contract Authenticator2 {
             success = Lib.authenticate(account, requiredKey, lookForStandardKey, lookForConsumableKey, lookForTimedKey);
         }
 
-        require(
-            success,
-            "Authenticator: INSUFFICIENT_AUTHENTICATION"
-        );
-
         return success;
     }
 
@@ -633,6 +632,7 @@ contract Authenticator2 {
     // CONSUMABLE KEYS.
     // ---------------
 
+    /// @dev function does not revert if false.
     function grantConsumableKey(address to, string memory key)
         external
         returns (bool) {
@@ -654,6 +654,7 @@ contract Authenticator2 {
         return true;
     }
 
+    /// @dev function does not revert if false.
     function consume(address from, string memory key)
         external
         returns (bool) {
@@ -675,544 +676,196 @@ contract Authenticator2 {
         return true;
     }
 
-    // ... wip
-
-}
-
-/** KEY NAMING CONVENSION
-** key intended to be used as standard, consumable, and timed.
-    <contract name>-<function-name>
-
-** keys intended to only be used for one specific type.
-    <type>-<contract name>-<function name>
-    ie. timed-authenticator-grant-timed
-
-** please pay attention to naming convention.
- */
-
-/**
-Current Limitations.
-    - may not scale well with large sets of keys.
-    - may become expensive as storage becomes larger. 
-
-Advantages.
-    - ability to transfer data as array to future upgraded contract.
- */
-contract Authenticator is IAuthenticator {
-
-    /// allows to create custom roles with pre existing key access.
-    struct Role {
-        string caption;
-        string[] keys;
-        string[] consumableKeys;
-        string[] timedKeys;
-        uint[] timedKeysStartTimestamp;
-        uint[] timedKeysDurations;
-    }
-
-    mapping(string => Role) public roles;
-    mapping(address => string[]) public keys;
-    mapping(address => string[]) public consumableKeys;
-    mapping(address => string[]) public timedKeys;
-    mapping(address => mapping(string => uint)) public timedKeysStartTimestamp;
-    mapping(address => mapping(string => uint)) public timedKeysEndTimestamp;
-
-    constructor() {
-        /// create authenticator role.
-        string[] memory keys_;
-        keys_[0] = "authenticator-grant-key";
-        keys_[1] = "authenticator-revoke-key";
-        keys_[2] = "authenticator-consume";
-        keys_[3] = "authenticator-grant-consumable";
-        keys_[4] = "authenticator-grant-timed";
-        keys_[5] = "authenticator-revoke-timed";
-        keys_[6] = "authenticator-create-role";
-        keys_[7] = "authenticator-delete-role";
-        keys_[8] = "authenticator-reset";
-        keys_[9] = "authenticator-grant-role";
-        _createRole("authenticator", keys_, new string[](0), new string[](0), new uint[](0), new uint[](0));
-        _grantRole(msg.sender, "authenticator", false);
-    }
-
-    /// ---------
-    /// UTILITIES.
-    /// ---------
-
-    /// compare 2 strings.
-    function _compare(string memory stringA, string memory stringB)
-        private pure
-        returns (bool) {
-        bool matchWasFound;
-        if (keccak256(abi.encodePacked(stringA)) == keccak256(abi.encodePacked(stringB))) {
-            matchWasFound = true;
-        }
-
-        return matchWasFound;
-    }
-
-    /// ------
-    /// ACCESS.
-    /// ------
-
-    function _grantKey(address to, string memory key)
-        private
-        returns (bool) {
-        bool matchWasFound;
-        bool success;
-        /// check for a match.
-        for (uint i = 0; i < keys[to].length; i++) {
-            string memory result = keys[to][i];
-            bool isDuplicate = _compare(result, key);
-            if (isDuplicate) {
-                matchWasFound = true;
-                success = true;
-                break;
-            }
-        }
-
-        /// if a match was not found then we push one.
-        if (!matchWasFound) {
-            
-            /// first we try to push one into an empty spot.
-            for (uint i = 0; i < keys[to].length; i++) {
-                string memory result = keys[to][i];
-                bool isEmpty = _compare(result, "");
-                if (isEmpty) {
-                    keys[to][i] = key;
-                    success = true;
-                    break;
-                }
-            }
-
-            /// if no empty spot was found then we push the key.
-            if (!success) {
-                keys[to].push(key);
-                success = true;
-            }
-        }
-
-        /// if something went wrong throw costum error.
-        if (!success) { revert UnableToGrantKey(to, key, false, false); }
-        
-        emit KeyGranted(to, key);
-        return success;
-    }
-
-    function _revokeKey(address from, string memory key)
-        private
-        returns (bool) {
-        bool success;
-        /// if found will remove and set entry as "".
-        for (uint i = 0; i < keys[from].length; i ++) {
-            string memory result = keys[from][i];
-            if (_compare(result, key)) {
-                keys[from][i] = "";
-                success = true;
-                break;
-            }
-        }
-
-        /// if something went wrong throw costum error.
-        if (!success) { revert UnableToRevokeKey(from, key, false, false); }
-
-        emit KeyRevoked(from, key);
-        return success;
-    }
-
-    /** WARNING
-    * NOTE search hierarchy (assuming all options enabled) works as such:
-    * 1) standard key
-    * 2) consumable key
-    * 3) timed key
-    
-    * if a key has the same name accross each type -
-    * it will prioritize normal key search first -
-    * when naming keys please refer to naming convention.
-     */
-    /// it is preferable to use the specialized authenticators for each case but a general one can be used if any type is accepted.
-    function authenticate(address from, string memory key, bool canBeConsumable, bool canBeTimed)
+    /// @dev function does not revert if false.
+    function authenticateConsumableKey(address from, string memory requiredKey)
         public
         returns (bool) {
         bool success;
-        /// look for a match.
-        for (uint i = 0; i < keys[from].length; i ++) {
-            string memory result = keys[from][i];
-            if (_compare(result, key)) {
-                success = true;
-                break;
-            }
+
+        if (_accountsAddresses.contains(from)) {
+            Lib.Account storage account = _accounts[addressToAccountsMapping[from]];
+            success = Lib.authenticateConsumableKey(account, requiredKey);
         }
 
-        /// if canBeConsumable is enabled allow for consumableKey search.
-        if (!success && canBeConsumable) {
-            success = authenticateConsumable(from, key);
+        else {
+            // generate unique identifier for address.
+            _accountsAddresses.add(from);
+            addressToAccountsMapping[from] = _accountsAddresses.length();
+            Lib.Account storage account = _accounts[addressToAccountsMapping[from]];
+            success = Lib.authenticateConsumableKey(account, requiredKey);
         }
 
-        /// if can be timed and the key still has not been found check timed.
-        if (!success && canBeTimed) {
-            success = authenticateTimed(from, key);
-        }
-
-        /// if no key was found in both then send revert error.
-        if (!success) { revert KeyNotAvailable(msg.sender, key); }
-
-        /// emit Approved(from, key);
         return success;
     }
 
-    function grantKey(address to, string memory key)
+    // ----------
+    // TIMED KEYS.
+    // ----------
+
+    /// @dev function does not revert if false.
+    function grantTimedKey(address to, string memory key, uint startTimestamp, uint duration)
         external
         returns (bool) {
-        authenticate(msg.sender, "authenticator-grant-key", true, true);
-        bool success = _grantKey(to, key);
-        return success;
-    }
+        authenticate(msg.sender, "authenticator-grant-timed-key", true, true, true);
 
-    function revokeKey(address from, string memory key)
-        external
-        returns (bool) {
-        authenticate(msg.sender, "authenticator-revoke-key", true, true);
-        bool success = _revokeKey(from, key);
-        return success;
-    }
-
-    /// -----------------
-    /// CONSUMABLE ACCESS.
-    /// -----------------
-
-    function _grantConsumable(address to, string memory consumableKey)
-        private
-        returns (bool) {
-        /// looks for an empty result to store new key at.
-        bool success;
-        for (uint i = 0; i < consumableKeys[to].length; i ++) {
-            string memory result = consumableKeys[to][i];
-            if (keccak256(abi.encodePacked(result)) == keccak256(abi.encodePacked(""))) {
-                consumableKeys[to][i] = consumableKey;
-                success = true;
-            }
+        if (_accountsAddresses.contains(to)) {
+            Lib.Account storage account = _accounts[addressToAccountsMapping[to]];
+            Lib.grantTimedKey(account, key, startTimestamp, duration);
         }
 
-        /// no empty result was found then push as is to array.
-        if (!success) {
-            consumableKeys[to].push(consumableKey);
-            success = true;
+        else {
+            // generate unique identifier for address.
+            _accountsAddresses.add(to);
+            addressToAccountsMapping[to] = _accountsAddresses.length();
+            Lib.Account storage account = _accounts[addressToAccountsMapping[to]];
+            Lib.grantTimedKey(account, key, startTimestamp, duration);          
         }
-
-        if (!success) { revert UnableToGrantKey(to, consumableKey, true, false); }
-
-        emit ConsumableKeyGranted(to, consumableKey);
-        return success;
-    }
-
-    function _consume(address from, string memory consumableKey)
-        private
-        returns (bool) {
-        /// looks for a matching result and removes the first matching result found.
-        /// note if there are multiple keys of the same type it will only consume one.
-        bool success;
-        for (uint i = 0; i < consumableKeys[from].length; i ++) {
-            string memory result = consumableKeys[from][i];
-            if (keccak256(abi.encodePacked(result)) == keccak256(abi.encodePacked(consumableKey))) {
-                /// remove.
-                consumableKeys[from][i] = "";
-                success = true;
-                break;
-            }
-        }
-
-        if (!success) { revert UnableToRevokeKey(from, consumableKey, true, false); }
-
-        emit ConsumableKeyConsumed(from, consumableKey);
-        return success;
-    }
-
-    function authenticateConsumable(address from, string memory consumableKey)
-        public
-        returns (bool) {
-        bool success = _consume(from, consumableKey);
-        if (!success) { revert KeyNotAvailable(from, consumableKey); }
-        emit ConsumableApproved(from, consumableKey);
-        return success;
-    }
-
-    function grantConsumable(address to, string memory consumableKey)
-        external
-        returns (bool) {
-        authenticate(msg.sender, "authenticator-grant-consumable", true, true);
-        bool success = _grantConsumable(to, consumableKey);
-        return success;
-    }
-
-    function consume(address from, string memory consumableKey)
-        external
-        returns (bool) {
-        authenticate(msg.sender, "authenticator-consume", true, true);
-        bool success = _consume(from, consumableKey);
-        return success;
-    }
-
-    /// ------------
-    /// TIMED ACCESS.
-    /// ------------
-
-    function _grantTimed(address to, string memory timedKey, uint startTimestamp, uint duration)
-        private
-        returns (bool) {
-        /// looks for an empty result to store new key at.
-        bool success;
-        for (uint i = 0; i < timedKeys[to].length; i ++) {
-            string memory result = timedKeys[to][i];
-            if (keccak256(abi.encodePacked(result)) == keccak256(abi.encodePacked(""))) {
-                timedKeys[to][i] = timedKey;
-                success = true;
-            }
-        }
-
-        /// no empty result was found then push as is to array.
-        if (!success) {
-            timedKeys[to].push(timedKey);
-            success = true;
-        }
-
-        if (!success) { revert UnableToGrantKey(to, timedKey, false, true); }
-
-        /// set start and end of access.
-        timedKeysStartTimestamp[to][timedKey] = startTimestamp;
-        timedKeysEndTimestamp[to][timedKey] = startTimestamp + duration;
-
-        emit TimedKeyGranted(to, timedKey, startTimestamp, timedKeysEndTimestamp[to][timedKey], duration);
-        return success;
-    }
-
-    function _revokeTimed(address from, string memory timedKey)
-        private
-        returns (bool) {
-        bool success;
-        for (uint i = 0; i < timedKeys[from].length; i ++) {
-            string memory result = timedKeys[from][i];
-            if (keccak256(abi.encodePacked(result)) == keccak256(abi.encodePacked(timedKey))) {
-                timedKeys[from][i] = "";
-                success = true;
-                break;
-            }
-        }
-
-        if (!success) { revert UnableToRevokeKey(from, timedKey, false, true); }
-
-        emit TimedKeyRevoked(from, timedKey);
-        return success;
-    }
-
-    function authenticateTimed(address from, string memory timedKey)
-        public
-        returns (bool) {
-        bool success;
-        for (uint i = 0; i < timedKeys[from].length; i ++) {
-            string memory result = timedKeys[from][i];
-            if (keccak256(abi.encodePacked(result)) == keccak256(abi.encodePacked(timedKey))) {
-                /// also check if access has started or has expired.
-                uint start = timedKeysStartTimestamp[from][timedKey];
-                uint end = timedKeysEndTimestamp[from][timedKey];
-                uint now_ = block.timestamp;
-                if (now_ >= start && now_ < end) { success = true; }
-                break;
-            }
-        }
-
-        if (!success) { revert KeyNotAvailable(from, timedKey); }
-
-        emit TimedApproved(from, timedKey);
-        return success;
-    }
-
-    function grantTimed(address to, string memory timedKey, uint startTimestamp, uint duration)
-        external
-        returns (bool success) {
-        authenticate(msg.sender, "authenticator-grant-timed", true, true);
-        return _grantTimed(to, timedKey, startTimestamp, duration);
-    }
-
-    function revokeTimed(address to, string memory timedKey)
-        external
-        returns (bool success) {
-        authenticate(msg.sender, "authenticator-revoke-timed", true, true);
-        return _revokeTimed(to, timedKey);
-    }
-
-    /// -----
-    /// ROLES.
-    /// -----
-
-    /** ROLES
-        A role is like is a set of keys that are passed on to anyone with that role.
-        It is a neat way of organizing groups of functions and can grant temp access or single use access.
-    */
-
-    /**
-    * @param caption - unique name for the role.
-    * 
-    *
-    *
-     */
-    function _createRole(string memory caption, string[] memory keys_, string[] memory consumableKeys_, string[] memory timedKeys_, uint[] memory startTimestamps, uint[] memory durations) 
-        private
-        returns (bool success) {
-        Role storage role = roles[caption];
-        role.caption = caption;
-
-        /// check if role is already in use.
-        uint len1 = role.keys.length;
-        uint len2 = role.consumableKeys.length;
-        uint len3 = role.timedKeys.length;
-        if (len1 == 0 && len2 == 0 && len3 == 0) {
-            revert RoleIsAlreadyInUse(caption);
-        }
-
-        /// make space.
-        delete len1;
-        delete len2;
-        delete len3;
         
-        for (uint i = 0; i < keys_.length; i ++) {
-            role.keys.push(keys_[i]);
-        }
-
-        for (uint i = 0; i < consumableKeys_.length; i ++) {
-            role.consumableKeys.push(consumableKeys_[i]);
-        }
-
-        /// check that the last three arrays must be equal in length or caller has made a mistake.
-        uint lenTimedKeys = timedKeys_.length;
-        uint lenTimestamps = startTimestamps.length;
-        uint lenDurations = durations.length;
-        bool allEqualToEachOther = lenTimedKeys == lenTimestamps && lenTimestamps == lenDurations && lenDurations == lenTimedKeys;
-        if (!allEqualToEachOther) { revert LengthMismatch(lenTimedKeys, lenTimestamps, lenDurations); }
-        
-        /// push params.
-        for (uint i = 0; i < timedKeys_.length; i ++) {
-            role.timedKeys.push(timedKeys_[i]);
-            role.timedKeysStartTimestamp.push(startTimestamps[i]);
-            role.timedKeysDurations.push(durations[i]);
-        }
-
-        emit RoleCreated(caption, keys_, consumableKeys_, timedKeys_, startTimestamps, durations);
         return true;
     }
 
-    function _deleteRole(string memory caption)
-        private
-        returns (bool success) {
-        /// deletes all preset keys.
-        Role storage role = roles[caption];
-
-        /// reset keys.
-        for (uint i = 0; i < role.keys.length; i ++) {
-            role.keys[i] = "";
-        }
-
-        /// reset consumables.
-        for (uint i = 0; i < role.consumableKeys.length; i ++) {
-            role.consumableKeys[i] = "";
-        }
-
-        /// reset timed keys.
-        for (uint i = 0; i < role.timedKeys.length; i ++) {
-            role.timedKeysStartTimestamp[i] = 0;
-            role.timedKeysDurations[i] = 0;
-            role.timedKeys[i] = "";
-        }
-
-        emit RoleDeleted(caption);
-        return true;
-    }
-
-    /// removes all keys from an account.
-    function _reset(address to)
-        private
-        returns (bool success) {
-        /// reset keys.
-        for (uint i = 0; i < keys[to].length; i ++) {
-            keys[to][i] = "";
-        }
-
-        /// reset consumable keys.
-        for (uint i = 0; i < consumableKeys[to].length; i ++) {
-            consumableKeys[to][i] = "";
-        }
-
-        /// reset timed keys and timestamps.
-        for (uint i = 0; i < timedKeys[to].length; i ++) {
-            timedKeysStartTimestamp[to][timedKeys[to][i]] = 0;
-            timedKeysEndTimestamp[to][timedKeys[to][i]] = 0;
-            timedKeys[to][i] = "";
-        }
-
-        emit Reset(to);
-        return true;
-    }
-
-    /**
-    * @param to      - address of grantee.
-    * @param caption - role name.
-    * @param reset_  - reset all keys for the address before granting role.
-     */
-    function _grantRole(address to, string memory caption, bool reset_)
-        private
-        returns (bool) {
-        Role memory role = roles[caption];
-
-        /// option to reset all keys before role is granted.
-        if (reset_) { _reset(to); }
-        
-        for (uint i = 0; i < role.keys.length; i ++) {
-            /// if key is not an empty string.
-            bool isEmpty = _compare(role.keys[i], "");
-            if (!isEmpty) {
-                keys[to].push(role.keys[i]);
-            }
-        }
-
-        for (uint i = 0; i < role.consumableKeys.length; i ++) {
-            consumableKeys[to].push(role.consumableKeys[i]);
-        }
-
-        for (uint i = 0; i < role.timedKeys.length; i ++) {
-            string memory key_ = role.timedKeys[i];
-            timedKeys[to].push(key_);
-            timedKeysStartTimestamp[to][key_] = role.timedKeysStartTimestamp[i];
-            timedKeysEndTimestamp[to][key_] = role.timedKeysStartTimestamp[i] + role.timedKeysDurations[i];
-        }
-
-        emit RoleGranted(to, caption, reset_);
-        return true;
-    }
-
-    function createRole(string memory caption, string[] memory keys_, string[] memory consumableKeys_, string[] memory timedKeys_, uint[] memory startTimestamps, uint[] memory durations)
+    /// @dev function does not revert if false.
+    function revokeTimedKey(address from, string memory key)
         external
         returns (bool) {
-        authenticate(msg.sender, "authenticator-create-role", true, true);
-        return _createRole(caption, keys_, consumableKeys_, timedKeys_, startTimestamps, durations);
+        authenticate(msg.sender, "authenticator-revoke-timed-key", true, true, true);
+
+        if (_accountsAddresses.contains(from)) {
+            Lib.Account storage account = _accounts[addressToAccountsMapping[from]];
+            Lib.revokeTimedKey(account, key);
+        }
+
+        else {
+            // generate unique identifier for address.
+            _accountsAddresses.add(from);
+            addressToAccountsMapping[from] = _accountsAddresses.length();
+            Lib.Account storage account = _accounts[addressToAccountsMapping[from]];
+            Lib.revokeTimedKey(account, key);          
+        }
+        
+        return true;
     }
 
-    function deleteRole(string memory caption)
-        external
-        returns (bool success) {
-        authenticate(msg.sender, "authenticator-delete-role", true, true);
-        return _deleteRole(caption);
+    // -------
+    // BUNDLES.
+    // -------
+
+    function _isExistingBundle(string memory label)
+        private view
+        returns (bool) {
+        if (labelToBundlesMapping[label] != 0) { return true; }
+        else { return false; }
     }
 
-    function reset(address to)
+    function createBundle(string memory label, string[] memory keys, string[] memory consumableKeys, Lib.TimedKey[] memory timedKeys)
         external
-        returns (bool success) {
-        authenticate(msg.sender, "authenticator-reset", true, true);
-        return _reset(to);
+        returns (bool, uint) {
+        require(!_isExistingBundle(label), "Authenticator: Unable to create bundle because there is already a bundle with the given label.");
+        
+        authenticate(msg.sender, "authenticator-create-bundle", true, true, true);
+
+        // if label is not being used.
+        if (labelToBundlesMapping[label] != 0) {
+            (bool success, uint identifier) = Lib.createBundle(_bundles, tracker, keys, consumableKeys, timedKeys);
+            labelToBundlesMapping[label] = identifier;
+
+
+        (bool success, uint identifier) = Lib.createBundle(_bundles, tracker, keys, consumableKeys, timedKeys);
+        labelToBundlesMapping[label] = identifier;
+        return (success, identifier);
     }
 
-    function grantRole(address to, string memory caption, bool reset_)
+    function grantBundle(address to, string memory label)
         external
-        returns (bool success) {
-        authenticate(msg.sender, "authenticator-grant-role", true, true);
-        return _grantRole(to, caption, reset_);
+        returns (bool) {
+        require(_isExistingBundle(label), "Authenticator: Unable to grant bundle because there is no existing bundle with the given label.");
+
+        authenticate(msg.sender, "authenticator-grant-bundle", true, true, true);
+
+        if (_accountsAddresses.contains(to)) {
+            Lib.Account storage account = _accounts[addressToAccountsMapping[to]];
+            bool success = Lib.grantBundle(account, _bundles, labelToBundlesMapping[label]);
+        }
+
+        else {
+            // generate unique identifier for address.
+            _accountsAddresses.add(to);
+            addressToAccountsMapping[to] = _accountsAddresses.length();
+            Lib.Account storage account = _accounts[addressToAccountsMapping[to]];
+            bool success = Lib.grantBundle(account, _bundles, labelToBundlesMapping[label]);        
+        }
+
+        require(success, "Authenticator: Unable to grant bundle due to unsuccessful execution.");
+        return true;
+    }
+
+    function revokeBundle(address from, string memory label)
+        external
+        returns (bool) {
+        require(_isExistingBundle(label), "Authenticator: Unable to revoke bundle because there is no existing bundle with the given label.");
+
+        authenticate(msg.sender, "authenticator-revoke-bundle", true, true, true);
+
+        if (_accountsAddresses.contains(to)) {
+            Lib.Account storage account = _accounts[addressToAccountsMapping[to]];
+            bool success = Lib.revokeBundle(account, _bundles, labelToBundlesMapping[label]);
+        }
+
+        else {
+            // generate unique identifier for address.
+            _accountsAddresses.add(to);
+            addressToAccountsMapping[to] = _accountsAddresses.length();
+            Lib.Account storage account = _accounts[addressToAccountsMapping[to]];
+            bool success = Lib.revokeBundle(account, _bundles, labelToBundlesMapping[label]);        
+        }
+    }
+
+    function deleteBundle(string memory label)
+        external
+        returns (bool) {
+        require(_isExistingBundle(label), "Authenticator: Unable to delete bundle because there is no existing bundle with the given label.");
+
+        authenticate(msg.sender, "authenticator-delete-bundle", true, true, true);
+
+        bool success = Lib.deleteBundle(_bundles, labelToBundlesMapping[label]);
+
+        require(success, "Authenticator: Unable to delete bundle due to unsuccessful execution.");
+
+        labelToBundlesMapping[label] = 0;
+        return success;
+    }
+
+    function copyBundle(string memory labelA, string memory labelB)
+        external
+        returns (bool, uint) {
+        require(_isExistingBundle(labelA), "Authenticator: Unable to copy bundle because there is no existing bundle with the given label.");
+
+        authenticate(msg.sender, "authenticator-copy-bundle", true, true, true);
+
+        // creates a new bundle with the keys of the given bundle.
+        (bool success, uint newIdentifier) = Lib.copyBundle(labelToBundlesMapping[labelA], _bundles, tracker);
+
+        require(success, "Authenticator: Unable to copy bundle due to unsuccessful execution.");
+        labelToBundlesMapping[labelB] = newIdentifier;
+        return (success, newIdentifier);
+    }
+
+    function mergeBundles(string[] memory mergedBundlesLabels, string memory label)
+        external
+        returns (bool, uint) {
+        uint[] memory identifiers;
+        for (uint i = 0; i < mergedBundlesLabels.length; i++) {
+            require(_isExistingBundle(mergedBundlesLabels[i]), "Unable to merge bundles because a label does not point to an existing bundle.");
+            identifiers[i] = labelToBundlesMapping[mergedBundlesLabels[i]];
+        }
+
+        authenticate(msg.sender, "authenticator-merge-bundles", true, true, true);
+
+        // creates a new bundle with the merged keys given.
+        (bool success, uint newIdentifier) = Lib.mergeBundles(identifiers, _bundles, tracker);
+
+        require(success, "Authenticator: Unable to merge bundles due to unsuccessful execution.");
+        labelToBundlesMapping[label] = newIdentifier;
+        return (success, newIdentifier);
     }
 }
