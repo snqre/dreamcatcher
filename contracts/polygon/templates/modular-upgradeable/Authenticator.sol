@@ -657,6 +657,8 @@ contract Authenticator2 {
     function consume(address from, string memory key)
         external
         returns (bool) {
+        authenticate(msg.sender, "authenticator-consume", true, true, true);
+
         if (_accountsAddresses.contains(from)) {
             Lib.Account storage account = _accounts[addressToAccountsMapping[from]];
             Lib.consume(account, key);
