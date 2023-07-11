@@ -614,6 +614,18 @@ contract Authenticator is IAuthenticator {
         Lib.grantStandardKey(account, "authenticator-delete-bundle");
         Lib.grantStandardKey(account, "authenticator-copy-bundle");
         Lib.grantStandardKey(account, "authenticator-merge-bundles");
+
+        // test bundles.
+
+        // ... create
+
+        // ... grant
+
+        // ... revoke
+
+        // ... delete
+
+        // need function to reset address keys to default?
     }
 
     // -------------
