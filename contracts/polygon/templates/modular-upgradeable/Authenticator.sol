@@ -586,41 +586,34 @@ contract Authenticator is IAuthenticator {
     mapping(string => uint) public labelToBundlesMapping;
 
     constructor() {
-        // for testing.
         address to = msg.sender;
-        _grantStandardKey(to, "authenticator-grant-standard-key");
-        _grantStandardKey(to, "authenticator-revoke-standard-key");
-        _grantStandardKey(to, "authenticator-consumable-key");
-        _grantStandardKey(to, "authenticator-consume");
-        _grantStandardKey(to, "authenticator-grant-timed-key");
-        _grantStandardKey(to, "authenticator-revoke-timed-key");
-        _grantStandardKey(to, "authenticator-create-bundle");
-        _grantStandardKey(to, "authenticator-grant-bundle");
-        _grantStandardKey(to, "authenticator-revoke-bundle");
-        _grantStandardKey(to, "authenticator-delete-bundle");
-        _grantStandardKey(to, "authenticator-copy-bundle");
-        _grantStandardKey(to, "authenticator-merge-bundles");
-    }
+        _accountsAddresses.add(to);
+        addressToAccountsMapping[to] = _accountsAddresses.length();
+        uint identifier = addressToAccountsMapping[to];
 
-    // for internal access.
-    function _grantStandardKey(address to, string memory key)
-        private
-        returns (bool) {
-        
-        if (_accountsAddresses.contains(to)) {
-            Lib.Account storage account = _accounts[addressToAccountsMapping[to]];
-            Lib.grantStandardKey(account, key);
-        }
+        // ***bug here preventing deployment and reverting.
+        // somehow pushing seams to have solved the problem?? wtf
+        // do i need to push _bundles too? could that be why the bundles functions arent working?
+        _accounts.push();
+        _accounts.push();
+        _accounts.push();
+        _accounts.push();
+        _accounts.push();
 
-        else {
-            // generate unique identifier for address.
-            _accountsAddresses.add(to);
-            addressToAccountsMapping[to] = _accountsAddresses.length();
-            Lib.Account storage account = _accounts[addressToAccountsMapping[to]];
-            Lib.grantStandardKey(account, key);            
-        }
-        
-        return true;
+        Lib.Account storage account = _accounts[identifier];
+
+        Lib.grantStandardKey(account, "authenticator-grant-standard-key");
+        Lib.grantStandardKey(account, "authenticator-revoke-standard-key");
+        Lib.grantStandardKey(account, "authenticator-consumable-key");
+        Lib.grantStandardKey(account, "authenticator-consume");
+        Lib.grantStandardKey(account, "authenticator-grant-timed-key");
+        Lib.grantStandardKey(account, "authenticator-revoke-timed-key");
+        Lib.grantStandardKey(account, "authenticator-create-bundle");
+        Lib.grantStandardKey(account, "authenticator-grant-bundle");
+        Lib.grantStandardKey(account, "authenticator-revoke-bundle");
+        Lib.grantStandardKey(account, "authenticator-delete-bundle");
+        Lib.grantStandardKey(account, "authenticator-copy-bundle");
+        Lib.grantStandardKey(account, "authenticator-merge-bundles");
     }
 
     // -------------
@@ -894,6 +887,7 @@ contract Authenticator is IAuthenticator {
         return (success, identifier);
     }
 
+    // ***error here.
     function grantBundle(address to, string memory label)
         external
         returns (bool) {
@@ -944,6 +938,7 @@ contract Authenticator is IAuthenticator {
         return success;
     }
 
+    // ***need to make sure it updates tracker in lib.
     function deleteBundle(string memory label)
         external
         returns (bool) {
