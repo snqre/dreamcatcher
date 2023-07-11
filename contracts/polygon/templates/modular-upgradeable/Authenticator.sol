@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity ^0.8.19;
+pragma solidity 0.8.19;
 import "contracts/polygon/deps/openzeppelin/utils/structs/EnumerableSet.sol";
+import "contracts/polygon/templates/structs/Structs.sol";
 
 interface IAuthenticator {
     // -------------
@@ -124,18 +125,6 @@ interface IAuthenticator {
 }
 
 library Lib {
-    struct TimedKey {
-        string key;
-        uint startTimestamp;
-        uint endTimestamp;
-        uint duration;
-    }
-
-    struct Account {
-        string[] keys;
-        string[] consumableKeys;
-        TimedKey[] timedKeys;
-    }
 
     struct Tracker { uint numBundles; }
 
@@ -169,6 +158,7 @@ library Lib {
         bool success;
 
         uint len = account.keys.length;
+        require(len <= 1000, "Lib: Authenticator: TOO_MANY_KEYS");
 
         // check for a match.
         for (uint i = 0; i < len; i++) {
@@ -206,7 +196,7 @@ library Lib {
         public
         returns (bool) {
         bool success;
-        
+
         for (uint i = 0; i < account.keys.length; i++) {
             if (compare(account.keys[i], key)) {
                 account.keys[i] = "";
@@ -222,6 +212,14 @@ library Lib {
         public
         returns (bool) {
         bool success;
+
+        uint len1 = account.keys.length;
+        uint len2 = account.consumableKeys.length;
+        uint len3 = account.timedKeys.length;
+
+        require(len1 <= 5000, "TOO_MANY_KEYS");
+        require(len2 <= 5000, "TOO_MANY_KEYS");
+        require(len3 <= 5000, "TOO_MANY_KEYS");
         
         // will look for a standard key as valid authentication.
         if (!success && lookForStandardKey) {
@@ -240,7 +238,7 @@ library Lib {
         // will look for timed key as valid authentication.
         if (!success && lookForTimedKey) { success = authenticateTimedKey(account, requiredKey); }
 
-        require(success, "Authenticator: Unable to approve due to insufficient authorization.");
+        require(success, "Authenticator: INSUFFICIENT_AUTHORIZATION");
 
         return success;
     }
@@ -257,6 +255,7 @@ library Lib {
         bool success;
 
         uint len = account.consumableKeys.length;
+        require(len <= 5000, "Authenticator: TOO_MANY_KEYS");
 
         // check for a match.
         for (uint i = 0; i < len; i++) {
@@ -294,6 +293,10 @@ library Lib {
         public
         returns (bool) {
         bool success;
+        
+        uint len = account.consumableKeys.length;
+        require(len <= 5000, "Authenticator: TOO_MANY_KEYS");
+
         for (uint i = 0; i < account.consumableKeys.length; i++) {
             if (compare(account.consumableKeys[i], key)) {
                 // remove.
@@ -328,6 +331,7 @@ library Lib {
         bool success;
 
         uint len = account.timedKeys.length;
+        require(len <= 5000, "Authenticator: TOO_MANY_KEYS");
 
         TimedKey memory timedKey = TimedKey({
             key: key,
@@ -575,8 +579,8 @@ library Lib {
 
 contract Authenticator is IAuthenticator {
     using EnumerableSet for EnumerableSet.AddressSet;
-    Lib.Account[] private _accounts;
-    Lib.Account[] private _bundles;
+    Account[] private _accounts;
+    Account[] private _bundles;
 
     Lib.Tracker public tracker;
 
@@ -586,7 +590,7 @@ contract Authenticator is IAuthenticator {
     mapping(string => uint) public labelToBundlesMapping;
 
     constructor() {
-        address to = msg.sender;
+        address to = address(this);
         _accountsAddresses.add(to);
         addressToAccountsMapping[to] = _accountsAddresses.length();
         uint identifier = addressToAccountsMapping[to];
@@ -600,7 +604,7 @@ contract Authenticator is IAuthenticator {
         _accounts.push();
         _accounts.push();
 
-        Lib.Account storage account = _accounts[identifier];
+        Account storage account = _accounts[identifier];
 
         Lib.grantStandardKey(account, "authenticator-grant-standard-key");
         Lib.grantStandardKey(account, "authenticator-revoke-standard-key");
@@ -615,13 +619,30 @@ contract Authenticator is IAuthenticator {
         Lib.grantStandardKey(account, "authenticator-copy-bundle");
         Lib.grantStandardKey(account, "authenticator-merge-bundles");
 
-        // test bundles.
+        _bundles.push();
+        _bundles.push();
+        _bundles.push();
 
-        // ... create
+        string[] memory keys;
+        keys[0] = "authenticator-grant-standard-key";
+        keys[1] = "authenticator-revoke-standard-key";
+        keys[2] = "authenticator-consumable-key";
+        keys[3] = "authenticator-consume";
+        keys[4] = "authenticator-grant-timed-key";
+        keys[5] = "authenticator-revoke-timed-key";
+        keys[6] = "authenticator-create-bundle";
+        keys[7] = "authenticator-grant-bundle";
+        keys[8] = "authenticator-revoke-bundle";
+        keys[9] = "authenticator-delete-bundle";
+        keys[10] = "authenticator-copy-bundle";
+        keys[11] = "authenticator-merge-bundles";
 
-        // ... grant
+        string[] memory consumableKeys;
+        Timedkey[] memory timedKeys;
 
-        // ... revoke
+        createBundle("test-bundle", keys, consumableKeys, timedKeys);
+
+        grantBundle(msg.sender, "test-bundle");
 
         // ... delete
 
