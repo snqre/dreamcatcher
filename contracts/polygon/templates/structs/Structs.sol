@@ -13,21 +13,26 @@ struct Key {
 }
 
 struct Module {
-    string[] keys;
     EnumerableSet.AddressSet implementations;
-    Module[] dependencies;
-    uint[] dependenciesVersions;
+    bool isUpgradeable;
+    bool isInUse;
 }
 
-struct TimedKey {
-    string key;
-    uint startTimestamp;
-    uint endTimestamp;
+struct SettingsTimelock {
     uint duration;
+    uint executionWindowDuration;
 }
 
-struct Account {
-    string[] keys;
-    string[] consumableKeys;
-    TimedKey[] timedKeys;
+struct Payload {
+    address target;
+    string signature;
+    bytes args;
 }
+
+struct ConnectionRequest {
+    Payload payload;
+    bool isApproved;
+    bool isExecuted;
+    bool isPending;
+}
+

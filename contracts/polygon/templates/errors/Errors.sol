@@ -1,21 +1,27 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity 0.8.19;
+import "contracts/polygon/templates/structs/Structs.sol";
 
-/**
-Common use costum errors.
-*/
+// ---------
+// UNIVERSAL.
+// ---------
 
-/** # UNEX
-If the currentTimestamp is after expectedTimestamp it is likely we are throwing an error because it is expired.
-If the currentTimestamp is before expectedTimestamp it is likely we are throwing an error because it is premature.
- */
-error UnseasonedExecution(uint currentTimestamp, uint expectedTimestamp);
+
 
 // -----------------
 // LIB AUTHENTICATOR.
 // -----------------
 
-error TimedKeyIsPremature(uint currentTimestamp, uint expectedTimestamp);
-error TimedKeyIsExpired(uint currentTimestamp, uint expectedTimestamp);
-error ConsumableKeyIsExhausted();
-error KeyIsNotOwned();
+error KeyIsNotOfType(Key memory key);
+error KeyIsNotOwned(Key memory key);
+error KeyAccessPremature(Key memory key, uint currentTimestamp);
+error KeyAccessExpired(Key memory key, uint currentTimestamp);
+error KeyAccessZero(Key memory key);
+
+// --------
+// TERMINAL.
+// --------
+
+error ModuleIsNotEmpty(Module memory module);
+error ModuleIsEmpty(Module memory module);
+error ModuleIsNotUpgradeable(Module memory module);
