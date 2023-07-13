@@ -117,22 +117,147 @@ library ModuleManager {
     }
 }
 
-library Timelock {
-    function queueConnectionRequest(ConnectionRequest storage connectionRequest, address target, string memory signature, bytes memory args)
+// for requests handling.
+library TimelockA {
+
+    error IsLocked(ConnectionRequest request);
+    error IsUnlocked(ConnectionRequest request);
+    error IsTimedOut(ConnectionRequest request);
+    error IsRejected(ConnectionRequest request);
+    error IsExecuted(ConnectionRequest request);
+    error IsApproved(ConnectionRequest request);
+    error IsNotApproved(ConnectionRequest request);
+
+    function mustBeAfterTimelock(ConnectionRequest memory request)
         public {
-        connectionRequest.target = target;
-        connectionRequest.signature = signature;
-        connectionRequest.args = args;
+        bool isTooEarly = block.timestamp < (request.connectionRequestSchedule.startTimestamp + request.connectionRequestSchedule.timelockDuration);
+        if (isTooEarly) { revert IsLocked(request); }
     }
+
+    function mustBeBeforeTimelock(ConnectionRequest memory request)
+        public {
+        bool isTooLate = block.timestamp >= (request.connectionRequestSchedule.startTimestamp + request.connectionRequestSchedule.timelockDuration);
+        if (isTooLate) { revert isUnlocked(request); }
+    }
+
+    function mustBeBeforeTimeout(ConnectionRequest memory request)
+        public {
+        bool isTooLate = block.timestamp >= (request.connectionRequestSchedule.startTimestamp + request.connectionRequestSchedule.timelockDuration) + request.connectionRequestSchedule.timeoutDuration;
+        if (isTooLate) { revert IsTimedOut(request); }
+    }
+
+    function mustNotBeRejected(ConnectionRequest memory request)
+        public {
+        if (request.rejected) { revert IsRejected(request); }
+    }
+
+    function mustNotBeExecuted(ConnectionRequest memory request)
+        public {
+        if (request.executed) { revert IsExecuted(request); }
+    }
+
+    function mustBeApproved(ConnectionRequest memory request)
+        public {
+        if (!request.approved) { revert IsNotApproved(request); }
+    }
+
+    function mustNotBeApproved(ConnectionRequest memory request)
+        public {
+        if (request.approved) { revert IsApproved(request); }
+    }
+
+    function queueRequest(TimelockSettings memory settings, ConnectionRequest[] storage requests, uint storage numRequests, Payload memory payload, string memory message)
+        public
+        returns (uint) {
+        numRequests ++;
+        uint newIdentifier = numRequests;
+        ConnectionRequest storage newRequest = requests[newIdentifier];
+        newRequest.payload = Payload({
+            target: payload.target,
+            signature: payload.signature,
+            args: payload.args
+        });
+
+        newRequest.connectionRequestSchedule = ConnectionRequestSchedule({
+            startTimestamp: block.timestamp,
+            timelockDuration: settings.timelockDuration,
+            timeoutDuration: settings.timeoutDuration
+        });
+
+        newRequest.identifier = newIdentifier;
+        newRequest.origin = msg.sender;
+        newRequest.message = message;
+        newRequest.pending = true;
+
+        return newIdentifier;
+    }
+
+    function executeRequest(ConnectionRequest[] storage requests, uint identifier)
+        public 
+        returns (bool, bytes memory) {
+        ConnectionRequest storage request = requests[identifier];
+        mustBeAfterTimelock(request);
+        mustBeBeforeTimeout(request);
+        mustNotBeRejected(request);
+        mustNotBeExecuted(request);
+        mustBeApproved(request);
+
+        request.pending = false;
+        request.executed = true;
+
+        address target = request.payload.target;
+        string memory signature = request.payload.signature;
+        bytes memory args = request.payload.args;
+
+        (bool success, bytes memory response) = request.payload.target.call(abi.encodeWithSignature(signatire, args));
+        
+        return (success, response);
+    }
+
+    function rejectRequest(ConnectionRequest[] storage requests, uint identifier)
+        public {
+        ConnectionRequest storage request = requests[identifier];
+        mustBeBeforeTimelock(request);
+        mustNotBeExecuted(request);
+        mustNotBeRejected(request);
+        mustNotBeApproved(request);
+
+        request.pending = false;
+        request.rejected = true;
+    }
+
+    function approveRequest(ConnectionRequest[] storage requests, uint identifier)
+        public {
+        ConnectionRequest storage request = requests[identifier];
+        mustBeBeforeTimelock(request);
+        mustNotBeExecuted(request);
+        mustNotBeRejected(request);
+        mustNotBeApproved(request);
+
+        request.pending = false;
+        request.approved = true;
+    }
+}
+
+// for batches handling.
+library TimelockB {
+
 }
 
 contract Terminal {
     mapping(address => mapping(string => Key)) public keys;
     mapping(string => Module) private _modules;
-    ConnectionRequest[] public connectionsRequests;
-    uint numberOfConnectionRequests;
+    ConnectionRequest[] public requests;
+    BatchRequest[] public batches;
+    uint numRequests;
+    uint numBatches;
+
+    TimelockSettings public timelockSettings;
 
     constructor() {
+        timelockSettings.timelockDuration = 4 weeks;
+        timelockSettings.timeoutDuration = 7 days;
+
         Authenticator.grantStandardKey("terminal-revoke-any-key");
         Authenticator.grantStandardKey("terminal-grant-standard-key");
         Authenticator.grantStandardKey("terminal-grant-timed-key");
@@ -213,5 +338,6 @@ contract Terminal {
         external {
         authenticate(msg.sender, "terminal-connect");
     }
+    
     
 }

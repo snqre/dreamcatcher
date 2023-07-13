@@ -23,16 +23,51 @@ struct SettingsTimelock {
     uint executionWindowDuration;
 }
 
+struct ConnectionRequestSchedule {
+    uint startTimestamp;    // queued timestamp.
+    uint timelockDuration;  // amount of time it is locked for.
+    uint timeoutDuration;   // window of time when it can be executed.
+}
+
 struct Payload {
     address target;
     string signature;
     bytes args;
 }
 
+// single request.
 struct ConnectionRequest {
     Payload payload;
-    bool isApproved;
-    bool isExecuted;
-    bool isPending;
+    ConnectionRequestSchedule connectionRequestSchedule;
+    uint identifier;
+    address origin;
+    string message;
+    bool rejected;
+    bool approved;
+    bool executed;
+    bool pending;
 }
 
+struct Batch {
+    address[] targets;
+    string[] signatures;
+    bytes[] args;
+}
+
+// multi request can be complex.
+struct BatchRequest {
+    Batch batch;
+    ConnectionRequestSchedule connectionRequestSchedule;
+    uint identifier;
+    address origin;
+    string message;
+    bool rejected;
+    bool approved;
+    bool executed;
+    bool pending;
+}
+
+struct TimelockSettings {
+    uint timelockDuration;
+    uint timeoutDuration;
+}
