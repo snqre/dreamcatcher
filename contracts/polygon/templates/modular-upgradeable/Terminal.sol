@@ -119,7 +119,6 @@ library ModuleManager {
 
 // for requests handling.
 library TimelockA {
-
     error IsLocked(ConnectionRequest request);
     error IsUnlocked(ConnectionRequest request);
     error IsTimedOut(ConnectionRequest request);
@@ -241,16 +240,136 @@ library TimelockA {
 
 // for batches handling.
 library TimelockB {
+    error IsLocked(BatchConnectionRequest request);
+    error IsUnlocked(BatchConnectionRequest request);
+    error IsTimedOut(BatchConnectionRequest request);
+    error IsRejected(BatchConnectionRequest request);
+    error IsExecuted(BatchConnectionRequest request);
+    error IsApproved(BatchConnectionRequest request);
+    error IsNotApproved(BatchConnectionRequest request);
+    
+    function mustBeAfterTimelock(BatchConnectionRequest memory request)
+        public {
+        bool isTooEarly = block.timestamp < (request.connectionRequestSchedule.startTimestamp + request.connectionRequestSchedule.timelockDuration);
+        if (isTooEarly) { revert IsLocked(request); }
+    }
 
+    function mustBeBeforeTimelock(BatchConnectionRequest memory request)
+        public {
+        bool isTooLate = block.timestamp >= (request.connectionRequestSchedule.startTimestamp + request.connectionRequestSchedule.timelockDuration);
+        if (isTooLate) { revert isUnlocked(request); }
+    }
+
+    function mustBeBeforeTimeout(BatchConnectionRequest memory request)
+        public {
+        bool isTooLate = block.timestamp >= (request.connectionRequestSchedule.startTimestamp + request.connectionRequestSchedule.timelockDuration) + request.connectionRequestSchedule.timeoutDuration;
+        if (isTooLate) { revert IsTimedOut(request); }
+    }
+
+    function mustNotBeRejected(BatchConnectionRequest memory request)
+        public {
+        if (request.rejected) { revert IsRejected(request); }
+    }
+
+    function mustNotBeExecuted(BatchConnectionRequest memory request)
+        public {
+        if (request.executed) { revert IsExecuted(request); }
+    }
+
+    function mustBeApproved(BatchConnectionRequest memory request)
+        public {
+        if (!request.approved) { revert IsNotApproved(request); }
+    }
+
+    function mustNotBeApproved(BatchConnectionRequest memory request)
+        public {
+        if (request.approved) { revert IsApproved(request); }
+    }
+
+    function queueBatchRequest(TimelockSettings memory settings, BatchConnectionRequest[] storage requests, uint storage numRequests, Batch memory batch, string memory message)
+        public
+        returns (uint) {
+        numRequests ++;
+        uint newIdentifier = numRequests;
+        BatchConnectionRequest storage newRequest = requests[newIdentifier];
+        newRequest.batch = Batch({
+            targets: batch.targets,
+            signatures: batch.signatures,
+            args: batch.args
+        });
+
+        newRequest.connectionRequestSchedule = ConnectionRequestSchedule({
+            startTimestamp: block.timestamp,
+            timelockDuration: settings.timelockDuration,
+            timeoutDuration: settings.timeoutDuration
+        });
+
+        newRequest.identifier = newIdentifier;
+        newRequest.origin = msg.sender;
+        newRequest.message = message;
+        newRequest.pending = true;
+
+        return newIdentifier;
+    }
+    
+    function executeBatchRequest(BatchConnectionRequest[] storage requests, uint identifier)
+        public 
+        returns (bool[] memory, bytes[] memory) {
+        BatchConnectionRequest storage request = requests[identifier];
+        mustBeAfterTimelock(request);
+        mustBeBeforeTimeout(request);
+        mustNotBeRejected(request);
+        mustNotBeExecuted(request);
+        mustBeApproved(request);
+
+        request.pending = false;
+        request.executed = true;
+
+        address[] memory targets = request.batch.targets;
+        string[] memory signatures = request.batch.signatures;
+        bytes[] memory args = request.batch.args;
+
+        bool[] memory successes;
+        bytes[] memory responses;
+        for (uint i = 0; i < targets.length; i++) {
+            (successes[i], bytes[i]) = targets[i].call(abi.encodeWithSignature(signatures[i], args[i]));
+        }
+
+        return (successes, responses);
+    }
+
+    function rejectBatchRequest(BatchConnectionRequest[] storage requests, uint identifier)
+        public {
+        BatchConnectionRequest storage request = requests[identifier];
+        mustBeBeforeTimelock(request);
+        mustNotBeExecuted(request);
+        mustNotBeRejected(request);
+        mustNotBeApproved(request);
+
+        request.pending = false;
+        request.rejected = true;
+    }
+
+    function approveBatchRequest(BatchConnectionRequest[] storage requests, uint identifier)
+        public {
+        BatchConnectionRequest storage request = requests[identifier];
+        mustBeBeforeTimelock(request);
+        mustNotBeExecuted(request);
+        mustNotBeRejected(request);
+        mustNotBeApproved(request);
+
+        request.pending = false;
+        request.approved = true;
+    }
 }
 
 contract Terminal {
     mapping(address => mapping(string => Key)) public keys;
     mapping(string => Module) private _modules;
     ConnectionRequest[] public requests;
-    BatchRequest[] public batches;
+    BatchConnectionRequest[] public batchRequests;
+    uint numBatchRequests;
     uint numRequests;
-    uint numBatches;
 
     TimelockSettings public timelockSettings;
 
