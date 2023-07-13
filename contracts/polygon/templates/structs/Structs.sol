@@ -12,10 +12,14 @@ struct Key {
     uint numUses;
 }
 
+struct Implementation {
+    bool enabled;
+}
+
 struct Module {
     EnumerableSet.AddressSet implementations;
-    bool isUpgradeable;
-    bool isInUse;
+    bool upgradeable;
+    bool used;
 }
 
 struct SettingsTimelock {

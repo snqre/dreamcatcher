@@ -102,7 +102,7 @@ library Authenticator {
 }
 
 library ModuleManager {
-    function aquireModule(Module storage module, address implementation, bool isUpgradeable)
+    function aquireModule(Module storage module, address terminal, address implementation, string[] memory keys, bool isUpgradeable)
         public {
         if (module.isInUse) { revert ModuleIsNotEmpty(module); }
         
@@ -119,6 +119,8 @@ library ModuleManager {
         module.implementations.add(implementation);
         return module;
     }
+
+    
 }
 
 
@@ -375,6 +377,11 @@ library TimelockB {
     }
 }
 
+// designed to be able to make calls to all modules.
+library Broadcaster {
+
+}
+
 
 
 
@@ -435,30 +442,48 @@ contract Terminal {
     // MODULE MANAGER.
     // --------------
 
-    function aquireModule(string memory name, string[] memory keys_, address implementation, bool isUpgradeable)
-        external 
+    function designateModule(string memory name, address implementation, string[] memory keys_, bool upgradeable)
+        external
         returns (Module memory) {
         authenticate(msg.sender, "terminal-aquire-module");
         Module storage module = _modules[name];
-        ModuleManager.aquireModule(module, implementation, isUpgradeable);
 
+        if (module.used) { revert ModuleIsNotEmpty(module); }
+        module.implementations.add(implementation);
+        module.upgradeable = upgradeable;
+        module.used = true;
+
+        // pass authentication keys to terminal.
         for (uint i = 0; i < keys_.length; i++) { Authenticator.grantStandardKey(keys[address(this)][keys_[i]]); }
-
         emit ModuleAquired(name, module);
         return module;
     }
 
-    function upgradeModule(string memory name, string[] memory keys_, address implementation)
+    function upgradeModule(string memory name, address implementation, string[] memory keys_, bool force)
         external
-        returns (Module memory) {
+        returns (Module memory, uint version) {
         authenticate(msg.sender, "terminal-upgrade-module");
         Module storage module = _modules[name];
-        ModuleManager.upgradeModule(module, implementation);
 
-        for (uint i = 0; i < keys_.length; i++) { Authenticator.grantStandardKey(keys[address(this)][keys_[i]]); }
+        if (!module.used) { revert ModuleIsEmpty(module); }
+        if (!module.upgradeable) { revert ModuleIsNotUpgradeable(module); }
 
-        emit ModuleUpgraded(name, module);
-        return module;
+        // disable previous implementation.
+        uint latest = module.implementations.length() - 1;
+        address latestImplementation = module.implementations.at(latest);
+
+        (bool success, bytes memory response) = latestImplementation.call(abi.encodeWithSignature("disable()"));
+
+        if (!success && !force) {
+
+            // force will push the upgrade regardless of confirming the previous implementation is disabled.
+            revert UnableToConfirmPreviousImplementationIsDisabled(module);
+        }
+
+        // upgrade.
+        module.implementations.add(implementation);
+
+        return (module, module.implementations.length() - 1);
     }
 
     // ... iteralet over all modules and make the same call.
