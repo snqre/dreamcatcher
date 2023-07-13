@@ -18,6 +18,8 @@ struct Implementation {
 
 struct Module {
     EnumerableSet.AddressSet implementations;
+    address latestImplementation;
+    uint latestVersion;
     bool upgradeable;
     bool used;
 }

@@ -101,28 +101,6 @@ library Authenticator {
     }
 }
 
-library ModuleManager {
-    function aquireModule(Module storage module, address terminal, address implementation, string[] memory keys, bool isUpgradeable)
-        public {
-        if (module.isInUse) { revert ModuleIsNotEmpty(module); }
-        
-        module.implementations.add(implementation);
-        module.isUpgradeable = isUpgradeable;
-        module.isInUse = true;
-    }
-
-    function upgradeModule(Module storage module, address implementation)
-        public {
-        if (!module.isInUse) { revert ModuleIsEmpty(module); }
-        if (!module.isUpgradeable) { revert ModuleIsNotUpgradeable(module); }
-
-        module.implementations.add(implementation);
-        return module;
-    }
-
-    
-}
-
 
 
 
@@ -377,18 +355,10 @@ library TimelockB {
     }
 }
 
-// designed to be able to make calls to all modules.
-library Broadcaster {
-
-}
-
-
-
-
-
 contract Terminal {
     mapping(address => mapping(string => Key)) public keys;
     mapping(string => Module) private _modules;
+    string[] public modules;
     ConnectionRequest[] public requests;
     BatchConnectionRequest[] public batchRequests;
     uint numBatchRequests;
@@ -438,18 +408,20 @@ contract Terminal {
     function authenticate(address from, string memory key)
         public { Authenticator.authenticate(keys[from][key]); }
 
-    // --------------
-    // MODULE MANAGER.
-    // --------------
+    // ==============|
+    // MODULE MANAGER|
+    // ==============|
 
-    function designateModule(string memory name, address implementation, string[] memory keys_, bool upgradeable)
+    function addModule(string memory name, address implementation, string[] memory keys_, bool upgradeable)
         external
         returns (Module memory) {
-        authenticate(msg.sender, "terminal-aquire-module");
+        authenticate(msg.sender, "terminal-add-module");
         Module storage module = _modules[name];
 
         if (module.used) { revert ModuleIsNotEmpty(module); }
         module.implementations.add(implementation);
+        module.latestImplementation = implementation;
+        module.latestVersion = module.implementations.length() - 1;
         module.upgradeable = upgradeable;
         module.used = true;
 
@@ -457,6 +429,20 @@ contract Terminal {
         for (uint i = 0; i < keys_.length; i++) { Authenticator.grantStandardKey(keys[address(this)][keys_[i]]); }
         emit ModuleAquired(name, module);
         return module;
+    }
+
+    function removeModule(string memory name)
+        external
+        returns (Module memory) {
+        authenticate(msg.sender, "terminal-remove-module");
+        Module storage module = _modules[name];
+        
+        if (!module.used) { revert ModuleIsEmpty(module); }
+        module = Module({
+            /** clear implementations array */
+            upgradeable: false,
+            used: false
+        });
     }
 
     function upgradeModule(string memory name, address implementation, string[] memory keys_, bool force)
@@ -486,9 +472,29 @@ contract Terminal {
         return (module, module.implementations.length() - 1);
     }
 
+    // -----------|
+    // BROADCASTER|
+    // -----------|
+
+    /** makes a call to all modules with to the same signature with the same args 
+    @dev assuming each implementation is built on the implementation wrapper they should all have the same drm001 standard.
+     */
+    function broadcast(string memory signature, bytes memory args)
+        public
+        returns (bool[] memory successes, bytes[] memory responses) {
+        authenticate(msg.sender, "terminal-broadcast");
+        for (uint i = 0; i < modules.length; i++) {
+            Module storage module = _modules[modules[i]];
+            module.latestImplementation.call(abi.encodeWithSignature(signature, args));
+        }
+    }
+
+
     // ... iteralet over all modules and make the same call.
     // if they have a module wrapper terminal should be able to pause all of them.
     // identify module types and differences.
+
+    /** deploy parent terminal as new upgrade and brodcast new terminal */
 
     // --------------
     // SINGLE REQUEST.
