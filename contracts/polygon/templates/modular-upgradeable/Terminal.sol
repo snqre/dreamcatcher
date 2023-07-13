@@ -461,6 +461,10 @@ contract Terminal {
         return module;
     }
 
+    // ... iteralet over all modules and make the same call.
+    // if they have a module wrapper terminal should be able to pause all of them.
+    // identify module types and differences.
+
     // --------------
     // SINGLE REQUEST.
     // --------------
@@ -507,5 +511,29 @@ contract Terminal {
         returns (bool[] memory, bytes[] memory) {
         authenticate(msg.sender, "terminal-execute-batch-request");
         return TimelockB.executeBatchRequest(batchRequests, identifier);
+    }
+
+    function rejectBatchRequest(uint identifier)
+        external {
+        authenticate(msg.sender, "terminal-reject-batch-request");
+        TimelockB.rejectBatchRequest(batchRequests, identifier);
+    }
+
+    function approveBatchRequest(uint identifier)
+        external {
+        authenticate(msg.sender, "terminal-approve-batch-request");
+        TimelockB.approveBatchRequest(batchRequests, identifier);
+    }
+}
+
+// protocols are fast tracked instructions to terminal
+// can only be executed if the conditions are met
+contract Protocol7777 { // catastrophic failure
+    fallback()
+    public {
+        // get price
+        (, bytes memory response) = Terminal.queueRequest(payload, message);
+
+
     }
 }

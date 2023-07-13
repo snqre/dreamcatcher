@@ -55,7 +55,7 @@ struct Batch {
 }
 
 // multi request can be complex.
-struct BatchRequest {
+struct BatchConnectionRequest {
     Batch batch;
     ConnectionRequestSchedule connectionRequestSchedule;
     uint identifier;
