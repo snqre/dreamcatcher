@@ -5,6 +5,10 @@ import "contracts/polygon/deps/openzeppelin/utils/structs/EnumerableSet.sol";
 import "contracts/polygon/templates/structs/Structs.sol";
 import "contracts/polygon/templates/errors/Errors.sol";
 
+
+
+
+
 library Authenticator {
     function revokeAnyKey(Key storage key)
         public {
@@ -116,6 +120,10 @@ library ModuleManager {
         return module;
     }
 }
+
+
+
+
 
 // for requests handling.
 library TimelockA {
@@ -237,6 +245,10 @@ library TimelockA {
         request.approved = true;
     }
 }
+
+
+
+
 
 // for batches handling.
 library TimelockB {
@@ -363,6 +375,10 @@ library TimelockB {
     }
 }
 
+
+
+
+
 contract Terminal {
     mapping(address => mapping(string => Key)) public keys;
     mapping(string => Module) private _modules;
@@ -445,18 +461,51 @@ contract Terminal {
         return module;
     }
 
-    // ---------------------------
-    // CONNECTION QUEUE W TIMELOCK.
-    // ---------------------------
-
-    // request -> queued -> | exec window | -> execution -> connect -> module function
-
-    function queueConnect()
-
-    function connect(address target, string memory signature, bytes memory args)
-        external {
-        authenticate(msg.sender, "terminal-connect");
+    // --------------
+    // SINGLE REQUEST.
+    // --------------
+    
+    function queueRequest(Payload memory payload, string memory message)
+        external
+        returns (uint) {
+        authenticate(msg.sender, "terminal-queue-request");
+        return TimelockA.queueRequest(timelockSettings, requests, numRequests, payload, message);
     }
-    
-    
+
+    function executeRequest(uint identifier)
+        external
+        returns (bool, bytes memory) {
+        authenticate(msg.sender, "terminal-execute-request");
+        return TimelockA.executeRequest(requests, identifier);
+    }
+
+    function rejectRequest(uint identifier)
+        external {
+        authenticate(msg.sender, "terminal-reject-request");
+        TimelockA.rejectRequest(requests, identifier);
+    }
+
+    function approveRequest(uint identifier)
+        external {
+        authenticate(msg.sender, "terminal-approve-request");
+        TimelockA.approveRequest(requests, identifier);
+    }
+
+    // -------------
+    // BATCH REQUEST.
+    // -------------
+
+    function queueBatchRequest(Batch memory batch, string memory message)
+        external
+        returns (uint) {
+        authenticate(msg.sender, "terminal-queue-batch-request");
+        return TimelockB.queueBatchRequest(timelockSettings, batchRequests, numBatchRequests, batch, message);
+    }
+
+    function executeBatchRequest(uint identifier)
+        external
+        returns (bool[] memory, bytes[] memory) {
+        authenticate(msg.sender, "terminal-execute-batch-request");
+        return TimelockB.executeBatchRequest(batchRequests, identifier);
+    }
 }
