@@ -482,6 +482,7 @@ interface ITerminal {
     function rejectBatch(uint identifier) external;
     function approveBatch(uint identifier) external;
     function deployRouter(string memory name, address implementation, bool upgradeable, bool enabled) external returns (address);
+    function route(string memory signature, bytes memory args, bool globalSearch) external returns (bool, bytes memory);
 }
 
 contract Terminal is ITerminal {
@@ -508,6 +509,7 @@ contract Terminal is ITerminal {
     error ROUTER_ADDRESS_ALREADY_IN_USE();
     error TERMINAL_RELAY_MODE_ENABLED();
     error TERMINAL_DISABLED();
+    error ROUTE_UNABLE_TO_FIND_FUNCTION();
 
     modifier onlyKey(string memory key) {
         validate(msg.sender, key);
@@ -748,21 +750,36 @@ contract Terminal is ITerminal {
         grantStandardKey(to, "Terminal->broadcast()");
         grantStandardKey(to, "Terminal->upgrade()");
     }
-    
-    fallback() // router.
-        external
+    /// route.
+    function route(string memory signature, bytes memory args, bool globalSearch)
+        public
         onlyIfEnabled
-        onlyIfRelayModeDisabled {
-        (bool globalSearch, string memory signature, bytes memory args) = abi.decode(msg.data, (bool, string, bytes));
-        // local search
+        onlyIfRelayModeDisabled
+        returns (bool, bytes memory) {
+        bool success;
+        bytes memory response;
+        // first search through local native routers.
         for (uint i = 0; i < routers.length; i++) {
-            Router router = routers[i];
-            address target = address(router);
-            bool success;
-            bytes memory response;
-            (success, response) = target.call{gas: 2000, value: 100}(abi.encodeWithSignature(signature, args, msg.sender));
-            (response, success) = abi.decode(response, (bytes, bool));
+            address target = routers[i].getLatestImplementation();
+            (success, response) = target.call(abi.encodeWithSignature(signature, args));
+            if (success) { break; }
         }
-        
+        // search non native routers.
+        if (!success) {
+            for (uint i = 0; i < nonNativeRouters.length; i++) {
+                address target = IRouter(nonNativeRouters[i]).getLatestImplementation();
+                (success, response) = target.call(abi.encodeWithSignature(signature, args));
+                if (success) { break; }    
+            }
+        }
+        // search global.
+        if (!success && globalSearch) {
+            for (uint i = 0; i < terminals.length; i++) {
+                // first call terminal.
+                (success, response) = ITerminal(terminals[i]).route(signature, args, globalSearch);
+                if (success) { break; }
+            }
+        }
+        return (success, response);
     }
 }
