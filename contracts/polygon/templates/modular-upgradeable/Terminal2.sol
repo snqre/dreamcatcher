@@ -142,37 +142,51 @@ library TimelockRequest {
 
     function mustBeAfterTimelock(Request memory request)
         private view { 
-        if (block.timestamp < (request.start + request.timelock)) { revert IS_PENDING(request); } 
+        if (block.timestamp < (request.start + request.timelock)) { 
+            revert IS_PENDING(request); 
+        } 
     }
 
     function mustBeBeforeTimelock(Request memory request)
         private view { 
-        if (block.timestamp >= (request.start + request.timelock)) { revert IS_NO_LONGER_PENDING(request); } 
+        if (block.timestamp >= (request.start + request.timelock)) { 
+            revert IS_NO_LONGER_PENDING(request); 
+        } 
     }
 
     function mustBeBeforeTimeout(Request memory request)
         private view { 
-        if (block.timestamp >= (request.start + request.timelock) + request.timeout) { revert IS_TIMED_OUT(request); } 
+        if (block.timestamp >= (request.start + request.timelock) + request.timeout) { 
+            revert IS_TIMED_OUT(request); 
+        } 
     }
     
     function mustNotBeRejected(Request memory request)
         private pure { 
-        if (request.rejected) { revert IS_REJECTED(request); } 
+        if (request.rejected) { 
+            revert IS_REJECTED(request); 
+        } 
     }
 
     function mustNotBeExecuted(Request memory request)
         private pure { 
-        if (request.executed) { revert IS_EXECUTED(request); } 
+        if (request.executed) { 
+            revert IS_EXECUTED(request); 
+        } 
     }
 
     function mustBeApproved(Request memory request)
         private pure { 
-        if (!request.approved) { revert IS_NOT_APPROVED(request); } 
+        if (!request.approved) { 
+            revert IS_NOT_APPROVED(request); 
+        } 
     }
 
     function mustNotBeApproved(Request memory request)
         private pure { 
-        if (request.approved) { revert IS_APPROVED(request); } 
+        if (request.approved) { 
+            revert IS_APPROVED(request); 
+        } 
     }
     
     function queue(uint timelock, uint timeout, Request[] storage requests, address target, string memory signature, bytes memory args, address creator, string memory message)
@@ -248,37 +262,51 @@ library TimelockBatchRequest {
 
     function mustBeAfterTimelock(BatchRequest memory request)
         private view { 
-        if (block.timestamp < (request.start + request.timelock)) { revert IS_PENDING(request); } 
+        if (block.timestamp < (request.start + request.timelock)) { 
+            revert IS_PENDING(request); 
+        } 
     }
 
     function mustBeBeforeTimelock(BatchRequest memory request)
         private view { 
-        if (block.timestamp >= (request.start + request.timelock)) { revert IS_NO_LONGER_PENDING(request); } 
+        if (block.timestamp >= (request.start + request.timelock)) { 
+            revert IS_NO_LONGER_PENDING(request); 
+        } 
     }
 
     function mustBeBeforeTimeout(BatchRequest memory request)
         private view { 
-        if (block.timestamp >= (request.start + request.timelock) + request.timeout) { revert IS_TIMED_OUT(request); } 
+        if (block.timestamp >= (request.start + request.timelock) + request.timeout) { 
+            revert IS_TIMED_OUT(request); 
+        } 
     }
     
     function mustNotBeRejected(BatchRequest memory request)
         private pure { 
-        if (request.rejected) { revert IS_REJECTED(request); } 
+        if (request.rejected) { 
+            revert IS_REJECTED(request); 
+        } 
     }
 
     function mustNotBeExecuted(BatchRequest memory request)
         private pure { 
-        if (request.executed) { revert IS_EXECUTED(request); } 
+        if (request.executed) { 
+            revert IS_EXECUTED(request); 
+        } 
     }
 
     function mustBeApproved(BatchRequest memory request)
         private pure { 
-        if (!request.approved) { revert IS_NOT_APPROVED(request); } 
+        if (!request.approved) { 
+            revert IS_NOT_APPROVED(request); 
+        } 
     }
 
     function mustNotBeApproved(BatchRequest memory request)
         private pure { 
-        if (request.approved) { revert IS_APPROVED(request); } 
+        if (request.approved) { 
+            revert IS_APPROVED(request); 
+        } 
     }
     
     function queue(uint timelock, uint timeout, BatchRequest[] storage requests, address[] memory targets, string[] memory signatures, bytes[] memory args, address creator, string memory message)
