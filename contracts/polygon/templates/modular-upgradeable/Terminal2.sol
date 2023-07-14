@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity 0.8.19;
+import "contracts/polygon/deps/openzeppelin/utils/structs/EnumerableSet.sol";
 
 struct Key {
     bool owned;
@@ -41,6 +42,98 @@ struct BatchRequest {
     bool approved;
     bool executed;
     bool pending;
+}
+
+interface IRouter {
+    function upgradeable() external view returns (bool);
+    function enabled() external view returns (bool);
+    function name() external view returns (string memory);
+    function terminal() external view returns (address);
+    function enable() external;
+    function disable() external;
+    function upgrade(address implementation) external;
+    function downgrade(uint version) external;
+    function swapTerminal(address terminal_) external;
+    function getLatestImplementation() external returns (address);
+    function getLatestVersion() external returns (uint);
+}
+
+contract Router is IRouter {
+    using EnumerableSet for EnumerableSet.AddressSet;
+
+    EnumerableSet.AddressSet private _implementations;
+    bool public immutable upgradeable;
+    bool public enabled;
+    string public name;
+    address public terminal;
+
+    error ROUTER_DISABLED();
+    error INVALID_VERSION();
+
+    modifier onlyIfEnabled() {
+        if (!enabled) { revert ROUTER_DISABLED();}
+        _;
+    }
+
+    modifier onlyKey(string memory key) {
+        ITerminal(terminal).validate(msg.sender, string(abi.encodePacked(name, key)));
+        _;
+    }
+
+    constructor(string memory name_, address implementation, bool upgradeable_) {
+        _implementations.add(implementation);
+        upgradeable = upgradeable_;
+        name = name_;
+        terminal = msg.sender;
+    }
+
+    function enable()
+        public 
+        onlyKey("->enable()") {
+        enabled = true;
+    }
+
+    function disable()
+        public
+        onlyKey("->disable()") {
+        enabled = false;
+    }
+
+    function upgrade(address implementation)
+        public
+        onlyIfEnabled
+        onlyKey("->upgrade()") {
+        _implementations.add(implementation);
+    }
+
+    function downgrade(uint version)
+        public
+        onlyIfEnabled
+        onlyKey("->downgrade") {
+        if (version >= _implementations.length()) { revert INVALID_VERSION(); }
+        _implementations.add(_implementations.at(version));
+    }
+
+    function swapTerminal(address terminal_)
+        public
+        onlyIfEnabled
+        onlyKey("->swapTerminal()") {
+        terminal = terminal_;
+    }
+
+    function getLatestImplementation()
+        public view
+        onlyIfEnabled
+        returns (address) {
+        return _implementations.at(getLatestVersion());
+    }
+
+    function getLatestVersion()
+        public view
+        onlyIfEnabled
+        returns (uint) {
+        return _implementations.length() - 1;
+    }
 }
 
 library Validator {
@@ -370,18 +463,64 @@ library TimelockBatchRequest {
     }
 }
 
-contract Terminal {
-    mapping(address => mapping(string => Key)) public keys;
-    Request[] public requests;
-    BatchRequest[] public requestsBatch;
-    
+interface ITerminal {
+    function validate(address from, string memory key) external;
+    function revokeAnyKey(address from, string memory key) external;
+    function grantStandardKey(address to, string memory key) external;
+    function grantTimedKey(address to, string memory key, uint start, uint duration) external;
+    function increaseTimedKeyDuration(address of_, string memory key, uint increase) external;
+    function decreaseTimedKeyDuration(address of_, string memory key, uint decrease) external;
+    function grantConsumableKey(address to, string memory key, uint uses) external;
+    function increaseConsumableKeyUses(address of_, string memory key, uint increase) external;
+    function decreaseConsumableKeyUses(address of_, string memory key, uint decrease) external;
+    function queue(address target, string memory signature, bytes memory args, address creator, string memory message) external;
+    function execute(uint identifier) external;
+    function reject(uint identifier) external;
+    function approve(uint identifier) external;
+    function queueBatch(address[] memory targets, string[] memory signatures, bytes[] memory args, address creator, string memory message) external;
+    function executeBatch(uint identifier) external;
+    function rejectBatch(uint identifier) external;
+    function approveBatch(uint identifier) external;
+    function deployRouter(string memory name, address implementation, bool upgradeable, bool enabled) external returns (address);
+}
+
+contract Terminal is ITerminal {
     uint public timelock;
     uint public timeout;
+    bool public enabledSelfApprove;
+    bool public enabledRelayMode;
+    bool public enabled_;
 
-    event KeyGranted();
+    Request[] public requests;
+    BatchRequest[] public requestsBatch;
+    Router[] public routers;
+    address[] public terminals;
+    address[] public nonNativeRouters;
+
+    mapping(string => bool) public nameHasBeenUsed;
+    mapping(address => bool) public addressHasBeenUsed;
+    string[] public routersNames;
+    mapping(string => uint) public nameRepeats;
+
+    mapping(address => mapping(string => Key)) public keys;
+
+    error ROUTER_NAME_ALREADY_IN_USE();
+    error ROUTER_ADDRESS_ALREADY_IN_USE();
+    error TERMINAL_RELAY_MODE_ENABLED();
+    error TERMINAL_DISABLED();
 
     modifier onlyKey(string memory key) {
         validate(msg.sender, key);
+        _;
+    }
+
+    modifier onlyIfEnabled() {
+        if (enabled_) { revert TERMINAL_DISABLED(); }
+        _;
+    }
+
+    modifier onlyIfRelayModeDisabled() {
+        if (enabledRelayMode) { revert TERMINAL_RELAY_MODE_ENABLED(); }
         _;
     }
 
@@ -398,63 +537,232 @@ contract Terminal {
     }
     
     function revokeAnyKey(address from, string memory key)
-        external 
+        public
+        onlyIfEnabled
+        onlyIfRelayModeDisabled 
         onlyKey("Terminal->revokeAnyKey()") { 
         Validator.revokeAnyKey(keys[from][key]); 
     }
 
     function grantStandardKey(address to, string memory key)
-        external
+        public
+        onlyIfEnabled
+        onlyIfRelayModeDisabled 
         onlyKey("Terminal->grantStandardKey()") { 
         Validator.grantStandardKey(keys[to][key]); 
     }
 
     function grantTimedKey(address to, string memory key, uint start, uint duration)
-        external
+        public
+        onlyIfEnabled
+        onlyIfRelayModeDisabled 
         onlyKey("Terminal->grantTimedKey()") { 
         Validator.grantTimedKey(keys[to][key], start, duration);
     }
     
     function increaseTimedKeyDuration(address of_, string memory key, uint increase)
-        external
+        public
+        onlyIfEnabled
+        onlyIfRelayModeDisabled 
         onlyKey("Terminal->increaseTimedKeyDuration()") { 
         Validator.increaseTimedKeyDuration(keys[of_][key], increase); 
     }
     
     function decreaseTimedKeyDuration(address of_, string memory key, uint decrease)
-        external
+        public
+        onlyIfEnabled
+        onlyIfRelayModeDisabled 
         onlyKey("Terminal->decreaseTimedKeyDuration()") { 
         Validator.decreaseTimedKeyDuration(keys[of_][key], decrease); 
     }
 
     function grantConsumableKey(address to, string memory key, uint uses)
-        external
+        public
+        onlyIfEnabled
+        onlyIfRelayModeDisabled 
         onlyKey("Terminal->grantConsumableKey()") { 
         Validator.grantConsumableKey(keys[to][key], uses); 
     }
     
     function increaseConsumableKeyUses(address of_, string memory key, uint increase)
-        external
+        public
+        onlyIfEnabled
+        onlyIfRelayModeDisabled 
         onlyKey("Terminal->increaseConsumableKeyUses()") { 
         Validator.increaseConsumableKeyUses(keys[of_][key], increase); 
     }
     
     function decreaseConsumableKeyUses(address of_, string memory key, uint decrease)
-        external
+        public
+        onlyIfEnabled
+        onlyIfRelayModeDisabled 
         onlyKey("Terminal->decreaseConsumableKeyUses()") { 
         Validator.decreaseConsumableKeyUses(keys[of_][key], decrease); 
     }
     
     function queue(address target, string memory signature, bytes memory args, address creator, string memory message)
-        external
+        public
+        onlyIfEnabled
+        onlyIfRelayModeDisabled 
         onlyKey("Terminal->queue()") {
-        TimelockRequest.queue(timelock, timeout, requests, target, signature, args, creator, message);
+        uint identifier = TimelockRequest.queue(timelock, timeout, requests, target, signature, args, creator, message);
+        if (enabledSelfApprove) { TimelockRequest.approve(requests, identifier); }
     }
 
-    // ... request mechanism
-    // ... batch request mechanism
-    // ... router management
-    // ... implementation management
-    // ... terminal manipulation
-    // ... universals
+    function execute(uint identifier)
+        public
+        onlyIfEnabled
+        onlyIfRelayModeDisabled 
+        onlyKey("Terminal->execute()") {
+        TimelockRequest.execute(requests, identifier);
+    }
+
+    function reject(uint identifier)
+        public
+        onlyIfEnabled
+        onlyIfRelayModeDisabled 
+        onlyKey("Terminal->reject()") {
+        TimelockRequest.reject(requests, identifier);
+    }
+
+    function approve(uint identifier)
+        public
+        onlyIfEnabled
+        onlyIfRelayModeDisabled 
+        onlyKey("Terminal->approve()") {
+        TimelockRequest.approve(requests, identifier);
+    }
+
+    function queueBatch(address[] memory targets, string[] memory signatures, bytes[] memory args, address creator, string memory message)
+        public
+        onlyIfEnabled
+        onlyIfRelayModeDisabled 
+        onlyKey("Terminal->queueBatch()") {
+        uint identifier = TimelockBatchRequest.queue(timelock, timeout, requestsBatch, targets, signatures, args, creator, message);
+        if (enabledSelfApprove) { TimelockBatchRequest.approve(requestsBatch, identifier); }
+    }
+
+    function executeBatch(uint identifier)
+        public
+        onlyIfEnabled
+        onlyIfRelayModeDisabled 
+        onlyKey("Terminal->executeBatch()") {
+        TimelockBatchRequest.execute(requestsBatch, identifier);
+    }
+    
+    function rejectBatch(uint identifier)
+        public
+        onlyKey("Terminal->rejectBatch()") {
+        TimelockBatchRequest.reject(requestsBatch, identifier);
+    }
+
+    function approveBatch(uint identifier)
+        public
+        onlyIfEnabled
+        onlyIfRelayModeDisabled 
+        onlyKey("Terminal->approveBatch()") {
+        TimelockBatchRequest.approve(requestsBatch, identifier);
+    }
+
+    function deployRouter(string memory name, address implementation, bool upgradeable, bool enabled)
+        public 
+        onlyIfEnabled
+        onlyIfRelayModeDisabled 
+        onlyKey("Terminal->deployRouter()")
+        returns (address) {
+        if (nameHasBeenUsed[name]) { revert ROUTER_NAME_ALREADY_IN_USE(); }
+        nameHasBeenUsed[name] = true;
+        routersNames.push(name);
+        routers.push(new Router(name, implementation, upgradeable));
+        uint identifier = routers.length - 1;
+        if (enabled) { routers[identifier].enable(); }
+        addressHasBeenUsed[address(routers[identifier])] = true;
+        return address(routers[identifier]);
+    }
+
+    // for non native router access.
+    function plugInRouter(address router_)
+        public
+        onlyIfEnabled
+        onlyIfRelayModeDisabled 
+        onlyKey("Terminal-plugInRouter()") 
+        returns (address) {
+        IRouter router = IRouter(router_);
+        if (addressHasBeenUsed[address(router)]) { revert ROUTER_ADDRESS_ALREADY_IN_USE(); }
+        if (nameHasBeenUsed[router.name()]) { revert ROUTER_NAME_ALREADY_IN_USE(); }
+        addressHasBeenUsed[address(router)] = true;
+        router.swapTerminal(address(this));
+        router.enable();
+        nonNativeRouters.push(router_);
+        return address(router);
+    }
+
+    function broadcast(string memory signature, bytes memory args)
+        public
+        onlyIfEnabled
+        onlyIfRelayModeDisabled 
+        onlyKey("Terminal->broadcast()") 
+        returns (bool[] memory) {
+        bool[] memory successes;
+        for (uint i = 0; i < routers.length; i++) {
+            (bool success, ) = address(routers[i]).call(abi.encodeWithSignature(signature, args));
+            successes[successes.length] = success; 
+        }
+        for (uint i = 0; i < nonNativeRouters.length; i++) {
+            (bool success, ) = address(nonNativeRouters[i]).call(abi.encodeWithSignature(signature, args));
+            successes[successes.length] = success;
+        }
+        return successes;
+    }
+
+    function upgrade(address implementation, bool carryRouters)
+        public
+        onlyIfEnabled
+        onlyIfRelayModeDisabled 
+        onlyKey("Terminal->upgrade()") {
+        // move router's terminal to new terminal implementation.
+        if (carryRouters) {
+            bytes memory args = abi.encode(implementation);
+            broadcast("swapTerminal(address)", args);
+        }
+        // grant keys of this contract.
+        terminals.push(implementation);
+        address to = implementation;
+        grantStandardKey(to, "Terminal->revokeAnyKey()");
+        grantStandardKey(to, "Terminal->grantTimedKey()");
+        grantStandardKey(to, "Terminal->increaseTimedKeyDuration");
+        grantStandardKey(to, "Terminal->decreaseTimedKeyDuration");
+        grantStandardKey(to, "Terminal->grantConsumableKey()");
+        grantStandardKey(to, "Terminal->increaseConsumableKeyUses()");
+        grantStandardKey(to, "Terminal->decreaseConsumableKeyUses()");
+        grantStandardKey(to, "Terminal->queue()");
+        grantStandardKey(to, "Terminal->execute()");
+        grantStandardKey(to, "Terminal->reject()");
+        grantStandardKey(to, "Terminal->approve()");
+        grantStandardKey(to, "Terminal->queueBatch()");
+        grantStandardKey(to, "Terminal->executeBatch()");
+        grantStandardKey(to, "Terminal->rejectBatch()");
+        grantStandardKey(to, "Terminal->approveBatch()");
+        grantStandardKey(to, "Terminal->deployRouter()");
+        grantStandardKey(to, "Terminal->plugInRouter()");
+        grantStandardKey(to, "Terminal->broadcast()");
+        grantStandardKey(to, "Terminal->upgrade()");
+    }
+    
+    fallback() // router.
+        external
+        onlyIfEnabled
+        onlyIfRelayModeDisabled {
+        (bool globalSearch, string memory signature, bytes memory args) = abi.decode(msg.data, (bool, string, bytes));
+        // local search
+        for (uint i = 0; i < routers.length; i++) {
+            Router router = routers[i];
+            address target = address(router);
+            bool success;
+            bytes memory response;
+            (success, response) = target.call{gas: 2000, value: 100}(abi.encodeWithSignature(signature, args, msg.sender));
+            (response, success) = abi.decode(response, (bytes, bool));
+        }
+        
+    }
 }
