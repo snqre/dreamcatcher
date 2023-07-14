@@ -141,25 +141,39 @@ library TimelockRequest {
     error INVALID_IDENTIFIER(uint max);
 
     function mustBeAfterTimelock(Request memory request)
-        private view { if (block.timestamp < (request.start + request.timelock)) { revert IS_PENDING(request); } }
+        private view { 
+        if (block.timestamp < (request.start + request.timelock)) { revert IS_PENDING(request); } 
+    }
 
     function mustBeBeforeTimelock(Request memory request)
-        private view { if (block.timestamp >= (request.start + request.timelock)) { revert IS_NO_LONGER_PENDING(request); } }
+        private view { 
+        if (block.timestamp >= (request.start + request.timelock)) { revert IS_NO_LONGER_PENDING(request); } 
+    }
 
     function mustBeBeforeTimeout(Request memory request)
-        private view { if (block.timestamp >= (request.start + request.timelock) + request.timeout) { revert IS_TIMED_OUT(request); } }
+        private view { 
+        if (block.timestamp >= (request.start + request.timelock) + request.timeout) { revert IS_TIMED_OUT(request); } 
+    }
     
     function mustNotBeRejected(Request memory request)
-        private pure { if (request.rejected) { revert IS_REJECTED(request); } }
+        private pure { 
+        if (request.rejected) { revert IS_REJECTED(request); } 
+    }
 
     function mustNotBeExecuted(Request memory request)
-        private pure { if (request.executed) { revert IS_EXECUTED(request); } }
+        private pure { 
+        if (request.executed) { revert IS_EXECUTED(request); } 
+    }
 
     function mustBeApproved(Request memory request)
-        private pure { if (!request.approved) { revert IS_NOT_APPROVED(request); } }
+        private pure { 
+        if (!request.approved) { revert IS_NOT_APPROVED(request); } 
+    }
 
     function mustNotBeApproved(Request memory request)
-        private pure { if (request.approved) { revert IS_APPROVED(request); } }
+        private pure { 
+        if (request.approved) { revert IS_APPROVED(request); } 
+    }
     
     function queue(uint timelock, uint timeout, Request[] storage requests, address target, string memory signature, bytes memory args, address creator, string memory message)
         public
@@ -233,25 +247,39 @@ library TimelockBatchRequest {
     error INVALID_IDENTIFIER(uint max);
 
     function mustBeAfterTimelock(BatchRequest memory request)
-        private view { if (block.timestamp < (request.start + request.timelock)) { revert IS_PENDING(request); } }
+        private view { 
+        if (block.timestamp < (request.start + request.timelock)) { revert IS_PENDING(request); } 
+    }
 
     function mustBeBeforeTimelock(BatchRequest memory request)
-        private view { if (block.timestamp >= (request.start + request.timelock)) { revert IS_NO_LONGER_PENDING(request); } }
+        private view { 
+        if (block.timestamp >= (request.start + request.timelock)) { revert IS_NO_LONGER_PENDING(request); } 
+    }
 
     function mustBeBeforeTimeout(BatchRequest memory request)
-        private view { if (block.timestamp >= (request.start + request.timelock) + request.timeout) { revert IS_TIMED_OUT(request); } }
+        private view { 
+        if (block.timestamp >= (request.start + request.timelock) + request.timeout) { revert IS_TIMED_OUT(request); } 
+    }
     
     function mustNotBeRejected(BatchRequest memory request)
-        private pure { if (request.rejected) { revert IS_REJECTED(request); } }
+        private pure { 
+        if (request.rejected) { revert IS_REJECTED(request); } 
+    }
 
     function mustNotBeExecuted(BatchRequest memory request)
-        private pure { if (request.executed) { revert IS_EXECUTED(request); } }
+        private pure { 
+        if (request.executed) { revert IS_EXECUTED(request); } 
+    }
 
     function mustBeApproved(BatchRequest memory request)
-        private pure { if (!request.approved) { revert IS_NOT_APPROVED(request); } }
+        private pure { 
+        if (!request.approved) { revert IS_NOT_APPROVED(request); } 
+    }
 
     function mustNotBeApproved(BatchRequest memory request)
-        private pure { if (request.approved) { revert IS_APPROVED(request); } }
+        private pure { 
+        if (request.approved) { revert IS_APPROVED(request); } 
+    }
     
     function queue(uint timelock, uint timeout, BatchRequest[] storage requests, address[] memory targets, string[] memory signatures, bytes[] memory args, address creator, string memory message)
         public
@@ -337,40 +365,64 @@ contract Terminal {
     }
 
     function validate(address from, string memory key)
-        public { Validator.validate(keys[from][key]); }
+        public { 
+        Validator.validate(keys[from][key]); 
+    }
     
     function revokeAnyKey(address from, string memory key)
         external 
-        onlyKey("Terminal->revokeAnyKey()") { Validator.revokeAnyKey(keys[from][key]); }
+        onlyKey("Terminal->revokeAnyKey()") { 
+        Validator.revokeAnyKey(keys[from][key]); 
+    }
 
     function grantStandardKey(address to, string memory key)
         external
-        onlyKey("Terminal->grantStandardKey()") { Validator.grantStandardKey(keys[to][key]); }
+        onlyKey("Terminal->grantStandardKey()") { 
+        Validator.grantStandardKey(keys[to][key]); 
+    }
 
     function grantTimedKey(address to, string memory key, uint start, uint duration)
         external
-        onlyKey("Terminal->grantTimedKey()") { Validator.grantTimedKey(keys[to][key], start, duration);}
+        onlyKey("Terminal->grantTimedKey()") { 
+        Validator.grantTimedKey(keys[to][key], start, duration);
+    }
     
     function increaseTimedKeyDuration(address of_, string memory key, uint increase)
         external
-        onlyKey("Terminal->increaseTimedKeyDuration()") { Validator.increaseTimedKeyDuration(keys[of_][key], increase); }
+        onlyKey("Terminal->increaseTimedKeyDuration()") { 
+        Validator.increaseTimedKeyDuration(keys[of_][key], increase); 
+    }
     
     function decreaseTimedKeyDuration(address of_, string memory key, uint decrease)
         external
-        onlyKey("Terminal->decreaseTimedKeyDuration()") { Validator.decreaseTimedKeyDuration(keys[of_][key], decrease); }
+        onlyKey("Terminal->decreaseTimedKeyDuration()") { 
+        Validator.decreaseTimedKeyDuration(keys[of_][key], decrease); 
+    }
 
     function grantConsumableKey(address to, string memory key, uint uses)
         external
-        onlyKey("Terminal->grantConsumableKey()") { Validator.grantConsumableKey(keys[to][key], uses); }
+        onlyKey("Terminal->grantConsumableKey()") { 
+        Validator.grantConsumableKey(keys[to][key], uses); 
+    }
     
     function increaseConsumableKeyUses(address of_, string memory key, uint increase)
         external
-        onlyKey("Terminal->increaseConsumableKeyUses()") { Validator.increaseConsumableKeyUses(keys[of_][key], increase); }
+        onlyKey("Terminal->increaseConsumableKeyUses()") { 
+        Validator.increaseConsumableKeyUses(keys[of_][key], increase); 
+    }
     
     function decreaseConsumableKeyUses(address of_, string memory key, uint decrease)
         external
-        onlyKey("Terminal->decreaseConsumableKeyUses()") { Validator.decreaseConsumableKeyUses(keys[of_][key], decrease); }
+        onlyKey("Terminal->decreaseConsumableKeyUses()") { 
+        Validator.decreaseConsumableKeyUses(keys[of_][key], decrease); 
+    }
     
+    function queue(address target, string memory signature, bytes memory args, address creator, string memory message)
+        external
+        onlyKey("Terminal->queue()") {
+        TimelockRequest.queue(timelock, timeout, requests, target, signature, args, creator, message);
+    }
+
     // ... request mechanism
     // ... batch request mechanism
     // ... router management
