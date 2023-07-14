@@ -2,48 +2,6 @@
 pragma solidity 0.8.19;
 import "contracts/polygon/deps/openzeppelin/utils/structs/EnumerableSet.sol";
 
-struct Key {
-    bool owned;
-    bool timed;
-    bool standard;
-    bool consumable;
-    uint start;
-    uint end;
-    uint uses;
-}
-
-struct Request {
-    address target;
-    string signature;
-    bytes args;
-    uint start;
-    uint timelock;
-    uint timeout;
-    uint identifier;
-    address creator;
-    string message;
-    bool rejected;
-    bool approved;
-    bool executed;
-    bool pending;
-}
-
-struct BatchRequest {
-    address[] targets;
-    string[] signatures;
-    bytes[] args;
-    uint start;
-    uint timelock;
-    uint timeout;
-    uint identifier;
-    address creator;
-    string message;
-    bool rejected;
-    bool approved;
-    bool executed;
-    bool pending;
-}
-
 interface IRouter {
     function upgradeable() external view returns (bool);
     function enabled() external view returns (bool);
@@ -137,6 +95,16 @@ contract Router is IRouter {
 }
 
 library Validator {
+    struct Key {
+        bool owned;
+        bool timed;
+        bool standard;
+        bool consumable;
+        uint start;
+        uint end;
+        uint uses;
+    }
+
     error KEY_IS_NOT_OF_TYPE(Key);
     error KEY_CANNOT_EXPIRE_BEFORE_GRANTED(Key);
     error KEY_IS_NOT_OWNED(Key);
@@ -224,6 +192,22 @@ library Validator {
 }
 
 library TimelockRequest {
+    struct Request {
+        address target;
+        string signature;
+        bytes args;
+        uint start;
+        uint timelock;
+        uint timeout;
+        uint identifier;
+        address creator;
+        string message;
+        bool rejected;
+        bool approved;
+        bool executed;
+        bool pending;
+    }
+
     error IS_PENDING(Request);
     error IS_NO_LONGER_PENDING(Request);
     error IS_TIMED_OUT(Request);
@@ -338,12 +322,27 @@ library TimelockRequest {
         mustNotBeExecuted(request);
         mustNotBeRejected(request);
         mustNotBeApproved(request);
-        request.pending = false;
         request.approved = true;
     }
 }
 
 library TimelockBatchRequest {
+    struct BatchRequest {
+        address[] targets;
+        string[] signatures;
+        bytes[] args;
+        uint start;
+        uint timelock;
+        uint timeout;
+        uint identifier;
+        address creator;
+        string message;
+        bool rejected;
+        bool approved;
+        bool executed;
+        bool pending;
+    }
+
     error IS_PENDING(BatchRequest);
     error IS_NO_LONGER_PENDING(BatchRequest);
     error IS_TIMED_OUT(BatchRequest);
@@ -458,7 +457,6 @@ library TimelockBatchRequest {
         mustNotBeExecuted(request);
         mustNotBeRejected(request);
         mustNotBeApproved(request);
-        request.pending = false;
         request.approved = true;
     }
 }
@@ -492,8 +490,8 @@ contract Terminal is ITerminal {
     bool public enabledRelayMode;
     bool public enabled_;
 
-    Request[] public requests;
-    BatchRequest[] public requestsBatch;
+    TimelockRequest.Request[] public requests;
+    TimelockBatchRequest.BatchRequest[] public requestsBatch;
     Router[] public routers;
     address[] public terminals;
     address[] public nonNativeRouters;
@@ -503,13 +501,14 @@ contract Terminal is ITerminal {
     string[] public routersNames;
     mapping(string => uint) public nameRepeats;
 
-    mapping(address => mapping(string => Key)) public keys;
+    mapping(address => mapping(string => Validator.Key)) public keys;
 
     error ROUTER_NAME_ALREADY_IN_USE();
     error ROUTER_ADDRESS_ALREADY_IN_USE();
     error TERMINAL_RELAY_MODE_ENABLED();
     error TERMINAL_DISABLED();
     error ROUTE_UNABLE_TO_FIND_FUNCTION();
+    error INVALID_IDENTIFIER();
 
     modifier onlyKey(string memory key) {
         validate(msg.sender, key);
@@ -529,8 +528,26 @@ contract Terminal is ITerminal {
     constructor() {
         timelock = 1814400 seconds;
         timeout = 604800 seconds;
-        address to = address(this);
+        address to = msg.sender;
         Validator.grantStandardKey(keys[to]["Terminal.revokeAnyKey()"]);
+        Validator.grantStandardKey(keys[to]["Terminal.grantTimedKey()"]);
+        Validator.grantStandardKey(keys[to]["Terminal.increaseTimedKeyDuration()"]);
+        Validator.grantStandardKey(keys[to]["Terminal.decreaseTimedKeyDuration()"]);
+        Validator.grantStandardKey(keys[to]["Terminal->grantConsumableKey()"]);
+        Validator.grantStandardKey(keys[to]["Terminal->increaseConsumableKeyUses()"]);
+        Validator.grantStandardKey(keys[to]["Terminal->decreaseConsumableKeyUses()"]);
+        Validator.grantStandardKey(keys[to]["Terminal->queue()"]);
+        Validator.grantStandardKey(keys[to]["Terminal->execute()"]);
+        Validator.grantStandardKey(keys[to]["Terminal->reject()"]);
+        Validator.grantStandardKey(keys[to]["Terminal->approve()"]);
+        Validator.grantStandardKey(keys[to]["Terminal->queueBatch()"]);
+        Validator.grantStandardKey(keys[to]["Terminal->executeBatch()"]);
+        Validator.grantStandardKey(keys[to]["Terminal->rejectBatch()"]);
+        Validator.grantStandardKey(keys[to]["Terminal->approveBatch()"]);
+        Validator.grantStandardKey(keys[to]["Terminal->deployRouter()"]);
+        Validator.grantStandardKey(keys[to]["Terminal->plugInRouter()"]);
+        Validator.grantStandardKey(keys[to]["Terminal->broadcast()"]);
+        Validator.grantStandardKey(keys[to]["Terminal->upgrade()"]);
     }
 
     function validate(address from, string memory key)
@@ -632,6 +649,7 @@ contract Terminal is ITerminal {
         onlyIfEnabled
         onlyIfRelayModeDisabled 
         onlyKey("Terminal->approve()") {
+        
         TimelockRequest.approve(requests, identifier);
     }
 
@@ -666,6 +684,7 @@ contract Terminal is ITerminal {
         TimelockBatchRequest.approve(requestsBatch, identifier);
     }
 
+    // ... when router is deployed keys must be granted to terminal.
     function deployRouter(string memory name, address implementation, bool upgradeable, bool enabled)
         public 
         onlyIfEnabled
