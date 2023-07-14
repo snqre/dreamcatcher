@@ -4,10 +4,7 @@ import "contracts/polygon/deps/openzeppelin/utils/math/Math.sol";
 import "contracts/polygon/deps/openzeppelin/utils/structs/EnumerableSet.sol";
 import "contracts/polygon/templates/structs/Structs.sol";
 import "contracts/polygon/templates/errors/Errors.sol";
-
-
-
-
+import "contracts/polygon/templates/modular-upgradeable/Router.sol";
 
 library Authenticator {
     function revokeAnyKey(Key storage key)
@@ -47,20 +44,20 @@ library Authenticator {
 
     function decreaseTimedKeyDuration(Key storage key, uint decrease)
         public {
-        if (!key.isOwned) { revert KeyIsNotOfType(key); }
-        if (!key.isTimed) { revert KeyIsNotOfType(key); }
+            if (!key.isOwned) { revert KeyIsNotOfType(key); }
+            if (!key.isTimed) { revert KeyIsNotOfType(key); }
 
-        uint newEndTimestamp = key.startTimestamp + ((key.endTimestamp - key.startTimestamp) - decrease);
-        require(newEndTimestamp > key.startTimestamp);
-        key.endTimestamp = newEndTimestamp;
+            uint newEndTimestamp = key.startTimestamp + ((key.endTimestamp - key.startTimestamp) - decrease);
+            require(newEndTimestamp > key.startTimestamp);
+            key.endTimestamp = newEndTimestamp;
     }
 
     function grantConsumableKey(Key storage key, uint numUses)
         public {
-        revokeAnyKey(key);
-        key.isOwned = true;
-        key.isConsumable = true;
-        key.numUses = numUses;
+            revokeAnyKey(key);
+            key.isOwned = true;
+            key.isConsumable = true;
+            key.numUses = numUses;
     }
 
     function increaseConsumableKeyUses(Key storage key, uint increase)
@@ -357,14 +354,17 @@ library TimelockB {
 
 contract Terminal {
     mapping(address => mapping(string => Key)) public keys;
-    mapping(string => Module) private _modules;
-    string[] public modules;
+    Router[] public routers;
+    mapping(string => bool) public isRouter;
+    mapping(string => uint) public nameToRouterMapping;
     ConnectionRequest[] public requests;
     BatchConnectionRequest[] public batchRequests;
     uint numBatchRequests;
     uint numRequests;
 
     TimelockSettings public timelockSettings;
+
+    error ROUTER_IS_ALREADY_DEPLOYED();
 
     constructor() {
         timelockSettings.timelockDuration = 4 weeks;
@@ -411,6 +411,44 @@ contract Terminal {
     // ==============|
     // MODULE MANAGER|
     // ==============|
+
+    // deploys router and grants access to router keys.
+    function deployRouter(string memory name, address implementation, bool upgradeable, bool enabled)
+        external
+        returns (bool) {
+        if (isRouter[name]) { revert ROUTER_IS_ALREADY_DEPLOYED(); }
+        routers.push(new Router(name, implementation, upgradeable, enabled));
+        nameToRouterMapping[name] = routers.length - 1;
+        address to = address(this); // standard router functions.
+        Authenticator.grantStandardKey(keys[to][string(abi.encodePacked(name, "->enable()"))]);
+        Authenticator.grantStandardKey(keys[to][string(abi.encodePacked(name, "->disable()"))]);
+        Authenticator.grantStandardKey(keys[to][string(abi.encodePacked(name, "->upgrade()"))]);
+        Authenticator.grantStandardKey(keys[to][string(abi.encodePacked(name, "->downgrade()"))]);
+        Authenticator.grantStandardKey(keys[to][string(abi.encodePacked(name, "->swapTerminal()"))]);
+        isRouter[name] = true;
+        return true;
+    }
+
+    function connect(string memory name, string memory signature, bytes memory args)
+        external
+        returns (bytes memory) {
+        authenticate(msg.sender, "Terminal->connect()");
+        Router storage router = routers[nameToRouterMapping[name]];
+        (bool success, bytes memory response) = address(router).call(abi.encodeWithSignature(signature, args));
+        return response;
+    }
+
+    function route(string memory signature, bytes memory args)
+        external
+        returns (bytes memory) {
+        for (uint i = 0; i < routers.length; i++) {
+            Router storage router = routers[i];
+            (bool success, bytes memory response) = address(router).call(abi.encodeWithSignature(signature, args));
+            if (success) { break; }
+        }
+
+        return response;
+    }
 
     function addModule(string memory name, address implementation, string[] memory keys_, bool upgradeable)
         external
@@ -554,6 +592,41 @@ contract Terminal {
         external {
         authenticate(msg.sender, "terminal-approve-batch-request");
         TimelockB.approveBatchRequest(batchRequests, identifier);
+    }
+
+    function route(string memory signature, bytes memory args)
+        external
+        returns (bytes memory) {
+        for (uint i = 0; i < routers.length; i++) {
+            Router storage router = routers[i];
+            (bool success, bytes memory response) = address(router).call(abi.encodeWithSignature(signature, args));
+            if (success) { break; }
+        }
+
+        return response;
+    }
+
+    // anyone can make any function call from this contract.
+    fallback()
+        external
+        returns (bytes memory) {
+        (bytes4 signature, bytes memory args) = abi.decode(msg.data, (bytes4, bytes));
+        for (uint i = 0; i < routers.length; i++) {
+            Router storage router = routers[i];
+            address target = address(router);
+            
+            bool success;
+            bytes memory response;
+            try (success, response) = target.call{value: msg.sender}(abi.encodeWithSignature(signature, args)) {
+                if (success) {
+                    
+                }
+            } catch {
+                continue;
+            }
+        }
+
+        return response;
     }
 }
 
