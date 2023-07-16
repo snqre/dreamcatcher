@@ -1,100 +1,75 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity 0.8.19;
 import "contracts/polygon/deps/openzeppelin/utils/structs/EnumerableSet.sol";
-import "contracts/polygon/templates/errors/Errors.sol";
-
-/**
- The router will route any calls to the latest implementation
- */
+import "contracts/polygon/templates/modular-upgradeable/Terminal.sol";
 
 contract Router {
     using EnumerableSet for EnumerableSet.AddressSet;
-
-    EnumerableSet.AddressSet private implementations;
-    address public latestImplementation;
-    uint public latestVersion;
-    bool public upgradeable;
-    bool public enabled;
-    string public name;
-
+    bool upgradeable;
+    bool enabled;
+    string id;
     address terminal;
 
-    error IsNotEnabled();
+    error ROUTER_DISABLED();
+    error INVALID_VERSION();
+
+    modifier onlyKey(uint id) {
+        ITerminal(terminal).validate(msg.sender, self.requiredKeys[id]);
+        _;
+    }
 
     modifier onlyIfEnabled() {
-        if (!enabled) { revert IsNotEnabled();_; }
+        if (!self.enabled) { revert ROUTER_DISABLED(); }
+        _;
     }
 
-    constructor(string name_, address implementation, bool upgradeable_, bool enabled_) {
-        implementations.add(implementation);
-        latestImplementation = implementation;
-        latestVersion = implementations.length() - 1;
-        upgradeable = upgradeable_;
-        enabled = enabled_;
-        name = name;
-
-        // routers are only meant to be deployed from a terminal.
-        terminal = msg.sender;
+    constructor(string memory id, address implementation, string[30] requiredKeys, bool upgradeable, bool enabled) {
+        self.implementations.add(implementation);
+        self.upgradeable = upgradeable;
+        self.enabled = enabled;
+        self.id = id;
+        self.terminal = msg.sender;
+        self.requiredKeys = requiredKeys;
+        self.latestImplementation = implementation;
+        self.latestVersion = self.implementations.length() - 1;
     }
+
+    function _onlyKey(bytes memory key)
 
     function enable()
-        external 
-        returns (bool) {
-        ITerminal(terminal).authenticate(msg.sender, string(abi.encodePacked(name, "->enable()")));
-        enabled = true;
-        return true;
+        public
+        onlyKey(0) {
+        self.enabled = true;
     }
 
     function disable()
-        external
-        returns (bool) {
-        ITerminal(terminal).authenticate(msg.sender, string(abi.encodePacked(name, "->disable()")));
-        enabled = false;
-        return true;
+        public
+        onlyKey(1) {
+        self.enabled = false;
     }
 
     function upgrade(address implementation)
-        external
-        returns (bool) {
-        ITerminal(terminal).authenticate(msg.sender, string(abi.encodePacked(name, "->upgrade()")));
-        implementations.add(implementation);
-        return true;
+        public
+        onlyIfEnabled
+        onlyKey(2) {
+        self.implementations.add(implementation);
+        self.latestImplementation = implementation;
+        self.latestVersion = self.implementations.length() - 1;
     }
 
     function downgrade(uint version)
-        external
-        returns (bool) {
-        ITerminal(terminal).authenticate(msg.sender, string(abi.encodePacked(name, "->downgrade()"))); 
-        implementations.add(implementations.at(version));
-        return true;
-    }
-
-    function swapTerminal(address terminal_)
-        external
+        public
         onlyIfEnabled
-        returns (bool) {
-        ITerminal(terminal).authenticate(msg.sender, string(abi.encodePacked(name, "->swapTerminal()")));
-        terminal = terminal_;
+        onlyKey(3) {
+        if (version >= self.implementations.length()) { revert INVALID_VERSION(); }
+        self.implementations.add(self.implementations.at(version));
     }
 
-    function getImplementation(uint version)
-        external view
-        returns (address) {
-        return implementations.at(version);
+    function getLatestVersion()
+        public
+        onlyIfEnabled {
+        return self.implementations.length() - 1;
     }
 
-    fallback()
-        external
-        onlyIfEnabled
-        returns (bool, bytes memory) {
-        (bytes4 signature, bytes memory args) = abi.decode(msg.data, (bytes4, bytes));
 
-        bool success;
-        bytes memory response;
-
-        /// @dev should pass the original caller to the fallback function of the router.
-        (success, response) = latestImplementation.call{value: msg.sender}(abi.encodeWithSignature(signature, args));
-        
-        return (success, response);
-    }    
 }

@@ -1,0 +1,325 @@
+// SPDX-License-Identifier: Apache-2.0
+pragma solidity 0.8.19;
+import "contracts/polygon/deps/openzeppelin/utils/structs/EnumerableSet.sol";
+
+library Validator {
+    using EnumerableSet for EnumerableSet.Bytes32Set;
+
+    struct Key {
+        bool isStandard;
+        bool isTimed;
+        bool isConsumable;
+        uint startTimestamp;
+        uint endTimestamp;
+        uint balance;
+    }
+
+    function _encode(string memory value)
+        private pure
+        returns (bytes32) {
+        return keccak256(abi.encode(value));
+    }
+
+    function _mustBeExistingKey(EnumerableSet.Bytes32Set storage _keys, string memory key)
+        private view {
+        require(
+            _keys.contains(_encode(key)),
+            "Validator: KEY_MATCH_NOT_FOUND"
+        );
+    }
+
+    function _mustNotBeExistingKey(EnumerableSet.Bytes32Set storage _keys, string memory key)
+        private view {
+        require(
+            !_keys.contains(_encode(key)),
+            "Validator: KEY_MATCH_WAS_FOUND"
+        );
+    }
+
+    function _add(EnumerableSet.Bytes32Set storage _keys, string memory key)
+        private {
+        _mustNotBeExistingKey(_keys, key);
+        _keys.add(_encode(key));
+    }
+
+    function _remove(EnumerableSet.Bytes32Set storage _keys, string memory key)
+        private {
+        _mustBeExistingKey(_keys, key);
+        _keys.remove(_encode(key));
+    }
+
+    function _setKey(EnumerableSet.Bytes32Set storage _keys, Key storage data, string memory key, bool isStandard, bool isTimed, bool isConsumable, uint startTimestamp, uint endTimestamp, uint balance)
+        private {
+        if (_keys.contains(_encode(key))) {
+            _remove(_keys, key);
+            _add(_keys, key);
+        }
+        else {
+            _add(_keys, key);
+        }
+        data.isStandard = isStandard;
+        data.isTimed = isTimed;
+        data.isConsumable = isConsumable;
+        data.startTimestamp = startTimestamp;
+        data.endTimestamp = endTimestamp;
+        data.balance = balance;
+    }
+
+    function _getKey(EnumerableSet.Bytes32Set storage _keys, Key storage data, string memory key)
+        private view
+        returns (bytes32, bool, bool, bool, uint, uint, uint) {
+        _mustBeExistingKey(_keys, key);
+        return (_encode(key), data.isStandard, data.isTimed, data.isConsumable, data.startTimestamp, data.endTimestamp, data.balance);
+    }
+
+    function _revokeAnyKey(EnumerableSet.Bytes32Set storage _keys, Key storage data, string memory key)
+        private {
+        _setKey(_keys, data, key, false, false, false, 0, 0, 0);
+        _remove(_keys, key);
+    }
+
+    function _grantStandardKey(EnumerableSet.Bytes32Set storage _keys, Key storage data, string memory key)
+        private {
+        _mustNotBeExistingKey(_keys, key);
+        _revokeAnyKey(_keys, data, key);
+        _setKey(_keys, data, key, true, false, false, 0, 0, 0);
+    }
+
+    function _grantTimedKey(EnumerableSet.Bytes32Set storage _keys, Key storage data, string memory key, uint startTimestamp, uint endTimestamp)
+        private {
+        _mustNotBeExistingKey(_keys, key);
+        _revokeAnyKey(_keys, data, key);
+        _setKey(_keys, data, key, false, true, false, startTimestamp, endTimestamp, 0);
+    }
+
+    function _increaseTimedKeyDuration(EnumerableSet.Bytes32Set storage _keys, Key storage data, string memory key, uint increase)
+        private {
+        _mustBeExistingKey(_keys, key);
+        require(
+            !data.isStandard
+            && data.isTimed
+            && !data.isConsumable
+            && data.startTimestamp != 0
+            && data.endTimestamp != 0
+            && data.balance == 0,
+            "Validator: KEY_IS_NOT_OF_TYPE"
+        );
+        data.endTimestamp = data.startTimestamp + ((data.endTimestamp - data.startTimestamp) + increase);
+        _setKey(_keys, data, key, data.isStandard, data.isTimed, data.isConsumable, data.startTimestamp, data.endTimestamp, data.balance);
+    }
+
+    function _decreaseTimedKeyDuration(EnumerableSet.Bytes32Set storage _keys, Key storage data, string memory key, uint decrease)
+        private {
+        _mustBeExistingKey(_keys, key);
+        require(
+            !data.isStandard
+            && data.isTimed
+            && !data.isConsumable
+            && data.startTimestamp != 0
+            && data.endTimestamp != 0
+            && data.balance == 0,
+            "Validator: KEY_IS_NOT_OF_TYPE"
+        );
+        uint newValue = data.startTimestamp + ((data.endTimestamp - data.startTimestamp) - decrease);
+        require(newValue > data.endTimestamp, "Validator: KEY_CANNOT_EXPIRE_BEFORE_GRANTED");
+        data.endTimestamp = newValue;
+        _setKey(_keys, data, key, data.isStandard, data.isTimed, data.isConsumable, data.startTimestamp, data.endTimestamp, data.balance);
+    }
+
+    function _grantConsumableKey(EnumerableSet.Bytes32Set storage _keys, Key storage data, string memory key, uint balance)
+        private {
+        _mustNotBeExistingKey(_keys, key);
+        _revokeAnyKey(_keys, data, key);
+        _setKey(_keys, data, key, false, false, true, 0, 0, balance);
+    }
+
+    function _increaseConsumableKeyBalance(EnumerableSet.Bytes32Set storage _keys, Key storage data, string memory key, uint increase)
+        private {
+        _mustBeExistingKey(_keys, key);
+        require(
+            !data.isStandard
+            && !data.isTimed
+            && data.isConsumable
+            && data.startTimestamp == 0
+            && data.endTimestamp == 0,
+            "Validator: KEY_IS_NOT_OF_TYPE"
+        );
+        data.balance += increase;
+        _setKey(_keys, data, key, data.isStandard, data.isTimed, data.isConsumable, data.startTimestamp, data.endTimestamp, data.balance);
+    }
+
+    function _decreaseConsumableKeyBalance(EnumerableSet.Bytes32Set storage _keys, Key storage data, string memory key, uint decrease)
+        private {
+        _mustBeExistingKey(_keys, key);
+        require(
+            !data.isStandard
+            && !data.isTimed
+            && data.isConsumable
+            && data.startTimestamp == 0
+            && data.endTimestamp == 0,
+            "Validator: KEY_IS_NOT_OF_TYPE"
+        );
+        require(data.balance != 0, "Validator: KEY_BALANCE_IS_ZERO");
+        data.balance -= decrease;
+        _setKey(_keys, data, key, data.isStandard, data.isTimed, data.isConsumable, data.startTimestamp, data.endTimestamp, data.balance);
+    }
+
+    function _validate(EnumerableSet.Bytes32Set storage _keys, Key storage data, string memory key)
+        private {
+        _mustBeExistingKey(_keys, key);
+        if (data.isTimed) {
+            require(block.timestamp >= data.startTimestamp, "Validator: KEY_IS_NOT_GRANTED_YET");
+            require(block.timestamp <= data.endTimestamp, "Validator: KEY_IS_NO_LONGER_VALID");
+        }
+        else if (data.isConsumable) {
+            require(data.balance != 0, "Validator: KEY_BALANCE_IS_ZERO");
+            data.balance--;
+        }
+    }
+
+    function encode(string memory value)
+        public pure
+        returns (bytes32) {
+        return _encode(value);
+    }
+
+    function revokeAnyKey(EnumerableSet.Bytes32Set storage _keys, Key storage data, string memory key)
+        public 
+        returns (bool) {
+        _revokeAnyKey(_keys, data, key);
+        return true;
+    }
+
+    function grantStandardKey(EnumerableSet.Bytes32Set storage _keys, Key storage data, string memory key)
+        public 
+        returns (bool) {
+        _grantStandardKey(_keys, data, key);
+        return true;
+    }
+
+    function grantTimedKey(EnumerableSet.Bytes32Set storage _keys, Key storage data, string memory key, uint startTimestamp, uint endTimestamp)
+        public
+        returns (bool) {
+        _grantTimedKey(_keys, data, key, startTimestamp, endTimestamp);
+        return true;
+    }
+
+    function increaseTimedKeyDuration(EnumerableSet.Bytes32Set storage _keys, Key storage data, string memory key, uint increase)
+        public
+        returns (bool) {
+        _increaseTimedKeyDuration(_keys, data, key, increase);
+        return true;
+    }
+
+    function decreaseTimedKeyDuration(EnumerableSet.Bytes32Set storage _keys, Key storage data, string memory key, uint decrease)
+        public
+        returns (bool) {
+        _decreaseConsumableKeyBalance(_keys, data, key, decrease);
+        return true;
+    }
+
+    function grantConsumableKey(EnumerableSet.Bytes32Set storage _keys, Key storage data, string memory key, uint balance)
+        public
+        returns (bool) {
+        _grantConsumableKey(_keys, data, key, balance);
+        return true;
+    }
+
+    function increaseConsumableKeyBalance(EnumerableSet.Bytes32Set storage _keys, Key storage data, string memory key, uint increase)
+        public
+        returns (bool) {
+        _increaseConsumableKeyBalance(_keys, data, key, increase);
+        return true;
+    }
+
+    function decreaseConsumableKeyBalance(EnumerableSet.Bytes32Set storage _keys, Key storage data, string memory key, uint decrease)
+        public
+        returns (bool) {
+        _decreaseConsumableKeyBalance(_keys, data, key, decrease);
+        return true;
+    }
+
+    function validate(EnumerableSet.Bytes32Set storage _keys, Key storage data, string memory key)
+        public
+        returns (bool) {
+        _validate(_keys, data, key);
+        return true;
+    }
+
+    function getKey(EnumerableSet.Bytes32Set storage _keys, Key storage data, string memory key)
+        public view
+        returns (bytes32, bool, bool, bool, uint, uint, uint) {
+        return _getKey(_keys, data, key);
+    }
+}
+
+contract SentinelA {
+    using EnumerableSet for EnumerableSet.Bytes32Set;
+
+    mapping(address => EnumerableSet.Bytes32Set) internal _keys;
+    mapping(address => mapping(bytes32 => Validator.Key)) internal _keysData;
+
+    function revokeAnykey(address from, string memory key)
+        public
+        returns (bool) {
+        return Validator.revokeAnyKey(_keys[from], _keysData[from][Validator.encode(key)], key);
+    }    
+
+    function grantStandardKey(address to, string memory key)
+        public
+        returns (bool) {
+        return Validator.grantStandardKey(_keys[to], _keysData[to][Validator.encode(key)], key);
+    }
+
+    function grantTimedKey(address to, string memory key, uint startTimestamp, uint endTimestamp)
+        public
+        returns (bool) {
+        return Validator.grantTimedKey(_keys[to], _keysData[to][Validator.encode(key)], key, startTimestamp, endTimestamp);
+    }
+
+    function increaseTimedKeyDuration(address of_, string memory key, uint increase)
+        public
+        returns (bool) {
+        return Validator.increaseTimedKeyDuration(_keys[of_], _keysData[of_][Validator.encode(key)], key, increase);
+    }
+
+    function decreaseTimedKeyDuration(address of_, string memory key, uint decrease)
+        public
+        returns (bool) {
+        return Validator.decreaseTimedKeyDuration(_keys[of_], _keysData[of_][Validator.encode(key)], key, decrease);
+    }
+
+    function grantConsumableKey(address to, string memory key, uint balance)
+        public
+        returns (bool) {
+        return Validator.grantConsumableKey(_keys[to], _keysData[to][Validator.encode(key)], key, balance);
+    }
+
+    function increaseConsumableKeyBalance(address of_, string memory key, uint increase)
+        public
+        returns (bool) {
+        return Validator.increaseConsumableKeyBalance(_keys[of_], _keysData[of_][Validator.encode(key)], key, increase);
+    }
+
+    function decreaseConsumableKeyBalance(address of_, string memory key, uint decrease)
+        public
+        returns (bool) {
+        return Validator.decreaseConsumableKeyBalance(_keys[of_], _keysData[of_][Validator.encode(key)], key, decrease);
+    }
+
+    function validate(address from, string memory key)
+        public
+        returns (bool) {
+        return Validator.validate(_keys[from], _keysData[from][Validator.encode(key)], key);
+    }
+
+    function getKey(address of_, string memory key)
+        public view
+        returns (bytes32, bool, bool, bool, uint, uint, uint) {
+        return Validator.getKey(_keys[of_], _keysData[of_][Validator.encode(key)], key);
+    }
+}
+
+contract SentinelB {
+    mapping
+}

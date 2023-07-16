@@ -1,643 +1,959 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity 0.8.19;
-import "contracts/polygon/deps/openzeppelin/utils/math/Math.sol";
 import "contracts/polygon/deps/openzeppelin/utils/structs/EnumerableSet.sol";
-import "contracts/polygon/templates/structs/Structs.sol";
-import "contracts/polygon/templates/errors/Errors.sol";
-import "contracts/polygon/templates/modular-upgradeable/Router.sol";
 
-library Authenticator {
+contract Router2 {
+    using EnumerableSet for EnumerableSet.AddressSet;
+
+    struct Self {
+        EnumerableSet.AddressSet implementations;
+        bool upgradeable;
+        bool enabled;
+        string id;
+        address terminal;
+        string[] requiredKeys;
+        address latestImplementation;
+        uint latestVersion;
+    }
+
+    Self public self;
+
+    error ROUTER_DISABLED();
+    error INVALID_VERSION();
+
+    modifier onlyKey(uint id) {
+        ITerminal(terminal).validate(msg.sender, self.requiredKeys[id]);
+        _;
+    }
+
+    modifier onlyIfEnabled() {
+        if (!self.enabled) { revert ROUTER_DISABLED(); }
+        _;
+    }
+
+    constructor(string memory id, address implementation, string[] requiredKeys, bool upgradeable, bool enabled) {
+        self.implementations.add(implementation);
+        self.upgradeable = upgradeable;
+        self.enabled = enabled;
+        self.id = id;
+        self.terminal = msg.sender;
+        self.requiredKeys = requiredKeys;
+        self.latestImplementation = implementation;
+        self.latestVersion = self.implementations.length() - 1;
+    }
+
+    function enable()
+        public
+        onlyKey(0) {
+        self.enabled = true;
+    }
+
+    function disable()
+        public
+        onlyKey(1) {
+        self.enabled = false;
+    }
+
+    function upgrade(address implementation)
+        public
+        onlyIfEnabled
+        onlyKey(2) {
+        self.implementations.add(implementation);
+        self.latestImplementation = implementation;
+        self.latestVersion = self.implementations.length() - 1;
+    }
+
+    function downgrade(uint version)
+        public
+        onlyIfEnabled
+        onlyKey(3) {
+        if (version >= self.implementations.length()) { revert INVALID_VERSION(); }
+        self.implementations.add(self.implementations.at(version));
+    }
+
+    function getLatestVersion()
+        public
+        onlyIfEnabled {
+        return self.implementations.length() - 1;
+    }
+
+
+}
+
+interface IRouter {
+    function upgradeable() external view returns (bool);
+    function enabled() external view returns (bool);
+    function name() external view returns (string memory);
+    function terminal() external view returns (address);
+    function enable() external;
+    function disable() external;
+    function upgrade(address implementation) external;
+    function downgrade(uint version) external;
+    function swapTerminal(address terminal_) external;
+    function getLatestImplementation() external returns (address);
+    function getLatestVersion() external returns (uint);
+}
+
+contract Router is IRouter {
+    using EnumerableSet for EnumerableSet.AddressSet;
+
+    EnumerableSet.AddressSet private _implementations;
+    bool public immutable upgradeable;
+    bool public enabled;
+    string public name;
+    address public terminal;
+
+    error ROUTER_DISABLED();
+    error INVALID_VERSION();
+
+    modifier onlyIfEnabled() {
+        if (!enabled) { revert ROUTER_DISABLED();}
+        _;
+    }
+
+    modifier onlyKey(string memory key) {
+        ITerminal(terminal).validate(msg.sender, string(abi.encodePacked(name, key)));
+        _;
+    }
+
+    constructor(string memory name_, address implementation, bool upgradeable_) {
+        _implementations.add(implementation);
+        upgradeable = upgradeable_;
+        name = name_;
+        terminal = msg.sender;
+    }
+
+    function enable()
+        public 
+        onlyKey("->enable()") {
+        enabled = true;
+    }
+
+    function disable()
+        public
+        onlyKey("->disable()") {
+        enabled = false;
+    }
+
+    function upgrade(address implementation)
+        public
+        onlyIfEnabled
+        onlyKey("->upgrade()") {
+        _implementations.add(implementation);
+    }
+
+    function downgrade(uint version)
+        public
+        onlyIfEnabled
+        onlyKey("->downgrade") {
+        if (version >= _implementations.length()) { revert INVALID_VERSION(); }
+        _implementations.add(_implementations.at(version));
+    }
+
+    function swapTerminal(address terminal_)
+        public
+        onlyIfEnabled
+        onlyKey("->swapTerminal()") {
+        terminal = terminal_;
+    }
+
+    function getLatestImplementation()
+        public view
+        onlyIfEnabled
+        returns (address) {
+        return _implementations.at(getLatestVersion());
+    }
+
+    function getLatestVersion()
+        public view
+        onlyIfEnabled
+        returns (uint) {
+        return _implementations.length() - 1;
+    }
+}
+
+library Validator {
+    struct Key {
+        bool owned;
+        bool timed;
+        bool standard;
+        bool consumable;
+        uint start;
+        uint end;
+        uint uses;
+    }
+
+    error KEY_IS_NOT_OF_TYPE(Key);
+    error KEY_CANNOT_EXPIRE_BEFORE_GRANTED(Key);
+    error KEY_IS_NOT_OWNED(Key);
+    error KEY_IS_NOT_GRANTED_YET(Key);
+    error KEY_IS_NO_LONGER_VALID(Key);
+    error KEY_USES_IS_DEPLETED(Key);
+
     function revokeAnyKey(Key storage key)
         public {
-        key.isOwned = false;
-        key.isTimed = false;
-        key.isStandard = false;
-        key.isConsumable = false;
-        key.startTimestamp = 0;
-        key.endTimestamp = 0;
-        key.numUses = 0;
+        key.owned = false;
+        key.timed = false;
+        key.standard = false;
+        key.consumable = false;
+        key.start = 0;
+        key.end = 0;
+        key.uses = 0;
     }
 
     function grantStandardKey(Key storage key)
         public {
         revokeAnyKey(key);
-        key.isOwned = true;
-        key.isStandard = true;
+        key.owned = true;
+        key.standard = true;
     }
-
-    function grantTimedKey(Key storage key, uint startTimestamp, uint duration)
+    
+    function grantTimedKey(Key storage key, uint start, uint duration)
         public {
         revokeAnyKey(key);
-        key.isOwned = true;
-        key.isTimed = true;
-        key.startTimestamp = startTimestamp;
-        key.endTimestamp = startTimestamp + duration;
+        key.owned = true;
+        key.timed = true;
+        key.start = start;
+        key.end = start + duration;
     }
-
+    
     function increaseTimedKeyDuration(Key storage key, uint increase)
         public {
-        if (!key.isOwned) { revert KeyIsNotOfType(key); }
-        if (!key.isTimed) { revert KeyIsNotOfType(key); }
-
-        key.endTimestamp = key.startTimestamp + ((key.endTimestamp - key.startTimestamp) + increase);
+        if (!key.owned) { revert KEY_IS_NOT_OF_TYPE(key); }
+        if (!key.timed) { revert KEY_IS_NOT_OF_TYPE(key); }
+        key.end = key.start + ((key.end - key.start) + increase);
     }
 
     function decreaseTimedKeyDuration(Key storage key, uint decrease)
         public {
-            if (!key.isOwned) { revert KeyIsNotOfType(key); }
-            if (!key.isTimed) { revert KeyIsNotOfType(key); }
-
-            uint newEndTimestamp = key.startTimestamp + ((key.endTimestamp - key.startTimestamp) - decrease);
-            require(newEndTimestamp > key.startTimestamp);
-            key.endTimestamp = newEndTimestamp;
+        if (!key.owned) { revert KEY_IS_NOT_OF_TYPE(key); }
+        if (!key.timed) { revert KEY_IS_NOT_OF_TYPE(key); }
+        uint new_ = key.start + ((key.end - key.start) - decrease);
+        if (new_ <= key.start) { revert KEY_CANNOT_EXPIRE_BEFORE_GRANTED(key); }
+        key.end = new_;
     }
 
-    function grantConsumableKey(Key storage key, uint numUses)
+    function grantConsumableKey(Key storage key, uint uses)
         public {
-            revokeAnyKey(key);
-            key.isOwned = true;
-            key.isConsumable = true;
-            key.numUses = numUses;
+        revokeAnyKey(key);
+        key.owned = true;
+        key.consumable = true;
+        key.uses = uses;
     }
 
     function increaseConsumableKeyUses(Key storage key, uint increase)
         public {
-        if (!key.isOwned) { revert KeyIsNotOfType(key); }
-        if (!key.isConsumable) { revert KeyIsNotOfType(key); }
-
-        // assuming solidity ^0.8.0 should check for overflow.
-        key.numUses += increase;
+        if (!key.owned) { revert KEY_IS_NOT_OF_TYPE(key); }
+        if (!key.consumable) { revert KEY_IS_NOT_OF_TYPE(key); }
+        key.uses += increase;
     }
 
     function decreaseConsumableKeyUses(Key storage key, uint decrease)
         public {
-        if (!key.isOwned) { revert KeyIsNotOfType(key); }
-        if (!key.isConsumable) { revert KeyIsNotOfType(key); }
-
-        // assuming solidity ^0.8.0 should check for overflow.
-        key.numUses -= decrease;
+        if (!key.owned) { revert KEY_IS_NOT_OF_TYPE(key); }
+        if (!key.consumable) { revert KEY_IS_NOT_OF_TYPE(key); }
+        key.uses -= decrease;
     }
 
-    function authenticate(Key storage key)
+    function validate(Key storage key)
         public {
-        if (!key.isOwned) { revert KeyIsNotOwned(key); }
-
-        else if (key.isTimed) {
-            uint currentTimestamp = block.timestamp;
-            bool early = currentTimestamp < key.startTimestamp;
-            bool late = currentTimestamp > key.endTimestamp;
-
-            if (early) { revert KeyAccessPremature(key, currentTimestamp); }
-            if (isLate) { revert KeyAccessExpired(key, currentTimestamp); }
+        if (!key.owned) { revert KEY_IS_NOT_OWNED(key); }
+        else if (key.timed) {
+            if (block.timestamp < key.start) { revert KEY_IS_NOT_GRANTED_YET(key); }
+            if (block.timestamp > key.end) { revert KEY_IS_NO_LONGER_VALID(key); }
         }
-
-        else if (key.isConsumable) {
-            if (key.numUses == 0) { revert KeyAccessZero(key); }
-            key.numUses --;
+        else if (key.consumable) {
+            if (key.uses == 0) { revert KEY_USES_IS_DEPLETED(key); }
+            key.uses--;
         }
     }
 }
 
-
-
-
-
-// for requests handling.
-library TimelockA {
-    error IsLocked(ConnectionRequest request);
-    error IsUnlocked(ConnectionRequest request);
-    error IsTimedOut(ConnectionRequest request);
-    error IsRejected(ConnectionRequest request);
-    error IsExecuted(ConnectionRequest request);
-    error IsApproved(ConnectionRequest request);
-    error IsNotApproved(ConnectionRequest request);
-
-    function mustBeAfterTimelock(ConnectionRequest memory request)
-        public {
-        bool isTooEarly = block.timestamp < (request.connectionRequestSchedule.startTimestamp + request.connectionRequestSchedule.timelockDuration);
-        if (isTooEarly) { revert IsLocked(request); }
+library TimelockRequest {
+    struct Request {
+        address target;
+        string signature;
+        bytes args;
+        uint start;
+        uint timelock;
+        uint timeout;
+        uint identifier;
+        address creator;
+        string message;
+        bool rejected;
+        bool approved;
+        bool executed;
+        bool pending;
     }
 
-    function mustBeBeforeTimelock(ConnectionRequest memory request)
-        public {
-        bool isTooLate = block.timestamp >= (request.connectionRequestSchedule.startTimestamp + request.connectionRequestSchedule.timelockDuration);
-        if (isTooLate) { revert isUnlocked(request); }
+    error IS_PENDING(Request);
+    error IS_NO_LONGER_PENDING(Request);
+    error IS_TIMED_OUT(Request);
+    error IS_REJECTED(Request);
+    error IS_EXECUTED(Request);
+    error IS_APPROVED(Request);
+    error IS_NOT_APPROVED(Request);
+    error INVALID_IDENTIFIER(uint max);
+
+    function mustBeAfterTimelock(Request memory request)
+        private view { 
+        if (block.timestamp < (request.start + request.timelock)) { 
+            revert IS_PENDING(request); 
+        } 
     }
 
-    function mustBeBeforeTimeout(ConnectionRequest memory request)
-        public {
-        bool isTooLate = block.timestamp >= (request.connectionRequestSchedule.startTimestamp + request.connectionRequestSchedule.timelockDuration) + request.connectionRequestSchedule.timeoutDuration;
-        if (isTooLate) { revert IsTimedOut(request); }
+    function mustBeBeforeTimelock(Request memory request)
+        private view { 
+        if (block.timestamp >= (request.start + request.timelock)) { 
+            revert IS_NO_LONGER_PENDING(request); 
+        } 
     }
 
-    function mustNotBeRejected(ConnectionRequest memory request)
-        public {
-        if (request.rejected) { revert IsRejected(request); }
+    function mustBeBeforeTimeout(Request memory request)
+        private view { 
+        if (block.timestamp >= (request.start + request.timelock) + request.timeout) { 
+            revert IS_TIMED_OUT(request); 
+        } 
+    }
+    
+    function mustNotBeRejected(Request memory request)
+        private pure { 
+        if (request.rejected) { 
+            revert IS_REJECTED(request); 
+        } 
     }
 
-    function mustNotBeExecuted(ConnectionRequest memory request)
-        public {
-        if (request.executed) { revert IsExecuted(request); }
+    function mustNotBeExecuted(Request memory request)
+        private pure { 
+        if (request.executed) { 
+            revert IS_EXECUTED(request); 
+        } 
     }
 
-    function mustBeApproved(ConnectionRequest memory request)
-        public {
-        if (!request.approved) { revert IsNotApproved(request); }
+    function mustBeApproved(Request memory request)
+        private pure { 
+        if (!request.approved) { 
+            revert IS_NOT_APPROVED(request); 
+        } 
     }
 
-    function mustNotBeApproved(ConnectionRequest memory request)
-        public {
-        if (request.approved) { revert IsApproved(request); }
+    function mustNotBeApproved(Request memory request)
+        private pure { 
+        if (request.approved) { 
+            revert IS_APPROVED(request); 
+        } 
     }
-
-    function queueRequest(TimelockSettings memory settings, ConnectionRequest[] storage requests, uint storage numRequests, Payload memory payload, string memory message)
+    
+    function queue(uint timelock, uint timeout, Request[] storage requests, address target, string memory signature, bytes memory args, address creator, string memory message)
         public
         returns (uint) {
-        numRequests ++;
-        uint newIdentifier = numRequests;
-        ConnectionRequest storage newRequest = requests[newIdentifier];
-        newRequest.payload = Payload({
-            target: payload.target,
-            signature: payload.signature,
-            args: payload.args
+        if (requests.length == 0) { requests.push(); }
+        Request memory request = Request({
+            target: target,
+            signature: signature,
+            args: args,
+            start: block.timestamp,
+            timelock: timelock,
+            timeout: timeout,
+            identifier: requests.length,
+            creator: creator,
+            message: message,
+            rejected: false,
+            approved: false,
+            executed: false,
+            pending: true
         });
-
-        newRequest.connectionRequestSchedule = ConnectionRequestSchedule({
-            startTimestamp: block.timestamp,
-            timelockDuration: settings.timelockDuration,
-            timeoutDuration: settings.timeoutDuration
-        });
-
-        newRequest.identifier = newIdentifier;
-        newRequest.origin = msg.sender;
-        newRequest.message = message;
-        newRequest.pending = true;
-
-        return newIdentifier;
+        requests.push(request);
+        return request.identifier;
     }
 
-    function executeRequest(ConnectionRequest[] storage requests, uint identifier)
-        public 
-        returns (bool, bytes memory) {
-        ConnectionRequest storage request = requests[identifier];
+    function execute(Request[] storage requests, uint identifier)
+        public {
+        if (identifier >= requests.length) { revert INVALID_IDENTIFIER(requests.length); }
+        Request storage request = requests[identifier];
         mustBeAfterTimelock(request);
         mustBeBeforeTimeout(request);
         mustNotBeRejected(request);
         mustNotBeExecuted(request);
         mustBeApproved(request);
-
         request.pending = false;
         request.executed = true;
-
-        address target = request.payload.target;
-        string memory signature = request.payload.signature;
-        bytes memory args = request.payload.args;
-
-        (bool success, bytes memory response) = request.payload.target.call(abi.encodeWithSignature(signatire, args));
-        
-        return (success, response);
     }
 
-    function rejectRequest(ConnectionRequest[] storage requests, uint identifier)
+    function reject(Request[] storage requests, uint identifier)
         public {
-        ConnectionRequest storage request = requests[identifier];
+        if (identifier >= requests.length) { revert INVALID_IDENTIFIER(requests.length); }
+        Request storage request = requests[identifier];
         mustBeBeforeTimelock(request);
         mustNotBeExecuted(request);
         mustNotBeRejected(request);
         mustNotBeApproved(request);
-
         request.pending = false;
         request.rejected = true;
     }
 
-    function approveRequest(ConnectionRequest[] storage requests, uint identifier)
+    function approve(Request[] storage requests, uint identifier)
         public {
-        ConnectionRequest storage request = requests[identifier];
+        if (identifier >= requests.length) { revert INVALID_IDENTIFIER(requests.length); }
+        Request storage request = requests[identifier];
         mustBeBeforeTimelock(request);
         mustNotBeExecuted(request);
         mustNotBeRejected(request);
         mustNotBeApproved(request);
-
-        request.pending = false;
         request.approved = true;
     }
 }
 
+library TimelockBatchRequest {
+    struct BatchRequest {
+        address[] targets;
+        string[] signatures;
+        bytes[] args;
+        uint start;
+        uint timelock;
+        uint timeout;
+        uint identifier;
+        address creator;
+        string message;
+        bool rejected;
+        bool approved;
+        bool executed;
+        bool pending;
+    }
 
+    error IS_PENDING(BatchRequest);
+    error IS_NO_LONGER_PENDING(BatchRequest);
+    error IS_TIMED_OUT(BatchRequest);
+    error IS_REJECTED(BatchRequest);
+    error IS_EXECUTED(BatchRequest);
+    error IS_APPROVED(BatchRequest);
+    error IS_NOT_APPROVED(BatchRequest);
+    error INVALID_IDENTIFIER(uint max);
 
+    function mustBeAfterTimelock(BatchRequest memory request)
+        private view { 
+        if (block.timestamp < (request.start + request.timelock)) { 
+            revert IS_PENDING(request); 
+        } 
+    }
 
+    function mustBeBeforeTimelock(BatchRequest memory request)
+        private view { 
+        if (block.timestamp >= (request.start + request.timelock)) { 
+            revert IS_NO_LONGER_PENDING(request); 
+        } 
+    }
 
-// for batches handling.
-library TimelockB {
-    error IsLocked(BatchConnectionRequest request);
-    error IsUnlocked(BatchConnectionRequest request);
-    error IsTimedOut(BatchConnectionRequest request);
-    error IsRejected(BatchConnectionRequest request);
-    error IsExecuted(BatchConnectionRequest request);
-    error IsApproved(BatchConnectionRequest request);
-    error IsNotApproved(BatchConnectionRequest request);
+    function mustBeBeforeTimeout(BatchRequest memory request)
+        private view { 
+        if (block.timestamp >= (request.start + request.timelock) + request.timeout) { 
+            revert IS_TIMED_OUT(request); 
+        } 
+    }
     
-    function mustBeAfterTimelock(BatchConnectionRequest memory request)
-        public {
-        bool isTooEarly = block.timestamp < (request.connectionRequestSchedule.startTimestamp + request.connectionRequestSchedule.timelockDuration);
-        if (isTooEarly) { revert IsLocked(request); }
+    function mustNotBeRejected(BatchRequest memory request)
+        private pure { 
+        if (request.rejected) { 
+            revert IS_REJECTED(request); 
+        } 
     }
 
-    function mustBeBeforeTimelock(BatchConnectionRequest memory request)
-        public {
-        bool isTooLate = block.timestamp >= (request.connectionRequestSchedule.startTimestamp + request.connectionRequestSchedule.timelockDuration);
-        if (isTooLate) { revert isUnlocked(request); }
+    function mustNotBeExecuted(BatchRequest memory request)
+        private pure { 
+        if (request.executed) { 
+            revert IS_EXECUTED(request); 
+        } 
     }
 
-    function mustBeBeforeTimeout(BatchConnectionRequest memory request)
-        public {
-        bool isTooLate = block.timestamp >= (request.connectionRequestSchedule.startTimestamp + request.connectionRequestSchedule.timelockDuration) + request.connectionRequestSchedule.timeoutDuration;
-        if (isTooLate) { revert IsTimedOut(request); }
+    function mustBeApproved(BatchRequest memory request)
+        private pure { 
+        if (!request.approved) { 
+            revert IS_NOT_APPROVED(request); 
+        } 
     }
 
-    function mustNotBeRejected(BatchConnectionRequest memory request)
-        public {
-        if (request.rejected) { revert IsRejected(request); }
+    function mustNotBeApproved(BatchRequest memory request)
+        private pure { 
+        if (request.approved) { 
+            revert IS_APPROVED(request); 
+        } 
     }
-
-    function mustNotBeExecuted(BatchConnectionRequest memory request)
-        public {
-        if (request.executed) { revert IsExecuted(request); }
-    }
-
-    function mustBeApproved(BatchConnectionRequest memory request)
-        public {
-        if (!request.approved) { revert IsNotApproved(request); }
-    }
-
-    function mustNotBeApproved(BatchConnectionRequest memory request)
-        public {
-        if (request.approved) { revert IsApproved(request); }
-    }
-
-    function queueBatchRequest(TimelockSettings memory settings, BatchConnectionRequest[] storage requests, uint storage numRequests, Batch memory batch, string memory message)
+    
+    function queue(uint timelock, uint timeout, BatchRequest[] storage requests, address[] memory targets, string[] memory signatures, bytes[] memory args, address creator, string memory message)
         public
         returns (uint) {
-        numRequests ++;
-        uint newIdentifier = numRequests;
-        BatchConnectionRequest storage newRequest = requests[newIdentifier];
-        newRequest.batch = Batch({
-            targets: batch.targets,
-            signatures: batch.signatures,
-            args: batch.args
+        if (requests.length == 0) { requests.push(); }
+        BatchRequest memory request = BatchRequest({
+            targets: targets,
+            signatures: signatures,
+            args: args,
+            start: block.timestamp,
+            timelock: timelock,
+            timeout: timeout,
+            identifier: requests.length,
+            creator: creator,
+            message: message,
+            rejected: false,
+            approved: false,
+            executed: false,
+            pending: true
         });
-
-        newRequest.connectionRequestSchedule = ConnectionRequestSchedule({
-            startTimestamp: block.timestamp,
-            timelockDuration: settings.timelockDuration,
-            timeoutDuration: settings.timeoutDuration
-        });
-
-        newRequest.identifier = newIdentifier;
-        newRequest.origin = msg.sender;
-        newRequest.message = message;
-        newRequest.pending = true;
-
-        return newIdentifier;
+        requests.push(request);
+        return request.identifier;
     }
-    
-    function executeBatchRequest(BatchConnectionRequest[] storage requests, uint identifier)
-        public 
-        returns (bool[] memory, bytes[] memory) {
-        BatchConnectionRequest storage request = requests[identifier];
+
+    function execute(BatchRequest[] storage requests, uint identifier)
+        public {
+        if (identifier >= requests.length) { revert INVALID_IDENTIFIER(requests.length); }
+        BatchRequest storage request = requests[identifier];
         mustBeAfterTimelock(request);
         mustBeBeforeTimeout(request);
         mustNotBeRejected(request);
         mustNotBeExecuted(request);
         mustBeApproved(request);
-
         request.pending = false;
         request.executed = true;
-
-        address[] memory targets = request.batch.targets;
-        string[] memory signatures = request.batch.signatures;
-        bytes[] memory args = request.batch.args;
-
-        bool[] memory successes;
-        bytes[] memory responses;
-        for (uint i = 0; i < targets.length; i++) {
-            (successes[i], bytes[i]) = targets[i].call(abi.encodeWithSignature(signatures[i], args[i]));
-        }
-
-        return (successes, responses);
     }
 
-    function rejectBatchRequest(BatchConnectionRequest[] storage requests, uint identifier)
+    function reject(BatchRequest[] storage requests, uint identifier)
         public {
-        BatchConnectionRequest storage request = requests[identifier];
+        if (identifier >= requests.length) { revert INVALID_IDENTIFIER(requests.length); }
+        BatchRequest storage request = requests[identifier];
         mustBeBeforeTimelock(request);
         mustNotBeExecuted(request);
         mustNotBeRejected(request);
         mustNotBeApproved(request);
-
         request.pending = false;
         request.rejected = true;
     }
 
-    function approveBatchRequest(BatchConnectionRequest[] storage requests, uint identifier)
+    function approve(BatchRequest[] storage requests, uint identifier)
         public {
-        BatchConnectionRequest storage request = requests[identifier];
+        if (identifier >= requests.length) { revert INVALID_IDENTIFIER(requests.length); }
+        BatchRequest storage request = requests[identifier];
         mustBeBeforeTimelock(request);
         mustNotBeExecuted(request);
         mustNotBeRejected(request);
         mustNotBeApproved(request);
-
-        request.pending = false;
         request.approved = true;
     }
 }
 
-contract Terminal {
-    mapping(address => mapping(string => Key)) public keys;
+interface ITerminal {
+    function validate(address from, string memory key) external;
+    function revokeAnyKey(address from, string memory key) external;
+    function grantStandardKey(address to, string memory key) external;
+    function grantTimedKey(address to, string memory key, uint start, uint duration) external;
+    function increaseTimedKeyDuration(address of_, string memory key, uint increase) external;
+    function decreaseTimedKeyDuration(address of_, string memory key, uint decrease) external;
+    function grantConsumableKey(address to, string memory key, uint uses) external;
+    function increaseConsumableKeyUses(address of_, string memory key, uint increase) external;
+    function decreaseConsumableKeyUses(address of_, string memory key, uint decrease) external;
+    function queue(address target, string memory signature, bytes memory args, address creator, string memory message) external;
+    function execute(uint identifier) external;
+    function reject(uint identifier) external;
+    function approve(uint identifier) external;
+    function queueBatch(address[] memory targets, string[] memory signatures, bytes[] memory args, address creator, string memory message) external;
+    function executeBatch(uint identifier) external;
+    function rejectBatch(uint identifier) external;
+    function approveBatch(uint identifier) external;
+    function deployRouter(string memory name, address implementation, bool upgradeable, bool enabled) external returns (address);
+    function route(string memory signature, bytes memory args, bool globalSearch) external returns (bool, bytes memory);
+}
+
+contract Terminal is ITerminal {
+    uint public timelock;
+    uint public timeout;
+    bool public enabledSelfApprove;
+    bool public enabledRelayMode;
+    bool public enabled_;
+
+    TimelockRequest.Request[] public requests;
+    TimelockBatchRequest.BatchRequest[] public requestsBatch;
     Router[] public routers;
-    mapping(string => bool) public isRouter;
-    mapping(string => uint) public nameToRouterMapping;
-    ConnectionRequest[] public requests;
-    BatchConnectionRequest[] public batchRequests;
-    uint numBatchRequests;
-    uint numRequests;
+    address[] public terminals;
+    address[] public nonNativeRouters;
 
-    TimelockSettings public timelockSettings;
+    mapping(string => bool) public nameHasBeenUsed;
+    mapping(address => bool) public addressHasBeenUsed;
+    string[] public routersNames;
+    mapping(string => uint) public nameRepeats;
 
-    error ROUTER_IS_ALREADY_DEPLOYED();
+    // account > the name of the key > Key
+    mapping(address => mapping(string => Validator.Key)) public keys;
+
+    error ROUTER_NAME_ALREADY_IN_USE();
+    error ROUTER_ADDRESS_ALREADY_IN_USE();
+    error TERMINAL_RELAY_MODE_ENABLED();
+    error TERMINAL_DISABLED();
+    error ROUTE_UNABLE_TO_FIND_FUNCTION();
+    error INVALID_IDENTIFIER();
+
+    modifier onlyKey(string memory key) {
+        validate(msg.sender, key);
+        _;
+    }
+
+    modifier onlyIfEnabled() {
+        if (enabled_) { revert TERMINAL_DISABLED(); }
+        _;
+    }
+
+    modifier onlyIfRelayModeDisabled() {
+        if (enabledRelayMode) { revert TERMINAL_RELAY_MODE_ENABLED(); }
+        _;
+    }
 
     constructor() {
-        timelockSettings.timelockDuration = 4 weeks;
-        timelockSettings.timeoutDuration = 7 days;
+        timelock = 1814400 seconds;
+        timeout = 604800 seconds;
 
-        Authenticator.grantStandardKey("terminal-revoke-any-key");
-        Authenticator.grantStandardKey("terminal-grant-standard-key");
-        Authenticator.grantStandardKey("terminal-grant-timed-key");
-        Authenticator.grantStandardKey("terminal-aquire-module");
-        Authenticator.grantStandardKey("terminal-upgrade-module");
+        /// grant keys to msg.sender.
+        address to = msg.sender;
+        Validator.grantStandardKey(keys[to]["Terminal.revokeAnyKey()"]);
+        Validator.grantStandardKey(keys[to]["Terminal.grantTimedKey()"]);
+        Validator.grantStandardKey(keys[to]["Terminal.increaseTimedKeyDuration()"]);
+        Validator.grantStandardKey(keys[to]["Terminal.decreaseTimedKeyDuration()"]);
+        Validator.grantStandardKey(keys[to]["Terminal->grantConsumableKey()"]);
+        Validator.grantStandardKey(keys[to]["Terminal->increaseConsumableKeyUses()"]);
+        Validator.grantStandardKey(keys[to]["Terminal->decreaseConsumableKeyUses()"]);
+        Validator.grantStandardKey(keys[to]["Terminal->queue()"]);
+        Validator.grantStandardKey(keys[to]["Terminal->execute()"]);
+        Validator.grantStandardKey(keys[to]["Terminal->reject()"]);
+        Validator.grantStandardKey(keys[to]["Terminal->approve()"]);
+        Validator.grantStandardKey(keys[to]["Terminal->queueBatch()"]);
+        Validator.grantStandardKey(keys[to]["Terminal->executeBatch()"]);
+        Validator.grantStandardKey(keys[to]["Terminal->rejectBatch()"]);
+        Validator.grantStandardKey(keys[to]["Terminal->approveBatch()"]);
+        Validator.grantStandardKey(keys[to]["Terminal->deployRouter()"]);
+        Validator.grantStandardKey(keys[to]["Terminal->plugInRouter()"]);
+        Validator.grantStandardKey(keys[to]["Terminal->broadcast()"]);
+        Validator.grantStandardKey(keys[to]["Terminal->upgrade()"]);
+
+        /// grant keys to self.
+        to = address(this);
+        Validator.grantStandardKey(keys[to]["Terminal.revokeAnyKey()"]);
+        Validator.grantStandardKey(keys[to]["Terminal.grantTimedKey()"]);
+        Validator.grantStandardKey(keys[to]["Terminal.increaseTimedKeyDuration()"]);
+        Validator.grantStandardKey(keys[to]["Terminal.decreaseTimedKeyDuration()"]);
+        Validator.grantStandardKey(keys[to]["Terminal->grantConsumableKey()"]);
+        Validator.grantStandardKey(keys[to]["Terminal->increaseConsumableKeyUses()"]);
+        Validator.grantStandardKey(keys[to]["Terminal->decreaseConsumableKeyUses()"]);
+        Validator.grantStandardKey(keys[to]["Terminal->queue()"]);
+        Validator.grantStandardKey(keys[to]["Terminal->execute()"]);
+        Validator.grantStandardKey(keys[to]["Terminal->reject()"]);
+        Validator.grantStandardKey(keys[to]["Terminal->approve()"]);
+        Validator.grantStandardKey(keys[to]["Terminal->queueBatch()"]);
+        Validator.grantStandardKey(keys[to]["Terminal->executeBatch()"]);
+        Validator.grantStandardKey(keys[to]["Terminal->rejectBatch()"]);
+        Validator.grantStandardKey(keys[to]["Terminal->approveBatch()"]);
+        Validator.grantStandardKey(keys[to]["Terminal->deployRouter()"]);
+        Validator.grantStandardKey(keys[to]["Terminal->plugInRouter()"]);
+        Validator.grantStandardKey(keys[to]["Terminal->broadcast()"]);
+        Validator.grantStandardKey(keys[to]["Terminal->upgrade()"]);
     }
 
-    // -------------
-    // AUTHENTICATOR.
-    // -------------
-
+    function validate(address from, string memory key)
+        public { 
+        Validator.validate(keys[from][key]); 
+    }
+    
     function revokeAnyKey(address from, string memory key)
-        external {
-        authenticate(msg.sender, "terminal-revoke-any-key");
-        Authenticator.revokeAnyKey(keys[from][key]);
+        public
+        onlyIfEnabled
+        onlyIfRelayModeDisabled 
+        onlyKey("Terminal->revokeAnyKey()") { 
+        Validator.revokeAnyKey(keys[from][key]); 
     }
 
     function grantStandardKey(address to, string memory key)
-        external {
-        authenticate(msg.sender, "terminal-grant-standard-key");
-        Authenticator.grantStandardKey(keys[to][key]);
+        public
+        onlyIfEnabled
+        onlyIfRelayModeDisabled 
+        onlyKey("Terminal->grantStandardKey()") { 
+        Validator.grantStandardKey(keys[to][key]); 
     }
 
-    function grantTimedKey(address to, string memory key, uint startTimestamp, uint duration)
-        external {
-        authenticate(msg.sender, "terminal-grant-timed-key");
-        Authenticator.grantTimedKey(keys[to][key], startTimestamp, duration);
+    function grantTimedKey(address to, string memory key, uint start, uint duration)
+        public
+        onlyIfEnabled
+        onlyIfRelayModeDisabled 
+        onlyKey("Terminal->grantTimedKey()") { 
+        Validator.grantTimedKey(keys[to][key], start, duration);
+    }
+    
+    function increaseTimedKeyDuration(address of_, string memory key, uint increase)
+        public
+        onlyIfEnabled
+        onlyIfRelayModeDisabled 
+        onlyKey("Terminal->increaseTimedKeyDuration()") { 
+        Validator.increaseTimedKeyDuration(keys[of_][key], increase); 
+    }
+    
+    function decreaseTimedKeyDuration(address of_, string memory key, uint decrease)
+        public
+        onlyIfEnabled
+        onlyIfRelayModeDisabled 
+        onlyKey("Terminal->decreaseTimedKeyDuration()") { 
+        Validator.decreaseTimedKeyDuration(keys[of_][key], decrease); 
     }
 
-    function grantConsumableKey(address to, string memory key, uint numUses)
-        external {
-        authenticate(msg.sender, "terminal-grant-consumable-key");
-        Authenticator.grantConsumableKey(keys[to][key], numUses);
+    function grantConsumableKey(address to, string memory key, uint uses)
+        public
+        onlyIfEnabled
+        onlyIfRelayModeDisabled 
+        onlyKey("Terminal->grantConsumableKey()") { 
+        Validator.grantConsumableKey(keys[to][key], uses); 
+    }
+    
+    function increaseConsumableKeyUses(address of_, string memory key, uint increase)
+        public
+        onlyIfEnabled
+        onlyIfRelayModeDisabled 
+        onlyKey("Terminal->increaseConsumableKeyUses()") { 
+        Validator.increaseConsumableKeyUses(keys[of_][key], increase); 
+    }
+    
+    function decreaseConsumableKeyUses(address of_, string memory key, uint decrease)
+        public
+        onlyIfEnabled
+        onlyIfRelayModeDisabled 
+        onlyKey("Terminal->decreaseConsumableKeyUses()") { 
+        Validator.decreaseConsumableKeyUses(keys[of_][key], decrease); 
     }
 
-    function authenticate(address from, string memory key)
-        public { Authenticator.authenticate(keys[from][key]); }
-
-    // ==============|
-    // MODULE MANAGER|
-    // ==============|
-
-    // deploys router and grants access to router keys.
-    function deployRouter(string memory name, address implementation, bool upgradeable, bool enabled)
-        external
-        returns (bool) {
-        if (isRouter[name]) { revert ROUTER_IS_ALREADY_DEPLOYED(); }
-        routers.push(new Router(name, implementation, upgradeable, enabled));
-        nameToRouterMapping[name] = routers.length - 1;
-        address to = address(this); // standard router functions.
-        Authenticator.grantStandardKey(keys[to][string(abi.encodePacked(name, "->enable()"))]);
-        Authenticator.grantStandardKey(keys[to][string(abi.encodePacked(name, "->disable()"))]);
-        Authenticator.grantStandardKey(keys[to][string(abi.encodePacked(name, "->upgrade()"))]);
-        Authenticator.grantStandardKey(keys[to][string(abi.encodePacked(name, "->downgrade()"))]);
-        Authenticator.grantStandardKey(keys[to][string(abi.encodePacked(name, "->swapTerminal()"))]);
-        isRouter[name] = true;
-        return true;
+    function setTimelock(uint value)
+        public
+        onlyIfEnabled
+        onlyIfRelayModeDisabled
+        onlyKey("Terminal->setTimelock()") {
+        timelock = value;
     }
 
-    function connect(string memory name, string memory signature, bytes memory args)
-        external
-        returns (bytes memory) {
-        authenticate(msg.sender, "Terminal->connect()");
-        Router storage router = routers[nameToRouterMapping[name]];
-        (bool success, bytes memory response) = address(router).call(abi.encodeWithSignature(signature, args));
-        return response;
+    function setTimeout(uint value)
+        public
+        onlyIfEnabled
+        onlyIfRelayModeDisabled
+        onlyKey("Terminal->setTimeout()") {
+        timeout = value;
     }
 
-    function route(string memory signature, bytes memory args)
-        external
-        returns (bytes memory) {
-        for (uint i = 0; i < routers.length; i++) {
-            Router storage router = routers[i];
-            (bool success, bytes memory response) = address(router).call(abi.encodeWithSignature(signature, args));
-            if (success) { break; }
-        }
 
-        return response;
+    
+    function queue(address target, string memory signature, bytes memory args, address creator, string memory message)
+        public
+        onlyIfEnabled
+        onlyIfRelayModeDisabled 
+        onlyKey("Terminal->queue()") {
+        uint identifier = TimelockRequest.queue(timelock, timeout, requests, target, signature, args, creator, message);
+        if (enabledSelfApprove) { TimelockRequest.approve(requests, identifier); }
     }
 
-    function addModule(string memory name, address implementation, string[] memory keys_, bool upgradeable)
-        external
-        returns (Module memory) {
-        authenticate(msg.sender, "terminal-add-module");
-        Module storage module = _modules[name];
-
-        if (module.used) { revert ModuleIsNotEmpty(module); }
-        module.implementations.add(implementation);
-        module.latestImplementation = implementation;
-        module.latestVersion = module.implementations.length() - 1;
-        module.upgradeable = upgradeable;
-        module.used = true;
-
-        // pass authentication keys to terminal.
-        for (uint i = 0; i < keys_.length; i++) { Authenticator.grantStandardKey(keys[address(this)][keys_[i]]); }
-        emit ModuleAquired(name, module);
-        return module;
+    function execute(uint identifier)
+        public
+        onlyIfEnabled
+        onlyIfRelayModeDisabled 
+        onlyKey("Terminal->execute()") {
+        TimelockRequest.execute(requests, identifier);
     }
 
-    function removeModule(string memory name)
-        external
-        returns (Module memory) {
-        authenticate(msg.sender, "terminal-remove-module");
-        Module storage module = _modules[name];
+    function reject(uint identifier)
+        public
+        onlyIfEnabled
+        onlyIfRelayModeDisabled 
+        onlyKey("Terminal->reject()") {
+        TimelockRequest.reject(requests, identifier);
+    }
+
+    function approve(uint identifier)
+        public
+        onlyIfEnabled
+        onlyIfRelayModeDisabled 
+        onlyKey("Terminal->approve()") {
         
-        if (!module.used) { revert ModuleIsEmpty(module); }
-        module = Module({
-            /** clear implementations array */
-            upgradeable: false,
-            used: false
-        });
+        TimelockRequest.approve(requests, identifier);
     }
 
-    function upgradeModule(string memory name, address implementation, string[] memory keys_, bool force)
-        external
-        returns (Module memory, uint version) {
-        authenticate(msg.sender, "terminal-upgrade-module");
-        Module storage module = _modules[name];
-
-        if (!module.used) { revert ModuleIsEmpty(module); }
-        if (!module.upgradeable) { revert ModuleIsNotUpgradeable(module); }
-
-        // disable previous implementation.
-        uint latest = module.implementations.length() - 1;
-        address latestImplementation = module.implementations.at(latest);
-
-        (bool success, bytes memory response) = latestImplementation.call(abi.encodeWithSignature("disable()"));
-
-        if (!success && !force) {
-
-            // force will push the upgrade regardless of confirming the previous implementation is disabled.
-            revert UnableToConfirmPreviousImplementationIsDisabled(module);
-        }
-
-        // upgrade.
-        module.implementations.add(implementation);
-
-        return (module, module.implementations.length() - 1);
+    function queueBatch(address[] memory targets, string[] memory signatures, bytes[] memory args, address creator, string memory message)
+        public
+        onlyIfEnabled
+        onlyIfRelayModeDisabled 
+        onlyKey("Terminal->queueBatch()") {
+        uint identifier = TimelockBatchRequest.queue(timelock, timeout, requestsBatch, targets, signatures, args, creator, message);
+        if (enabledSelfApprove) { TimelockBatchRequest.approve(requestsBatch, identifier); }
     }
 
-    // -----------|
-    // BROADCASTER|
-    // -----------|
+    function executeBatch(uint identifier)
+        public
+        onlyIfEnabled
+        onlyIfRelayModeDisabled 
+        onlyKey("Terminal->executeBatch()") {
+        TimelockBatchRequest.execute(requestsBatch, identifier);
+    }
+    
+    function rejectBatch(uint identifier)
+        public
+        onlyKey("Terminal->rejectBatch()") {
+        TimelockBatchRequest.reject(requestsBatch, identifier);
+    }
 
-    /** makes a call to all modules with to the same signature with the same args 
-    @dev assuming each implementation is built on the implementation wrapper they should all have the same drm001 standard.
-     */
+    function approveBatch(uint identifier)
+        public
+        onlyIfEnabled
+        onlyIfRelayModeDisabled 
+        onlyKey("Terminal->approveBatch()") {
+        TimelockBatchRequest.approve(requestsBatch, identifier);
+    }
+
+    // ... when router is deployed keys must be granted to terminal.
+    function deployRouter(string memory name, address implementation, bool upgradeable, bool enabled)
+        public 
+        onlyIfEnabled
+        onlyIfRelayModeDisabled 
+        onlyKey("Terminal->deployRouter()")
+        returns (address) {
+        /// check if the name is being used by another router.
+        if (nameHasBeenUsed[name]) { revert ROUTER_NAME_ALREADY_IN_USE(); }
+        nameHasBeenUsed[name] = true;
+        routersNames.push(name);
+
+        /// deploy new router.
+        routers.push(new Router(name, implementation, upgradeable));
+
+        /// grant keys to standard router functions.
+        address to = address(this);
+        grantStandardKey(to, string(abi.encodePacked(name, "->enable()")));
+        grantStandardKey(to, string(abi.encodePacked(name, "->disable()")));
+        grantStandardKey(to, string(abi.encodePacked(name, "->upgrade()")));
+        grantStandardKey(to, string(abi.encodePacked(name, "->downgrade()")));
+        grantStandardKey(to, string(abi.encodePacked(name, "->swapTerminal()")));
+
+        uint identifier = routers.length - 1;
+        if (enabled) { routers[identifier].enable(); }
+        addressHasBeenUsed[address(routers[identifier])] = true;
+        return address(routers[identifier]);
+    }
+
+    // for non native router access.
+    function plugInRouter(address router_)
+        public
+        onlyIfEnabled
+        onlyIfRelayModeDisabled 
+        onlyKey("Terminal-plugInRouter()") 
+        returns (address) {
+        IRouter router = IRouter(router_);
+        if (addressHasBeenUsed[address(router)]) { revert ROUTER_ADDRESS_ALREADY_IN_USE(); }
+        if (nameHasBeenUsed[router.name()]) { revert ROUTER_NAME_ALREADY_IN_USE(); }
+        addressHasBeenUsed[address(router)] = true;
+        router.swapTerminal(address(this));
+        router.enable();
+        nonNativeRouters.push(router_);
+        return address(router);
+    }
+
     function broadcast(string memory signature, bytes memory args)
         public
-        returns (bool[] memory successes, bytes[] memory responses) {
-        authenticate(msg.sender, "terminal-broadcast");
-        for (uint i = 0; i < modules.length; i++) {
-            Module storage module = _modules[modules[i]];
-            module.latestImplementation.call(abi.encodeWithSignature(signature, args));
-        }
-    }
-
-
-    // ... iteralet over all modules and make the same call.
-    // if they have a module wrapper terminal should be able to pause all of them.
-    // identify module types and differences.
-
-    /** deploy parent terminal as new upgrade and brodcast new terminal */
-
-    // --------------
-    // SINGLE REQUEST.
-    // --------------
-    
-    function queueRequest(Payload memory payload, string memory message)
-        external
-        returns (uint) {
-        authenticate(msg.sender, "terminal-queue-request");
-        return TimelockA.queueRequest(timelockSettings, requests, numRequests, payload, message);
-    }
-
-    function executeRequest(uint identifier)
-        external
-        returns (bool, bytes memory) {
-        authenticate(msg.sender, "terminal-execute-request");
-        return TimelockA.executeRequest(requests, identifier);
-    }
-
-    function rejectRequest(uint identifier)
-        external {
-        authenticate(msg.sender, "terminal-reject-request");
-        TimelockA.rejectRequest(requests, identifier);
-    }
-
-    function approveRequest(uint identifier)
-        external {
-        authenticate(msg.sender, "terminal-approve-request");
-        TimelockA.approveRequest(requests, identifier);
-    }
-
-    // -------------
-    // BATCH REQUEST.
-    // -------------
-
-    function queueBatchRequest(Batch memory batch, string memory message)
-        external
-        returns (uint) {
-        authenticate(msg.sender, "terminal-queue-batch-request");
-        return TimelockB.queueBatchRequest(timelockSettings, batchRequests, numBatchRequests, batch, message);
-    }
-
-    function executeBatchRequest(uint identifier)
-        external
-        returns (bool[] memory, bytes[] memory) {
-        authenticate(msg.sender, "terminal-execute-batch-request");
-        return TimelockB.executeBatchRequest(batchRequests, identifier);
-    }
-
-    function rejectBatchRequest(uint identifier)
-        external {
-        authenticate(msg.sender, "terminal-reject-batch-request");
-        TimelockB.rejectBatchRequest(batchRequests, identifier);
-    }
-
-    function approveBatchRequest(uint identifier)
-        external {
-        authenticate(msg.sender, "terminal-approve-batch-request");
-        TimelockB.approveBatchRequest(batchRequests, identifier);
-    }
-
-    function route(string memory signature, bytes memory args)
-        external
-        returns (bytes memory) {
+        onlyIfEnabled
+        onlyIfRelayModeDisabled 
+        onlyKey("Terminal->broadcast()") 
+        returns (bool[] memory) {
+        bool[] memory successes;
         for (uint i = 0; i < routers.length; i++) {
-            Router storage router = routers[i];
-            (bool success, bytes memory response) = address(router).call(abi.encodeWithSignature(signature, args));
+            (bool success, ) = address(routers[i]).call(abi.encodeWithSignature(signature, args));
+            successes[successes.length] = success; 
+        }
+        for (uint i = 0; i < nonNativeRouters.length; i++) {
+            (bool success, ) = address(nonNativeRouters[i]).call(abi.encodeWithSignature(signature, args));
+            successes[successes.length] = success;
+        }
+        return successes;
+    }
+
+    function upgrade(address implementation, bool carryRouters)
+        public
+        onlyIfEnabled
+        onlyIfRelayModeDisabled 
+        onlyKey("Terminal->upgrade()") {
+        // move router's terminal to new terminal implementation.
+        if (carryRouters) {
+            bytes memory args = abi.encode(implementation);
+            broadcast("swapTerminal(address)", args);
+        }
+        // grant keys of this contract.
+        terminals.push(implementation);
+        address to = implementation;
+        grantStandardKey(to, "Terminal->revokeAnyKey()");
+        grantStandardKey(to, "Terminal->grantTimedKey()");
+        grantStandardKey(to, "Terminal->increaseTimedKeyDuration");
+        grantStandardKey(to, "Terminal->decreaseTimedKeyDuration");
+        grantStandardKey(to, "Terminal->grantConsumableKey()");
+        grantStandardKey(to, "Terminal->increaseConsumableKeyUses()");
+        grantStandardKey(to, "Terminal->decreaseConsumableKeyUses()");
+        grantStandardKey(to, "Terminal->queue()");
+        grantStandardKey(to, "Terminal->execute()");
+        grantStandardKey(to, "Terminal->reject()");
+        grantStandardKey(to, "Terminal->approve()");
+        grantStandardKey(to, "Terminal->queueBatch()");
+        grantStandardKey(to, "Terminal->executeBatch()");
+        grantStandardKey(to, "Terminal->rejectBatch()");
+        grantStandardKey(to, "Terminal->approveBatch()");
+        grantStandardKey(to, "Terminal->deployRouter()");
+        grantStandardKey(to, "Terminal->plugInRouter()");
+        grantStandardKey(to, "Terminal->broadcast()");
+        grantStandardKey(to, "Terminal->upgrade()");
+    }
+
+    function connect(string memory signature, bytes memory args, bool global_)
+        public
+        onlyIfEnabled
+        returns (bool, bytes memory) {
+        
+        bool success;
+        bytes memory response;
+
+        /// search local native
+        for (uint i = 0; i < routers.length; i++) {
+            
+            address msgSender = msg.sender;
+            args = abi.encodePacked(msgSender, args);
+            
+            /// check for response
+            (success, response) = IRouter(routers[i]).connect(signature, args);
+            
             if (success) { break; }
         }
-
-        return response;
     }
 
-    // anyone can make any function call from this contract.
-    fallback()
-        external
-        returns (bytes memory) {
-        (bytes4 signature, bytes memory args) = abi.decode(msg.data, (bytes4, bytes));
+    /// route.
+    function route(string memory signature, bytes memory args, bool globalSearch)
+        public
+        onlyIfEnabled
+        onlyIfRelayModeDisabled
+        returns (bool, bytes memory) {
+        bool success;
+        bytes memory response;
+        // first search through local native routers.
         for (uint i = 0; i < routers.length; i++) {
-            Router storage router = routers[i];
-            address target = address(router);
-            
-            bool success;
-            bytes memory response;
-            try (success, response) = target.call{value: msg.sender}(abi.encodeWithSignature(signature, args)) {
-                if (success) {
-                    
-                }
-            } catch {
-                continue;
+            address target = routers[i].getLatestImplementation();
+            (success, response) = target.call(abi.encodeWithSignature(signature, args));
+            if (success) { break; }
+        }
+        // search non native routers.
+        if (!success) {
+            for (uint i = 0; i < nonNativeRouters.length; i++) {
+                address target = IRouter(nonNativeRouters[i]).getLatestImplementation();
+                (success, response) = target.call(abi.encodeWithSignature(signature, args));
+                if (success) { break; }    
             }
         }
-
-        return response;
-    }
-}
-
-// protocols are fast tracked instructions to terminal
-// can only be executed if the conditions are met
-contract Protocol7777 { // catastrophic failure
-    fallback()
-    public {
-        // get price
-        (, bytes memory response) = Terminal.queueRequest(payload, message);
-
-
+        // search global.
+        if (!success && globalSearch) {
+            for (uint i = 0; i < terminals.length; i++) {
+                // first call terminal.
+                (success, response) = ITerminal(terminals[i]).route(signature, args, globalSearch);
+                if (success) { break; }
+            }
+        }
+        return (success, response);
     }
 }
