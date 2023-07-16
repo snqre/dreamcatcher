@@ -318,8 +318,91 @@ contract SentinelA {
         returns (bytes32, bool, bool, bool, uint, uint, uint) {
         return Validator.getKey(_keys[of_], _keysData[of_][Validator.encode(key)], key);
     }
+
+    function getKeyValues(address of_)
+        public view 
+        returns (bytes32[] memory) {
+        return _keys[of_].values();
+    }
 }
 
-contract SentinelB {
-    mapping
+contract SentinelB is SentinelA {
+    using EnumerableSet for EnumerableSet.Bytes32Set;
+
+    mapping(string => EnumerableSet.Bytes32Set) internal _bundles;
+    mapping(string => mapping(bytes32 => Validator.Key)) internal _bundlesData;
+
+    function _removeAnyKeysFromBundle(string memory label, string[] memory keys)
+        internal {
+        for (uint i = 0; i < keys.length; i++) {
+            Validator.revokeAnyKey(_bundles[label], _bundlesData[label][Validator.encode(keys[i])], keys[i]);
+        }
+    }
+
+    function _addStandardKeysToBundle(string memory label, string[] memory keys)
+        internal {
+        for (uint i = 0; i < keys.length; i++) {
+            Validator.grantStandardKey(_bundles[label], _bundlesData[label][Validator.encode(keys[i])], keys[i]);
+        }
+    }
+
+    function _addTimedKeysToBundle(string memory label, string[] memory keys, uint[] memory startTimestamp, uint[] memory endTimestamp)
+        internal {
+        for (uint i = 0; i < keys.length; i++) {
+            Validator.grantTimedKey(_bundles[label], _bundlesData[label][Validator.encode(keys[i])], keys[i], startTimestamp[i], endTimestamp[i]);
+        }
+    }
+
+    function _addConsumableKeysToBundle(string memory label, string[] memory keys, uint[] memory balance)
+        internal {
+        for (uint i = 0; i < keys.length; i++) {
+            Validator.grantConsumableKey(_bundles[label], _bundlesData[label][Validator.encode(keys[i])], keys[i], balance[i]);
+        }
+    }
+
+    function _getBundle(string memory label, string memory key)
+        internal view 
+        returns (bytes32, bool, bool, bool, uint, uint, uint) {
+        return Validator.getKey(_bundles[label], _bundlesData[label][Validator.encode(key)], key);
+    }
+
+    function removeAnyKeysFromBundle(string memory label, string[] memory keys)
+        public 
+        returns (bool) {
+        _removeAnyKeysFromBundle(label, keys);
+        return true;
+    }
+
+    function addStandardKeysToBundle(string memory label, string[] memory keys)
+        public
+        returns (bool) {
+        _addStandardKeysToBundle(label, keys);
+        return true;
+    }
+
+    function addTimedKeysToBundle(string memory label, string[] memory keys, uint[] memory startTimestamp, uint[] memory endTimestamp)
+        public
+        returns (bool) {
+        _addTimedKeysToBundle(label, keys, startTimestamp, endTimestamp);
+        return true;
+    }
+
+    function addConsumableKeysToBundle(string memory label, string[] memory keys, uint[] memory balance)
+        public
+        returns (bool) {
+        _addConsumableKeysToBundle(label, keys, balance);
+        return true;
+    }
+
+    function getBundle(string memory label, string memory key)
+        public view
+        returns (bytes32, bool, bool, bool, uint, uint, uint) {
+        return _getBundle(label, key);
+    }
+
+    function getBundleValues(string memory label)
+        public view 
+        returns (bytes32[] memory) {
+        return _bundles[label].values();
+    }
 }
