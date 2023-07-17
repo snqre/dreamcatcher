@@ -1,0 +1,28 @@
+// SPDX-License-Identifier: Apache-2.0
+pragma solidity 0.8.19;
+import "contracts/polygon/deps/openzeppelin/utils/structs/EnumerableSet.sol";
+
+contract Link {
+    using EnumerableSet for EnumerableSet.AddressSet;
+    
+    EnumerableSet.AddressSet private _terminals;
+    mapping(address => EnumerableSet.AddressSet) private _routers;
+
+    function connect(string memory signature, bytes memory args)
+        public
+        returns (bytes memory) {
+        address target;
+        bool success;
+        bytes memory response;
+        for (uint i = 0; i < _terminals.length(); i++) {
+            for (uint x = 0; x < _routers[_terminals.at(i)].length(); x++) {
+                target = _routers[_terminals.at(i)].at(x);
+                (success, response) = target.call(abi.encodeWithSignature(signature, args));
+                if (success) { break; }
+            }
+            if (success) { break; }
+        }
+        require(success, "Link: failed to find signature");
+        return response;
+    }
+}

@@ -1,1 +1,0 @@
-7777s are a catastrophic failure or threat to the DAO's functioning. These protocols are executed or refered to.
