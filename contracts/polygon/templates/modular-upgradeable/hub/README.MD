@@ -44,3 +44,57 @@ The `__Validator` library provides granular authorization functionality through 
 
 10. `getKeys(EnumerableSet.Bytes32Set storage keys, Data[] storage datas) public view returns (Key[] memory)`
     - This function returns an array of `Key` structs corresponding to all the keys in the `keys` set. It fetches the associated information from the `data` structs and compiles them into the array.
+
+# Validator Contract Documentation
+
+## Introduction
+The `Validator` contract provides granular authorization functionality through the manipulation and management of keys. It allows users to grant and revoke access to specific addresses along with associated signatures, classes, start timestamps, end timestamps, and balance values. The contract implements the `IValidator` interface, which defines the external functions for managing keys.
+
+## Interface: IValidator
+
+```solidity
+interface IValidator {
+    event KeyRevoked(address indexed from, address indexed of_, string indexed signature);
+    event KeyGranted(address indexed to, address indexed of_, string indexed signature, __Validator.Class class, uint32 startTimestamp, uint32 endTimestamp, uint8 balance);
+    event Authorized(address indexed from, address indexed of_, string indexed signature);
+
+    function revoke(address from, address of_, string memory signature) external;
+    function grant(address to, address of_, string memory signature, __Validator.Class class, uint32 startTimestamp, uint32 endTimestamp, uint8 balance) external;
+    function validate(address from, address of_, string memory signature) external;
+    function getKey(address from, address of_, string memory signature) external view returns (bytes32, __Validator.Class, uint32, uint32, uint8);
+    function getKeys(address from) external view returns (bytes32[] memory, __Validator.Class[] memory, uint32[] memory, uint32[] memory, uint8[] memory);
+}
+
+# Validator Contract Documentation
+
+## Introduction
+The `Validator` contract implements the `IValidator` interface and provides the core functionality for managing keys.
+
+## Interface: IValidator
+
+The `IValidator` interface declares the external functions to manage keys, along with relevant events.
+
+### Events
+
+- **KeyRevoked**: Emitted when a key is revoked. It indicates the address from which the key is revoked (`from`), the address being revoked (`of_`), and the associated signature (`signature`).
+
+- **KeyGranted**: Emitted when a key is granted. It indicates the address to which the key is granted (`to`), the address being granted (`of_`), the associated signature (`signature`), the class of the key (`class`), the start timestamp (`startTimestamp`), the end timestamp (`endTimestamp`), and the balance value (`balance`).
+
+- **Authorized**: Emitted when a key is successfully validated. It indicates the address from which the validation is done (`from`), the address being validated (`of_`), and the associated signature (`signature`).
+
+## Functions
+
+- `revoke(address from, address of_, string memory signature) external`
+  - This function revokes the access key associated with the specified signature. It can only be called by the key owner (`from`). Emits `KeyRevoked` event upon successful revocation.
+
+- `grant(address to, address of_, string memory signature, __Validator.Class class, uint32 startTimestamp, uint32 endTimestamp, uint8 balance) external`
+  - This function grants access to the specified address with the provided signature, class, start timestamp, end timestamp, and balance. It can only be called by the key owner (`to`). Emits `KeyGranted` event upon successful granting.
+
+- `validate(address from, address of_, string memory signature) external`
+  - This function validates the access key of the specified address (`of_`) and signature. It ensures the key is valid and performs necessary checks based on the key's class and timestamps. Emits `Authorized` event upon successful validation.
+
+- `getKey(address from, address of_, string memory signature) external view returns (bytes32, __Validator.Class, uint32, uint32, uint8)`
+  - This function retrieves the key information associated with the specified address and signature. It returns the key's ID, class, start timestamp, end timestamp, and balance.
+
+- `getKeys(address from) external view returns (bytes32[] memory, __Validator.Class[] memory, uint32[] memory, uint32[] memory, uint8[] memory)`
+  - This function retrieves all keys associated with the specified address. It returns arrays of key IDs, classes, start timestamps, end timestamps, and balances.
