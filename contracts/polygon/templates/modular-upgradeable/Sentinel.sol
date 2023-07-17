@@ -253,6 +253,82 @@ library Validator {
     }
 }
 
+library Anchor {
+    using EnumerableSet for EnumerableSet.AddressSet;
+
+    function _mustBeExistingTerminal(EnumerableSet.AddressSet storage _terminals, address terminal)
+        private view {
+        require(
+            _terminals.contains(terminal), 
+            "Anchor: TERMINAL_MATCH_NOT_FOUND"
+        );
+    }
+
+    function _mustNotBeExistingTerminal(EnumerableSet.AddressSet storage _terminals, address terminal)
+        private view {
+        require(
+            !_terminals.contains(terminal),
+            "Anchor: TERMINAL_MATCH_WAS_FOUND"
+        );
+    }
+
+    function _mustBeExistingRouter(EnumerableSet.AddressSet storage _routers, address router)
+        private view {
+        require(
+            _routers.contains(router),
+            "Anchor: ROUTER_MATCH_NOT_FOUND"
+        );
+    }
+
+    function _mustNotBeExistingRouter(EnumerableSet.AddressSet storage _routers, address router)
+        private view {
+        require(
+            !_routers.contains(router),
+            "Anchor: ROUTER_MATCH_WAS_FOUND"
+        );
+    }
+
+    function _call(address target, string memory signature, bytes memory args)
+        private 
+        returns (bytes memory) {
+        (bool success, bytes memory response) = target.call(abi.encodeWithSignature(signature, args));
+        require(success, "Anchor: FAILED_CALL");
+        return response;
+    }
+
+    function assignTerminal(EnumerableSet.AddressSet storage _terminals, address terminal)
+        public
+        returns (bool) {
+        _mustNotBeExistingTerminal(_terminals, terminal);
+        _terminals.add(terminal);
+        return true;
+    }
+
+    function unassignTerminal(EnumerableSet.AddressSet storage _terminals, address terminal)
+        public
+        returns (bool) {
+        _mustBeExistingTerminal(_terminals, terminal);
+        _terminals.remove(terminal);
+        return true;
+    }
+
+    function assignRouter(EnumerableSet.AddressSet storage _routers, address router)
+        public
+        returns (bool) {
+        _mustNotBeExistingRouter(_routers, router);
+        _routers.add(router);
+        return true;
+    }
+
+    function unassignRouter(EnumerableSet.AddressSet storage _routers, address router)
+        public
+        returns (bool) {
+        _mustBeExistingRouter(_routers, router);
+        _routers.remove(router);
+        return true;
+    }    
+}
+
 contract SentinelA {
     using EnumerableSet for EnumerableSet.Bytes32Set;
 
@@ -407,82 +483,6 @@ contract SentinelB is SentinelA {
     }
 }
 
-library Anchor {
-    using EnumerableSet for EnumerableSet.AddressSet;
-
-    function _mustBeExistingTerminal(EnumerableSet.AddressSet storage _terminals, address terminal)
-        private view {
-        require(
-            _terminals.contains(terminal), 
-            "Anchor: TERMINAL_MATCH_NOT_FOUND"
-        );
-    }
-
-    function _mustNotBeExistingTerminal(EnumerableSet.AddressSet storage _terminals, address terminal)
-        private view {
-        require(
-            !_terminals.contains(terminal),
-            "Anchor: TERMINAL_MATCH_WAS_FOUND"
-        );
-    }
-
-    function _mustBeExistingRouter(EnumerableSet.AddressSet storage _routers, address router)
-        private view {
-        require(
-            _routers.contains(router),
-            "Anchor: ROUTER_MATCH_NOT_FOUND"
-        );
-    }
-
-    function _mustNotBeExistingRouter(EnumerableSet.AddressSet storage _routers, address router)
-        private view {
-        require(
-            !_routers.contains(router),
-            "Anchor: ROUTER_MATCH_WAS_FOUND"
-        );
-    }
-
-    function _call(address target, string memory signature, bytes memory args)
-        private 
-        returns (bytes memory) {
-        (bool success, bytes memory response) = target.call(abi.encodeWithSignature(signature, args));
-        require(success, "Anchor: FAILED_CALL");
-        return response;
-    }
-
-    function assignTerminal(EnumerableSet.AddressSet storage _terminals, address terminal)
-        public
-        returns (bool) {
-        _mustNotBeExistingTerminal(_terminals, terminal);
-        _terminals.add(terminal);
-        return true;
-    }
-
-    function unassignTerminal(EnumerableSet.AddressSet storage _terminals, address terminal)
-        public
-        returns (bool) {
-        _mustBeExistingTerminal(_terminals, terminal);
-        _terminals.remove(terminal);
-        return true;
-    }
-
-    function assignRouter(EnumerableSet.AddressSet storage _routers, address router)
-        public
-        returns (bool) {
-        _mustNotBeExistingRouter(_routers, router);
-        _routers.add(router);
-        return true;
-    }
-
-    function unassignRouter(EnumerableSet.AddressSet storage _routers, address router)
-        public
-        returns (bool) {
-        _mustBeExistingRouter(_routers, router);
-        _routers.remove(router);
-        return true;
-    }    
-}
-
 contract SentinelC is SentinelB {
     /**
     
@@ -564,4 +564,8 @@ contract SentinelC is SentinelB {
         require(success, "Sentinel: FAILED_TO_FIND_SIGNATURE");
         return response;
     }
+}
+
+contract SentinelD {
+    
 }
