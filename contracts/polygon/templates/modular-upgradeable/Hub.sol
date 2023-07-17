@@ -339,6 +339,8 @@ library Anchor {
 }
 
 library Timelock {
+    using EnumerableSet for EnumerableSet.Bytes32Set;
+    
     struct Request {
         address target;
         string signature;
@@ -355,37 +357,132 @@ library Timelock {
         bool isPending;
     }
 
-    function generateUniqueId()
-        public
-        returns (bytes32) {
-        
+    struct BatchRequest {
+        address[] targets;
+        string[] signature;
+        bytes[] args;
+        uint startTimestamp;
+        uint timelock;
+        uint timeout;
+        address creator;
+        address origin;
+        string message;
+        bool isRejected;
+        bool isApproved;
+        bool isExecuted;
+        bool isPending;
     }
 
-    function queue(EnumerableSet.Bytes32Set storage _requests, Request storage request, uint timelock, uint timeout, address target, string memory signature, bytes memory args, address creator, string memory message)
+    function generateUniqueId(uint nonce)
+        public pure
+        returns (bytes32) {
+        return keccak256(abi.encodePacked(nonce));
+    }
+
+    function mustBeAfterTimelock(Request storage request)
+        public view {
+        require(
+            block.timestamp > (request.startTimestamp + request.timelock),
+            "__Timelock: REQUEST_IS_PENDING"
+        );
+    }
+
+    function mustBeBeforeTimelock(Request storage request)
+        public view {
+        require(
+            block.timestamp < (request.startTimestamp + request.timelock),
+            "__Timelock: REQUEST_IS_NO_LONGER_PENDING"
+        );
+    }
+
+    function mustBeBeforeTimeout(Request storage request)
+        public view {
+        require(
+            block.timestamp < (request.startTimestamp + request.timelock) + request.timeout,
+            "__Timelock: REQUEST_HAS_TIMED_OUT"
+        );
+    }
+
+    function mustNotBeRejected(Request storage request)
+        public view {
+        require(!request.isRejected, "__Timelock: REQUEST_HAS_BEEN_REJECTED");
+    }
+
+    function mustNotBeExecuted(Request storage request)
+        public view {
+        require(!request.isExecuted, "__Timelock: REQUEST_HAS_BEEN_EXECUTED");
+    }
+
+    function mustBeApproved(Request storage request)
+        public view {
+        require(request.isApproved, "__Timelock: REQUEST_HAS_NOT_BEEN_APPROVED");
+    }
+
+    function mustNotBeApproved(Request storage request)
+        public view {
+        require(!request.isApproved, "__Timelock: REQUEST_HAS_BEEN_APPROVED");
+    }
+
+    function queueRequest(EnumerableSet.Bytes32Set storage _requests, Request storage request, uint timelock, uint timeout, bytes32 id, address target, string memory signature, bytes memory args, address creator, string memory message)
         public
-        returns (bool) {
-        _requests.add(generateUniqueId());
+        returns (bytes32) {
+        _requests.add(id);
         request.target = target;
         request.signature = signature;
         request.args = args;
         request.creator = creator;
         request.origin = msg.sender;
         request.message = message;
+        request.startTimestamp = block.timestamp;
+        request.timelock = timelock;
+        request.timeout = timeout;
+        request.isPending = true;
+        return id;
+    }
+
+    function executeRequest(Request storage request)
+        public {
+        mustBeAfterTimelock(request);
+        mustBeBeforeTimeout(request);
+        mustNotBeRejected(request);
+        mustNotBeExecuted(request);
+        mustBeApproved(request);
+        request.isPending = false;
+        request.isExecuted = true;
+    }
+
+    function rejectRequest(Request storage request)
+        public {
+        mustBeBeforeTimelock(request);
+        mustNotBeExecuted(request);
+        mustNotBeRejected(request);
+        mustNotBeApproved(request);
+        request.isPending = false;
+        request.isRejected = true;
+    }
+
+    function approveRequest(Request storage request)
+        public {
+        mustBeBeforeTimelock(request);
+        mustNotBeExecuted(request);
+        mustNotBeRejected(request);
+        mustNotBeApproved(request);
+        request.isApproved = true;
     }
 }
 
-contract SentinelA {
+contract HubA {
     using EnumerableSet for EnumerableSet.Bytes32Set;
 
     mapping(address => EnumerableSet.Bytes32Set) internal _keys;
     mapping(address => mapping(bytes32 => Validator.Key)) internal _keysData;
 
-    event KeyRevoked(address from, string key, EnumerableSet.Bytes32Set keys, Validator.Key data);
+    event KeyRevoked(address from, string key);
 
     function revokeAnykey(address from, string memory key)
         public
         returns (bool) {
-        emit KeyRevoked(from, key, _keys[from], _keysData[from][Validator.encode(key)]);
+        emit KeyRevoked(from, key);
         return Validator.revokeAnyKey(_keys[from], _keysData[from][Validator.encode(key)], key);
     }    
 
@@ -450,7 +547,7 @@ contract SentinelA {
     }
 }
 
-contract SentinelB is SentinelA {
+contract HubB is HubA {
     using EnumerableSet for EnumerableSet.Bytes32Set;
 
     mapping(string => EnumerableSet.Bytes32Set) internal _bundles;
@@ -531,7 +628,7 @@ contract SentinelB is SentinelA {
     }
 }
 
-contract SentinelC is SentinelB {
+contract HubC is HubB {
     /**
     
         sentinel:
@@ -614,7 +711,7 @@ contract SentinelC is SentinelB {
     }
 }
 
-contract SentinelD {
+contract HubD is HubC {
     /**
     
         Timelock.
@@ -624,8 +721,48 @@ contract SentinelD {
 
     using EnumerableSet for EnumerableSet.Bytes32Set;
 
+    struct Settings {
+        uint timelock;
+        uint timeout;
+        bool enabledIndependentApproval;
+    }
+
+    Settings public settings;
     EnumerableSet.Bytes32Set internal _requests;
     mapping(bytes32 => Timelock.Request) internal _requestsData;
+    uint nonce;
+
+    function queueRequest(address target, string memory signature, bytes memory args, address creator, string memory message)
+        public
+        returns (bytes32) {
+        nonce++;
+        bytes32 id = Timelock.generateUniqueId(nonce);
+        Timelock.queueRequest(_requests, _requestsData[id], settings.timelock, settings.timeout, id, target, signature, args, creator, message);
+        if (settings.enabledIndependentApproval) {
+            approveRequest(id);
+        }
+        return id;
+    }
+
+    function executeRequest(bytes32 id)
+        public 
+        returns (bytes memory) {
+        Timelock.Request storage request = _requestsData[id];
+        (bool success, bytes memory response) = request.target.call(abi.encodeWithSignature(request.signature, request.args));
+        require(success, "Hub: FAILED_EXECUTION");
+        Timelock.executeRequest(request);
+        return response;
+    }
+
+    function rejectRequest(bytes32 id)
+        public {
+        Timelock.rejectRequest(_requestsData[id]);
+    }
+
+    function approveRequest(bytes32 id)
+        public {
+        Timelock.approveRequest(_requestsData[id]);
+    }
 
     /// @dev execute a pre determined set of calls to native
     function executeProtocol(address protocol)
@@ -633,4 +770,28 @@ contract SentinelD {
         returns (bool) {
         
     }
+
+    function setTimelock(uint value)
+        public {
+        settings.timelock = value;
+    }
+
+    function setTimeout(uint value)
+        public {
+        settings.timeout = value;
+    }
+
+    function enableIndependentApproval()
+        public {
+        settings.enabledIndependentApproval = true;
+    }
+
+    function disableIndependentApproval()
+        public {
+        settings.enabledIndependentApproval = false;
+    }
+}
+
+contract Hub is HubD {
+    
 }
