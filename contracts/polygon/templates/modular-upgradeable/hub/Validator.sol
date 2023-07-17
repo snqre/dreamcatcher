@@ -8,19 +8,19 @@ interface IValidator {
     event KeyGranted(address indexed to, address indexed of_, string indexed signature, __Validator.Class class, uint32 startTimestamp, uint32 endTimestamp, uint8 balance);
     event Authorized(address indexed from, address indexed of_, string indexed signature);
 
-    function revoke(address from, address of_, string memory signature) external;
-    function grant(address to, address of_, string memory signature, __Validator.Class class, uint32 startTimestamp, uint32 endTimestamp, uint8 balance) external;
-    function validate(address from, address of_, string memory signature) external;
-    function getKey(address from, address of_, string memory signature) external view returns (bytes32, __Validator.Class, uint32, uint32, uint8);
-    function getKeys(address from) external view returns (bytes32[] memory, __Validator.Class[] memory, uint32[] memory, uint32[] memory, uint8[] memory);
+    //function revoke(address from, address of_, string memory signature) external;
+    //function grant(address to, address of_, string memory signature, __Validator.Class class, uint32 startTimestamp, uint32 endTimestamp, uint8 balance) external;
+    //function validate(address from, address of_, string memory signature) external;
+    //function getKey(address from, address of_, string memory signature) external view returns (bytes32, __Validator.Class, uint32, uint32, uint8);
+    //function getKeys(address from) external view returns (bytes32[] memory, __Validator.Class[] memory, uint32[] memory, uint32[] memory, uint8[] memory);
 }
 
 contract Validator is IValidator {
     using EnumerableSet for EnumerableSet.Bytes32Set;
     using EnumerableSet for EnumerableSet.AddressSet;
 
-    mapping(address => EnumerableSet.Bytes32Set) private _keys;
-    mapping(address => mapping(bytes32 => __Validator.Data)) private _datas;
+    mapping(address => EnumerableSet.Bytes32Set) internal _keys;
+    mapping(address => mapping(bytes32 => __Validator.Data)) internal _datas;
 
     function revoke(address from, address of_, string memory signature)
         public {

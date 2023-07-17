@@ -19,14 +19,6 @@ library __Validator {
         uint8 balance;
     }
 
-    struct Key {
-        bytes32 id;
-        Class class;
-        uint32 startTimestamp;
-        uint32 endTimestamp;
-        uint8 balance;
-    }
-
     function encode(address of_, string memory signature)
         public pure 
         returns (bytes32) {
