@@ -50,11 +50,6 @@ The `__Validator` library provides granular authorization functionality through 
 ## Introduction
 The `Validator` contract provides granular authorization functionality through the manipulation and management of keys. It allows users to grant and revoke access to specific addresses along with associated signatures, classes, start timestamps, end timestamps, and balance values. The contract implements the `IValidator` interface, which defines the external functions for managing keys.
 
-# Validator Contract Documentation
-
-## Introduction
-The `Validator` contract implements the `IValidator` interface and provides the core functionality for managing keys.
-
 ## Interface: IValidator
 
 The `IValidator` interface declares the external functions to manage keys, along with relevant events.
