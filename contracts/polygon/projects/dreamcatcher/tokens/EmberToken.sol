@@ -6,15 +6,12 @@ import "contracts/polygon/deps/openzeppelin/token/ERC20/extensions/ERC20Burnable
 import "contracts/polygon/deps/openzeppelin/token/ERC20/ERC20.sol";
 import "contracts/polygon/deps/openzeppelin/access/Ownable.sol";
 
-contract DreamToken is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit, Ownable {
-    uint public cap;
-
+contract EmberToken is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit, Ownable {
     constructor()
-        ERC20("DreamToken", "DREAM")
-        ERC20Permit("DreamToken") 
+        ERC20("EmberToken", "EMBER")
+        ERC20Permit("EmberToken") 
         Ownable(msg.sender) {
-        cap = _convertToWei(200_000_000);
-        _mint(msg.sender, _convertToWei(200_000_000));
+
     }
 
     function _convertToWei(uint value)
@@ -33,6 +30,11 @@ contract DreamToken is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit, Ownable
         super._afterTokenTransfer(from, to, amount);
     }
 
+    function _transfer(address from, address to, uint amount)
+        private override {
+        revert("EmberToken: token transfer disabled by design");
+    }
+
     function _mint(address to, uint amount)
         private override {
         super._mint(to, amount);
@@ -44,21 +46,21 @@ contract DreamToken is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit, Ownable
         super._burn(account, amount);
     }
 
-    function maxSupply() 
-        public view 
-        returns (uint) { 
-        return cap; 
+    function mint(address to, uint amount)
+        public 
+        onlyOwner {
+        _mint(to, amount);
     }
 
     function snapshot()
-        external
+        public
         returns (uint) {
         _snapshot();
         return _getCurrentSnapshotId();
     }
 
     function getCurrentSnapshotId()
-        external view
+        public view
         returns (uint) {
         return _getCurrentSnapshotId();
     }

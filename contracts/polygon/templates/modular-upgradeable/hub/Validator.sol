@@ -17,6 +17,7 @@ interface IValidator {
 
 contract Validator is IValidator {
     using EnumerableSet for EnumerableSet.Bytes32Set;
+    using EnumerableSet for EnumerableSet.AddressSet;
 
     mapping(address => EnumerableSet.Bytes32Set) private _keys;
     mapping(address => mapping(bytes32 => __Validator.Data)) private _datas;
