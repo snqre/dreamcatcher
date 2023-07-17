@@ -2,6 +2,15 @@
 pragma solidity 0.8.19;
 import "contracts/polygon/deps/openzeppelin/utils/structs/EnumerableSet.sol";
 
+/**
+
+    Sentinel.
+        >. universal router
+        >. access control for all contracts on polygon
+        >. timelock
+
+ */
+
 library Validator {
     using EnumerableSet for EnumerableSet.Bytes32Set;
 
@@ -338,6 +347,7 @@ library Timelock {
         uint timelock;
         uint timeout;
         address creator;
+        address origin;
         string message;
         bool isRejected;
         bool isApproved;
@@ -351,10 +361,16 @@ library Timelock {
         
     }
 
-    function queue(EnumerableSet.Bytes32Set storage _requests, Request storage request, uint timelock, uint timeout, address target, string signature, bytes args, address creator, string memory message)
+    function queue(EnumerableSet.Bytes32Set storage _requests, Request storage request, uint timelock, uint timeout, address target, string memory signature, bytes memory args, address creator, string memory message)
         public
         returns (bool) {
         _requests.add(generateUniqueId());
+        request.target = target;
+        request.signature = signature;
+        request.args = args;
+        request.creator = creator;
+        request.origin = msg.sender;
+        request.message = message;
     }
 }
 
@@ -364,9 +380,12 @@ contract SentinelA {
     mapping(address => EnumerableSet.Bytes32Set) internal _keys;
     mapping(address => mapping(bytes32 => Validator.Key)) internal _keysData;
 
+    event KeyRevoked(address from, string key, EnumerableSet.Bytes32Set keys, Validator.Key data);
+
     function revokeAnykey(address from, string memory key)
         public
         returns (bool) {
+        emit KeyRevoked(from, key, _keys[from], _keysData[from][Validator.encode(key)]);
         return Validator.revokeAnyKey(_keys[from], _keysData[from][Validator.encode(key)], key);
     }    
 
@@ -608,5 +627,10 @@ contract SentinelD {
     EnumerableSet.Bytes32Set internal _requests;
     mapping(bytes32 => Timelock.Request) internal _requestsData;
 
-
+    /// @dev execute a pre determined set of calls to native
+    function executeProtocol(address protocol)
+        external
+        returns (bool) {
+        
+    }
 }
