@@ -50,21 +50,6 @@ The `__Validator` library provides granular authorization functionality through 
 ## Introduction
 The `Validator` contract provides granular authorization functionality through the manipulation and management of keys. It allows users to grant and revoke access to specific addresses along with associated signatures, classes, start timestamps, end timestamps, and balance values. The contract implements the `IValidator` interface, which defines the external functions for managing keys.
 
-## Interface: IValidator
-
-```solidity
-interface IValidator {
-    event KeyRevoked(address indexed from, address indexed of_, string indexed signature);
-    event KeyGranted(address indexed to, address indexed of_, string indexed signature, __Validator.Class class, uint32 startTimestamp, uint32 endTimestamp, uint8 balance);
-    event Authorized(address indexed from, address indexed of_, string indexed signature);
-
-    function revoke(address from, address of_, string memory signature) external;
-    function grant(address to, address of_, string memory signature, __Validator.Class class, uint32 startTimestamp, uint32 endTimestamp, uint8 balance) external;
-    function validate(address from, address of_, string memory signature) external;
-    function getKey(address from, address of_, string memory signature) external view returns (bytes32, __Validator.Class, uint32, uint32, uint8);
-    function getKeys(address from) external view returns (bytes32[] memory, __Validator.Class[] memory, uint32[] memory, uint32[] memory, uint8[] memory);
-}
-
 # Validator Contract Documentation
 
 ## Introduction
