@@ -24,7 +24,7 @@ library Validator {
         private view {
         require(
             _keys.contains(_encode(key)),
-            "Validator: KEY_MATCH_NOT_FOUND"
+            "__Validator: KEY_MATCH_NOT_FOUND"
         );
     }
 
@@ -32,7 +32,7 @@ library Validator {
         private view {
         require(
             !_keys.contains(_encode(key)),
-            "Validator: KEY_MATCH_WAS_FOUND"
+            "__Validator: KEY_MATCH_WAS_FOUND"
         );
     }
 
@@ -102,7 +102,7 @@ library Validator {
             && data.startTimestamp != 0
             && data.endTimestamp != 0
             && data.balance == 0,
-            "Validator: KEY_IS_NOT_OF_TYPE"
+            "__Validator: KEY_IS_NOT_OF_TYPE"
         );
         data.endTimestamp = data.startTimestamp + ((data.endTimestamp - data.startTimestamp) + increase);
         _setKey(_keys, data, key, data.isStandard, data.isTimed, data.isConsumable, data.startTimestamp, data.endTimestamp, data.balance);
@@ -118,10 +118,10 @@ library Validator {
             && data.startTimestamp != 0
             && data.endTimestamp != 0
             && data.balance == 0,
-            "Validator: KEY_IS_NOT_OF_TYPE"
+            "__Validator: KEY_IS_NOT_OF_TYPE"
         );
         uint newValue = data.startTimestamp + ((data.endTimestamp - data.startTimestamp) - decrease);
-        require(newValue > data.endTimestamp, "Validator: KEY_CANNOT_EXPIRE_BEFORE_GRANTED");
+        require(newValue > data.endTimestamp, "__Validator: KEY_CANNOT_EXPIRE_BEFORE_GRANTED");
         data.endTimestamp = newValue;
         _setKey(_keys, data, key, data.isStandard, data.isTimed, data.isConsumable, data.startTimestamp, data.endTimestamp, data.balance);
     }
@@ -142,7 +142,7 @@ library Validator {
             && data.isConsumable
             && data.startTimestamp == 0
             && data.endTimestamp == 0,
-            "Validator: KEY_IS_NOT_OF_TYPE"
+            "__Validator: KEY_IS_NOT_OF_TYPE"
         );
         data.balance += increase;
         _setKey(_keys, data, key, data.isStandard, data.isTimed, data.isConsumable, data.startTimestamp, data.endTimestamp, data.balance);
@@ -157,9 +157,9 @@ library Validator {
             && data.isConsumable
             && data.startTimestamp == 0
             && data.endTimestamp == 0,
-            "Validator: KEY_IS_NOT_OF_TYPE"
+            "__Validator: KEY_IS_NOT_OF_TYPE"
         );
-        require(data.balance != 0, "Validator: KEY_BALANCE_IS_ZERO");
+        require(data.balance != 0, "__Validator: KEY_BALANCE_IS_ZERO");
         data.balance -= decrease;
         _setKey(_keys, data, key, data.isStandard, data.isTimed, data.isConsumable, data.startTimestamp, data.endTimestamp, data.balance);
     }
@@ -168,11 +168,11 @@ library Validator {
         private {
         _mustBeExistingKey(_keys, key);
         if (data.isTimed) {
-            require(block.timestamp >= data.startTimestamp, "Validator: KEY_IS_NOT_GRANTED_YET");
-            require(block.timestamp <= data.endTimestamp, "Validator: KEY_IS_NO_LONGER_VALID");
+            require(block.timestamp >= data.startTimestamp, "__Validator: KEY_IS_NOT_GRANTED_YET");
+            require(block.timestamp <= data.endTimestamp, "__Validator: KEY_IS_NO_LONGER_VALID");
         }
         else if (data.isConsumable) {
-            require(data.balance != 0, "Validator: KEY_BALANCE_IS_ZERO");
+            require(data.balance != 0, "__Validator: KEY_BALANCE_IS_ZERO");
             data.balance--;
         }
     }
@@ -260,7 +260,7 @@ library Anchor {
         private view {
         require(
             _terminals.contains(terminal), 
-            "Anchor: TERMINAL_MATCH_NOT_FOUND"
+            "__Anchor: TERMINAL_MATCH_NOT_FOUND"
         );
     }
 
@@ -268,7 +268,7 @@ library Anchor {
         private view {
         require(
             !_terminals.contains(terminal),
-            "Anchor: TERMINAL_MATCH_WAS_FOUND"
+            "__Anchor: TERMINAL_MATCH_WAS_FOUND"
         );
     }
 
@@ -276,7 +276,7 @@ library Anchor {
         private view {
         require(
             _routers.contains(router),
-            "Anchor: ROUTER_MATCH_NOT_FOUND"
+            "__Anchor: ROUTER_MATCH_NOT_FOUND"
         );
     }
 
@@ -284,7 +284,7 @@ library Anchor {
         private view {
         require(
             !_routers.contains(router),
-            "Anchor: ROUTER_MATCH_WAS_FOUND"
+            "__Anchor: ROUTER_MATCH_WAS_FOUND"
         );
     }
 
@@ -292,7 +292,7 @@ library Anchor {
         private 
         returns (bytes memory) {
         (bool success, bytes memory response) = target.call(abi.encodeWithSignature(signature, args));
-        require(success, "Anchor: FAILED_CALL");
+        require(success, "__Anchor: FAILED_CALL");
         return response;
     }
 
@@ -327,6 +327,35 @@ library Anchor {
         _routers.remove(router);
         return true;
     }    
+}
+
+library Timelock {
+    struct Request {
+        address target;
+        string signature;
+        bytes args;
+        uint startTimestamp;
+        uint timelock;
+        uint timeout;
+        address creator;
+        string message;
+        bool isRejected;
+        bool isApproved;
+        bool isExecuted;
+        bool isPending;
+    }
+
+    function generateUniqueId()
+        public
+        returns (bytes32) {
+        
+    }
+
+    function queue(EnumerableSet.Bytes32Set storage _requests, Request storage request, uint timelock, uint timeout, address target, string signature, bytes args, address creator, string memory message)
+        public
+        returns (bool) {
+        _requests.add(generateUniqueId());
+    }
 }
 
 contract SentinelA {
@@ -567,5 +596,17 @@ contract SentinelC is SentinelB {
 }
 
 contract SentinelD {
+    /**
     
+        Timelock.
+            -> queue()
+    
+     */
+
+    using EnumerableSet for EnumerableSet.Bytes32Set;
+
+    EnumerableSet.Bytes32Set internal _requests;
+    mapping(bytes32 => Timelock.Request) internal _requestsData;
+
+
 }
