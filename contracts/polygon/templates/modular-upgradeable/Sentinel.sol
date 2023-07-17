@@ -406,3 +406,162 @@ contract SentinelB is SentinelA {
         return _bundles[label].values();
     }
 }
+
+library Anchor {
+    using EnumerableSet for EnumerableSet.AddressSet;
+
+    function _mustBeExistingTerminal(EnumerableSet.AddressSet storage _terminals, address terminal)
+        private view {
+        require(
+            _terminals.contains(terminal), 
+            "Anchor: TERMINAL_MATCH_NOT_FOUND"
+        );
+    }
+
+    function _mustNotBeExistingTerminal(EnumerableSet.AddressSet storage _terminals, address terminal)
+        private view {
+        require(
+            !_terminals.contains(terminal),
+            "Anchor: TERMINAL_MATCH_WAS_FOUND"
+        );
+    }
+
+    function _mustBeExistingRouter(EnumerableSet.AddressSet storage _routers, address router)
+        private view {
+        require(
+            _routers.contains(router),
+            "Anchor: ROUTER_MATCH_NOT_FOUND"
+        );
+    }
+
+    function _mustNotBeExistingRouter(EnumerableSet.AddressSet storage _routers, address router)
+        private view {
+        require(
+            !_routers.contains(router),
+            "Anchor: ROUTER_MATCH_WAS_FOUND"
+        );
+    }
+
+    function _call(address target, string memory signature, bytes memory args)
+        private 
+        returns (bytes memory) {
+        (bool success, bytes memory response) = target.call(abi.encodeWithSignature(signature, args));
+        require(success, "Anchor: FAILED_CALL");
+        return response;
+    }
+
+    function assignTerminal(EnumerableSet.AddressSet storage _terminals, address terminal)
+        public
+        returns (bool) {
+        _mustNotBeExistingTerminal(_terminals, terminal);
+        _terminals.add(terminal);
+        return true;
+    }
+
+    function unassignTerminal(EnumerableSet.AddressSet storage _terminals, address terminal)
+        public
+        returns (bool) {
+        _mustBeExistingTerminal(_terminals, terminal);
+        _terminals.remove(terminal);
+        return true;
+    }
+
+    function assignRouter(EnumerableSet.AddressSet storage _routers, address router)
+        public
+        returns (bool) {
+        _mustNotBeExistingRouter(_routers, router);
+        _routers.add(router);
+        return true;
+    }
+
+    function unassignRouter(EnumerableSet.AddressSet storage _routers, address router)
+        public
+        returns (bool) {
+        _mustBeExistingRouter(_routers, router);
+        _routers.remove(router);
+        return true;
+    }    
+}
+
+contract SentinelC is SentinelB {
+    /**
+    
+        sentinel:
+            -> keeps track of terminals and routers
+            -> updates terminals and routers
+            -> convinient way of viewing terminals
+
+     */
+
+    using EnumerableSet for EnumerableSet.AddressSet;
+    EnumerableSet.AddressSet internal _terminals;
+    mapping(address => EnumerableSet.AddressSet) internal _routers;
+
+    function assignTerminal(address terminal)
+        public
+        returns (bool) {
+        Anchor.assignTerminal(_terminals, terminal);
+        return true;
+    }
+
+    function unassignTerminal(address terminal)
+        public
+        returns (bool) {
+        Anchor.unassignTerminal(_terminals, terminal);
+        return true;
+    }
+
+    function assignRouter(address terminal, address router)
+        public
+        returns (bool) {
+        Anchor.assignRouter(_routers[terminal], router);
+        return true;
+    }
+
+    function unassignRouter(address terminal, address router)
+        public
+        returns (bool) {
+        Anchor.unassignRouter(_routers[terminal], router);
+        return true;
+    }
+    
+    function getTerminals()
+        public view
+        returns (address[] memory) {
+        return _terminals.values();
+    }
+
+    function getRouters(address terminal)
+        public view
+        returns (address[] memory) {
+        return _routers[terminal].values();
+    }
+
+    /**
+    
+        should loop over each terminal and its implementation to look for the first successful call
+    
+     */
+    function connect(string memory signature, bytes memory args)
+        public
+        returns (bytes memory) {
+        address target;
+        bool success;
+        bytes memory response;
+        /// for each terminal
+        for (uint i = 0; i < _terminals.length(); i++) {
+            
+            /// loop through each router
+            for (uint x = 0; x < _routers[_terminals.at(i)].length(); x++) {
+                /// make call to its latestImplementation
+                target = _routers[_terminals.at(i)].at(x);
+                (success, response) = target.call(abi.encodeWithSignature(signature, args));
+                if (success) { break; }
+            }
+
+            if (success) { break; }
+        }
+        require(success, "Sentinel: FAILED_TO_FIND_SIGNATURE");
+        return response;
+    }
+}
