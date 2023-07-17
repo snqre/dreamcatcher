@@ -56,21 +56,25 @@ contract Validator is IValidator {
 
     function getKey(address from, string memory key)
         external view
-        returns (__Validator.Key memory) {
+        returns (bytes32, __Validator.Class, uint32, uint32, uint8) {
         return __Validator.getKey(_keys[from], _datas[from][__Validator.encode(key)], key);
     }
 
     function getKeys(address from)
         external view
-        returns (__Validator.Key[] memory) {
-        __Validator.Data[] memory newDatas;
-        for (uint i = 0; i < _keys[from].length(); i++) {
-            __Validator.Data storage data = _datas[from][_keys[from].at(i)];
-            newDatas[i].class = data.class;
-            newDatas[i].startTimestamp = data.startTimestamp;
-            newDatas[i].endTimestamp = data.endTimestamp;
-            newDatas[i].balance = data.balance;
+        returns (bytes32[] memory, __Validator.Class[] memory, uint32[] memory, uint32[] memory, uint8[] memory) {
+        bytes32[] memory values = _keys[from].values();
+        __Validator.Class[] memory classes;
+        uint32[] memory startTimestamps;
+        uint32[] memory endTimestamps;
+        uint8[] memory balances;
+        for (uint i = 0; i < values.length; i++) {
+            __Validator.Data memory data = _datas[from][values[i]];
+            classes[i] = data.class;
+            startTimestamps[i] = data.startTimestamp;
+            endTimestamps[i] = data.endTimestamp;
+            balances[i] = data.balance;
         }
-        return __Validator.getKeys(_keys[from], newDatas);
+        return (values, classes, startTimestamps, endTimestamps, balances);
     }
 }

@@ -85,32 +85,8 @@ library __Validator {
 
     function getKey(EnumerableSet.Bytes32Set storage keys, Data storage data, string memory key)
         public view
-        returns (Key memory) {
+        returns (bytes32, Class, uint32, uint32, uint8) {
         onlyIfMatch(keys, key);
-        Key memory newKey = Key({
-            id: encode(key),
-            class: data.class,
-            startTimestamp: data.startTimestamp,
-            endTimestamp: data.endTimestamp,
-            balance: data.balance
-        });
-        return newKey;
-    }
-
-    function getKeys(EnumerableSet.Bytes32Set storage keys, Data[] memory datas)
-        public view
-        returns (Key[] memory) {
-        Key[] memory newKeys;
-        bytes32[] memory values = keys.values();
-        for (uint i = 0; i < values.length; i++) {
-            newKeys[i] = Key({
-                id: values[i],
-                class: datas[i].class,
-                startTimestamp: datas[i].startTimestamp,
-                endTimestamp: datas[i].endTimestamp,
-                balance: datas[i].balance
-            });
-        }
-        return newKeys;
+        return (encode(key), data.class, data.startTimestamp, data.endTimestamp, data.balance);
     }
 }
