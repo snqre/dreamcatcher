@@ -27,10 +27,10 @@ library __Validator {
         uint8 balance;
     }
 
-    function encode(string memory value)
+    function encode(address of_, string memory signature)
         public pure 
         returns (bytes32) {
-        return keccak256(abi.encode(value));
+        return keccak256(abi.encode(of_, signature));
     }
 
     function isClass(Class class, Class requiredClass)
@@ -39,54 +39,54 @@ library __Validator {
         return class == requiredClass;
     }
 
-    function isMatch(EnumerableSet.Bytes32Set storage keys, string memory key)
+    function isMatch(EnumerableSet.Bytes32Set storage keys, address of_, string memory signature)
         public view 
         returns (bool) {
-        return keys.contains(encode(key));
+        return keys.contains(encode(of_, signature));
     }
 
-    function onlyIfMatch(EnumerableSet.Bytes32Set storage keys, string memory key)
+    function onlyIfMatch(EnumerableSet.Bytes32Set storage keys, address of_, string memory signature)
         public view {
-        require(isMatch(keys, key), "__Validator: key match not found");
+        require(isMatch(keys, of_, signature), "__Validator: key match not found");
     }
 
-    function onlyIfNotMatch(EnumerableSet.Bytes32Set storage keys, string memory key)
+    function onlyIfNotMatch(EnumerableSet.Bytes32Set storage keys, address of_, string memory signature)
         public view {
-        require(!isMatch(keys, key), "__Validator: key match was found");
+        require(!isMatch(keys, of_, signature), "__Validator: key match was found");
     }
 
-    function add(EnumerableSet.Bytes32Set storage keys, string memory key)
+    function add(EnumerableSet.Bytes32Set storage keys, address of_, string memory signature)
         public {
-        keys.add(encode(key));
+        keys.add(encode(of_, signature));
     }
 
-    function remove(EnumerableSet.Bytes32Set storage keys, string memory key)
+    function remove(EnumerableSet.Bytes32Set storage keys, address of_, string memory signature)
         public {
-        keys.remove(encode(key));
+        keys.remove(encode(of_, signature));
     }
 
-    function addKey(EnumerableSet.Bytes32Set storage keys, Data storage data, string memory key, Class class, uint32 startTimestamp, uint32 endTimestamp, uint8 balance)
+    function addKey(EnumerableSet.Bytes32Set storage keys, Data storage data, address of_, string memory signature, Class class, uint32 startTimestamp, uint32 endTimestamp, uint8 balance)
         public {
-        add(keys, key);
+        add(keys, of_, signature);
         data.class = class;
         data.startTimestamp = startTimestamp;
         data.endTimestamp = endTimestamp;
         data.balance = balance;
     }
 
-    function removeKey(EnumerableSet.Bytes32Set storage keys, Data storage data, string memory key)
+    function removeKey(EnumerableSet.Bytes32Set storage keys, Data storage data, address of_, string memory signature)
         public {
-        remove(keys, key);
+        remove(keys, of_, signature);
         data.class = Class.DEFAULT;
         data.startTimestamp = 0;
         data.endTimestamp = 0;
         data.balance = 0;
     }
 
-    function getKey(EnumerableSet.Bytes32Set storage keys, Data storage data, string memory key)
+    function getKey(EnumerableSet.Bytes32Set storage keys, Data storage data, address of_, string memory signature)
         public view
         returns (bytes32, Class, uint32, uint32, uint8) {
-        onlyIfMatch(keys, key);
-        return (encode(key), data.class, data.startTimestamp, data.endTimestamp, data.balance);
+        onlyIfMatch(keys, of_, signature);
+        return (encode(of_, signature), data.class, data.startTimestamp, data.endTimestamp, data.balance);
     }
 }
