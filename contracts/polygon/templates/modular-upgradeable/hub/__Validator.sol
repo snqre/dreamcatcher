@@ -33,6 +33,12 @@ library __Validator {
         return keccak256(abi.encode(value));
     }
 
+    function isClass(Class class, Class requiredClass)
+        public pure 
+        returns (bool) {
+        return class == requiredClass;
+    }
+
     function isMatch(EnumerableSet.Bytes32Set storage keys, string memory key)
         public view 
         returns (bool) {
@@ -91,7 +97,7 @@ library __Validator {
         return newKey;
     }
 
-    function getKeys(EnumerableSet.Bytes32Set storage keys, Data[] storage datas)
+    function getKeys(EnumerableSet.Bytes32Set storage keys, Data[] memory datas)
         public view
         returns (Key[] memory) {
         Key[] memory newKeys;
