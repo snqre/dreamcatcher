@@ -19,9 +19,16 @@ contract Role is IRole, Validator {
     using EnumerableSet for EnumerableSet.AddressSet;
     using EnumerableSet for EnumerableSet.Bytes32Set;
 
+    uint public maxKeysPerRole;
+
     mapping(string => EnumerableSet.AddressSet) private _roles;
     mapping(string => EnumerableSet.Bytes32Set) private _rolesKeys;
     mapping(string => mapping(bytes32 => __Validator.Data)) private _rolesDatas;
+
+    constructor() {
+        /// 30 approaches about 3million gas in execution to grant
+        maxKeysPerRole = 30;
+    }
 
     function revokeKeyFromRole(string memory role, address of_, string memory signature)
         public {
@@ -34,6 +41,7 @@ contract Role is IRole, Validator {
 
     function grantKeyToRole(string memory role, address of_, string memory signature, __Validator.Class class, uint32 startTimestamp, uint32 endTimestamp, uint8 balance)
         public {
+        require(_rolesKeys[role].length() <= maxKeysPerRole, "Role: maximum amount of keys per role reached");
         require(
             !__Validator.isClass(class, __Validator.Class.DEFAULT),
             "Validator: class cannot default"
@@ -65,6 +73,7 @@ contract Role is IRole, Validator {
     }
 
     /// terrible way of implementing this but its good enough for the moment
+    /// maximum and optimal amount of numbers seams to be 30 due to gas limits
 
     function grantRole(address to, string memory role)
         public {
@@ -72,6 +81,7 @@ contract Role is IRole, Validator {
         for (uint i = 0; i < values.length; i++) {
             __Role.addKey(_keys[to], _datas[to][values[i]], values[i], classes[i], startTimestamps[i], endTimestamps[i], balances[i]);
         }
+
     }
 
     function getRoleKeys(string memory role)
