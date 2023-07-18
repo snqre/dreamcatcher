@@ -10,19 +10,20 @@ contract Hub is Role, Timelock, Link {
         /// ... Role: set maxKeyPerRole to 30
         
         address to = address(this);
-        _grant(to, address(this), "revoke", 2, 0, 0, 0);
-        _grant(to, address(this), "grant", 2, 0, 0, 0);
-        _grant(to, address(this), "revokeKeyFromRole", 2, 0, 0, 0);
-        _grant(to, address(this), "grantKeyToRole", 2, 0, 0, 0);
-        _grant(to, address(this), "grantRole", 2, 0, 0, 0);
-        _grant(to, address(this), "revokeRole", 2, 0, 0, 0);
+        _grant(to, address(this), "revoke", __Validator.Class(2), 0, 0, 0);
+        _grant(to, address(this), "grant", __Validator.Class(2), 0, 0, 0);
+        _grant(to, address(this), "revokeKeyFromRole", __Validator.Class(2), 0, 0, 0);
+        _grant(to, address(this), "grantKeyToRole", __Validator.Class(2), 0, 0, 0);
+        _grant(to, address(this), "grantRole", __Validator.Class(2), 0, 0, 0);
+        _grant(to, address(this), "revokeRole", __Validator.Class(2), 0, 0, 0);
 
+        /// testing
         to = msg.sender;
-        _grant(to, address(this), "revoke", 2, 0, 0, 0);
-        _grant(to, address(this), "grant", 2, 0, 0, 0);
-        _grant(to, address(this), "revokeKeyFromRole", 2, 0, 0, 0);
-        _grant(to, address(this), "grantKeyToRole", 2, 0, 0, 0);
-        _grant(to, address(this), "grantRole", 2, 0, 0, 0);
-        _grant(to, address(this), "revokeRole", 2, 0, 0, 0);
+        _grant(to, address(this), "revoke", __Validator.Class(2), 0, 0, 0);
+        _grant(to, address(this), "grant", __Validator.Class(2), 0, 0, 0);
+        _grant(to, address(this), "revokeKeyFromRole", __Validator.Class(2), 0, 0, 0);
+        _grant(to, address(this), "grantKeyToRole", __Validator.Class(2), 0, 0, 0);
+        _grant(to, address(this), "grantRole", __Validator.Class(2), 0, 0, 0);
+        _grant(to, address(this), "revokeRole", __Validator.Class(2), 0, 0, 0);
     }
 }

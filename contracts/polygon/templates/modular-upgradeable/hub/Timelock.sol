@@ -1,10 +1,16 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity 0.8.19;
-import "contracts/polygon/deps/openzeppelin/governance/TimelockController.sol";
+import "contracts/polygon/templates/modular-upgradeable/hub/__Timelock.sol";
 
-contract Timelock is TimelockController {
-    constructor(uint minDelay, address[] memory proposers, address[] memory executors, address admin) 
-        TimelockController(minDelay, proposers, executors, admin) {
-        
+contract Timelock {
+    __Timelock.Request[] public requests;
+    __Timelock.Tracker private _tracker;
+    __Timelock.Settings private _settings;
+    
+    constructor() {
+        _settings.timelock = 3600 seconds;
+        _settings.timeout = 3600 seconds;
     }
+    
+
 }
