@@ -22,14 +22,14 @@ contract Validator is IValidator {
     mapping(address => EnumerableSet.Bytes32Set) internal _keys;
     mapping(address => mapping(bytes32 => __Validator.Data)) internal _datas;
 
-    function revoke(address from, address of_, string memory signature)
-        public {
+    function _revoke(address from, address of_, string memory signature)
+        internal {
         __Validator.removeKey(_keys[from], _datas[from][__Validator.encode(of_, signature)], of_, signature);
         emit KeyRevoked(from, of_, signature);
     }
 
-    function grant(address to, address of_, string memory signature, __Validator.Class class, uint32 startTimestamp, uint32 endTimestamp, uint8 balance)
-        public {
+    function _grant(address to, address of_, string memory signature, __Validator.Class class, uint32 startTimestamp, uint32 endTimestamp, uint8 balance)
+        internal {
         require(
             !__Validator.isClass(class, __Validator.Class.DEFAULT),
             "Validator: class cannot default"
@@ -52,6 +52,18 @@ contract Validator is IValidator {
         }
         __Validator.addKey(_keys[to], _datas[to][__Validator.encode(of_, signature)], of_, signature, class, startTimestamp, endTimestamp, balance);
         emit KeyGranted(to, of_, signature, class, startTimestamp, endTimestamp, balance);
+    }
+
+    function revoke(address from, address of_, string memory signature)
+        public {
+        validate(msg.sender, address(this), "revoke");
+        _revoke(from, of_, signature);
+    }
+
+    function grant(address to, address of_, string memory signature, __Validator.Class class, uint32 startTimestamp, uint32 endTimestamp, uint8 balance)
+        public {
+        validate(msg.sender, address(this), "grant");
+        _grant(to, of_, signature, class, startTimestamp, endTimestamp, balance);
     }
 
     function validate(address from, address of_, string memory signature)
@@ -78,8 +90,8 @@ contract Validator is IValidator {
             );
             balance--;
         }
-        revoke(from, of_, signature);
-        grant(from, of_, signature, class, startTimestamp, endTimestamp, balance);
+        _revoke(from, of_, signature);
+        _grant(from, of_, signature, class, startTimestamp, endTimestamp, balance);
     }
 
     function getKey(address from, address of_, string memory signature)

@@ -4,17 +4,15 @@ import "contracts/polygon/deps/openzeppelin/token/ERC20/extensions/draft-ERC20Pe
 import "contracts/polygon/deps/openzeppelin/token/ERC20/extensions/ERC20Snapshot.sol";
 import "contracts/polygon/deps/openzeppelin/token/ERC20/extensions/ERC20Burnable.sol";
 import "contracts/polygon/deps/openzeppelin/token/ERC20/ERC20.sol";
-import "contracts/polygon/deps/openzeppelin/access/Ownable.sol";
 
-contract DreamToken is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit, Ownable {
+contract DreamToken is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit {
     uint public cap;
 
     constructor()
         ERC20("DreamToken", "DREAM")
-        ERC20Permit("DreamToken") 
-        Ownable(msg.sender) {
-        cap = _convertToWei(200_000_000);
-        _mint(msg.sender, _convertToWei(200_000_000));
+        ERC20Permit("DreamToken") {
+        cap = _convertToWei(200000000);
+        _mint(msg.sender, _convertToWei(200000000));
     }
 
     function _convertToWei(uint value)
