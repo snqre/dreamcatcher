@@ -34,6 +34,7 @@ library __Timelock {
         uint timeout;
         uint startTimestamp;
         uint endTimestap;
+        uint timeoutTimestamp;
         address origin;
         bool isApproved;
         bool isRejected;
@@ -41,9 +42,21 @@ library __Timelock {
         bool isPending;
     }
 
-    function queue(Request[] storage requests, Tracker storage tracker, Settings storage settings, uint id)
+    function queue(Request[] storage requests, Tracker storage tracker, Settings storage settings, uint id, address target, string memory signature, bytes memory args)
         public {
         tracker.numRequests++;
-        /// ...
+        Request storage request = requests[id];
+        request.payloadA = PayloadA({
+            target: target,
+            signature: signature,
+            args: args
+        });
+        request.timelock = settings.timelock;
+        request.timeout = settings.timeout;
+        request.startTimestamp = block.timestamp;
+        request.endTimestap = request.startTimestamp + request.timelock;
+        request.timeoutTimestamp + request.endTimestap + request.timeout;
+        request.origin = msg.sender;
+        request.isPending = true;
     }
 }
