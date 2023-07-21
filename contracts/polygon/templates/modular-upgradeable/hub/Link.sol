@@ -4,11 +4,21 @@ import "contracts/polygon/deps/openzeppelin/utils/structs/EnumerableSet.sol";
 import "contracts/polygon/templates/modular-upgradeable/hub/Timelock.sol";
 
 contract Link is Timelock {
+    using EnumerableSet for EnumerableSet.AddressSet;
+
+    EnumerableSet.AddressSet private _terminals;
+
+    mapping(address => bool) private _cache;
+    
 /**
     using EnumerableSet for EnumerableSet.AddressSet;
     
     EnumerableSet.AddressSet private _terminals;
     mapping(address => EnumerableSet.AddressSet) private _routers;
+
+    /// cache mechanic if a call is made to an address and was previously successful then just go there immidietly
+    /// what happens when there is a signature class? the first one found is picked but what about the second?
+    /// can this be done any differently
 
     function connect(string memory signature, bytes memory args)
         public

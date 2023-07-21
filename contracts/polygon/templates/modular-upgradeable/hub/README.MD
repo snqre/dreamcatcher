@@ -78,3 +78,4 @@ The `IValidator` interface declares the external functions to manage keys, along
 
 - `getKeys(address from) external view returns (bytes32[] memory, __Validator.Class[] memory, uint32[] memory, uint32[] memory, uint8[] memory)`
   - This function retrieves all keys associated with the specified address. It returns arrays of key IDs, classes, start timestamps, end timestamps, and balances.
+

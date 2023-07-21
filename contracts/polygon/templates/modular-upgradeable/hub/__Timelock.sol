@@ -5,10 +5,7 @@ library __Timelock {
     struct Settings {
         uint timelock;
         uint timeout;
-    }
-
-    struct Tracker {
-        uint numRequests;
+        bool enabledAutoApproval;
     }
 
     /// for single request
@@ -89,7 +86,8 @@ library __Timelock {
     }
 
     function queue(Request[] storage requests, Settings storage settings, address target, string memory signature, bytes memory args)
-        public {
+        public 
+        returns (uint) {
         requests.push();
 
         Request storage request = requests[requests.length - 1];
@@ -106,10 +104,12 @@ library __Timelock {
         request.origin = msg.sender;
         request.isPending = true;
         request.class = Class.DEFAULT;
+        return requests.length - 1;
     }
 
     function queueBatch(Request[] storage requests, Settings storage settings, address[] memory targets, string[] memory signatures, bytes[] memory args)
-        public {
+        public 
+        returns (uint) {
         requests.push();
         Request storage request = requests[requests.length - 1];
         request.payloadB = PayloadB({
@@ -125,6 +125,7 @@ library __Timelock {
         request.origin = msg.sender;
         request.isPending = true;
         request.class = Class.BATCH;
+        return requests.length - 1;
     }
 
     function approve(Request[] storage requests, uint id)
@@ -164,5 +165,12 @@ library __Timelock {
         onlyIfNotExecuted(requests, id);
         onlyIfApproved(requests, id);
         requests[id].isExecuted = true;
+    }
+
+    function getRequest(Request[] storage requests, uint id)
+        public view 
+        returns (address, string memory, bytes memory, uint, uint, uint, uint, uint, address, bool, bool, bool, bool, __Timelock.Class) {
+        Request storage request = requests[id];
+        return (request.payloadA.target, request.payloadA.signature, request.payloadA.args, request.timelock, request.timeout, request.startTimestamp, request.endTimestap, request.timeoutTimestamp, request.origin, request.isApproved, request.isRejected, request.isExecuted, request.isPending, request.class);
     }
 }
