@@ -4,8 +4,7 @@ import "contracts/polygon/templates/modular-upgradeable/hub/__Timelock.sol";
 import "contracts/polygon/templates/modular-upgradeable/hub/Role.sol";
 
 contract Timelock is Role {
-    __Timelock.Request[] public requests;
-    __Timelock.Tracker private _tracker;
+    __Timelock.Request[] private requests;
     __Timelock.Settings private _settings;
     
     constructor() {
@@ -15,12 +14,12 @@ contract Timelock is Role {
 
     function queue(address target, string memory signature, bytes memory args)
         public {
-        __Timelock.queue(requests, _tracker, _settings, target, signature, args);
+        __Timelock.queue(requests, _settings, target, signature, args);
     }
 
     function queueBatch(address[] memory targets, string[] memory signatures, bytes[] memory args)
         public {
-        __Timelock.queueBatch(requests, _tracker, _settings, targets, signatures, args);
+        __Timelock.queueBatch(requests, _settings, targets, signatures, args);
     }
 
     function approve(uint id)

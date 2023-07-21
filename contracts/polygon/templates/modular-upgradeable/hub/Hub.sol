@@ -3,8 +3,9 @@ pragma solidity 0.8.19;
 import "contracts/polygon/templates/modular-upgradeable/hub/Link.sol";
 
 contract Hub is Link {
-    constructor()
-        Role() {
+    constructor() 
+    Role() 
+    Timelock() {
         /// ... Role: set maxKeyPerRole to 30
         
         address to = address(this);

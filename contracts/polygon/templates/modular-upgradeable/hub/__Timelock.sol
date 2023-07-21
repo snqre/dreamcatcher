@@ -88,10 +88,11 @@ library __Timelock {
         require(!requests[id].isPending, "__Timelock: request is pending");
     }
 
-    function queue(Request[] storage requests, Tracker storage tracker, Settings storage settings, address target, string memory signature, bytes memory args)
+    function queue(Request[] storage requests, Settings storage settings, address target, string memory signature, bytes memory args)
         public {
-        tracker.numRequests++;
-        Request storage request = requests[tracker.numRequests];
+        requests.push();
+
+        Request storage request = requests[requests.length - 1];
         request.payloadA = PayloadA({
             target: target,
             signature: signature,
@@ -107,10 +108,10 @@ library __Timelock {
         request.class = Class.DEFAULT;
     }
 
-    function queueBatch(Request[] storage requests, Tracker storage tracker, Settings storage settings, address[] memory targets, string[] memory signatures, bytes[] memory args)
+    function queueBatch(Request[] storage requests, Settings storage settings, address[] memory targets, string[] memory signatures, bytes[] memory args)
         public {
-        tracker.numRequests++;
-        Request storage request = requests[tracker.numRequests];
+        requests.push();
+        Request storage request = requests[requests.length - 1];
         request.payloadB = PayloadB({
             targets: targets,
             signatures: signatures,
