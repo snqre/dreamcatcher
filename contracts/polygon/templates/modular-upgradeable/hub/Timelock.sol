@@ -84,11 +84,9 @@ contract Timelock is ITimelock, Role {
         return __Timelock.getRequest(requests, id);
     }
 
-    /// wip
     function getBatchRequest(uint id)
         public view
-        returns (addrss[] memory) {
-        
+        returns (address[] memory, string[] memory, bytes[] memory, uint, uint, uint, uint, uint, address, bool, bool, bool, bool, __Timelock.Class) {
+        return __Timelock.getBatchRequest(requests, id);
     }
-        
 }

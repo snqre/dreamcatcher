@@ -35,7 +35,7 @@ library __Timelock {
         uint timelock;
         uint timeout;
         uint startTimestamp;
-        uint endTimestap;
+        uint endTimestamp;
         uint timeoutTimestamp;
         address origin;
         bool isApproved;
@@ -99,8 +99,8 @@ library __Timelock {
         request.timelock = settings.timelock;
         request.timeout = settings.timeout;
         request.startTimestamp = block.timestamp;
-        request.endTimestap = request.startTimestamp + request.timelock;
-        request.timeoutTimestamp + request.endTimestap + request.timeout;
+        request.endTimestamp = request.startTimestamp + request.timelock;
+        request.timeoutTimestamp + request.endTimestamp + request.timeout;
         request.origin = msg.sender;
         request.isPending = true;
         request.class = Class.DEFAULT;
@@ -120,8 +120,8 @@ library __Timelock {
         request.timelock = settings.timelock;
         request.timeout = settings.timeout;
         request.startTimestamp = block.timestamp;
-        request.endTimestap = request.startTimestamp + request.timelock;
-        request.timeoutTimestamp + request.endTimestap + request.timeout;
+        request.endTimestamp = request.startTimestamp + request.timelock;
+        request.timeoutTimestamp + request.endTimestamp + request.timeout;
         request.origin = msg.sender;
         request.isPending = true;
         request.class = Class.BATCH;
@@ -149,7 +149,7 @@ library __Timelock {
 
     function execute(Request[] storage requests, uint id)
         public {
-        require(requests[id].class == Class.DEFAULT, "__Timelock: request is only batch executable");
+        require(requests[id].class == Class.DEFAULT, "__Timelock: request cannot be of batch class");
         onlyIfNotPending(requests, id);
         onlyIfNotRejected(requests, id);
         onlyIfNotExecuted(requests, id);
@@ -159,7 +159,7 @@ library __Timelock {
 
     function executeBatch(Request[] storage requests, uint id)
         public {
-        require(requests[id].class == Class.BATCH, "__Timelock: request is only standard executable");
+        require(requests[id].class == Class.BATCH, "__Timelock: request cannot be of default class");
         onlyIfNotPending(requests, id);
         onlyIfNotRejected(requests, id);
         onlyIfNotExecuted(requests, id);
@@ -170,7 +170,16 @@ library __Timelock {
     function getRequest(Request[] storage requests, uint id)
         public view 
         returns (address, string memory, bytes memory, uint, uint, uint, uint, uint, address, bool, bool, bool, bool, __Timelock.Class) {
+        require(requests[id].class == Class.DEFAULT, "__Timelock: request cannot be of batch class");
         Request storage request = requests[id];
-        return (request.payloadA.target, request.payloadA.signature, request.payloadA.args, request.timelock, request.timeout, request.startTimestamp, request.endTimestap, request.timeoutTimestamp, request.origin, request.isApproved, request.isRejected, request.isExecuted, request.isPending, request.class);
+        return (request.payloadA.target, request.payloadA.signature, request.payloadA.args, request.timelock, request.timeout, request.startTimestamp, request.endTimestamp, request.timeoutTimestamp, request.origin, request.isApproved, request.isRejected, request.isExecuted, request.isPending, request.class);
+    }
+
+    function getBatchRequest(Request[] storage requests, uint id)
+        public view
+        returns (address[] memory, string[] memory, bytes[] memory, uint, uint, uint, uint, uint, address, bool, bool, bool, bool, __Timelock.Class) {
+        require(requests[id].class == Class.BATCH, "__Timelock: request cannot be of default class");
+        Request storage request = requests[id];
+        return (request.payloadB.targets, request.payloadB.signatures, request.payloadB.args, request.timelock, request.timeout, request.startTimestamp, request.endTimestamp, request.timeoutTimestamp, request.origin, request.isApproved, request.isRejected, request.isExecuted, request.isPending, request.class);
     }
 }
