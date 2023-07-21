@@ -19,6 +19,10 @@ contract Hub is Link {
         _grant(to, address(this), "reject", __Validator.Class(2), 0, 0, 0);
         _grant(to, address(this), "execute", __Validator.Class(2), 0, 0, 0);
         _grant(to, address(this), "executeBatch", __Validator.Class(2), 0, 0, 0);
+        _grant(to, address(this), "addTerminal", __Validator.Class(2), 0, 0, 0);
+        _grant(to, address(this), "removeTerminal", __Validator.Class(2), 0, 0, 0);
+        _grant(to, address(this), "addRouter", __Validator.Class(2), 0, 0, 0);
+        _grant(to, address(this), "removeRouter", __Validator.Class(2), 0, 0, 0);
 
         /// testing
         to = msg.sender;
@@ -32,5 +36,9 @@ contract Hub is Link {
         _grant(to, address(this), "reject", __Validator.Class(2), 0, 0, 0);
         _grant(to, address(this), "execute", __Validator.Class(2), 0, 0, 0);
         _grant(to, address(this), "executeBatch", __Validator.Class(2), 0, 0, 0);
+        _grant(to, address(this), "addTerminal", __Validator.Class(2), 0, 0, 0);
+        _grant(to, address(this), "removeTerminal", __Validator.Class(2), 0, 0, 0);
+        _grant(to, address(this), "addRouter", __Validator.Class(2), 0, 0, 0);
+        _grant(to, address(this), "removeRouter", __Validator.Class(2), 0, 0, 0);
     }
 }

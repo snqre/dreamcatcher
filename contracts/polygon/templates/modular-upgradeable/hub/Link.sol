@@ -35,4 +35,40 @@ contract Link is Timelock {
         require(success, "Link: failed to find signature");
         return response;
     }
+
+    function addTerminal(address terminal)
+        public {
+        validate(msg.sender, address(this), "addTerminal");
+        _terminals.add(terminal);
+    }
+
+    function removeTerminal(address terminal)
+        public {
+        validate(msg.sender, address(this), "removeTerminal");
+        _terminals.remove(terminal);
+    }
+
+    function addRouter(address terminal, address router)
+        public {
+        validate(msg.sender, address(this), "addRouter");
+        _routers[terminal].add(router);
+    }
+
+    function removeRouter(address terminal, address router)
+        public {
+        validate(msg.sender, address(this), "removeRouter");
+        _routers[terminal].remove(router);
+    }
+
+    function getTerminals()
+        public view
+        returns (address[] memory) {
+        return _terminals.values();
+    }
+
+    function getRouters(address terminal)
+        public view
+        returns (address[] memory) {
+        return _routers[terminal].values();
+    }
 }
