@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity 0.8.19;
 import "contracts/polygon/deps/openzeppelin/utils/structs/EnumerableSet.sol";
+import "contracts/polygon/templates/modular-upgradeable/hub/Timelock.sol";
 
-contract Link {
+contract Link is Timelock {
+/**
     using EnumerableSet for EnumerableSet.AddressSet;
     
     EnumerableSet.AddressSet private _terminals;
@@ -25,4 +27,5 @@ contract Link {
         require(success, "Link: failed to find signature");
         return response;
     }
+*/
 }
