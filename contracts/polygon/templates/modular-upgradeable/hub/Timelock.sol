@@ -26,6 +26,7 @@ contract Timelock is ITimelock, Role {
         public 
         returns (uint) {
         uint id = __Timelock.queue(requests, _settings, target, signature, args);
+        if (_settings.enabledAutoApproval) { approve(id); }
         emit RequestQueued(id, target, signature, args);
         return id;
     }
