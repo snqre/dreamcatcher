@@ -169,17 +169,24 @@ library __Timelock {
 
     function getRequest(Request[] storage requests, uint id)
         public view 
-        returns (address, string memory, bytes memory, uint, uint, uint, uint, uint, address, bool, bool, bool, bool, __Timelock.Class) {
-        require(requests[id].class == Class.DEFAULT, "__Timelock: request cannot be of batch class");
+        returns (uint, uint, uint, uint, uint, address, bool, bool, bool, bool, __Timelock.Class) {
         Request storage request = requests[id];
-        return (request.payloadA.target, request.payloadA.signature, request.payloadA.args, request.timelock, request.timeout, request.startTimestamp, request.endTimestamp, request.timeoutTimestamp, request.origin, request.isApproved, request.isRejected, request.isExecuted, request.isPending, request.class);
+        return (request.timelock, request.timeout, request.startTimestamp, request.endTimestamp, request.timeoutTimestamp, request.origin, request.isApproved, request.isRejected, request.isExecuted, request.isPending, request.class);
     }
 
-    function getBatchRequest(Request[] storage requests, uint id)
+    function getPayload(Request[] storage requests, uint id)
         public view
-        returns (address[] memory, string[] memory, bytes[] memory, uint, uint, uint, uint, uint, address, bool, bool, bool, bool, __Timelock.Class) {
+        returns (address, string memory, bytes memory) {
+        require(requests[id].class == Class.DEFAULT, "__Timelock: request cannot be of batch class");
+        Request storage request = requests[id];
+        return (request.payloadA.target, request.payloadA.signature, request.payloadA.args);
+    }
+
+    function getBatchPayload(Request[] storage requests, uint id)
+        public view
+        returns (address[] memory, string[] memory, bytes[] memory) {
         require(requests[id].class == Class.BATCH, "__Timelock: request cannot be of default class");
         Request storage request = requests[id];
-        return (request.payloadB.targets, request.payloadB.signatures, request.payloadB.args, request.timelock, request.timeout, request.startTimestamp, request.endTimestamp, request.timeoutTimestamp, request.origin, request.isApproved, request.isRejected, request.isExecuted, request.isPending, request.class);
+        return (request.payloadB.targets, request.payloadB.signatures, request.payloadB.args);
     }
 }

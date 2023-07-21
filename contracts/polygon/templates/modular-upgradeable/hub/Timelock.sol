@@ -80,13 +80,19 @@ contract Timelock is ITimelock, Role {
 
     function getRequest(uint id)
         public view
-        returns (address, string memory, bytes memory, uint, uint, uint, uint, uint, address, bool, bool, bool, bool, __Timelock.Class) {
+        returns (uint, uint, uint, uint, uint, address, bool, bool, bool, bool, __Timelock.Class) {
         return __Timelock.getRequest(requests, id);
     }
 
-    function getBatchRequest(uint id)
+    function getPayload(uint id)
         public view
-        returns (address[] memory, string[] memory, bytes[] memory, uint, uint, uint, uint, uint, address, bool, bool, bool, bool, __Timelock.Class) {
-        return __Timelock.getBatchRequest(requests, id);
+        returns (address, string memory, bytes memory args) {
+        return __Timelock.getPayload(requests, id);
+    }
+
+    function getBatchPayload(uint id)
+        public view
+        returns (address[] memory, string[] memory, bytes[] memory) {
+        return __Timelock.getBatchPayload(requests, id);
     }
 }
