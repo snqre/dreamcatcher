@@ -19,14 +19,14 @@ contract Timelock is ITimelock, Role {
     constructor() {
         _settings.timelock = 3600 seconds;
         _settings.timeout = 3600 seconds;
-        _settings.enabledAutoApproval = true;
+        _settings.enabledApproveAll = true;
     }
 
     function queue(address target, string memory signature, bytes memory args)
         public 
         returns (uint) {
         uint id = __Timelock.queue(requests, _settings, target, signature, args);
-        if (_settings.enabledAutoApproval) { approve(id); }
+        if (_settings.enabledApproveAll) { approve(id); }
         emit RequestQueued(id, target, signature, args);
         return id;
     }
@@ -81,7 +81,7 @@ contract Timelock is ITimelock, Role {
 
     function getRequest(uint id)
         public view
-        returns (uint, uint, uint, uint, uint, address, bool, bool, bool, bool, __Timelock.Class) {
+        returns (uint, uint, uint, uint, uint, address, bool, bool, bool, __Timelock.Class) {
         return __Timelock.getRequest(requests, id);
     }
 

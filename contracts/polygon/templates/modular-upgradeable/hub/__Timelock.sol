@@ -3,8 +3,8 @@ pragma solidity 0.8.19;
 
 library __Timelock {
     struct Settings {
-        uint durationTimelock;
-        uint durationTimeout;
+        uint timelock;
+        uint timeout;
         bool enabledApproveAll;
     }
 
@@ -42,114 +42,205 @@ library __Timelock {
         Class class;
     }
 
+    function onlyPending(Request[] storage requests, uint id)
+        public view {
+        Request storage request = requests[id];
+        require(
+            block.timestamp >= request.startTimestamp
+            && block.timestamp <= request.endTimestamp,
+            "__Timelock: request is not pending"
+        );
+    }
+
+    function onlyNotPending(Request[] storage requests, uint id)
+        public view {
+        Request storage request = requests[id];
+        require(
+            block.timestamp < request.startTimestamp
+            && block.timestamp > request.endTimestamp,
+            "__Timelock: request is pending"
+        );
+    }
+
+    function onlyExecutableWindow(Request[] storage requests, uint id)
+        public view {
+        Request storage request = requests[id];
+        bool isWindow = block.timestamp > request.endTimestamp && block.timestamp <= request.timeoutTimestamp;
+        require(
+            isWindow,
+            "__Timelock: request is timed out"
+        );
+    }
+
+    function onlyNotExecutableWindow(Request[] storage requests, uint id)
+        public view {
+        Request storage request = requests[id];
+        bool isWindow = block.timestamp > request.endTimestamp && block.timestamp <= request.timeoutTimestamp;
+        require(
+            !isWindow,
+            "__Timelock: request is not timed out"
+        );
+    }
+
+    function onlyRejected(Request[] storage requests, uint id)
+        public view {
+        Request storage request = requests[id];
+        require(
+            request.isRejected,
+            "__Timelock: request is not rejected"
+        );
+    }
+
+    function onlyNotRejected(Request[] storage requests, uint id)
+        public view {
+        Request storage request = requests[id];
+        require(
+            !request.isRejected,
+            "__Timelock: request is rejected"
+        );
+    }
+
+    function onlyApproved(Request[] storage requests, uint id)
+        public view {
+        Request storage request = requests[id];
+        require(
+            request.isApproved,
+            "__Timelock: request is not approved"
+        );
+    }
+
+    function onlyNotApproved(Request[] storage requests, uint id)
+        public view {
+        Request storage request = requests[id];
+        require(
+            !request.isApproved,
+            "__Timelock: request is approved"
+        );
+    }
+
+    function onlyExecuted(Request[] storage requests, uint id)
+        public view {
+        Request storage request = requests[id];
+        require(
+            request.isExecuted,
+            "__Timelock: request is not executed"
+        );
+    }
+
+    function onlyNotExecuted(Request[] storage requests, uint id)
+        public view {
+        Request storage request = requests[id];
+        require(
+            !request.isExecuted,
+            "__Timelock: request is executed"
+        );
+    }
+
+    function onlyDEFAULT(Request[] storage requests, uint id)
+        public view {
+        Request storage request = requests[id];
+        require(
+            request.class == Class.DEFAULT,
+            "__Timelock: request cannot have a batch payload"
+        );
+    }
+
+    function onlyBATCH(Request[] storage requests, uint id)
+        public view {
+        Request storage request = requests[id];
+        require(
+            request.class == Class.BATCH,
+            "__Timelock: request cananot have a default payload"
+        );
+    }
+
     function queue(Request[] storage requests, Settings storage settings, address target, string memory signature, bytes memory args)
         public
         returns (uint) {
         requests.push();
         Request storage request = requests[requests.length - 1];
         request.payloadA = PayloadA({target: target, signature: signature, args: args});
-        request.durationTimelock = settings.durationTimelock;
-        request.durationTimeout = 
-    }
-
-    function queue(Request[] storage requests, Settings storage settings, address target, string memory signature, bytes memory args)
-        public 
-        returns (uint) {
-        requests.push();
-
-        Request storage request = requests[requests.length - 1];
-        request.payloadA = PayloadA({
-            target: target,
-            signature: signature,
-            args: args
-        });
         request.timelock = settings.timelock;
         request.timeout = settings.timeout;
         request.startTimestamp = block.timestamp;
-        request.endTimestamp = request.startTimestamp + request.timelock;
-        request.timeoutTimestamp + request.endTimestamp + request.timeout;
+        request.endTimestamp = request.startTimestamp + settings.timelock;
+        request.timeoutTimestamp = request.endTimestamp + request.timeout;
         request.origin = msg.sender;
-        request.isPending = true;
         request.class = Class.DEFAULT;
         return requests.length - 1;
     }
-
+    
     function queueBatch(Request[] storage requests, Settings storage settings, address[] memory targets, string[] memory signatures, bytes[] memory args)
-        public 
+        public
         returns (uint) {
         requests.push();
         Request storage request = requests[requests.length - 1];
-        request.payloadB = PayloadB({
-            targets: targets,
-            signatures: signatures,
-            args: args
-        });
+        request.payloadB = PayloadB({targets: targets, signatures: signatures, args: args});
         request.timelock = settings.timelock;
         request.timeout = settings.timeout;
         request.startTimestamp = block.timestamp;
-        request.endTimestamp = request.startTimestamp + request.timelock;
-        request.timeoutTimestamp + request.endTimestamp + request.timeout;
+        request.endTimestamp = request.startTimestamp + settings.timelock;
+        request.timeoutTimestamp = request.endTimestamp + request.timeout;
         request.origin = msg.sender;
-        request.isPending = true;
-        request.class = Class.BATCH;
+        request.class = Class.DEFAULT;
         return requests.length - 1;
     }
 
     function approve(Request[] storage requests, uint id)
         public {
-        onlyIfPending(requests, id);
-        onlyIfNotRejected(requests, id);
-        onlyIfNotExecuted(requests, id);
-        onlyIfNotApproved(requests, id);
-        requests[id].isApproved = true;
+        onlyPending(requests, id);
+        onlyNotApproved(requests, id);
+        onlyNotRejected(requests, id);
+        onlyNotExecuted(requests, id);
+        Request storage request = requests[id];
+        request.isApproved = true;
     }
 
     function reject(Request[] storage requests, uint id)
         public {
-        onlyIfPending(requests, id);
-        onlyIfNotRejected(requests, id);
-        onlyIfNotExecuted(requests, id);
-        onlyIfNotApproved(requests, id);
-        requests[id].isRejected = true;
-        requests[id].isPending = false;
+        onlyPending(requests, id);
+        onlyNotApproved(requests, id);
+        onlyNotRejected(requests, id);
+        onlyNotExecuted(requests, id);
+        Request storage request = requests[id];
+        request.isRejected = true;
     }
 
     function execute(Request[] storage requests, uint id)
         public {
-        require(requests[id].class == Class.DEFAULT, "__Timelock: request cannot be of batch class");
-        if (block.timestamp > requests[id].endTimestamp) { requests[id].isPending = false; }
-        if (block.timestamp < )
-        onlyIfNotPending(requests, id);
-        onlyIfNotRejected(requests, id);
-        onlyIfNotExecuted(requests, id);
-        onlyIfApproved(requests, id);
-        requests[id].isExecuted = true;
+        onlyDEFAULT(requests, id);
+        onlyNotPending(requests, id);
+        onlyExecutableWindow(requests, id);
+        onlyNotExecuted(requests, id);
+        onlyApproved(requests, id);
+        onlyNotRejected(requests, id);
+        Request storage request = requests[id];
+        request.isExecuted = true;
     }
 
     function executeBatch(Request[] storage requests, uint id)
         public {
-        require(requests[id].class == Class.BATCH, "__Timelock: request cannot be of default class");
-        if (block.timestamp > requests[id].endTimestamp) {
-            requests[id].isPending = false;
-        }
-        onlyIfNotPending(requests, id);
-        onlyIfNotRejected(requests, id);
-        onlyIfNotExecuted(requests, id);
-        onlyIfApproved(requests, id);
-        requests[id].isExecuted = true;
+        onlyBATCH(requests, id);
+        onlyNotPending(requests, id);
+        onlyExecutableWindow(requests, id);
+        onlyNotExecuted(requests, id);
+        onlyApproved(requests, id);
+        onlyNotRejected(requests, id);
+        Request storage request = requests[id];
+        request.isExecuted = true;
     }
 
     function getRequest(Request[] storage requests, uint id)
         public view 
-        returns (uint, uint, uint, uint, uint, address, bool, bool, bool, bool, __Timelock.Class) {
+        returns (uint, uint, uint, uint, uint, address, bool, bool, bool, __Timelock.Class) {
         Request storage request = requests[id];
-        return (request.timelock, request.timeout, request.startTimestamp, request.endTimestamp, request.timeoutTimestamp, request.origin, request.isApproved, request.isRejected, request.isExecuted, request.isPending, request.class);
+        return (request.timelock, request.timeout, request.startTimestamp, request.endTimestamp, request.timeoutTimestamp, request.origin, request.isApproved, request.isRejected, request.isExecuted, request.class);
     }
 
     function getPayload(Request[] storage requests, uint id)
         public view
         returns (address, string memory, bytes memory) {
-        require(requests[id].class == Class.DEFAULT, "__Timelock: request cannot be of batch class");
+        onlyDEFAULT(requests, id);
         Request storage request = requests[id];
         return (request.payloadA.target, request.payloadA.signature, request.payloadA.args);
     }
@@ -157,7 +248,7 @@ library __Timelock {
     function getBatchPayload(Request[] storage requests, uint id)
         public view
         returns (address[] memory, string[] memory, bytes[] memory) {
-        require(requests[id].class == Class.BATCH, "__Timelock: request cannot be of default class");
+        onlyBATCH(requests, id);
         Request storage request = requests[id];
         return (request.payloadB.targets, request.payloadB.signatures, request.payloadB.args);
     }
