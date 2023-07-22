@@ -4,7 +4,7 @@ import "contracts/polygon/templates/modular-upgradeable/hub/Link.sol";
 
 contract Hub is Link {
     constructor() 
-    Role() 
+    Role()
     Timelock() {
         /// ... Role: set maxKeyPerRole to 30
         
