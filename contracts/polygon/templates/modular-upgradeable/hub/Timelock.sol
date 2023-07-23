@@ -17,14 +17,33 @@ contract Timelock is ITimelock, Role {
     __Timelock.Settings private _settings;
     
     constructor() {
-        _settings.timelock = 60 seconds;
-        _settings.timeout = 60 seconds;
+        _settings.timelock = 604800 seconds;
+        _settings.timeout = 604800 seconds;
         _settings.enabledApproveAll = true;
+    }
+
+    function setTimelock(uint value)
+        public {
+        validate(msg.sender, address(this), "setTimelock");
+        _settings.timelock = value;
+    }
+
+    function setTimeout(uint value)
+        public {
+        validate(msg.sender, address(this), "setTimeout");
+        _settings.timeout = value;
+    }
+
+    function approveAll(bool value)
+        public {
+        validate(msg.sender, address(this), "approveAll");
+        _settings.enabledApproveAll = value;
     }
 
     function queue(address target, string memory signature, bytes memory args)
         public 
         returns (uint) {
+        validate(msg.sender, address(this), "queue");
         uint id = __Timelock.queue(requests, _settings, target, signature, args);
         if (_settings.enabledApproveAll) { approve(id); }
         emit RequestQueued(id, target, signature, args);
@@ -34,6 +53,7 @@ contract Timelock is ITimelock, Role {
     function queueBatch(address[] memory targets, string[] memory signatures, bytes[] memory args)
         public 
         returns (uint) {
+        validate(msg.sender, address(this), "queueBatch");
         uint id = __Timelock.queueBatch(requests, _settings, targets, signatures, args);
         emit RequestsQueued(id, targets, signatures, args);
         return id;
