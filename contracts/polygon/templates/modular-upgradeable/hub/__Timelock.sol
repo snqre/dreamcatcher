@@ -62,23 +62,13 @@ library __Timelock {
         );
     }
 
-    function onlyExecutableWindow(Request[] storage requests, uint id)
+    function onlyWindow(Request[] storage requests, uint id)
         public view {
         Request storage request = requests[id];
-        bool isWindow = block.timestamp > request.endTimestamp && block.timestamp <= request.timeoutTimestamp;
         require(
-            isWindow,
-            "__Timelock: request is timed out"
-        );
-    }
-
-    function onlyNotExecutableWindow(Request[] storage requests, uint id)
-        public view {
-        Request storage request = requests[id];
-        bool isWindow = block.timestamp > request.endTimestamp && block.timestamp <= request.timeoutTimestamp;
-        require(
-            !isWindow,
-            "__Timelock: request is not timed out"
+            block.timestamp > request.endTimestamp
+            && block.timestamp <= request.timeoutTimestamp,
+            "__Timelock: request is not within execution window"
         );
     }
 
@@ -209,8 +199,7 @@ library __Timelock {
     function execute(Request[] storage requests, uint id)
         public {
         onlyDEFAULT(requests, id);
-        onlyNotPending(requests, id);
-        onlyExecutableWindow(requests, id);
+        onlyWindow(requests, id);
         onlyNotExecuted(requests, id);
         onlyApproved(requests, id);
         onlyNotRejected(requests, id);
@@ -221,8 +210,7 @@ library __Timelock {
     function executeBatch(Request[] storage requests, uint id)
         public {
         onlyBATCH(requests, id);
-        onlyNotPending(requests, id);
-        onlyExecutableWindow(requests, id);
+        onlyWindow(requests, id);
         onlyNotExecuted(requests, id);
         onlyApproved(requests, id);
         onlyNotRejected(requests, id);
