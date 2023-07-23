@@ -17,8 +17,8 @@ contract Timelock is ITimelock, Role {
     __Timelock.Settings private _settings;
     
     constructor() {
-        _settings.timelock = 3600 seconds;
-        _settings.timeout = 3600 seconds;
+        _settings.timelock = 60 seconds;
+        _settings.timeout = 60 seconds;
         _settings.enabledApproveAll = true;
     }
 
