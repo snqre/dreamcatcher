@@ -1,14 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
-import "contracts/polygon/deps/openzeppelin/access/Ownable.sol";
 import "contracts/polygon/deps/openzeppelin/utils/structs/EnumerableSet.sol";
-import "contracts/polygon/templates/modular-upgradeable/hub/Validator.sol";
+import "contracts/polygon/templates/modular-upgradeable/hub/Hub.sol";
 
 interface IMultiSigProposalsV1 {
 
 }
 
-contract MultiSigProposalsV1 is IMultiSigProposalsV1, Ownable {
+contract MultiSigProposalsV1 is IMultiSigProposalsV1 {
     using EnumerableSet for EnumerableSet.AddressSet;
 
     address public hub;
@@ -37,19 +36,19 @@ contract MultiSigProposalsV1 is IMultiSigProposalsV1, Ownable {
         EnumerableSet.AddressSet signatures;
     }
 
-    mapping(uint => Proposal) public proposals;
+    Settings public settings;
+    mapping(uint => Proposal) private _proposals;
     
-    constructor(address hub_)
-        Ownable(msg.sender) {
+    constructor(address hub_) {
         hub = hub_;
-        threshold = 10000;
-        timeout = 604800 seconds;
+        settings.threshold = 10000;
+        settings.timeout = 604800 seconds;
     }
     
     function _onlyIfSigner(uint identifier, address account)
         private view {
         require(
-            proposals[identifier].signers.contains(account),
+            _proposals[identifier].signers.contains(account),
             "MultiSigProposalsV1: caller is not expected to sign"
         );
     }
@@ -57,7 +56,7 @@ contract MultiSigProposalsV1 is IMultiSigProposalsV1, Ownable {
     function _onlyIfApproved(uint identifier)
         private view {
         require(
-            proposals[identifier].isApproved,
+            _proposals[identifier].isApproved,
             "MultiSigProposalsV1: proposal has not been approved"
         );
     }
@@ -65,7 +64,7 @@ contract MultiSigProposalsV1 is IMultiSigProposalsV1, Ownable {
     function _onlyIfNotApproved(uint identifier)
         private view {
         require(
-            !proposals[identifier].isApproved,
+            !_proposals[identifier].isApproved,
             "MultiSigProposalsV1: proposal has been approved"
         );
     }
@@ -73,7 +72,7 @@ contract MultiSigProposalsV1 is IMultiSigProposalsV1, Ownable {
     function _onlyIfRejected(uint identifier)
         private view {
         require(
-            proposals[identifier].isRejected,
+            _proposals[identifier].isRejected,
             "MultiSigProposalsV1: proposal has not been rejected"
         );
     }
@@ -81,7 +80,7 @@ contract MultiSigProposalsV1 is IMultiSigProposalsV1, Ownable {
     function _onlyIfNotRejected(uint identifier)
         private view {
         require(
-            !proposals[identifier].isRejected,
+            !_proposals[identifier].isRejected,
             "MultiSigProposalsV1: proposal has been rejected"
         );
     }
@@ -89,7 +88,7 @@ contract MultiSigProposalsV1 is IMultiSigProposalsV1, Ownable {
     function _onlyIfExecuted(uint identifier)
         private view {
         require(
-            proposals[identifier].isExecuted,
+            _proposals[identifier].isExecuted,
             "MultiSigProposalsV1: proposal has not been executed"
         );
     }
@@ -97,7 +96,7 @@ contract MultiSigProposalsV1 is IMultiSigProposalsV1, Ownable {
     function _onlyIfNotExecuted(uint identifier)
         private view {
         require(
-            proposals[identifier].isExecuted,
+            _proposals[identifier].isExecuted,
             "MultiSigProposalsV1: proposal has been executed"
         );
     }
@@ -105,7 +104,7 @@ contract MultiSigProposalsV1 is IMultiSigProposalsV1, Ownable {
     function _onlyIfNotExpired(uint identifier)
         private view {
         require(
-            block.timestamp < proposals[identifier].endTimestamp,
+            block.timestamp < _proposals[identifier].endTimestamp,
             "MultiSigProposalsV1: proposal has expired"
         );
     }
@@ -113,7 +112,7 @@ contract MultiSigProposalsV1 is IMultiSigProposalsV1, Ownable {
     function _requiredQuorumHasBeenMet(uint identifier)
         private view 
         returns (bool) {
-        Proposal storage proposal = proposals[identifier];
+        Proposal storage proposal = _proposals[identifier];
         uint currentQuorum = (proposal.signers.length() * 10000) / proposal.signatures.length();
         if (currentQuorum >= proposal.quorumRequired) {
             return true;
@@ -125,7 +124,8 @@ contract MultiSigProposalsV1 is IMultiSigProposalsV1, Ownable {
 
     function create(string memory message, uint32 startTimestamp, uint32 endTimestamp, address target, string memory signature)
         external returns (uint) {
-        IValidator(hub).validate(msg.sender, address(this), "create()");
+        IHub(hub).validate(msg.sender, address(this), "create");
+        
         
     }
 

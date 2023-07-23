@@ -31,7 +31,6 @@ contract Terminal {
             address[] memory routers = getRouters();
             (success, response, contract_) = __Calls.call(routers, signature, args);
             if (success) { _cache[signature] = contract_; }
-            
         }
         require(success, "Terminal: failed to find signature");
         return response;
