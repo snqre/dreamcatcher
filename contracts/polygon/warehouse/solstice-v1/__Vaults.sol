@@ -10,10 +10,10 @@ library __Vaults {
     using EnumerableSet for EnumerableSet.UintSet;
 
     struct Vault {
-        Token token;
-        EnumerableSet.AddressSet contracts;
-        EnumerableSet.UintSet amounts;
-        uint sumValue;
+        uint id;
+        Token token; /// the vaults unit of ownership and value accrual
+        EnumerableSet.AddressSet contracts; /// the token contracts
+        EnumerableSet.UintSet amounts; /// the amount of the tokens for each token contract
     }
 
     function convertToWei(uint value)
@@ -42,12 +42,5 @@ library __Vaults {
         return (amount * balance) / supply;
     }
 
-    function contribute(Vault[] storage vaults, address token, uint id, uint amount)
-        public {
-            bool success = IERC20(token).transferFrom(msg.sender, address(this), amount);
-            require(success, "__Vaults: unsuccessful > IERC20(token).transferFrom(msg.sender, address(this), amount)");
-            Vault storage vault = vaults[id];
-            uint amountToMint_ = amountToMint(amount, vault.supply, vault.balance);
-            
-        }
+    
 }
