@@ -1,11 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
-import "contracts/deps/openzeppelin/access/Ownable.sol";
-import "contracts/deps/openzeppelin/utils/structs/EnumerableSet.sol";
-import "contracts/deps/openzeppelin/token/ERC20/IERC20.sol";
-import "contracts/templates/libraries/Utils.sol";
 
-contract PoolVault is Ownable {
+contract SetVault is {
     IERC20 public token;
 
     mapping(address => uint256) public contribution;

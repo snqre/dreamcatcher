@@ -5,6 +5,8 @@ import "contracts/polygon/deps/openzeppelin/utils/structs/EnumerableSet.sol";
 library __Calls {
     using EnumerableSet for EnumerableSet.AddressSet;
 
+    /// loop through contracts and attempt to use the signature and args
+    /// if a call is successful it will break from the loop and return it as a successful call
     function call(address[] memory contracts, string memory signature, bytes memory args)
         public
         returns (bool, bytes memory, address) {

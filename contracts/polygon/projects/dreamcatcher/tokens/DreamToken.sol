@@ -5,6 +5,13 @@ import "contracts/polygon/deps/openzeppelin/token/ERC20/extensions/ERC20Snapshot
 import "contracts/polygon/deps/openzeppelin/token/ERC20/extensions/ERC20Burnable.sol";
 import "contracts/polygon/deps/openzeppelin/token/ERC20/ERC20.sol";
 
+interface IDreamToken {
+    function maxSupply() external view returns (uint);
+    function snapshot() external returns (uint);
+    function getCurrentSnapshotId() external view returns (uint);
+    function balanceOfAt(address account, uint snapshotId) external view returns (uint);
+}
+
 contract DreamToken is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit {
     uint public cap;
 

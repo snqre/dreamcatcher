@@ -6,15 +6,11 @@ import "contracts/polygon/templates/modular-upgradeable/__Calls.sol";
 contract Terminal {
     mapping(string => address) private _cache;
 
+    string public name_;
     address public hub;
-    constructor(address hub_) {
+    constructor(string memory name__, address hub_) {
         hub = hub_;
-    }
-
-    function getRouters()
-        public view
-        returns (address[] memory) {
-        return IHub(hub).getRouters(address(this));
+        name_ = name__;
     }
 
     function connect(string memory signature, bytes memory args)
@@ -34,5 +30,18 @@ contract Terminal {
         }
         require(success, "Terminal: failed to find signature");
         return response;
+    }
+
+    function getRouters()
+        public view
+        returns (address[] memory) {
+        return IHub(hub).getRouters(address(this));
+    }
+
+    /// this is also useful for universal routers
+    function name()
+        public view
+        returns (string memory) {
+        return name_;
     }
 }

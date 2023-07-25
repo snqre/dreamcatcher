@@ -9,9 +9,11 @@ contract Router is Pausable{
 
     EnumerableSet.AddressSet private _implementations;
 
-    address hub;
-    constructor(address hub_) {
+    string public name_;
+    address public hub;
+    constructor(string memory name__, address hub_) {
         hub = hub_;
+        name_ = name__;
     }
 
     function upgrade(address implementation)
@@ -52,5 +54,13 @@ contract Router is Pausable{
         public view
         returns (address) {
         return _implementations.at(getLatestVersion());
+    }
+
+    /// for organization each router has a callable name
+    /// this is also useful for universal routers
+    function name()
+        public view
+        returns (string memory) {
+        return name_;
     }
 }
