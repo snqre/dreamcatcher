@@ -5,6 +5,7 @@ import "contracts/polygon/templates/modular-upgradeable/controller/__MultiSigPro
 import "contracts/polygon/templates/modular-upgradeable/controller/__Proposals.sol";
 import "contracts/polygon/templates/modular-upgradeable/controller/__MultiSigProposals.sol";
 
+/// multi sig > proposal > controller (inheritance flow)
 interface IControler {
     function queueMultiSigProposal(string memory message, address target, string memory signature, bytes memory args) external returns (uint);
     function signMultiSigProposal(uint id) external;

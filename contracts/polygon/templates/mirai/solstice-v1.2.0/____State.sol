@@ -103,7 +103,13 @@ contract ____State is ____IState, Ownable {
         _settings.fee.withdraw = withdraw;
         _settings.fee.update = update;
         _settings.collatTScheduleDuration = collatTScheduleDuration;
-        emit SettingsStateChanged(create, contribute, withdraw, update, collatTScheduleDuration);
+        emit SettingsStateChanged(
+            create, 
+            contribute, 
+            withdraw, 
+            update, 
+            collatTScheduleDuration
+        );
     }
 
     function getSettings()
