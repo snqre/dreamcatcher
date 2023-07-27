@@ -21,26 +21,81 @@ contract QuickSwapOracle {
         quickSwapFactory = 0x5757371414417b8C6CAad45bAeF941aBc7d3Ab32;
     }
 
-    function _getPair(address factory, address tokenA, address tokenB)
-        private view
-        returns (address) {
-        return IUniswapV2Factory(factory).getPair(tokenA, tokenB);
+    function getPair(
+        address tokenA, 
+        address tokenB
+        ) public view
+        returns (
+            address,
+            uint,
+            address,
+            address,
+            address,
+            uint112,
+            uint112,
+            uint32,
+            uint,
+            uint,
+            uint
+            ) {
+        address pairAddress = IUniswapV2Factory(
+            quickSwapFactory
+            ).getPair(
+                tokenA, 
+                tokenB
+            );
+
+        require(
+            pairAddress != address(0), 
+            "QuickSwapOracle: match not found"
+        );
+
+        IUniswapV2Pair pair = IUniswapV2Pair(
+            pairAddress
+        );
+
+        (
+            uint112 reserveA,
+            uint112 reserveB,
+            uint32 blockTimestampLast
+        ) = pair.getReserves();
+        
+        return (
+            pairAddress,
+            pair.MINIMUM_LIQUIDITY,
+            pair.factory(),
+            pair.token0(),
+            pair.token1(),
+            reserveA,
+            reserveB,
+            blockTimestampLast,
+            pair.price0CumulativeLast,
+            pair.price1CumulativeLast,
+            pair.kLast
+        );
     }
 
-    function _requirePairMatch(address pair_, address factory_, address tokenA, address tokenB)
-        private view 
-        returns (uint, address, address, address, uint112, uint112, uint32, uint, uint, uint) {
-        IUniswapV2Pair pair = IUniswapV2Pair(pair_);
-        require(tokenA == pair.token0() && tokenB == pair.token1() && factory_ == pair.factory(), "QuickSwapOracle: pair does not match");
-        (uint112 reserveA, uint112 reserveB, uint32 blockTimestampLast) = pair.getReserves();
-        return (pair.MINIMUM_LIQUIDITY(), pair.factory(), pair.token0(), pair.token1(), reserveA, reserveB, blockTimestampLast, pair.price0CumulativeLast(), pair.price1CumulativeLast(), pair.kLast());
-    }
-
-    function getPrice(address tokenA, address tokenB)
-        public view
+    function getPrice(
+        address tokenA, 
+        address tokenB
+        ) public view
         returns (uint) {
-        address pair = _getPair(quickSwapFactory, tokenA, tokenB);
-        (, , , , uint112 reserveA, uint112 reserveB, , , , ) = _requirePairMatch(pair, quickSwapFactory, tokenA, tokenB);
+        (
+            ,
+            ,
+            ,
+            ,
+            ,
+            uint112 reserveA,
+            uint112 reserveB,
+            ,
+            ,
+            ,
+        ) = getPair(
+            tokenA,
+            tokenB
+        );
+
         return reserveB / reserveA;
     }
 }
