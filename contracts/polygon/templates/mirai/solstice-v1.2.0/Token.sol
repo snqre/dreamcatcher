@@ -3,6 +3,11 @@ pragma solidity ^0.8.19;
 import "contracts/polygon/deps/openzeppelin/token/ERC20/ERC20.sol";
 import "contracts/polygon/deps/openzeppelin/access/Ownable.sol";
 
+interface IToken {
+    function mint(address account, uint amount) external;
+    function burn(address account, uint amount) external;
+}
+
 contract Token is ERC20, Ownable {
     constructor(string memory name, string memory symbol) 
         ERC20(name, symbol) 
