@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity 0.8.19;
 import "contracts/polygon/deps/openzeppelin/utils/structs/EnumerableSet.sol";
+import "contracts/polygon/deps/openzeppelin/access/Ownable.sol";
 
 /**
 * The Eternal Storage design pattern in Solidity aims to separate the state data 
@@ -11,7 +12,7 @@ import "contracts/polygon/deps/openzeppelin/utils/structs/EnumerableSet.sol";
 /// we are expanding on the eternal storage design pattern
 /// here we add several new types of datatypes such as arrays
 /// the scope of this storage is for solstice
-contract ____Storage {
+contract ____Storage is Ownable {
     using EnumerableSet for EnumerableSet.AddressSet;
     using EnumerableSet for EnumerableSet.UintSet;
     using EnumerableSet for EnumerableSet.Bytes32Set;
@@ -38,13 +39,18 @@ contract ____Storage {
     mapping(bytes32 => EnumerableSet.UintSet) private uintSetStorage;
     mapping(bytes32 => EnumerableSet.Bytes32Set) private bytes32SetStorage;
 
-    constructor(address firstLogic) {
-        logic = firstLogic;
-    }
+    event NewLogicSet(address indexed newLogic);
+    event StringStorageSet(bytes32 indexed key, string indexed value);
+    event BytesStorageSet(bytes32 indexed key, bytes indexed value);
+
+    constructor() {}
 
     function setLogic(address newLogic)
-        public {
+        public 
+        onlyOwner {
         logic = newLogic;
+        _transferOwnership(newlogic);
+        emit NewLogicSet(newLogic);
     }
 
     function getLogic()
@@ -54,8 +60,10 @@ contract ____Storage {
     }
 
     function setStringStorage(bytes32 key, string memory value)
-        public {
+        public 
+        onlyOwner {
         stringStorage[key] = value;
+        emit StringStorageSet(key, value);
     }
 
     function getStringStorage(bytes32 key)
@@ -65,8 +73,10 @@ contract ____Storage {
     }
 
     function setBytesStorage(bytes32 key, bytes memory value)
-        public {
+        public 
+        onlyOwner {
         bytesStorage[key] = value;
+        emit BytesStorageSet(key, value);
     }
 
     function getBytesStorage(bytes32 key)
@@ -76,7 +86,8 @@ contract ____Storage {
     }
 
     function setUintStorage(bytes32 key, uint value)
-        public {
+        public 
+        onlyOwner {
         uintStorage[key] = value;
     }
 
@@ -87,7 +98,8 @@ contract ____Storage {
     }
 
     function setIntStorage(bytes32 key, int value)
-        public {
+        public 
+        onlyOwner {
         intStorage[key] = value;
     }
 
@@ -98,7 +110,8 @@ contract ____Storage {
     }
 
     function setAddressStorage(bytes32 key, address value)
-        public {
+        public 
+        onlyOwner {
         addressStorage[key] = value;
     }
 
@@ -109,7 +122,8 @@ contract ____Storage {
     }
 
     function setBooleanStorage(bytes32 key, bool value)
-        public {
+        public 
+        onlyOwner {
         booleanStorage[key] = value;
     }
 
@@ -120,7 +134,8 @@ contract ____Storage {
     }
 
     function setBytes32Storage(bytes32 key, bytes32 value)
-        public {
+        public 
+        onlyOwner {
         bytes32Storage[key] = value;
     }
 
@@ -131,17 +146,20 @@ contract ____Storage {
     }
 
     function setStringArrayStorage(bytes32 key, string[] memory value)
-        public {
+        public 
+        onlyOwner {
         stringArrayStorage[key] = value;
     }
 
     function pushStringArrayStorage(bytes32 key, string memory value)
-        public {
+        public 
+        onlyOwner {
         stringArrayStorage[key].push(value);
     }
 
     function deleteStringArrayStorage(bytes32 key) 
-        public {
+        public 
+        onlyOwner {
         delete stringArrayStorage[key];
     }
 
@@ -157,20 +175,27 @@ contract ____Storage {
         return stringArrayStorage[key][index];
     }
 
-    /// ... len
+    function lengthStringArrayStorage(bytes32 key)
+        public view
+        returns (uint) {
+        return stringArrayStorage[key].length;
+    }
 
     function setBytesArrayStorage(bytes32 key, bytes[] memory value)
-        public {
+        public 
+        onlyOwner {
         bytesArrayStorage[key] = value;
     }
 
     function pushBytesArrayStorage(bytes32 key, bytes memory value)
-        public {
+        public 
+        onlyOwner {
         bytesArrayStorage[key].push(value);
     }
 
     function deleteBytesArrayStorage(bytes32 key)
-        public {
+        public 
+        onlyOwner {
         delete bytesArrayStorage[key];
     }
 
@@ -186,20 +211,27 @@ contract ____Storage {
         return bytesArrayStorage[key][index];
     }
 
-    /// ... len
+    function lengthBytesArrayStorage(bytes32 key)
+        public view
+        returns (uint) {
+        return bytesArrayStorage[key].length;
+    }
 
     function setUintArrayStorage(bytes32 key, uint[] memory value)
-        public {
+        public 
+        onlyOwner {
         uintArrayStorage[key] = value;
     }
 
     function pushUintArrayStorage(bytes32 key, uint value)
-        public {
+        public 
+        onlyOwner {
         uintArrayStorage[key].push(value);
     }
 
     function deleteUintArrayStorage(bytes32 key)
-        public {
+        public 
+        onlyOwner {
         delete uintArrayStorage[key];
     }
 
@@ -215,20 +247,27 @@ contract ____Storage {
         return uintArrayStorage[key][index];
     }
 
-    /// ... len
+    function lengthUintArrayStorage(bytes32 key)
+        public view
+        returns (uint) {
+        return uintArrayStorage[key].length;
+    }
 
     function setIntArrayStorage(bytes32 key, int[] memory value)
-        public {
+        public 
+        onlyOwner {
         intArrayStorage[key] = value;
     }
 
     function pushIntArrayStorage(bytes32 key, int value)
-        public {
+        public 
+        onlyOwner {
         intArrayStorage[key].push(value);
     }
 
     function deleteIntArrayStorage(bytes32 key)
-        public {
+        public 
+        onlyOwner {
         delete intArrayStorage[key];
     }
 
@@ -244,20 +283,27 @@ contract ____Storage {
         return intArrayStorage[key][index];
     }
 
-    /// ... len
+    function lengthIntArrayStorage(bytes32 key)
+        public view
+        returns (uint) {
+        return intArrayStorage[key].length;
+    }
 
     function setAddressArrayStorage(bytes32 key, address[] memory value)
-        public {
+        public 
+        onlyOwner {
         addressArrayStorage[key] = value;
     }
 
     function pushAddressArrayStorage(bytes32 key, address value)
-        public {
+        public 
+        onlyOwner {
         addressArrayStorage[key].push(value);
     }
 
     function deleteAddressArrayStorage(bytes32 key)
-        public {
+        public 
+        onlyOwner {
         delete addressArrayStorage[key];
     }
 
@@ -280,17 +326,20 @@ contract ____Storage {
     }
 
     function setBooleanArrayStorage(bytes32 key, bool[] memory value)
-        public {
+        public 
+        onlyOwner {
         booleanArrayStorage[key] = value;
     }
 
     function pushBooleanArrayStorage(bytes32 key, bool value)
-        public {
+        public 
+        onlyOwner {
         booleanArrayStorage[key].push(value);
     }
 
     function deleteBooleanArrayStorage(bytes32 key)
-        public {
+        public 
+        onlyOwner {
         delete booleanArrayStorage[key];
     }
 
@@ -313,17 +362,20 @@ contract ____Storage {
     }
 
     function setBytes32ArrayStorage(bytes32 key, bytes32[] memory value)
-        public {
+        public 
+        onlyOwner {
         bytes32ArrayStorage[key] = value;
     }
 
     function pushBytes32ArrayStorage(bytes32 key, bytes32 value)
-        public {
+        public 
+        onlyOwner {
         bytes32ArrayStorage[key].push(value);
     }
 
     function deleteBytes32ArrayStorage(bytes32 key)
-        public {
+        public 
+        onlyOwner {
         delete bytes32ArrayStorage[key];
     }
 
@@ -346,12 +398,14 @@ contract ____Storage {
     }
 
     function addAddressSetStorage(bytes32 key, address value)
-        public {
+        public 
+        onlyOwner {
         addressSetStorage[key].add(value);
     }
 
     function removeAddressSetStorage(bytes32 key, address value)
-        public {
+        public 
+        onlyOwner {
         addressSetStorage[key].remove(value);
     }
 
@@ -359,6 +413,12 @@ contract ____Storage {
         public view
         returns (bool) {
         return addressSetStorage[key].contains(value);
+    }
+
+    function indexAddressSetStorage(bytes32 key, uint index)
+        public view
+        returns (address) {
+        return addressSetStorage[key].at(index);
     }
 
     function valuesAddressSetStorage(bytes32 key)
@@ -373,4 +433,75 @@ contract ____Storage {
         return addressSetStorage[key].length();
     }
 
+    function addUintSetStorage(bytes32 key, uint value)
+        public 
+        onlyOwner {
+        uintSetStorage[key].add(value);
+    }
+
+    function removeUintSetStorage(bytes32 key, uint value)
+        public 
+        onlyOwner {
+        uintSetStorage[key].remove(value);
+    }
+
+    function containsUintSetStorage(bytes32 key, uint value)
+        public view
+        returns (bool) {
+        return uintSetStorage[key].contains(value);
+    }
+
+    function indexUintSetStorage(bytes32 key, uint index)
+        public view
+        returns (uint) {
+        return uintSetStorage[key].at(index);
+    }
+
+    function valuesUintSetStorage(bytes32 key)
+        public view
+        returns (uint[] memory) {
+        return uintSetStorage[key].values();
+    }
+
+    function lengthUintSetStorage(bytes32 key)
+        public view
+        returns (uint) {
+        return uintSetStorage[key].length();
+    }
+
+    function addBytes32SetStorage(bytes32 key, bytes32 value)
+        public 
+        onlyOwner {
+        bytes32SetStorage[key].add(value);
+    }
+
+    function removeBytes32SetStorage(bytes32 key, bytes32 value)
+        public 
+        onlyOwner {
+        bytes32SetStorage[key].remove(value);
+    }
+
+    function containsBytes32SetStorage(bytes32 key, bytes32 value)
+        public view
+        returns (bool) {
+        return bytes32SetStorage[key].contains(value);
+    }
+
+    function indexBytes32SetStorage(bytes32 key, uint index)
+        public view
+        returns (bytes32) {
+        return bytes32SetStorage[key].at(index);
+    }
+
+    function valuesBytes32SetStorage(bytes32 key)
+        public view
+        returns (bytes32[] memory) {
+        return bytes32SetStorage[key].values();
+    }
+
+    function lengthBytes32SetStorage(bytes32 key)
+        public view
+        returns (uint) {
+        return bytes32SetStorage[key].length();
+    }
 }
