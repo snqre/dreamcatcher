@@ -3,15 +3,21 @@ pragma solidity 0.8.19;
 import "contracts/polygon/deps/openzeppelin/utils/structs/EnumerableSet.sol";
 import "contracts/polygon/deps/openzeppelin/access/Ownable.sol";
 
-/**
-* The Eternal Storage design pattern in Solidity aims to separate the state data 
-* from the logic of a smart contract, enabling upgrades without data loss 
-* by using an external contract to store the data permanently
- */
+interface ____IStorage {
+    function setLogic(address newLogic) external;
+    function getLogic() external view returns (address);
+    function setStringStorage(bytes32 key, string memory value) external;
+    function getStringStorage(bytes32 key) external view returns (string memory);
+    function setBytesStorage(bytes32 key, bytes memory value) external;
+    function getBytesStorage(bytes32 key) external view returns (bytes memory);
+    function setUintStorage(bytes32 key, uint value) external;
+    function getUintStorage(bytes32 key) external view returns (uint);
+    function setIntStorage(bytes32 key, int value) external;
+    function getIntStorage(bytes32 key) external view returns (int);
+    function setAddressStorage(bytes32 key, address value) external;
+    
+}
 
-/// we are expanding on the eternal storage design pattern
-/// here we add several new types of datatypes such as arrays
-/// the scope of this storage is for solstice
 contract ____Storage is Ownable {
     using EnumerableSet for EnumerableSet.AddressSet;
     using EnumerableSet for EnumerableSet.UintSet;
@@ -75,22 +81,14 @@ contract ____Storage is Ownable {
     event AddBytes32SetStorage(bytes32 indexed key, bytes32 indexed value);
     event RemoveBytes32SetStorage(bytes32 indexed key, bytes32 indexed value);
 
-    constructor() 
-        Ownable(msg.sender) {
-        
-    }
-
-    function encode(string memory value)
-        public view
-        returns (bytes32) {
-        return keccak256(value);
-    }
+    constructor()
+        Ownable(msg.sender) {}
 
     function setLogic(address newLogic)
         public 
         onlyOwner {
         logic = newLogic;
-        _transferOwnership(newlogic);
+        _transferOwnership(newLogic);
         emit SetLogic(newLogic);
     }
 
