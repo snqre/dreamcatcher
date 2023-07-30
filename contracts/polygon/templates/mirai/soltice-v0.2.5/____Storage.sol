@@ -31,7 +31,7 @@ contract ____Storage {
     mapping(bytes32 => uint[]) private uintArrayStorage;
     mapping(bytes32 => int[]) private intArrayStorage;
     mapping(bytes32 => address[]) private addressArrayStorage;
-    mapping(bytes32 => bool[]) private boolArrayStorage;
+    mapping(bytes32 => bool[]) private booleanArrayStorage;
     mapping(bytes32 => bytes32[]) private bytes32ArrayStorage;
 
     mapping(bytes32 => EnumerableSet.AddressSet) private addressSetStorage;
@@ -157,6 +157,8 @@ contract ____Storage {
         return stringArrayStorage[key][index];
     }
 
+    /// ... len
+
     function setBytesArrayStorage(bytes32 key, bytes[] memory value)
         public {
         bytesArrayStorage[key] = value;
@@ -183,6 +185,8 @@ contract ____Storage {
         returns (bytes memory) {
         return bytesArrayStorage[key][index];
     }
+
+    /// ... len
 
     function setUintArrayStorage(bytes32 key, uint[] memory value)
         public {
@@ -211,6 +215,8 @@ contract ____Storage {
         return uintArrayStorage[key][index];
     }
 
+    /// ... len
+
     function setIntArrayStorage(bytes32 key, int[] memory value)
         public {
         intArrayStorage[key] = value;
@@ -236,6 +242,135 @@ contract ____Storage {
         public view
         returns (int) {
         return intArrayStorage[key][index];
+    }
+
+    /// ... len
+
+    function setAddressArrayStorage(bytes32 key, address[] memory value)
+        public {
+        addressArrayStorage[key] = value;
+    }
+
+    function pushAddressArrayStorage(bytes32 key, address value)
+        public {
+        addressArrayStorage[key].push(value);
+    }
+
+    function deleteAddressArrayStorage(bytes32 key)
+        public {
+        delete addressArrayStorage[key];
+    }
+
+    function getAddressArrayStorage(bytes32 key)
+        public view
+        returns (address[] memory) {
+        return addressArrayStorage[key];
+    }
+
+    function indexAddressArrayStorage(bytes32 key, uint index)
+        public view
+        returns (address) {
+        return addressArrayStorage[key][index];
+    }
+
+    function lengthAddressArrayStorage(bytes32 key)
+        public view
+        returns (uint) {
+        return addressArrayStorage[key].length;
+    }
+
+    function setBooleanArrayStorage(bytes32 key, bool[] memory value)
+        public {
+        booleanArrayStorage[key] = value;
+    }
+
+    function pushBooleanArrayStorage(bytes32 key, bool value)
+        public {
+        booleanArrayStorage[key].push(value);
+    }
+
+    function deleteBooleanArrayStorage(bytes32 key)
+        public {
+        delete booleanArrayStorage[key];
+    }
+
+    function getBooleanArrayStorage(bytes32 key)
+        public view
+        returns (bool[] memory) {
+        return booleanArrayStorage[key];
+    }
+
+    function indexBooleanArrayStorage(bytes32 key, uint index)
+        public view
+        returns (bool) {
+        return booleanArrayStorage[key][index];
+    }
+
+    function lengthBooleanArrayStorage(bytes32 key)
+        public view
+        returns (uint) {
+        return booleanArrayStorage[key].length;
+    }
+
+    function setBytes32ArrayStorage(bytes32 key, bytes32[] memory value)
+        public {
+        bytes32ArrayStorage[key] = value;
+    }
+
+    function pushBytes32ArrayStorage(bytes32 key, bytes32 value)
+        public {
+        bytes32ArrayStorage[key].push(value);
+    }
+
+    function deleteBytes32ArrayStorage(bytes32 key)
+        public {
+        delete bytes32ArrayStorage[key];
+    }
+
+    function getBytes32ArrayStorage(bytes32 key)
+        public view
+        returns (bytes32[] memory) {
+        return bytes32ArrayStorage[key];
+    }
+
+    function indexBytes32ArrayStorage(bytes32 key, uint index)
+        public view
+        returns (bytes32) {
+        return bytes32ArrayStorage[key][index];
+    }
+
+    function lengthBytes32ArrayStorage(bytes32 key)
+        public view
+        returns (uint) {
+        return bytes32ArrayStorage[key].length;
+    }
+
+    function addAddressSetStorage(bytes32 key, address value)
+        public {
+        addressSetStorage[key].add(value);
+    }
+
+    function removeAddressSetStorage(bytes32 key, address value)
+        public {
+        addressSetStorage[key].remove(value);
+    }
+
+    function containsAddressSetStorage(bytes32 key, address value)
+        public view
+        returns (bool) {
+        return addressSetStorage[key].contains(value);
+    }
+
+    function valuesAddressSetStorage(bytes32 key)
+        public view
+        returns (address[] memory) {
+        return addressSetStorage[key].values();
+    }
+
+    function lengthAddressSetStorage(bytes32 key)
+        public view
+        returns (uint) {
+        return addressSetStorage[key].length();
     }
 
 }
