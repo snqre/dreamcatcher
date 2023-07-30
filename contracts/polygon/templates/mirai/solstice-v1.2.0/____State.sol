@@ -166,6 +166,11 @@ contract ____State is ____IState, Ownable {
         );
     }
 
+    function push() 
+        public {
+        _pools.push();
+    }
+
     function getPool(uint id)
         public view
         returns (
