@@ -56,6 +56,19 @@ contract ____Storage is Ownable {
     event SetUintArrayStorage(bytes32 indexed key, uint[] indexed value);
     event PushUintArrayStorage(bytes32 indexed key, uint indexed value);
     event DeleteUintArrayStorage(bytes32 indexed key);
+    event SetIntArrayStorage(bytes32 indexed key, int[] indexed value);
+    event PushIntArrayStorage(bytes32 indexed key, int indexed value);
+    event DeleteIntArrayStorage(bytes32 indexed key);
+    event SetAddressArrayStorage(bytes32 indexed key, address[] indexed value);
+    event PushAddressArrayStorage(bytes32 indexed key, address indexed value);
+    event DeleteAddressArrayStorage(bytes32 indexed key);
+    event SetBooleanArrayStorage(bytes32 indexed key, bool[] indexed value);
+    event PushBooleanArrayStorage(bytes32 indexed key, bool indexed value);
+    event DeleteBooleanArrayStorage(bytes32 indexed key);
+    event SetBytes32ArrayStorage(bytes32 indexed key, bytes32[] indexed value);
+    event PushBytes32ArrayStorage(bytes32 indexed key, bytes32 indexed value);
+    event DeleteBytes32ArrayStorage(bytes32 indexed key);
+    
 
     constructor() {}
 
@@ -285,18 +298,21 @@ contract ____Storage is Ownable {
         public 
         onlyOwner {
         intArrayStorage[key] = value;
+        emit SetIntArrayStorage(key, value);
     }
 
     function pushIntArrayStorage(bytes32 key, int value)
         public 
         onlyOwner {
         intArrayStorage[key].push(value);
+        emit PushIntArrayStorage(key, value);
     }
 
     function deleteIntArrayStorage(bytes32 key)
         public 
         onlyOwner {
         delete intArrayStorage[key];
+        emit DeleteBytesArrayStorage(key);
     }
 
     function getIntArrayStorage(bytes32 key)
@@ -321,18 +337,21 @@ contract ____Storage is Ownable {
         public 
         onlyOwner {
         addressArrayStorage[key] = value;
+        emit SetAddressArrayStorage(key, value);
     }
 
     function pushAddressArrayStorage(bytes32 key, address value)
         public 
         onlyOwner {
         addressArrayStorage[key].push(value);
+        emit PushAddressArrayStorage(key, value);
     }
 
     function deleteAddressArrayStorage(bytes32 key)
         public 
         onlyOwner {
         delete addressArrayStorage[key];
+        emit DeleteAddressArrayStorage(key);
     }
 
     function getAddressArrayStorage(bytes32 key)
@@ -357,18 +376,21 @@ contract ____Storage is Ownable {
         public 
         onlyOwner {
         booleanArrayStorage[key] = value;
+        emit SetBooleanArrayStorage(key, value);
     }
 
     function pushBooleanArrayStorage(bytes32 key, bool value)
         public 
         onlyOwner {
         booleanArrayStorage[key].push(value);
+        emit PushBooleanArrayStorage(key, value);
     }
 
     function deleteBooleanArrayStorage(bytes32 key)
         public 
         onlyOwner {
         delete booleanArrayStorage[key];
+        emit DeleteBooleanArrayStorage(key);
     }
 
     function getBooleanArrayStorage(bytes32 key)
@@ -393,18 +415,21 @@ contract ____Storage is Ownable {
         public 
         onlyOwner {
         bytes32ArrayStorage[key] = value;
+        emit SetBytes32ArrayStorage(key, value);
     }
 
     function pushBytes32ArrayStorage(bytes32 key, bytes32 value)
         public 
         onlyOwner {
         bytes32ArrayStorage[key].push(value);
+        emit PushBytes32ArrayStorage(key, value);
     }
 
     function deleteBytes32ArrayStorage(bytes32 key)
         public 
         onlyOwner {
         delete bytes32ArrayStorage[key];
+        emit DeleteBytes32ArrayStorage(key);
     }
 
     function getBytes32ArrayStorage(bytes32 key)
