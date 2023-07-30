@@ -39,9 +39,23 @@ contract ____Storage is Ownable {
     mapping(bytes32 => EnumerableSet.UintSet) private uintSetStorage;
     mapping(bytes32 => EnumerableSet.Bytes32Set) private bytes32SetStorage;
 
-    event NewLogicSet(address indexed newLogic);
-    event StringStorageSet(bytes32 indexed key, string indexed value);
-    event BytesStorageSet(bytes32 indexed key, bytes indexed value);
+    event SetLogic(address indexed newLogic);
+    event SetStringStorage(bytes32 indexed key, string indexed value);
+    event SetBytesStorage(bytes32 indexed key, bytes indexed value);
+    event SetUintStorage(bytes32 indexed key, uint indexed value);
+    event SetIntStorage(bytes32 indexed key, int indexed value);
+    event SetAddressStorage(bytes32 indexed key, address indexed value);
+    event SetBooleanStorage(bytes32 indexed key, bool indexed value);
+    event SetBytes32Storage(bytes32 indexed key, bytes32 indexed value);
+    event SetStringArrayStorage(bytes32 indexed key, string[] indexed value);
+    event PushStringArrayStorage(bytes32 indexed key, string indexed value);
+    event DeleteStringArrayStorage(bytes32 indexed key);
+    event SetBytesArrayStorage(bytes32 indexed key, bytes[] indexed value);
+    event PushBytesArrayStorage(bytes32 indexed key, bytes indexed value);
+    event DeleteBytesArrayStorage(bytes32 indexed key);
+    event SetUintArrayStorage(bytes32 indexed key, uint[] indexed value);
+    event PushUintArrayStorage(bytes32 indexed key, uint indexed value);
+    event DeleteUintArrayStorage(bytes32 indexed key);
 
     constructor() {}
 
@@ -50,7 +64,7 @@ contract ____Storage is Ownable {
         onlyOwner {
         logic = newLogic;
         _transferOwnership(newlogic);
-        emit NewLogicSet(newLogic);
+        emit SetLogic(newLogic);
     }
 
     function getLogic()
@@ -63,7 +77,7 @@ contract ____Storage is Ownable {
         public 
         onlyOwner {
         stringStorage[key] = value;
-        emit StringStorageSet(key, value);
+        emit SetStringStorage(key, value);
     }
 
     function getStringStorage(bytes32 key)
@@ -76,7 +90,7 @@ contract ____Storage is Ownable {
         public 
         onlyOwner {
         bytesStorage[key] = value;
-        emit BytesStorageSet(key, value);
+        emit SetBytesStorage(key, value);
     }
 
     function getBytesStorage(bytes32 key)
@@ -89,6 +103,7 @@ contract ____Storage is Ownable {
         public 
         onlyOwner {
         uintStorage[key] = value;
+        emit SetUintStorage(key, value);
     }
 
     function getUintStorage(bytes32 key)
@@ -101,6 +116,7 @@ contract ____Storage is Ownable {
         public 
         onlyOwner {
         intStorage[key] = value;
+        emit SetIntStorage(key, value);
     }
 
     function getIntStorage(bytes32 key)
@@ -113,6 +129,7 @@ contract ____Storage is Ownable {
         public 
         onlyOwner {
         addressStorage[key] = value;
+        emit SetAddressStorage(key, value);
     }
 
     function getAddressStorage(bytes32 key)
@@ -125,6 +142,7 @@ contract ____Storage is Ownable {
         public 
         onlyOwner {
         booleanStorage[key] = value;
+        emit SetBooleanStorage(key, value);
     }
 
     function getBooleanStorage(bytes32 key)
@@ -137,6 +155,7 @@ contract ____Storage is Ownable {
         public 
         onlyOwner {
         bytes32Storage[key] = value;
+        emit SetBytes32Storage(key, value);
     }
 
     function getBytes32Storage(bytes32 key)
@@ -149,18 +168,21 @@ contract ____Storage is Ownable {
         public 
         onlyOwner {
         stringArrayStorage[key] = value;
+        emit SetStringArrayStorage(key, value);
     }
 
     function pushStringArrayStorage(bytes32 key, string memory value)
         public 
         onlyOwner {
         stringArrayStorage[key].push(value);
+        emit PushStringArrayStorage(key, value);
     }
 
     function deleteStringArrayStorage(bytes32 key) 
         public 
         onlyOwner {
         delete stringArrayStorage[key];
+        emit DeleteStringArrayStorage(key);
     }
 
     function getStringArrayStorage(bytes32 key)
@@ -185,18 +207,21 @@ contract ____Storage is Ownable {
         public 
         onlyOwner {
         bytesArrayStorage[key] = value;
+        emit SetBytesArrayStorage(key, value);
     }
 
     function pushBytesArrayStorage(bytes32 key, bytes memory value)
         public 
         onlyOwner {
         bytesArrayStorage[key].push(value);
+        emit PushBytesArrayStorage(key, value);
     }
 
     function deleteBytesArrayStorage(bytes32 key)
         public 
         onlyOwner {
         delete bytesArrayStorage[key];
+        emit DeleteBytesArrayStorage(key);
     }
 
     function getBytesArrayStorage(bytes32 key)
@@ -221,18 +246,21 @@ contract ____Storage is Ownable {
         public 
         onlyOwner {
         uintArrayStorage[key] = value;
+        emit SetUintArrayStorage(key, value);
     }
 
     function pushUintArrayStorage(bytes32 key, uint value)
         public 
         onlyOwner {
         uintArrayStorage[key].push(value);
+        emit PushUintArrayStorage(key, value);
     }
 
     function deleteUintArrayStorage(bytes32 key)
         public 
         onlyOwner {
         delete uintArrayStorage[key];
+        emit DeleteUintArrayStorage(key);
     }
 
     function getUintArrayStorage(bytes32 key)
