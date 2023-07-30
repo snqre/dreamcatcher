@@ -68,7 +68,12 @@ contract ____Storage is Ownable {
     event SetBytes32ArrayStorage(bytes32 indexed key, bytes32[] indexed value);
     event PushBytes32ArrayStorage(bytes32 indexed key, bytes32 indexed value);
     event DeleteBytes32ArrayStorage(bytes32 indexed key);
-    
+    event AddAddressSetStorage(bytes32 indexed key, address indexed value);
+    event RemoveAddressSetStorage(bytes32 indexed key, address indexed value);
+    event AddUintSetStorage(bytes32 indexed key, uint indexed value);
+    event RemoveUintSetStorage(bytes32 indexed key, uint indexed value);
+    event AddBytes32SetStorage(bytes32 indexed key, bytes32 indexed value);
+    event RemoveBytes32SetStorage(bytes32 indexed key, bytes32 indexed value);
 
     constructor() {}
 
@@ -454,12 +459,14 @@ contract ____Storage is Ownable {
         public 
         onlyOwner {
         addressSetStorage[key].add(value);
+        emit AddAddressSetStorage(key, value);
     }
 
     function removeAddressSetStorage(bytes32 key, address value)
         public 
         onlyOwner {
         addressSetStorage[key].remove(value);
+        emit RemoveAddressSetStorage(key, value);
     }
 
     function containsAddressSetStorage(bytes32 key, address value)
@@ -490,12 +497,14 @@ contract ____Storage is Ownable {
         public 
         onlyOwner {
         uintSetStorage[key].add(value);
+        emit AddUintSetStorage(key, value);
     }
 
     function removeUintSetStorage(bytes32 key, uint value)
         public 
         onlyOwner {
         uintSetStorage[key].remove(value);
+        emit RemoveUintSetStorage(key, value);
     }
 
     function containsUintSetStorage(bytes32 key, uint value)
@@ -526,12 +535,14 @@ contract ____Storage is Ownable {
         public 
         onlyOwner {
         bytes32SetStorage[key].add(value);
+        emit AddBytes32SetStorage(key, value);
     }
 
     function removeBytes32SetStorage(bytes32 key, bytes32 value)
         public 
         onlyOwner {
         bytes32SetStorage[key].remove(value);
+        emit RemoveBytes32SetStorage(key, value);
     }
 
     function containsBytes32SetStorage(bytes32 key, bytes32 value)
