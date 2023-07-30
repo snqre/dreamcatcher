@@ -58,7 +58,28 @@ interface ____IStorage {
     function lengthBooleanArrayStorage(bytes32 key) external view returns (uint);
     function setBytes32ArrayStorage(bytes32 key, bytes32[] memory value) external;
     function pushBytes32ArrayStorage(bytes32 key, bytes32 value) external;
-    
+    function deleteBytes32ArrayStorage(bytes32 key) external;
+    function getBytes32ArrayStorage(bytes32 key) external view returns (bytes32[] memory);
+    function indexBytes32ArrayStorage(bytes32 key, uint index) external view returns (bytes32);
+    function lengthBytes32ArrayStorage(bytes32 key) external view returns (uint);
+    function addAddressSetStorage(bytes32 key, address value) external;
+    function removeAddressSetStorage(bytes32 key, address value) external;
+    function containsAddressSetStorage(bytes32 key, address value) external view returns (bool);
+    function indexAddressSetStorage(bytes32 key, uint index) external view returns (address);
+    function valuesAddressSetStorage(bytes32 key) external view returns (address[] memory);
+    function lengthAddressSetStorage(bytes32 key) external view returns (uint);
+    function addUintSetStorage(bytes32 key, uint value) external;
+    function removeUintSetStorage(bytes32 key, uint value) external;
+    function containsUintSetStorage(bytes32 key, uint value) external view returns (bool);
+    function indexUintSetStorage(bytes32 key, uint index) external view returns (uint);
+    function valuesUintSetStorage(bytes32 key) external view returns (uint[] memory);
+    function lengthUintSetStorage(bytes32 key) external view returns (uint);
+    function addBytes32SetStorage(bytes32 key, bytes32 value) external;
+    function removeBytes32SetStorage(bytes32 key, bytes32 value) external;
+    function containsBytes32SetStorage(bytes32 key, bytes32 value) external view returns (bool);
+    function indexBytes32SetStorage(bytes32 key, uint index) external view returns (bytes32);
+    function valuesBytes32SetStorage(bytes32 key) external view returns (bytes32[] memory);
+    function lengthBytes32SetStorage(bytes32 key) external view returns (uint);
 }
 
 contract ____Storage is Ownable {
