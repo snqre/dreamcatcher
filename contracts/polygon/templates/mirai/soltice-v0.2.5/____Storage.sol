@@ -75,7 +75,16 @@ contract ____Storage is Ownable {
     event AddBytes32SetStorage(bytes32 indexed key, bytes32 indexed value);
     event RemoveBytes32SetStorage(bytes32 indexed key, bytes32 indexed value);
 
-    constructor() {}
+    constructor() 
+        Ownable(msg.sender) {
+        
+    }
+
+    function encode(string memory value)
+        public view
+        returns (bytes32) {
+        return keccak256(value);
+    }
 
     function setLogic(address newLogic)
         public 
