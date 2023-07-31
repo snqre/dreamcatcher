@@ -6,80 +6,80 @@ import "contracts/polygon/deps/openzeppelin/access/Ownable.sol";
 interface ____IStorage {
     function setLogic(address newLogic) external;
     function getLogic() external view returns (address);
-    function setStringStorage(bytes32 key, string memory value) external;
-    function getStringStorage(bytes32 key) external view returns (string memory);
-    function setBytesStorage(bytes32 key, bytes memory value) external;
-    function getBytesStorage(bytes32 key) external view returns (bytes memory);
-    function setUintStorage(bytes32 key, uint value) external;
-    function getUintStorage(bytes32 key) external view returns (uint);
-    function setIntStorage(bytes32 key, int value) external;
-    function getIntStorage(bytes32 key) external view returns (int);
-    function setAddressStorage(bytes32 key, address value) external;
-    function getAddressStorage(bytes32 key) external view returns (address);
-    function setBooleanStorage(bytes32 key, bool value) external;
-    function getBooleanStorage(bytes32 key) external view returns (bool);
-    function setBytes32Storage(bytes32 key, bytes32 value) external;
-    function getBytes32Storage(bytes32 key) external view returns (bytes32);
-    function setStringArrayStorage(bytes32 key, string[] memory value) external;
-    function pushStringArrayStorage(bytes32 key, string memory value) external;
-    function deleteStringArrayStorage(bytes32 key) external;
-    function getStringArrayStorage(bytes32 key) external view returns (string[] memory);
-    function indexStringArrayStorage(bytes32 key, uint index) external view returns (string memory);
-    function lengthStringArrayStorage(bytes32 key) external view returns (uint);
-    function setBytesArrayStorage(bytes32 key, bytes[] memory value) external;
-    function pushBytesArrayStorage(bytes32 key, bytes memory value) external;
-    function deleteBytesArrayStorage(bytes32 key) external;
-    function getBytesArrayStorage(bytes32 key) external view returns (bytes[] memory);
-    function indexBytesArrayStorage(bytes32 key, uint index) external view returns (bytes memory);
-    function lengthBytesArrayStorage(bytes32 key) external view returns (uint);
-    function setUintArrayStorage(bytes32 key, uint[] memory value) external;
-    function pushUintArrayStorage(bytes32 key, uint value) external;
-    function deleteUintArrayStorage(bytes32 key) external;
-    function getUintArrayStorage(bytes32 key) external view returns (uint[] memory);
-    function indexUintArrayStorage(bytes32 key, uint index) external view returns (uint);
-    function lengthUintArrayStorage(bytes32 key) external view returns (uint);
-    function setIntArrayStorage(bytes32 key, int[] memory value) external;
-    function pushIntArrayStorage(bytes32 key, int value) external;
-    function deleteIntArrayStorage(bytes32 key) external;
-    function getIntArrayStorage(bytes32 key) external view returns (int[] memory);
-    function indexIntArrayStorage(bytes32 key, uint index) external view returns (int);
-    function lengthIntArrayStorage(bytes32 key) external view returns (uint);
-    function setAddressArrayStorage(bytes32 key, address[] memory value) external;
-    function pushAddressArrayStorage(bytes32 key, address value) external;
-    function deleteAddressArrayStorage(bytes32 key) external;
-    function getAddressArrayStorage(bytes32 key) external view returns (address[] memory);
-    function indexAddressArrayStorage(bytes32 key, uint index) external view returns (address);
-    function lengthAddressArrayStorage(bytes32 key) external view returns (uint);
-    function setBooleanArrayStorage(bytes32 key, bool[] memory value) external;
-    function pushBooleanArrayStorage(bytes32 key, bool value) external;
-    function deleteBooleanArrayStorage(bytes32 key) external;
-    function getBooleanArrayStorage(bytes32 key) external view returns (bool[] memory);
-    function indexBooleanArrayStorage(bytes32 key, uint index) external view returns (bool);
-    function lengthBooleanArrayStorage(bytes32 key) external view returns (uint);
-    function setBytes32ArrayStorage(bytes32 key, bytes32[] memory value) external;
-    function pushBytes32ArrayStorage(bytes32 key, bytes32 value) external;
-    function deleteBytes32ArrayStorage(bytes32 key) external;
-    function getBytes32ArrayStorage(bytes32 key) external view returns (bytes32[] memory);
-    function indexBytes32ArrayStorage(bytes32 key, uint index) external view returns (bytes32);
-    function lengthBytes32ArrayStorage(bytes32 key) external view returns (uint);
-    function addAddressSetStorage(bytes32 key, address value) external;
-    function removeAddressSetStorage(bytes32 key, address value) external;
-    function containsAddressSetStorage(bytes32 key, address value) external view returns (bool);
-    function indexAddressSetStorage(bytes32 key, uint index) external view returns (address);
-    function valuesAddressSetStorage(bytes32 key) external view returns (address[] memory);
-    function lengthAddressSetStorage(bytes32 key) external view returns (uint);
-    function addUintSetStorage(bytes32 key, uint value) external;
-    function removeUintSetStorage(bytes32 key, uint value) external;
-    function containsUintSetStorage(bytes32 key, uint value) external view returns (bool);
-    function indexUintSetStorage(bytes32 key, uint index) external view returns (uint);
-    function valuesUintSetStorage(bytes32 key) external view returns (uint[] memory);
-    function lengthUintSetStorage(bytes32 key) external view returns (uint);
-    function addBytes32SetStorage(bytes32 key, bytes32 value) external;
-    function removeBytes32SetStorage(bytes32 key, bytes32 value) external;
-    function containsBytes32SetStorage(bytes32 key, bytes32 value) external view returns (bool);
-    function indexBytes32SetStorage(bytes32 key, uint index) external view returns (bytes32);
-    function valuesBytes32SetStorage(bytes32 key) external view returns (bytes32[] memory);
-    function lengthBytes32SetStorage(bytes32 key) external view returns (uint);
+    function setString(bytes32 key, string memory value) external;
+    function getString(bytes32 key) external view returns (string memory);
+    function setBytes(bytes32 key, bytes memory value) external;
+    function getBytes(bytes32 key) external view returns (bytes memory);
+    function setUint(bytes32 key, uint value) external;
+    function getUint(bytes32 key) external view returns (uint);
+    function setInt(bytes32 key, int value) external;
+    function getInt(bytes32 key) external view returns (int);
+    function setAddress(bytes32 key, address value) external;
+    function getAddress(bytes32 key) external view returns (address);
+    function setBool(bytes32 key, bool value) external;
+    function getBool(bytes32 key) external view returns (bool);
+    function setBytes32(bytes32 key, bytes32 value) external;
+    function getBytes32(bytes32 key) external view returns (bytes32);
+    function setStringArray(bytes32 key, string[] memory value) external;
+    function pushStringArray(bytes32 key, string memory value) external;
+    function deleteStringArray(bytes32 key) external;
+    function getStringArray(bytes32 key) external view returns (string[] memory);
+    function indexStringArray(bytes32 key, uint index) external view returns (string memory);
+    function lengthStringArray(bytes32 key) external view returns (uint);
+    function setBytesArray(bytes32 key, bytes[] memory value) external;
+    function pushBytesArray(bytes32 key, bytes memory value) external;
+    function deleteBytesArray(bytes32 key) external;
+    function getBytesArray(bytes32 key) external view returns (bytes[] memory);
+    function indexBytesArray(bytes32 key, uint index) external view returns (bytes memory);
+    function lengthBytesArray(bytes32 key) external view returns (uint);
+    function setUintArray(bytes32 key, uint[] memory value) external;
+    function pushUintArray(bytes32 key, uint value) external;
+    function deleteUintArray(bytes32 key) external;
+    function getUintArray(bytes32 key) external view returns (uint[] memory);
+    function indexUintArray(bytes32 key, uint index) external view returns (uint);
+    function lengthUintArray(bytes32 key) external view returns (uint);
+    function setIntArray(bytes32 key, int[] memory value) external;
+    function pushIntArray(bytes32 key, int value) external;
+    function deleteIntArray(bytes32 key) external;
+    function getIntArray(bytes32 key) external view returns (int[] memory);
+    function indexIntArray(bytes32 key, uint index) external view returns (int);
+    function lengthIntArray(bytes32 key) external view returns (uint);
+    function setAddressArray(bytes32 key, address[] memory value) external;
+    function pushAddressArray(bytes32 key, address value) external;
+    function deleteAddressArray(bytes32 key) external;
+    function getAddressArray(bytes32 key) external view returns (address[] memory);
+    function indexAddressArray(bytes32 key, uint index) external view returns (address);
+    function lengthAddressArray(bytes32 key) external view returns (uint);
+    function setBoolArray(bytes32 key, bool[] memory value) external;
+    function pushBoolArray(bytes32 key, bool value) external;
+    function deleteBoolArray(bytes32 key) external;
+    function getBoolArray(bytes32 key) external view returns (bool[] memory);
+    function indexBoolArray(bytes32 key, uint index) external view returns (bool);
+    function lengthBoolArray(bytes32 key) external view returns (uint);
+    function setBytes32Array(bytes32 key, bytes32[] memory value) external;
+    function pushBytes32Array(bytes32 key, bytes32 value) external;
+    function deleteBytes32Array(bytes32 key) external;
+    function getBytes32Array(bytes32 key) external view returns (bytes32[] memory);
+    function indexBytes32Array(bytes32 key, uint index) external view returns (bytes32);
+    function lengthBytes32Array(bytes32 key) external view returns (uint);
+    function addAddressSet(bytes32 key, address value) external;
+    function removeAddressSet(bytes32 key, address value) external;
+    function containsAddressSet(bytes32 key, address value) external view returns (bool);
+    function indexAddressSet(bytes32 key, uint index) external view returns (address);
+    function valuesAddressSet(bytes32 key) external view returns (address[] memory);
+    function lengthAddressSet(bytes32 key) external view returns (uint);
+    function addUintSet(bytes32 key, uint value) external;
+    function removeUintSet(bytes32 key, uint value) external;
+    function containsUintSet(bytes32 key, uint value) external view returns (bool);
+    function indexUintSet(bytes32 key, uint index) external view returns (uint);
+    function valuesUintSet(bytes32 key) external view returns (uint[] memory);
+    function lengthUintSet(bytes32 key) external view returns (uint);
+    function addBytes32Set(bytes32 key, bytes32 value) external;
+    function removeBytes32Set(bytes32 key, bytes32 value) external;
+    function containsBytes32Set(bytes32 key, bytes32 value) external view returns (bool);
+    function indexBytes32Set(bytes32 key, uint index) external view returns (bytes32);
+    function valuesBytes32Set(bytes32 key) external view returns (bytes32[] memory);
+    function lengthBytes32Set(bytes32 key) external view returns (uint);
 }
 
 contract ____Storage is ____IStorage, Ownable {
@@ -89,61 +89,61 @@ contract ____Storage is ____IStorage, Ownable {
 
     address private logic;
 
-    mapping(bytes32 => string) private stringStorage;
-    mapping(bytes32 => bytes) private bytesStorage;
-    mapping(bytes32 => uint) private uintStorage;
-    mapping(bytes32 => int) private intStorage;
-    mapping(bytes32 => address) private addressStorage;
-    mapping(bytes32 => bool) private booleanStorage;
-    mapping(bytes32 => bytes32) private bytes32Storage;
+    mapping(bytes32 => string) private _string;
+    mapping(bytes32 => bytes) private _bytes;
+    mapping(bytes32 => uint) private _uint;
+    mapping(bytes32 => int) private _int;
+    mapping(bytes32 => address) private _address;
+    mapping(bytes32 => bool) private _bool;
+    mapping(bytes32 => bytes32) private _bytes32;
 
-    mapping(bytes32 => string[]) private stringArrayStorage;
-    mapping(bytes32 => bytes[]) private bytesArrayStorage;
-    mapping(bytes32 => uint[]) private uintArrayStorage;
-    mapping(bytes32 => int[]) private intArrayStorage;
-    mapping(bytes32 => address[]) private addressArrayStorage;
-    mapping(bytes32 => bool[]) private booleanArrayStorage;
-    mapping(bytes32 => bytes32[]) private bytes32ArrayStorage;
+    mapping(bytes32 => string[]) private _stringArray;
+    mapping(bytes32 => bytes[]) private _bytesArray;
+    mapping(bytes32 => uint[]) private _uintArray;
+    mapping(bytes32 => int[]) private _intArray;
+    mapping(bytes32 => address[]) private _addressArray;
+    mapping(bytes32 => bool[]) private _boolArray;
+    mapping(bytes32 => bytes32[]) private _bytes32Array;
 
-    mapping(bytes32 => EnumerableSet.AddressSet) private addressSetStorage;
-    mapping(bytes32 => EnumerableSet.UintSet) private uintSetStorage;
-    mapping(bytes32 => EnumerableSet.Bytes32Set) private bytes32SetStorage;
+    mapping(bytes32 => EnumerableSet.AddressSet) private _addressSet;
+    mapping(bytes32 => EnumerableSet.UintSet) private _uintSet;
+    mapping(bytes32 => EnumerableSet.Bytes32Set) private _bytes32Set;
 
     event SetLogic(address indexed newLogic);
-    event SetStringStorage(bytes32 indexed key, string indexed value);
-    event SetBytesStorage(bytes32 indexed key, bytes indexed value);
-    event SetUintStorage(bytes32 indexed key, uint indexed value);
-    event SetIntStorage(bytes32 indexed key, int indexed value);
-    event SetAddressStorage(bytes32 indexed key, address indexed value);
-    event SetBooleanStorage(bytes32 indexed key, bool indexed value);
-    event SetBytes32Storage(bytes32 indexed key, bytes32 indexed value);
-    event SetStringArrayStorage(bytes32 indexed key, string[] indexed value);
-    event PushStringArrayStorage(bytes32 indexed key, string indexed value);
-    event DeleteStringArrayStorage(bytes32 indexed key);
-    event SetBytesArrayStorage(bytes32 indexed key, bytes[] indexed value);
-    event PushBytesArrayStorage(bytes32 indexed key, bytes indexed value);
-    event DeleteBytesArrayStorage(bytes32 indexed key);
-    event SetUintArrayStorage(bytes32 indexed key, uint[] indexed value);
-    event PushUintArrayStorage(bytes32 indexed key, uint indexed value);
-    event DeleteUintArrayStorage(bytes32 indexed key);
-    event SetIntArrayStorage(bytes32 indexed key, int[] indexed value);
-    event PushIntArrayStorage(bytes32 indexed key, int indexed value);
-    event DeleteIntArrayStorage(bytes32 indexed key);
-    event SetAddressArrayStorage(bytes32 indexed key, address[] indexed value);
-    event PushAddressArrayStorage(bytes32 indexed key, address indexed value);
-    event DeleteAddressArrayStorage(bytes32 indexed key);
-    event SetBooleanArrayStorage(bytes32 indexed key, bool[] indexed value);
-    event PushBooleanArrayStorage(bytes32 indexed key, bool indexed value);
-    event DeleteBooleanArrayStorage(bytes32 indexed key);
-    event SetBytes32ArrayStorage(bytes32 indexed key, bytes32[] indexed value);
-    event PushBytes32ArrayStorage(bytes32 indexed key, bytes32 indexed value);
-    event DeleteBytes32ArrayStorage(bytes32 indexed key);
-    event AddAddressSetStorage(bytes32 indexed key, address indexed value);
-    event RemoveAddressSetStorage(bytes32 indexed key, address indexed value);
-    event AddUintSetStorage(bytes32 indexed key, uint indexed value);
-    event RemoveUintSetStorage(bytes32 indexed key, uint indexed value);
-    event AddBytes32SetStorage(bytes32 indexed key, bytes32 indexed value);
-    event RemoveBytes32SetStorage(bytes32 indexed key, bytes32 indexed value);
+    event SetString(bytes32 indexed key, string indexed value);
+    event SetBytes(bytes32 indexed key, bytes indexed value);
+    event SetUint(bytes32 indexed key, uint indexed value);
+    event SetInt(bytes32 indexed key, int indexed value);
+    event SetAddress(bytes32 indexed key, address indexed value);
+    event SetBool(bytes32 indexed key, bool indexed value);
+    event SetBytes32(bytes32 indexed key, bytes32 indexed value);
+    event SetStringArray(bytes32 indexed key, string[] indexed value);
+    event PushStringArray(bytes32 indexed key, string indexed value);
+    event DeleteStringArray(bytes32 indexed key);
+    event SetBytesArray(bytes32 indexed key, bytes[] indexed value);
+    event PushBytesArray(bytes32 indexed key, bytes indexed value);
+    event DeleteBytesArray(bytes32 indexed key);
+    event SetUintArray(bytes32 indexed key, uint[] indexed value);
+    event PushUintArray(bytes32 indexed key, uint indexed value);
+    event DeleteUintArray(bytes32 indexed key);
+    event SetIntArray(bytes32 indexed key, int[] indexed value);
+    event PushIntArray(bytes32 indexed key, int indexed value);
+    event DeleteIntArray(bytes32 indexed key);
+    event SetAddressArray(bytes32 indexed key, address[] indexed value);
+    event PushAddressArray(bytes32 indexed key, address indexed value);
+    event DeleteAddressArray(bytes32 indexed key);
+    event SetBoolArray(bytes32 indexed key, bool[] indexed value);
+    event PushBoolArray(bytes32 indexed key, bool indexed value);
+    event DeleteBoolArray(bytes32 indexed key);
+    event SetBytes32Array(bytes32 indexed key, bytes32[] indexed value);
+    event PushBytes32Array(bytes32 indexed key, bytes32 indexed value);
+    event DeleteBytes32Array(bytes32 indexed key);
+    event AddAddressSet(bytes32 indexed key, address indexed value);
+    event RemoveAddressSet(bytes32 indexed key, address indexed value);
+    event AddUintSet(bytes32 indexed key, uint indexed value);
+    event RemoveUintSet(bytes32 indexed key, uint indexed value);
+    event AddBytes32Set(bytes32 indexed key, bytes32 indexed value);
+    event RemoveBytes32Set(bytes32 indexed key, bytes32 indexed value);
 
     constructor()
         Ownable(msg.sender) {}
@@ -162,481 +162,481 @@ contract ____Storage is ____IStorage, Ownable {
         return logic;
     }
 
-    function setStringStorage(bytes32 key, string memory value)
-        public 
+    function setString(bytes32 key, string memory value)
+        public
         onlyOwner {
-        stringStorage[key] = value;
-        emit SetStringStorage(key, value);
+        _string[key] = value;
+        emit SetString(key, value);
     }
 
-    function getStringStorage(bytes32 key)
+    function getString(bytes32 key)
         public view
         returns (string memory) {
-        return stringStorage[key];
+        return _string[key];
     }
 
-    function setBytesStorage(bytes32 key, bytes memory value)
+    function setBytes(bytes32 key, bytes memory value)
         public 
         onlyOwner {
-        bytesStorage[key] = value;
-        emit SetBytesStorage(key, value);
+        _bytes[key] = value;
+        emit SetBytes(key, value);
     }
 
-    function getBytesStorage(bytes32 key)
+    function getBytes(bytes32 key)
         public view
         returns (bytes memory) {
-        return bytesStorage[key];
+        return _bytes[key];
     }
 
-    function setUintStorage(bytes32 key, uint value)
+    function setUint(bytes32 key, uint value)
         public 
         onlyOwner {
-        uintStorage[key] = value;
-        emit SetUintStorage(key, value);
+        _uint[key] = value;
+        emit SetUint(key, value);
     }
 
-    function getUintStorage(bytes32 key)
+    function getUint(bytes32 key)
         public view 
         returns (uint) {
-        return uintStorage[key];
+        return _uint[key];
     }
 
-    function setIntStorage(bytes32 key, int value)
+    function setInt(bytes32 key, int value)
         public 
         onlyOwner {
-        intStorage[key] = value;
-        emit SetIntStorage(key, value);
+        _int[key] = value;
+        emit SetInt(key, value);
     }
 
-    function getIntStorage(bytes32 key)
+    function getInt(bytes32 key)
         public view
         returns (int) {
-        return intStorage[key];
+        return _int[key];
     }
 
-    function setAddressStorage(bytes32 key, address value)
+    function setAddress(bytes32 key, address value)
         public 
         onlyOwner {
-        addressStorage[key] = value;
-        emit SetAddressStorage(key, value);
+        _address[key] = value;
+        emit SetAddress(key, value);
     }
 
-    function getAddressStorage(bytes32 key)
+    function getAddress(bytes32 key)
         public view
         returns (address) {
-        return addressStorage[key];
+        return _address[key];
     }
 
-    function setBooleanStorage(bytes32 key, bool value)
+    function setBool(bytes32 key, bool value)
         public 
         onlyOwner {
-        booleanStorage[key] = value;
-        emit SetBooleanStorage(key, value);
+        _bool[key] = value;
+        emit SetBool(key, value);
     }
 
-    function getBooleanStorage(bytes32 key)
+    function getBool(bytes32 key)
         public view
         returns (bool) {
-        return booleanStorage[key];
+        return _bool[key];
     }
 
-    function setBytes32Storage(bytes32 key, bytes32 value)
+    function setBytes32(bytes32 key, bytes32 value)
         public 
         onlyOwner {
-        bytes32Storage[key] = value;
-        emit SetBytes32Storage(key, value);
+        _bytes32[key] = value;
+        emit SetBytes32(key, value);
     }
 
-    function getBytes32Storage(bytes32 key)
+    function getBytes32(bytes32 key)
         public view
         returns (bytes32) {
-        return bytes32Storage[key];
+        return _bytes32[key];
     }
 
-    function setStringArrayStorage(bytes32 key, string[] memory value)
+    function setStringArray(bytes32 key, string[] memory value)
         public 
         onlyOwner {
-        stringArrayStorage[key] = value;
-        emit SetStringArrayStorage(key, value);
+        _stringArray[key] = value;
+        emit SetStringArray(key, value);
     }
 
-    function pushStringArrayStorage(bytes32 key, string memory value)
+    function pushStringArray(bytes32 key, string memory value)
         public 
         onlyOwner {
-        stringArrayStorage[key].push(value);
-        emit PushStringArrayStorage(key, value);
+        _stringArray[key].push(value);
+        emit PushStringArray(key, value);
     }
 
-    function deleteStringArrayStorage(bytes32 key) 
+    function deleteStringArray(bytes32 key) 
         public 
         onlyOwner {
-        delete stringArrayStorage[key];
-        emit DeleteStringArrayStorage(key);
+        delete _stringArray[key];
+        emit DeleteStringArray(key);
     }
 
-    function getStringArrayStorage(bytes32 key)
+    function getStringArray(bytes32 key)
         public view
         returns (string[] memory) { 
-        return stringArrayStorage[key];
+        return _stringArray[key];
     }
 
-    function indexStringArrayStorage(bytes32 key, uint index)
+    function indexStringArray(bytes32 key, uint index)
         public view
         returns (string memory) {
-        return stringArrayStorage[key][index];
+        return _stringArray[key][index];
     }
 
-    function lengthStringArrayStorage(bytes32 key)
+    function lengthStringArray(bytes32 key)
         public view
         returns (uint) {
-        return stringArrayStorage[key].length;
+        return _stringArray[key].length;
     }
 
-    function setBytesArrayStorage(bytes32 key, bytes[] memory value)
+    function setBytesArray(bytes32 key, bytes[] memory value)
         public 
         onlyOwner {
-        bytesArrayStorage[key] = value;
-        emit SetBytesArrayStorage(key, value);
+        _bytesArray[key] = value;
+        emit SetBytesArray(key, value);
     }
 
-    function pushBytesArrayStorage(bytes32 key, bytes memory value)
+    function pushBytesArray(bytes32 key, bytes memory value)
         public 
         onlyOwner {
-        bytesArrayStorage[key].push(value);
-        emit PushBytesArrayStorage(key, value);
+        _bytesArray[key].push(value);
+        emit PushBytesArray(key, value);
     }
 
-    function deleteBytesArrayStorage(bytes32 key)
+    function deleteBytesArray(bytes32 key)
         public 
         onlyOwner {
-        delete bytesArrayStorage[key];
-        emit DeleteBytesArrayStorage(key);
+        delete _bytesArray[key];
+        emit DeleteBytesArray(key);
     }
 
-    function getBytesArrayStorage(bytes32 key)
+    function getBytesArray(bytes32 key)
         public view
         returns (bytes[] memory) {
-        return bytesArrayStorage[key];
+        return _bytesArray[key];
     }
 
-    function indexBytesArrayStorage(bytes32 key, uint index)
+    function indexBytesArray(bytes32 key, uint index)
         public view
         returns (bytes memory) {
-        return bytesArrayStorage[key][index];
+        return _bytesArray[key][index];
     }
 
-    function lengthBytesArrayStorage(bytes32 key)
+    function lengthBytesArray(bytes32 key)
         public view
         returns (uint) {
-        return bytesArrayStorage[key].length;
+        return _bytesArray[key].length;
     }
 
-    function setUintArrayStorage(bytes32 key, uint[] memory value)
+    function setUintArray(bytes32 key, uint[] memory value)
         public 
         onlyOwner {
-        uintArrayStorage[key] = value;
-        emit SetUintArrayStorage(key, value);
+        _uintArray[key] = value;
+        emit SetUintArray(key, value);
     }
 
-    function pushUintArrayStorage(bytes32 key, uint value)
+    function pushUintArray(bytes32 key, uint value)
         public 
         onlyOwner {
-        uintArrayStorage[key].push(value);
-        emit PushUintArrayStorage(key, value);
+        _uintArray[key].push(value);
+        emit PushUintArray(key, value);
     }
 
-    function deleteUintArrayStorage(bytes32 key)
+    function deleteUintArray(bytes32 key)
         public 
         onlyOwner {
-        delete uintArrayStorage[key];
-        emit DeleteUintArrayStorage(key);
+        delete _uintArray[key];
+        emit DeleteUintArray(key);
     }
 
-    function getUintArrayStorage(bytes32 key)
+    function getUintArray(bytes32 key)
         public view
         returns (uint[] memory) {
-        return uintArrayStorage[key];
+        return _uintArray[key];
     }
 
-    function indexUintArrayStorage(bytes32 key, uint index)
+    function indexUintArray(bytes32 key, uint index)
         public view
         returns (uint) {
-        return uintArrayStorage[key][index];
+        return _uintArray[key][index];
     }
 
-    function lengthUintArrayStorage(bytes32 key)
+    function lengthUintArray(bytes32 key)
         public view
         returns (uint) {
-        return uintArrayStorage[key].length;
+        return _uintArray[key].length;
     }
 
-    function setIntArrayStorage(bytes32 key, int[] memory value)
+    function setIntArray(bytes32 key, int[] memory value)
         public 
         onlyOwner {
-        intArrayStorage[key] = value;
-        emit SetIntArrayStorage(key, value);
+        _intArray[key] = value;
+        emit SetIntArray(key, value);
     }
 
-    function pushIntArrayStorage(bytes32 key, int value)
+    function pushIntArray(bytes32 key, int value)
         public 
         onlyOwner {
-        intArrayStorage[key].push(value);
-        emit PushIntArrayStorage(key, value);
+        _intArray[key].push(value);
+        emit PushIntArray(key, value);
     }
 
-    function deleteIntArrayStorage(bytes32 key)
+    function deleteIntArray(bytes32 key)
         public 
         onlyOwner {
-        delete intArrayStorage[key];
-        emit DeleteBytesArrayStorage(key);
+        delete _intArray[key];
+        emit DeleteBytesArray(key);
     }
 
-    function getIntArrayStorage(bytes32 key)
+    function getIntArray(bytes32 key)
         public view
         returns (int[] memory) {
-        return intArrayStorage[key];
+        return _intArray[key];
     }
 
-    function indexIntArrayStorage(bytes32 key, uint index)
+    function indexIntArray(bytes32 key, uint index)
         public view
         returns (int) {
-        return intArrayStorage[key][index];
+        return _intArray[key][index];
     }
 
-    function lengthIntArrayStorage(bytes32 key)
+    function lengthIntArray(bytes32 key)
         public view
         returns (uint) {
-        return intArrayStorage[key].length;
+        return _intArray[key].length;
     }
 
-    function setAddressArrayStorage(bytes32 key, address[] memory value)
+    function setAddressArray(bytes32 key, address[] memory value)
         public 
         onlyOwner {
-        addressArrayStorage[key] = value;
-        emit SetAddressArrayStorage(key, value);
+        _addressArray[key] = value;
+        emit SetAddressArray(key, value);
     }
 
-    function pushAddressArrayStorage(bytes32 key, address value)
+    function pushAddressArray(bytes32 key, address value)
         public 
         onlyOwner {
-        addressArrayStorage[key].push(value);
-        emit PushAddressArrayStorage(key, value);
+        _addressArray[key].push(value);
+        emit PushAddressArray(key, value);
     }
 
-    function deleteAddressArrayStorage(bytes32 key)
+    function deleteAddressArray(bytes32 key)
         public 
         onlyOwner {
-        delete addressArrayStorage[key];
-        emit DeleteAddressArrayStorage(key);
+        delete _addressArray[key];
+        emit DeleteAddressArray(key);
     }
 
-    function getAddressArrayStorage(bytes32 key)
+    function getAddressArray(bytes32 key)
         public view
         returns (address[] memory) {
-        return addressArrayStorage[key];
+        return _addressArray[key];
     }
 
-    function indexAddressArrayStorage(bytes32 key, uint index)
+    function indexAddressArray(bytes32 key, uint index)
         public view
         returns (address) {
-        return addressArrayStorage[key][index];
+        return _addressArray[key][index];
     }
 
-    function lengthAddressArrayStorage(bytes32 key)
+    function lengthAddressArray(bytes32 key)
         public view
         returns (uint) {
-        return addressArrayStorage[key].length;
+        return _addressArray[key].length;
     }
 
-    function setBooleanArrayStorage(bytes32 key, bool[] memory value)
+    function setBoolArray(bytes32 key, bool[] memory value)
         public 
         onlyOwner {
-        booleanArrayStorage[key] = value;
-        emit SetBooleanArrayStorage(key, value);
+        _boolArray[key] = value;
+        emit SetBoolArray(key, value);
     }
 
-    function pushBooleanArrayStorage(bytes32 key, bool value)
+    function pushBoolArray(bytes32 key, bool value)
         public 
         onlyOwner {
-        booleanArrayStorage[key].push(value);
-        emit PushBooleanArrayStorage(key, value);
+        _boolArray[key].push(value);
+        emit PushBoolArray(key, value);
     }
 
-    function deleteBooleanArrayStorage(bytes32 key)
+    function deleteBoolArray(bytes32 key)
         public 
         onlyOwner {
-        delete booleanArrayStorage[key];
-        emit DeleteBooleanArrayStorage(key);
+        delete _boolArray[key];
+        emit DeleteBoolArray(key);
     }
 
-    function getBooleanArrayStorage(bytes32 key)
+    function getBoolArray(bytes32 key)
         public view
         returns (bool[] memory) {
-        return booleanArrayStorage[key];
+        return _boolArray[key];
     }
 
-    function indexBooleanArrayStorage(bytes32 key, uint index)
+    function indexBoolArray(bytes32 key, uint index)
         public view
         returns (bool) {
-        return booleanArrayStorage[key][index];
+        return _boolArray[key][index];
     }
 
-    function lengthBooleanArrayStorage(bytes32 key)
+    function lengthBoolArray(bytes32 key)
         public view
         returns (uint) {
-        return booleanArrayStorage[key].length;
+        return _boolArray[key].length;
     }
 
-    function setBytes32ArrayStorage(bytes32 key, bytes32[] memory value)
+    function setBytes32Array(bytes32 key, bytes32[] memory value)
         public 
         onlyOwner {
-        bytes32ArrayStorage[key] = value;
-        emit SetBytes32ArrayStorage(key, value);
+        _bytes32Array[key] = value;
+        emit SetBytes32Array(key, value);
     }
 
-    function pushBytes32ArrayStorage(bytes32 key, bytes32 value)
+    function pushBytes32Array(bytes32 key, bytes32 value)
         public 
         onlyOwner {
-        bytes32ArrayStorage[key].push(value);
-        emit PushBytes32ArrayStorage(key, value);
+        _bytes32Array[key].push(value);
+        emit PushBytes32Array(key, value);
     }
 
-    function deleteBytes32ArrayStorage(bytes32 key)
+    function deleteBytes32Array(bytes32 key)
         public 
         onlyOwner {
-        delete bytes32ArrayStorage[key];
-        emit DeleteBytes32ArrayStorage(key);
+        delete _bytes32Array[key];
+        emit DeleteBytes32Array(key);
     }
 
-    function getBytes32ArrayStorage(bytes32 key)
+    function getBytes32Array(bytes32 key)
         public view
         returns (bytes32[] memory) {
-        return bytes32ArrayStorage[key];
+        return _bytes32Array[key];
     }
 
-    function indexBytes32ArrayStorage(bytes32 key, uint index)
+    function indexBytes32Array(bytes32 key, uint index)
         public view
         returns (bytes32) {
-        return bytes32ArrayStorage[key][index];
+        return _bytes32Array[key][index];
     }
 
-    function lengthBytes32ArrayStorage(bytes32 key)
+    function lengthBytes32Array(bytes32 key)
         public view
         returns (uint) {
-        return bytes32ArrayStorage[key].length;
+        return _bytes32Array[key].length;
     }
 
-    function addAddressSetStorage(bytes32 key, address value)
+    function addAddressSet(bytes32 key, address value)
         public 
         onlyOwner {
-        addressSetStorage[key].add(value);
-        emit AddAddressSetStorage(key, value);
+        _addressSet[key].add(value);
+        emit AddAddressSet(key, value);
     }
 
-    function removeAddressSetStorage(bytes32 key, address value)
+    function removeAddressSet(bytes32 key, address value)
         public 
         onlyOwner {
-        addressSetStorage[key].remove(value);
-        emit RemoveAddressSetStorage(key, value);
+        _addressSet[key].remove(value);
+        emit RemoveAddressSet(key, value);
     }
 
-    function containsAddressSetStorage(bytes32 key, address value)
+    function containsAddressSet(bytes32 key, address value)
         public view
         returns (bool) {
-        return addressSetStorage[key].contains(value);
+        return _addressSet[key].contains(value);
     }
 
-    function indexAddressSetStorage(bytes32 key, uint index)
+    function indexAddressSet(bytes32 key, uint index)
         public view
         returns (address) {
-        return addressSetStorage[key].at(index);
+        return _addressSet[key].at(index);
     }
 
-    function valuesAddressSetStorage(bytes32 key)
+    function valuesAddressSet(bytes32 key)
         public view
         returns (address[] memory) {
-        return addressSetStorage[key].values();
+        return _addressSet[key].values();
     }
 
-    function lengthAddressSetStorage(bytes32 key)
+    function lengthAddressSet(bytes32 key)
         public view
         returns (uint) {
-        return addressSetStorage[key].length();
+        return _addressSet[key].length();
     }
 
-    function addUintSetStorage(bytes32 key, uint value)
+    function addUintSet(bytes32 key, uint value)
         public 
         onlyOwner {
-        uintSetStorage[key].add(value);
-        emit AddUintSetStorage(key, value);
+        _uintSet[key].add(value);
+        emit AddUintSet(key, value);
     }
 
-    function removeUintSetStorage(bytes32 key, uint value)
+    function removeUintSet(bytes32 key, uint value)
         public 
         onlyOwner {
-        uintSetStorage[key].remove(value);
-        emit RemoveUintSetStorage(key, value);
+        _uintSet[key].remove(value);
+        emit RemoveUintSet(key, value);
     }
 
-    function containsUintSetStorage(bytes32 key, uint value)
+    function containsUintSet(bytes32 key, uint value)
         public view
         returns (bool) {
-        return uintSetStorage[key].contains(value);
+        return _uintSet[key].contains(value);
     }
 
-    function indexUintSetStorage(bytes32 key, uint index)
+    function indexUintSet(bytes32 key, uint index)
         public view
         returns (uint) {
-        return uintSetStorage[key].at(index);
+        return _uintSet[key].at(index);
     }
 
-    function valuesUintSetStorage(bytes32 key)
+    function valuesUintSet(bytes32 key)
         public view
         returns (uint[] memory) {
-        return uintSetStorage[key].values();
+        return _uintSet[key].values();
     }
 
-    function lengthUintSetStorage(bytes32 key)
+    function lengthUintSet(bytes32 key)
         public view
         returns (uint) {
-        return uintSetStorage[key].length();
+        return _uintSet[key].length();
     }
 
-    function addBytes32SetStorage(bytes32 key, bytes32 value)
+    function addBytes32Set(bytes32 key, bytes32 value)
         public 
         onlyOwner {
-        bytes32SetStorage[key].add(value);
-        emit AddBytes32SetStorage(key, value);
+        _bytes32Set[key].add(value);
+        emit AddBytes32Set(key, value);
     }
 
-    function removeBytes32SetStorage(bytes32 key, bytes32 value)
+    function removeBytes32Set(bytes32 key, bytes32 value)
         public 
         onlyOwner {
-        bytes32SetStorage[key].remove(value);
-        emit RemoveBytes32SetStorage(key, value);
+        _bytes32Set[key].remove(value);
+        emit RemoveBytes32Set(key, value);
     }
 
-    function containsBytes32SetStorage(bytes32 key, bytes32 value)
+    function containsBytes32Set(bytes32 key, bytes32 value)
         public view
         returns (bool) {
-        return bytes32SetStorage[key].contains(value);
+        return _bytes32Set[key].contains(value);
     }
 
-    function indexBytes32SetStorage(bytes32 key, uint index)
+    function indexBytes32Set(bytes32 key, uint index)
         public view
         returns (bytes32) {
-        return bytes32SetStorage[key].at(index);
+        return _bytes32Set[key].at(index);
     }
 
-    function valuesBytes32SetStorage(bytes32 key)
+    function valuesBytes32Set(bytes32 key)
         public view
         returns (bytes32[] memory) {
-        return bytes32SetStorage[key].values();
+        return _bytes32Set[key].values();
     }
 
-    function lengthBytes32SetStorage(bytes32 key)
+    function lengthBytes32Set(bytes32 key)
         public view
         returns (uint) {
-        return bytes32SetStorage[key].length();
+        return _bytes32Set[key].length();
     }
 }
