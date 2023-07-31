@@ -3,7 +3,29 @@ pragma solidity 0.8.19;
 import "contracts/polygon/deps/openzeppelin/utils/structs/EnumerableSet.sol";
 import "contracts/polygon/deps/openzeppelin/access/Ownable.sol";
 
-interface ____IStorage {
+/**
+
+    The provided Solidity contract is named "Storage" and is intended to serve 
+    as a data storage and management smart contract. It includes a series of functions 
+    to store and retrieve various types of data, such as strings, bytes, integers, 
+    addresses, booleans, and bytes32, as well as arrays of these types. 
+    The contract implements an interface called "IStorage," which defines the functions 
+    that can be interacted with externally.
+
+    The contract allows setting and getting data for each data type using specific keys (bytes32 values). 
+    Additionally, it supports various operations on arrays like pushing, deleting, 
+    and fetching elements by index. 
+    
+    The contract also incorporates the OpenZeppelin library's EnumerableSet to manage 
+    sets of addresses, uints, and bytes32 values. It provides functions to add, remove, 
+    and check the existence of elements within these sets.
+
+    Whilt this complicated our syntax it allows us to keep storage within one single contract
+    making our contracts even more transparent
+    
+ */
+
+interface IStorage {
     function setLogic(address newLogic) external;
     function getLogic() external view returns (address);
     function setString(bytes32 key, string memory value) external;
@@ -82,7 +104,7 @@ interface ____IStorage {
     function lengthBytes32Set(bytes32 key) external view returns (uint);
 }
 
-contract ____Storage is ____IStorage, Ownable {
+contract Storage is IStorage, Ownable {
     using EnumerableSet for EnumerableSet.AddressSet;
     using EnumerableSet for EnumerableSet.UintSet;
     using EnumerableSet for EnumerableSet.Bytes32Set;
