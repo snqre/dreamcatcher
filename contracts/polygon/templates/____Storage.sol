@@ -82,7 +82,7 @@ interface ____IStorage {
     function lengthBytes32SetStorage(bytes32 key) external view returns (uint);
 }
 
-contract ____Storage is Ownable {
+contract ____Storage is ____IStorage, Ownable {
     using EnumerableSet for EnumerableSet.AddressSet;
     using EnumerableSet for EnumerableSet.UintSet;
     using EnumerableSet for EnumerableSet.Bytes32Set;

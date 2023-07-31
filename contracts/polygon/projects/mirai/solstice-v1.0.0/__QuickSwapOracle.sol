@@ -12,4 +12,6 @@ library __Oracle {
         require(pair != address(0x0), "QuickSwapOracle: unable to find pair");
         return IUniswapV2Pair(pair);
     }
+
+    
 }

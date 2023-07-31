@@ -6,5 +6,6 @@ import "contracts/polygon/templates/mirai/soltice-v0.2.5/UniswapV2Twap.sol";
 import "contracts/polygon/templates/mirai/soltice-v0.2.5/__Oracle.sol";
 
 contract Oracle {
+    IUniswapV2Factory public factory;
     
 }

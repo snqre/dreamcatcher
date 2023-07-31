@@ -9,15 +9,18 @@ interface IToken {
 }
 
 contract Token is ERC20, Ownable {
-    constructor(string memory name, string memory symbol) 
+    uint maxSupply;
+
+    constructor(string memory name, string memory symbol, uint maxSupply_) 
         ERC20(name, symbol) 
         Ownable(msg.sender) {
-        
+        maxSupply = maxSupply_;
     }
 
     function mint(address account, uint amount)
         public 
         onlyOwner {
+        require(amount + totalSupply() <= maxSupply, "Token: max supply reached");
         super._mint(account, amount);
     }
 
