@@ -99,6 +99,15 @@ library __Role {
         }
     }
 
+    function getKeys(address storage__, string memory role)
+        public view
+        returns (bytes32[] memory) {
+        // returns the keys a role has been assigned
+        IStorage storage_ = IStorage(storage__);
+        bytes32 roleKeys = __Encoder.encodeWithRole("keys", role);
+        return storage_.valuesBytes32Set(roleKeys);
+    }
+
     function getMembers(address storage__, string memory role)
         public view 
         returns (address[] memory) {
