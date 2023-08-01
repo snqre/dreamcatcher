@@ -59,8 +59,8 @@ contract Hub {
         _requireNotZeroAddress(to);
         _requireNotZeroAddress(of_);
         _requireValidType(type_);
-        _requireTimestampNotBeforeGivenTimestamp(startTimestamp, block.timestamp);
-        _requireTimestampNotBeforeGivenTimestamp(endTimestamp, startTimestamp);
+        require(startTimestamp >= block.timestamp || startTimestamp == 0, "Hub: invalid timestamp");
+        require(endTimestamp >= startTimestamp, "Hub: invalid timestamp");
         bool success;
         // here we encode the args
         bytes memory encodedKey = abi.encode(of_, signature, type_, startTimestamp, endTimestamp, balance);
