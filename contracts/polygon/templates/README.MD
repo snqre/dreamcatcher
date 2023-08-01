@@ -20,6 +20,8 @@ Interface Improvements: The "IStorage" interface has been updated to match the n
 
 These enhancements improve the security, efficiency, and functionality of the "Storage" contract, making it a more robust and versatile data storage solution for smart contract applications.
 
+*** please not that the contract can have multiple logic contracts that use it, as well as, multiple admins that can manage it but cannot store data directly
+
 
 
 

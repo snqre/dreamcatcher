@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity 0.8.19;
 import "contracts/polygon/deps/openzeppelin/utils/structs/EnumerableSet.sol";
-import "contracts/polygon/deps/openzeppelin/access/Ownable.sol";
 
 /**
 
@@ -22,12 +21,16 @@ import "contracts/polygon/deps/openzeppelin/access/Ownable.sol";
 
     Whilt this complicated our syntax it allows us to keep storage within one single contract
     making our contracts even more transparent
-    
+
  */
 
 interface IStorage {
-    function setLogic(address newLogic) external;
-    function getLogic() external view returns (address);
+    function addAdmin(address admin) external;
+    function removeAdmin(address admin) external;
+    function getAdmins() external view returns (address[] memory);
+    function addImplementation(address implementation) external;
+    function removeImplementation(address implementation) external;
+    function getImplementations() external view returns (address[] memory);
     function setString(bytes32 key, string memory value) external;
     function getString(bytes32 key) external view returns (string memory);
     function setBytes(bytes32 key, bytes memory value) external;
@@ -104,12 +107,13 @@ interface IStorage {
     function lengthBytes32Set(bytes32 key) external view returns (uint);
 }
 
-contract Storage is IStorage, Ownable {
+contract Storage is IStorage {
     using EnumerableSet for EnumerableSet.AddressSet;
     using EnumerableSet for EnumerableSet.UintSet;
     using EnumerableSet for EnumerableSet.Bytes32Set;
 
-    address private logic;
+    EnumerableSet.AddressSet private _admins;
+    EnumerableSet.AddressSet private _implementations;
 
     mapping(bytes32 => string) private _string;
     mapping(bytes32 => bytes) private _bytes;
@@ -131,7 +135,10 @@ contract Storage is IStorage, Ownable {
     mapping(bytes32 => EnumerableSet.UintSet) private _uintSet;
     mapping(bytes32 => EnumerableSet.Bytes32Set) private _bytes32Set;
 
-    event SetLogic(address indexed newLogic);
+    event AddAdmin(address admin);
+    event RemoveAdmin(address admin);
+    event AddImplementation(address indexed implementation);
+    event RemoveImplementation(address indexed implementation);
     event SetString(bytes32 indexed key, string indexed value);
     event SetBytes(bytes32 indexed key, bytes indexed value);
     event SetUint(bytes32 indexed key, uint indexed value);
@@ -167,21 +174,60 @@ contract Storage is IStorage, Ownable {
     event AddBytes32Set(bytes32 indexed key, bytes32 indexed value);
     event RemoveBytes32Set(bytes32 indexed key, bytes32 indexed value);
 
-    constructor()
-        Ownable(msg.sender) {}
-
-    function setLogic(address newLogic)
-        public 
-        onlyOwner {
-        logic = newLogic;
-        _transferOwnership(newLogic);
-        emit SetLogic(newLogic);
+    // only implementations are owners and can actually set and modify data
+    modifier onlyOwner() {
+        require(_implementations.contains(msg.sender), "Storage: caller is not an assigned implementation");
+        _;
     }
 
-    function getLogic()
+    // admins can add and remove implementations
+    modifier onlyAdmin() {
+        require(_admins.contains(msg.sender), "Storage: caller is not an admin");
+        _;
+    }
+
+    constructor() { // adds msg.sender as admin
+        _admins.add(msg.sender);
+    }
+
+    function addAdmin(address admin)
+        public
+        onlyAdmin {
+        _admins.add(admin);
+        emit AddAdmin(admin);
+    }
+
+    function removeAdmin(address admin)
+        public
+        onlyAdmin {
+        _admins.remove(admin);
+        emit RemoveAdmin(admin);
+    }
+
+    function getAdmins()
         public view
-        returns (address) {
-        return logic;
+        returns (address[] memory) {
+        return _admins.values();
+    }
+
+    function addImplementation(address implementation)
+        public
+        onlyAdmin {
+        _implementations.add(implementation);
+        emit AddImplementation(implementation);
+    }
+
+    function removeImplementation(address implementation)
+        public
+        onlyAdmin {
+        _implementations.remove(implementation);
+        emit RemoveImplementation(implementation);
+    }
+
+    function getImplementations()
+        public view
+        returns (address[] memory) {
+        return _implementations.values();
     }
 
     function setString(bytes32 key, string memory value)
