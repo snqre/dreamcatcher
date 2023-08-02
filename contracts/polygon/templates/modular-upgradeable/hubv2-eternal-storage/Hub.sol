@@ -71,7 +71,9 @@ contract Hub {
             
             // decode key
             (address of__, string memory signature_, , , ,) = abi.decode(encodedKey_, (address, string, uint, uint, uint, uint));
-            require(of__ != of_ && keccak256(bytes(signature_)) != keccak256(bytes(signature)), "Hub: a key with the same contract and signature was found");
+            bool sameContract = of__ != of_;
+            bool sameSignature = keccak256(abi.encodePacked(signature_)) == keccak256(abi.encodePacked(signature));
+            require(!sameContract && !sameSignature, "Hub: a key with the same contract and signature was found");
         }
 
         storage_.pushBytesArray(accountKeys, encodedKey);
