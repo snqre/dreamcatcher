@@ -20,12 +20,13 @@ contract Hub {
     function grantKey(address to, address of_, string memory signature, uint type_, uint startTimestamp, uint endTimestamp, uint balance)
         external {
         bool success = _grantKey(to, of_, signature, type_, startTimestamp, endTimestamp, balance);
-        require(success, "Hub: failed to grant key");
+        require(success, "Hub: unable to grant key");
     }
 
     function revokeKey(address from, address of_, string memory signature)
         external {
-        _revokeKey(from, of_, signature);
+        bool success = _revokeKey(from, of_, signature);
+        require(success, "Hub: unable to revoke key");
     }
 
     function _grantKey(address account, address of_, string memory signature, uint type_, uint startTimestamp, uint endTimestamp, uint balance)
@@ -71,9 +72,11 @@ contract Hub {
             
             // decode key
             (address of__, string memory signature_, , , ,) = abi.decode(encodedKey_, (address, string, uint, uint, uint, uint));
-            bool sameContract = of__ != of_;
+            bool sameContract = of__ == of_;
             bool sameSignature = keccak256(abi.encodePacked(signature_)) == keccak256(abi.encodePacked(signature));
-            require(!sameContract && !sameSignature, "Hub: a key with the same contract and signature was found");
+            bool isAMatch = sameContract == true && sameSignature == true;
+
+            require(!isAMatch, "Hub: a key with the same contract and signature was found");
         }
 
         storage_.pushBytesArray(accountKeys, encodedKey);
@@ -83,55 +86,35 @@ contract Hub {
     }
 
 
-    function _revokeKey(address from, address of_, string memory signature)
-        internal {
-        /**
+    function _revokeKey(address account, address of_, string memory signature)
+        internal 
+        returns (bool) {
         
-            here we only look through the of_ and signatures
-            if there is a match we remove every copy of it from the account keys array
-            so revoke key removes every instance of the key
-            for more precice manipulation revokeSpecificKey
-        
-         */
-        _requireNotZeroAddress(from);
-        _requireNotZeroAddress(of_);
-        // we import the array with the account's keys
-        bytes32 accountKeys = __Encoder.encodeWithAccount("keys", from);
-        bytes[] memory bytesArray = storage_.getBytesArray(accountKeys);
-        uint len = storage_.lengthBytesArray(accountKeys);
-        // then we loop through it
-        for (uint i = 0; i < len; i++) {
-            // for each one we decode them please note these are different from param variables "var__"
-            (address of__, string memory signature_, , , , ) = abi.decode(bytesArray[i], (address, string, uint, uint, uint, uint));
-            // if there is a match
-            if (of__ == of_ && keccak256(bytes(signature_)) == keccak256(bytes(signature))) {
-                /** tried to do this by poping it but cannot pop() within memory bytesArray
-                    // get the value for the last element of the array
-                    bytes memory value = bytesArray[len - 1];
-                    // swap current value with last value of array
-                    bytesArray[len - 1] = bytesArray[i];
-                    bytesArray[i] = value;
-                    // and finally pop
-                    bytesArray.pop();
-                */
+        bool success;
 
-                // set value to empty bytes
-                bytes memory emptyBytes;
-                bytesArray[i] = emptyBytes;
+        require(account != address(0x0), "Hub: account address is zero");
+        require(of_ != address(0x0), "Hub: of_ address is zero");
+        
+        bytes32 accountKeys = __Encoder.encodeWithAccount("keys", account);
+        for (uint i = 0; i < storage_.lengthBytesArray(accountKeys); i++) {
+            bytes memory encodedKey = storage_.indexBytesArray(accountKeys, i);
+
+            // decode key
+            (address of__, string memory signature_, , , ,) = abi.decode(encodedKey, (address, string, uint, uint, uint, uint));
+            bool sameContract = of__ == of_;
+            bool sameSignature = keccak256(abi.encodePacked(signature_)) == keccak256(abi.encodePacked(signature));
+            bool isAMatch = sameContract == true && sameSignature == true;
+
+            if (isAMatch) {
+
+                // we update the array with a new array
+                bytes[] memory newBytesArray = storage_.getBytesArray(accountKeys);
+                storage_.setBytesArray(accountKeys, newBytesArray);
+                break;
             }
         }
-        // update
-        storage_.setBytesArray(accountKeys, bytesArray);
-    }
 
-
-    function _requireNotZeroAddress(address account)
-        internal pure {
-        require(account != address(0x0), "Hub: invalid address");
-    }
-
-    function _requireValidType(uint type_)
-        internal pure {
-        require(type_ >= 0 && type_ <= 2, "Hub: invalid type");
+        success = true;
+        return success;
     }
 }
