@@ -71,12 +71,18 @@ contract Hub {
             bytes memory encodedKey_ = storage_.indexBytesArray(accountKeys, i);
             
             // decode key
-            (address of__, string memory signature_, , , ,) = abi.decode(encodedKey_, (address, string, uint, uint, uint, uint));
-            bool sameContract = of__ == of_;
-            bool sameSignature = keccak256(abi.encodePacked(signature_)) == keccak256(abi.encodePacked(signature));
-            bool isAMatch = sameContract == true && sameSignature == true;
+            bytes memory emptyBytes;
+            if (keccak256(encodedKey_) != keccak256(emptyBytes)) {
+                (address of__, string memory signature_, , , ,) = abi.decode(encodedKey_, (address, string, uint, uint, uint, uint));
+                bool sameContract = of__ == of_;
+                bool sameSignature = keccak256(abi.encodePacked(signature_)) == keccak256(abi.encodePacked(signature));
+                bool isAMatch = sameContract == true && sameSignature == true;
 
-            require(!isAMatch, "Hub: a key with the same contract and signature was found");
+                require(!isAMatch, "Hub: a key with the same contract and signature was found");
+            }
+            else {
+                // in the case that it is empty bytes
+            }
         }
 
         storage_.pushBytesArray(accountKeys, encodedKey);
@@ -100,17 +106,23 @@ contract Hub {
             bytes memory encodedKey = storage_.indexBytesArray(accountKeys, i);
 
             // decode key
-            (address of__, string memory signature_, , , ,) = abi.decode(encodedKey, (address, string, uint, uint, uint, uint));
-            bool sameContract = of__ == of_;
-            bool sameSignature = keccak256(abi.encodePacked(signature_)) == keccak256(abi.encodePacked(signature));
-            bool isAMatch = sameContract == true && sameSignature == true;
+            bytes memory emptyBytes;
+            if (keccak256(encodedKey) != keccak256(emptyBytes)) {
+                (address of__, string memory signature_, , , ,) = abi.decode(encodedKey, (address, string, uint, uint, uint, uint));
+                bool sameContract = of__ == of_;
+                bool sameSignature = keccak256(abi.encodePacked(signature_)) == keccak256(abi.encodePacked(signature));
+                bool isAMatch = sameContract == true && sameSignature == true;
 
-            if (isAMatch) {
+                if (isAMatch) {
 
-                // we update the index of the array with value but we dont just set it to an emptyByte we sent null values like a struct so we can decode it later
-                bytes memory emptyBytes;
-                storage_.setIndexBytesArray(accountKeys, i, emptyBytes);
-                break;
+                    // we update the index of the array with value but we dont just set it to an emptyByte we sent null values like a struct so we can decode it later
+                    
+                    storage_.setIndexBytesArray(accountKeys, i, emptyBytes);
+                    break;
+                }
+            }
+            else {
+                // in the case that it is empty bytes
             }
         }
 
