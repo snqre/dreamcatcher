@@ -36,6 +36,20 @@ contract Hub {
         return storage_.getBytesArray(roleKeys);
     }
 
+    function getRoleMembers(string memory role)
+        external view
+        returns (address[] memory) {
+        bytes32 roleMembers = __Encoder.encodeWithRole("members", role);
+        return storage_.valuesAddressSet(roleMembers);
+    }
+
+    function getRoleSize(string memory role)
+        external view
+        returns (uint) {
+        bytes32 roleMembers = __Encoder.encodeWithRole("members", role);
+        return storage_.lengthAddressSet(roleMembers);
+    }
+
     function grantKey(address account, address of_, string memory signature, uint type_, uint startTimestamp, uint endTimestamp, uint balance)
         external {
         bool success = _grantKey(account, of_, signature, type_, startTimestamp, endTimestamp, balance);
@@ -70,6 +84,24 @@ contract Hub {
         external {
         bool success = _revokeKeyFromRole(role, of_, signature);
         require(success, "Hub: unable to revoke key from role");
+    }
+
+    function resetRoleKeys(string memory role)
+        external {
+        bool success = _resetRoleKeys(role);
+        require(success, "Hub: unable to reset role keys");
+    }
+
+    function grantRole(address account, string memory role)
+        external {
+        bool success = _grantRole(account, role);
+        require(success, "Hub: unable to grant role");
+    }
+
+    function revokeRole(address account, string memory role)
+        external {
+        bool success = _revokeRole(account, role);
+        require(success, "Hub: unable to revoke role");
     }
 
     function _encodeKey(address of_, string memory signature, uint type_, uint startTimestamp, uint endTimestamp, uint balance)
@@ -382,6 +414,65 @@ contract Hub {
                 // in the case that it is empty bytes
             }
         }
+
+        success = true;
+        return success;
+    }
+
+    function _resetRoleKeys(string memory role)
+        internal
+        returns (bool) {
+        
+        bool success;
+
+        bytes32 roleKeys = __Encoder.encodeWithRole("keys", role);
+        storage_.deleteBytesArray(roleKeys);
+
+        success = true;
+        return success;
+    }
+
+    function _grantRole(address account, string memory role)
+        internal
+        returns (bool) {
+        
+        // refresh account before assiging role
+        _resetKeys(account);
+        bool success;
+
+        bytes32 roleKeys = __Encoder.encodeWithRole("keys", role);
+        bytes[] memory bytesArray = storage_.getBytesArray(roleKeys);
+        for (uint i = 0; i < bytesArray.length; i++) {
+            
+            bytes memory encodedKey = bytesArray[i];
+            (address of_, string memory signature, uint type_, uint startTimestamp, uint endTimestamp, uint balance) = _decodeKey(encodedKey);
+            _grantKey(account, of_, signature, type_, startTimestamp, endTimestamp, balance);
+        }
+
+        bytes32 roleMembers = __Encoder.encodeWithRole("members", role);
+        storage_.addAddressSet(roleMembers, account);
+
+        success = true;
+        return success;
+    }
+
+    function _revokeRole(address account, string memory role)
+        internal
+        returns (bool) {
+        
+        bool success;
+
+        bytes32 roleKeys = __Encoder.encodeWithRole("keys", role);
+        bytes[] memory bytesArray = storage_.getBytesArray(roleKeys);
+        for (uint i = 0; i < bytesArray.length; i++) {
+
+            bytes memory encodedKey = bytesArray[i];
+            (address of_, string memory signature, , , ,) = _decodeKey(encodedKey);
+            _revokeKey(account, of_, signature);
+        }
+
+        bytes32 roleMembers = __Encoder.encodeWithRole("members", role);
+        storage_.removeAddressSet(roleMembers, account);
 
         success = true;
         return success;
