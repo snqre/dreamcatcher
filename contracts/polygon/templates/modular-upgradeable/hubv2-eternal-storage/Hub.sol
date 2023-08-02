@@ -107,9 +107,9 @@ contract Hub {
 
             if (isAMatch) {
 
-                // we update the array with a new array
-                bytes[] memory newBytesArray = storage_.getBytesArray(accountKeys);
-                storage_.setBytesArray(accountKeys, newBytesArray);
+                // we update the index of the array with value but we dont just set it to an emptyByte we sent null values like a struct so we can decode it later
+                bytes memory emptyBytes;
+                storage_.setIndexBytesArray(accountKeys, i, emptyBytes);
                 break;
             }
         }

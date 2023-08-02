@@ -202,6 +202,7 @@ contract Storage is IStorage {
     event SetIndexIntArray(bytes32 indexed key, uint indexed index, int indexed value);
     event SetIndexAddressArray(bytes32 indexed key, uint indexed index, address indexed value);
     event SetIndexBoolArray(bytes32 indexed key, uint indexed index, bool indexed value);
+    event SetIndexBytes32Array(bytes32 indexed key, uint indexed index, bytes32 indexed value);
 
     // only implementations are owners and can actually set and modify data
     modifier onlyOwner() {
@@ -637,7 +638,7 @@ contract Storage is IStorage {
         public
         onlyOwner {
         _bytes32Array[key][index] = value;
-        emit SetIndexBoolArray(key, index, value);
+        emit SetIndexBytes32Array(key, index, value);
     }
 
     function pushBytes32Array(bytes32 key, bytes32 value)
