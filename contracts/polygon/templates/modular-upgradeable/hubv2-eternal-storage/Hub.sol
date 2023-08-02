@@ -197,7 +197,6 @@ contract Hub {
         return success;
     }
 
-
     function _revokeKey(address account, address of_, string memory signature)
         internal 
         returns (bool) {
