@@ -37,57 +37,56 @@ contract Hub {
 
     function grantKey(address to, address of_, string memory signature, uint type_, uint startTimestamp, uint endTimestamp, uint balance)
         external {
-        _grantKey(to, of_, signature, type_, startTimestamp, endTimestamp, balance);
+
+        bool success = _grantKey(to, of_, signature, type_, startTimestamp, endTimestamp, balance);
+        require(success, "Hub: failed to grant key");
     }
 
     function revokeKey(address from, address of_, string memory signature)
         external {
+
         _revokeKey(from, of_, signature);
     }
 
-    function _grantKey(address to, address of_, string memory signature, uint type_, uint startTimestamp, uint endTimestamp, uint balance)
-        internal {
-        /**
-
-            we are using bytes array to store the keys
-            this allows us to encode the args within them
-            and decode them when we verify them
-            it is more costly to do so but 
-            we cannot store bytes within EnumerableSets
-
-         */
-        _requireNotZeroAddress(to);
-        _requireNotZeroAddress(of_);
-        _requireValidType(type_);
-        require(startTimestamp >= block.timestamp || startTimestamp == 0, "Hub: invalid timestamp");
-        require(endTimestamp >= startTimestamp, "Hub: invalid timestamp");
-        bool success;
-        // here we encode the args
-        bytes memory encodedKey = abi.encode(of_, signature, type_, startTimestamp, endTimestamp, balance);
-        // this is the same as account.keys[]
-        bytes32 accountKeys = __Encoder.encodeWithAccount("keys", to);
-        // try to find if there are any emptyArray spots first
-        bytes[] memory bytesArray = storage_.getBytesArray(accountKeys);
-        uint len = storage_.lengthBytesArray(accountKeys);
-        for (uint i = 0; i < len; i++) {
-            bytes memory emptyBytes;
-            if (keccak256(bytesArray[i]) == keccak256(emptyBytes)) {
-                bytesArray[i] = encodedKey;
-                success = true;
-            }
-        }
-        // if no empty bytes were found then push new bytes
-        if (!success) {
-            storage_.pushBytesArray(accountKeys, encodedKey);
-        }
-        /**
+    function _grantKey(address account, address of_, string memory signature, uint type_, uint startTimestamp, uint endTimestamp, uint balance)
+        internal 
+        returns (bool) {
         
-            it is possible to have duplicate keys for the same function
-            however when being verified we read the of_ and type_ first
-            we also perform clean up to remove outdated keys to make sure the array does not get too large
+        bool success;
 
-         */
+        if (type_ == 0) { // standard key
+            require(startTimestamp == 0, "Hub: key is standard but startTimestamp is not default");
+            require(endTimestamp == 0, "Hub: key is standard but endTimestamp is not default");
+            require(balance == 0, "Hub: key is standard but balance is not default");
+        }
+
+        else if (type_ == 1) { // timed key
+            require(startTimestamp >= block.timestamp, "Hub: key is timed but startTimestamp is in the past");
+            require(endTimestamp >= startTimestamp, "Hub: key is timed but endTimestamp is before startTimestamp");
+            require(balance == 0, "Hub: key is timed but balance is not default");
+        }
+
+        else if (type_ == 2) { // consumable key
+            require(startTimestamp == 0, "Hub: key is consumable but startTimestamp is not default");
+            require(endTimestamp == 0, "Hub: key is consumable but endTimestamp is not default");
+            require(balance >= 1, "Hub: key is consumable but balance is set to default");
+        }
+
+        else {
+            revert("Hub: invalid type");
+        }
+
+        require(account != address(0x0), "Hub: account address is zero");
+        require(of_ != address(0x0), "Hub: of_ address is zero");
+
+        bytes memory encodedKey = abi.encode(of_, signature, type_, startTimestamp, endTimestamp, balance);
+        bytes32 accountKeys = __Encoder.encodeWithAccount("keys", account);
+        storage_.pushBytesArray(accountKeys, encodedKey);
+
+        success = true;
+        return success;
     }
+
 
     function _revokeKey(address from, address of_, string memory signature)
         internal {
@@ -139,10 +138,5 @@ contract Hub {
     function _requireValidType(uint type_)
         internal pure {
         require(type_ >= 0 && type_ <= 2, "Hub: invalid type");
-    }
-
-    function _requireTimestampNotBeforeGivenTimestamp(uint timestamp, uint givenTimestamp)
-        internal pure {
-        require(timestamp >= givenTimestamp, "Hub: invalid timestamp");
     }
 }
