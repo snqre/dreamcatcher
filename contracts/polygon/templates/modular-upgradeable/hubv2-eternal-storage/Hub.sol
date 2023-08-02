@@ -12,27 +12,9 @@ contract Hub {
 
     function getKeys(address account)
         external view
-        returns (address[] memory, string[] memory, uint[] memory, uint[] memory, uint[] memory, uint[] memory) {
-        // returns keys of an account as arrays of its data
+        returns (bytes[] memory) {
         bytes32 accountKeys = __Encoder.encodeWithAccount("keys", account);
-        bytes[] memory bytesArray = storage_.getBytesArray(accountKeys);
-        uint len = storage_.lengthBytesArray(accountKeys);
-        address[] memory contracts;
-        string[] memory signatures;
-        uint[] memory types;
-        uint[] memory startTimestamps;
-        uint[] memory endTimestamps;
-        uint[] memory balances;
-        for (uint i = 0; i < len; i++) {
-            (address of_, string memory signature, uint type_, uint startTimestamp, uint endTimestamp, uint balance) = abi.decode(bytesArray[i], (address, string, uint, uint, uint, uint));
-            contracts[i] = of_;
-            signatures[i] = signature;
-            types[i] = type_;
-            startTimestamps[i] = startTimestamp;
-            endTimestamps[i] = endTimestamp;
-            balances[i] = balance;
-        }
-        return (contracts, signatures, types, startTimestamps, endTimestamps, balances);
+        return storage_.getBytesArray(accountKeys);
     }
 
     function grantKey(address to, address of_, string memory signature, uint type_, uint startTimestamp, uint endTimestamp, uint balance)
@@ -54,19 +36,22 @@ contract Hub {
         
         bool success;
 
-        if (type_ == 0) { // standard key
+        // standard
+        if (type_ == 0) {
             require(startTimestamp == 0, "Hub: key is standard but startTimestamp is not default");
             require(endTimestamp == 0, "Hub: key is standard but endTimestamp is not default");
             require(balance == 0, "Hub: key is standard but balance is not default");
         }
 
-        else if (type_ == 1) { // timed key
+        // timed
+        else if (type_ == 1) {
             require(startTimestamp >= block.timestamp, "Hub: key is timed but startTimestamp is in the past");
             require(endTimestamp >= startTimestamp, "Hub: key is timed but endTimestamp is before startTimestamp");
             require(balance == 0, "Hub: key is timed but balance is not default");
         }
 
-        else if (type_ == 2) { // consumable key
+        // consumable
+        else if (type_ == 2) {
             require(startTimestamp == 0, "Hub: key is consumable but startTimestamp is not default");
             require(endTimestamp == 0, "Hub: key is consumable but endTimestamp is not default");
             require(balance >= 1, "Hub: key is consumable but balance is set to default");
