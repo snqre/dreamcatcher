@@ -444,6 +444,7 @@ contract Hub {
         bytes[] memory bytesArray = storage_.getBytesArray(roleKeys);
         for (uint i = 0; i < bytesArray.length; i++) {
             
+            // note if the account already has a key even if it is of a different type it will throw and error
             bytes memory encodedKey = bytesArray[i];
             (address of_, string memory signature, uint type_, uint startTimestamp, uint endTimestamp, uint balance) = _decodeKey(encodedKey);
             _grantKey(account, of_, signature, type_, startTimestamp, endTimestamp, balance);
