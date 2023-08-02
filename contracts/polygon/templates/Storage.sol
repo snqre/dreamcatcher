@@ -28,65 +28,88 @@ interface IStorage {
     function addAdmin(address admin) external;
     function removeAdmin(address admin) external;
     function getAdmins() external view returns (address[] memory);
+
     function addImplementation(address implementation) external;
     function removeImplementation(address implementation) external;
     function getImplementations() external view returns (address[] memory);
+
     function setString(bytes32 key, string memory value) external;
     function getString(bytes32 key) external view returns (string memory);
+
     function setBytes(bytes32 key, bytes memory value) external;
     function getBytes(bytes32 key) external view returns (bytes memory);
+
     function setUint(bytes32 key, uint value) external;
     function getUint(bytes32 key) external view returns (uint);
+
     function setInt(bytes32 key, int value) external;
     function getInt(bytes32 key) external view returns (int);
+
     function setAddress(bytes32 key, address value) external;
     function getAddress(bytes32 key) external view returns (address);
+
     function setBool(bytes32 key, bool value) external;
     function getBool(bytes32 key) external view returns (bool);
+
     function setBytes32(bytes32 key, bytes32 value) external;
     function getBytes32(bytes32 key) external view returns (bytes32);
+
     function setStringArray(bytes32 key, string[] memory value) external;
+    function setIndexStringArray(bytes32 key, uint index, string memory value) external;
     function pushStringArray(bytes32 key, string memory value) external;
     function deleteStringArray(bytes32 key) external;
     function getStringArray(bytes32 key) external view returns (string[] memory);
     function indexStringArray(bytes32 key, uint index) external view returns (string memory);
     function lengthStringArray(bytes32 key) external view returns (uint);
+
     function setBytesArray(bytes32 key, bytes[] memory value) external;
+    function setIndexBytesArray(bytes32 key, uint index, bytes memory value) external;
     function pushBytesArray(bytes32 key, bytes memory value) external;
     function deleteBytesArray(bytes32 key) external;
     function getBytesArray(bytes32 key) external view returns (bytes[] memory);
     function indexBytesArray(bytes32 key, uint index) external view returns (bytes memory);
     function lengthBytesArray(bytes32 key) external view returns (uint);
+
     function setUintArray(bytes32 key, uint[] memory value) external;
+    function setIndexUintArray(bytes32 key, uint index, uint value) external;
     function pushUintArray(bytes32 key, uint value) external;
     function deleteUintArray(bytes32 key) external;
     function getUintArray(bytes32 key) external view returns (uint[] memory);
     function indexUintArray(bytes32 key, uint index) external view returns (uint);
     function lengthUintArray(bytes32 key) external view returns (uint);
+
     function setIntArray(bytes32 key, int[] memory value) external;
+    function setIndexIntArray(bytes32 key, uint index, int value) external;
     function pushIntArray(bytes32 key, int value) external;
     function deleteIntArray(bytes32 key) external;
     function getIntArray(bytes32 key) external view returns (int[] memory);
     function indexIntArray(bytes32 key, uint index) external view returns (int);
     function lengthIntArray(bytes32 key) external view returns (uint);
+
     function setAddressArray(bytes32 key, address[] memory value) external;
+    function setIndexAddressArray(bytes32 key, uint index, address value) external;
     function pushAddressArray(bytes32 key, address value) external;
     function deleteAddressArray(bytes32 key) external;
     function getAddressArray(bytes32 key) external view returns (address[] memory);
     function indexAddressArray(bytes32 key, uint index) external view returns (address);
     function lengthAddressArray(bytes32 key) external view returns (uint);
+
     function setBoolArray(bytes32 key, bool[] memory value) external;
+    function setIndexBoolArray(bytes32 key, uint index, bool value) external;
     function pushBoolArray(bytes32 key, bool value) external;
     function deleteBoolArray(bytes32 key) external;
     function getBoolArray(bytes32 key) external view returns (bool[] memory);
     function indexBoolArray(bytes32 key, uint index) external view returns (bool);
     function lengthBoolArray(bytes32 key) external view returns (uint);
+
     function setBytes32Array(bytes32 key, bytes32[] memory value) external;
+    function setIndexBytes32Array(bytes32 key, uint index, bytes32 value) external;
     function pushBytes32Array(bytes32 key, bytes32 value) external;
     function deleteBytes32Array(bytes32 key) external;
     function getBytes32Array(bytes32 key) external view returns (bytes32[] memory);
     function indexBytes32Array(bytes32 key, uint index) external view returns (bytes32);
     function lengthBytes32Array(bytes32 key) external view returns (uint);
+    
     function addAddressSet(bytes32 key, address value) external;
     function removeAddressSet(bytes32 key, address value) external;
     function containsAddressSet(bytes32 key, address value) external view returns (bool);
@@ -173,6 +196,12 @@ contract Storage is IStorage {
     event RemoveUintSet(bytes32 indexed key, uint indexed value);
     event AddBytes32Set(bytes32 indexed key, bytes32 indexed value);
     event RemoveBytes32Set(bytes32 indexed key, bytes32 indexed value);
+    event SetIndexStringArray(bytes32 indexed key, uint indexed index, string indexed value);
+    event SetIndexBytesArray(bytes32 indexed key, uint indexed index, bytes indexed value);
+    event SetIndexUintArray(bytes32 indexed key, uint indexed index, uint indexed value);
+    event SetIndexIntArray(bytes32 indexed key, uint indexed index, int indexed value);
+    event SetIndexAddressArray(bytes32 indexed key, uint indexed index, address indexed value);
+    event SetIndexBoolArray(bytes32 indexed key, uint indexed index, bool indexed value);
 
     // only implementations are owners and can actually set and modify data
     modifier onlyOwner() {
@@ -328,6 +357,13 @@ contract Storage is IStorage {
         emit SetStringArray(key, value);
     }
 
+    function setIndexStringArray(bytes32 key, uint index, string memory value)
+        public
+        onlyOwner {
+        _stringArray[key][index] = value;
+        emit SetIndexStringArray(key, index, value);
+    }
+
     function pushStringArray(bytes32 key, string memory value)
         public 
         onlyOwner {
@@ -365,6 +401,13 @@ contract Storage is IStorage {
         onlyOwner {
         _bytesArray[key] = value;
         emit SetBytesArray(key, value);
+    }
+
+    function setIndexBytesArray(bytes32 key, uint index, bytes memory value)
+        public
+        onlyOwner {
+        _bytesArray[key][index] = value;
+        emit SetIndexBytesArray(key, index, value);
     }
 
     function pushBytesArray(bytes32 key, bytes memory value)
@@ -406,6 +449,13 @@ contract Storage is IStorage {
         emit SetUintArray(key, value);
     }
 
+    function setIndexUintArray(bytes32 key, uint index, uint value)
+        public
+        onlyOwner {
+        _uintArray[key][index] = value;
+        emit SetIndexUintArray(key, index, value);
+    }
+
     function pushUintArray(bytes32 key, uint value)
         public 
         onlyOwner {
@@ -443,6 +493,13 @@ contract Storage is IStorage {
         onlyOwner {
         _intArray[key] = value;
         emit SetIntArray(key, value);
+    }
+
+    function setIndexIntArray(bytes32 key, uint index, int value)
+        public
+        onlyOwner {
+        _intArray[key][index] = value;
+        emit SetIndexIntArray(key, index, value);
     }
 
     function pushIntArray(bytes32 key, int value)
@@ -484,6 +541,13 @@ contract Storage is IStorage {
         emit SetAddressArray(key, value);
     }
 
+    function setIndexAddressArray(bytes32 key, uint index, address value)
+        public
+        onlyOwner {
+        _addressArray[key][index] = value;
+        emit SetIndexAddressArray(key, index, value);
+    }
+
     function pushAddressArray(bytes32 key, address value)
         public 
         onlyOwner {
@@ -523,6 +587,13 @@ contract Storage is IStorage {
         emit SetBoolArray(key, value);
     }
 
+    function setIndexBoolArray(bytes32 key, uint index, bool value)
+        public
+        onlyOwner {
+        _boolArray[key][index] = value;
+        emit SetIndexBoolArray(key, index, value);
+    }
+
     function pushBoolArray(bytes32 key, bool value)
         public 
         onlyOwner {
@@ -560,6 +631,13 @@ contract Storage is IStorage {
         onlyOwner {
         _bytes32Array[key] = value;
         emit SetBytes32Array(key, value);
+    }
+
+    function setIndexBytes32Array(bytes32 key, uint index, bytes32 value)
+        public
+        onlyOwner {
+        _bytes32Array[key][index] = value;
+        emit SetIndexBoolArray(key, index, value);
     }
 
     function pushBytes32Array(bytes32 key, bytes32 value)
