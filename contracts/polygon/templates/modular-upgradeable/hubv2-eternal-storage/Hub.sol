@@ -19,14 +19,12 @@ contract Hub {
 
     function grantKey(address to, address of_, string memory signature, uint type_, uint startTimestamp, uint endTimestamp, uint balance)
         external {
-
         bool success = _grantKey(to, of_, signature, type_, startTimestamp, endTimestamp, balance);
         require(success, "Hub: failed to grant key");
     }
 
     function revokeKey(address from, address of_, string memory signature)
         external {
-
         _revokeKey(from, of_, signature);
     }
 
@@ -66,6 +64,16 @@ contract Hub {
 
         bytes memory encodedKey = abi.encode(of_, signature, type_, startTimestamp, endTimestamp, balance);
         bytes32 accountKeys = __Encoder.encodeWithAccount("keys", account);
+
+        // check if there is any duplicate keys
+        for (uint i = 0; i < storage_.lengthBytesArray(accountKeys); i++) {
+            bytes memory encodedKey_ = storage_.indexBytesArray(accountKeys, i);
+            
+            // decode key
+            (address of__, string memory signature_, , , ,) = abi.decode(encodedKey_, (address, string, uint, uint, uint, uint));
+            require(of__ != of_ && keccak256(bytes(signature_)) != keccak256(bytes(signature)), "Hub: a key with the same contract and signature was found");
+        }
+
         storage_.pushBytesArray(accountKeys, encodedKey);
 
         success = true;
