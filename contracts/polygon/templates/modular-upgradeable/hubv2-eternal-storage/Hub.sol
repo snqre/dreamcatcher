@@ -6,6 +6,7 @@ import "contracts/polygon/templates/__Encoder.sol";
 contract Hub {
     IStorage storage_;
 
+    // trying to use storage before it has been set as implementation
     constructor(address storage__, uint timelockDuration_, uint timeoutDuration_) {
         storage_ = IStorage(storage__);
         
@@ -462,7 +463,6 @@ contract Hub {
         bytes[] memory bytesArray = storage_.getBytesArray(roleKeys);
         for (uint i = 0; i < bytesArray.length; i++) {
             
-            // note if the account already has a key even if it is of a different type it will throw and error
             bytes memory encodedKey = bytesArray[i];
             (address of_, string memory signature, uint type_, uint startTimestamp, uint endTimestamp, uint balance) = _decodeKey(encodedKey);
             _grantKey(account, of_, signature, type_, startTimestamp, endTimestamp, balance);
@@ -497,6 +497,7 @@ contract Hub {
         return success;
     }
 
+    // stack too deep
     function _queue(address[] memory targets, string[] memory signatures, bytes[] memory args, address creator, string memory message)
         internal
         returns (bool, uint) {
