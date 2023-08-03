@@ -497,7 +497,7 @@ contract Hub {
         return success;
     }
 
-    // stack too deep
+    // stack too deep **need to break request into 2 payloads and data
     function _queue(address[] memory targets, string[] memory signatures, bytes[] memory args, address creator, string memory message)
         internal
         returns (bool, uint) {
