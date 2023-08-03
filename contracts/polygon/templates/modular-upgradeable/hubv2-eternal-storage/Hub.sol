@@ -519,4 +519,22 @@ contract Hub {
         success = true;
         return (success, index);
     }
+
+    function _approve()
+        internal 
+        returns (bool) {
+        
+    }
+
+    function _reject()
+        internal
+        returns (bool) {
+        
+    }
+
+    function _execute()
+        internal
+        returns(bool) {
+        
+    }
 }
