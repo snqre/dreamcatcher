@@ -4,7 +4,7 @@ import "contracts/polygon/templates/Storage.sol";
 import "contracts/polygon/templates/__Encoder.sol";
 import "contracts/polygon/deps/openzeppelin/security/ReentrancyGuard.sol";
 
-contract Hub is ReentrancyGuard {
+contract Validator is ReentrancyGuard {
     IStorage storage_;
 
     constructor(address storage__) {
@@ -49,13 +49,6 @@ contract Hub is ReentrancyGuard {
         returns (uint) {
         bytes32 roleMembers = __Encoder.encodeWithRole("members", role);
         return storage_.lengthAddressSet(roleMembers);
-    }
-
-    function getRequests()
-        external view
-        returns (bytes[] memory) {
-        bytes32 requests = __Encoder.encode("requests");
-        return storage_.getBytesArray(requests);
     }
 
     function grantKey(address account, address of_, string memory signature, uint type_, uint startTimestamp, uint endTimestamp, uint balance)
