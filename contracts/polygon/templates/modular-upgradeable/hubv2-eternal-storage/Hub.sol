@@ -2,21 +2,13 @@
 pragma solidity 0.8.19;
 import "contracts/polygon/templates/Storage.sol";
 import "contracts/polygon/templates/__Encoder.sol";
+import "contracts/polygon/deps/openzeppelin/security/ReentrancyGuard.sol";
 
-contract Hub {
+contract Hub is ReentrancyGuard {
     IStorage storage_;
 
-    // trying to use storage before it has been set as implementation
-    constructor(address storage__, uint timelockDuration_, uint timeoutDuration_) {
+    constructor(address storage__) {
         storage_ = IStorage(storage__);
-        
-        bytes32 timelockDuration = __Encoder.encode("timelockDuration");
-        bytes32 timeoutDuration = __Encoder.encode("timeoutDuration");
-        storage_.setUint(timelockDuration, timelockDuration_);
-        storage_.setUint(timeoutDuration, timeoutDuration_);
-        
-        bytes32 approveAllRequests = __Encoder.encode("approveAllRequests");
-        storage_.setBool(approveAllRequests, true);
     }
 
     function encodeKey(address of_, string memory signature, uint type_, uint startTimestamp, uint endTimestamp, uint balance)
@@ -29,18 +21,6 @@ contract Hub {
         external pure
         returns (address, string memory, uint, uint, uint, uint) {
         return _decodeKey(key);
-    }
-
-    function encodeRequest(address[] memory targets, string[] memory signatures, bytes[] memory args, address creator, string memory message, bool isApproved, bool isRejected, bool isExecuted, uint startTimestamp, uint endTimestamp, uint timeoutTimestamp)
-        external pure
-        returns (bytes memory) {
-        return _encodeRequest(targets, signatures, args, creator, message, isApproved, isRejected, isExecuted, startTimestamp, endTimestamp, timeoutTimestamp);
-    }
-
-    function decodeRequest(bytes memory request)
-        external pure
-        returns (address[] memory, string[] memory, bytes[] memory, address, string memory, bool, bool, bool, uint, uint, uint) {
-        return _decodeRequest(request);
     }
 
     function getKeys(address account)
@@ -79,65 +59,74 @@ contract Hub {
     }
 
     function grantKey(address account, address of_, string memory signature, uint type_, uint startTimestamp, uint endTimestamp, uint balance)
-        external {
+        external 
+        nonReentrant {
+        _verify(msg.sender, address(this), "grantKey");
         bool success = _grantKey(account, of_, signature, type_, startTimestamp, endTimestamp, balance);
         _requireSuccess(success);
     }
 
     function revokeKey(address account, address of_, string memory signature)
-        external {
+        external 
+        nonReentrant {
+        _verify(msg.sender, address(this), "revokeKey");
         bool success = _revokeKey(account, of_, signature);
         _requireSuccess(success);
     }
 
     function resetKeys(address account)
-        external {
+        external 
+        nonReentrant {
+        _verify(msg.sender, address(this), "resetKeys");
         bool success = _resetKeys(account);
         _requireSuccess(success);
     }
 
     function verify(address account, address of_, string memory signature)
-        external {
+        external 
+        nonReentrant {
         bool success = _verify(account, of_, signature);
         _requireSuccess(success);
     }
 
     function grantKeyToRole(string memory role, address of_, string memory signature, uint type_, uint startTimestamp, uint endTimestamp, uint balance)
-        external {
+        external 
+        nonReentrant {
+        _verify(msg.sender, address(this), "grantKeyToRole");
         bool success = _grantKeyToRole(role, of_, signature, type_, startTimestamp, endTimestamp, balance);
         _requireSuccess(success);
     }
 
     function revokeKeyFromRole(string memory role, address of_, string memory signature)
-        external {
+        external 
+        nonReentrant {
+        _verify(msg.sender, address(this), "revokeKeyFromRole");
         bool success = _revokeKeyFromRole(role, of_, signature);
         _requireSuccess(success);
     }
 
     function resetRoleKeys(string memory role)
-        external {
+        external 
+        nonReentrant {
+        _verify(msg.sender, address(this), "resetRoleKeys");
         bool success = _resetRoleKeys(role);
         _requireSuccess(success);
     }
 
     function grantRole(address account, string memory role)
-        external {
+        external 
+        nonReentrant {
+        _verify(msg.sender, address(this), "grantRole");
         bool success = _grantRole(account, role);
         _requireSuccess(success);
     }
 
     function revokeRole(address account, string memory role)
-        external {
+        external 
+        nonReentrant {
+        _verify(msg.sender, address(this), "revokeRole");
         bool success = _revokeRole(account, role);
         _requireSuccess(success);
-    }
-
-    function queue(address[] memory targets, string[] memory signatures, bytes[] memory args, address creator, string memory message)
-        external 
-        returns (uint) {
-        (bool success, uint index) = _queue(targets, signatures, args, creator, message);
-        _requireSuccess(success);
-        return index;
     }
 
     function _encodeKey(address of_, string memory signature, uint type_, uint startTimestamp, uint endTimestamp, uint balance)
@@ -151,19 +140,6 @@ contract Hub {
         returns (address, string memory, uint, uint, uint, uint) {
         (address of_, string memory signature, uint type_, uint startTimestamp, uint endTimestamp, uint balance) = abi.decode(key, (address, string, uint, uint, uint, uint));
         return (of_, signature, type_, startTimestamp, endTimestamp, balance);
-    }
-
-    function _encodeRequest(address[] memory targets, string[] memory signatures, bytes[] memory args, address creator, string memory message, bool isApproved, bool isRejected, bool isExecuted, uint startTimestamp, uint endTimestamp, uint timeoutTimestamp)
-        internal pure
-        returns (bytes memory) {
-        return abi.encode(targets, signatures, args, creator, message, isApproved, isRejected, isExecuted, startTimestamp, endTimestamp, timeoutTimestamp);
-    }
-
-    function _decodeRequest(bytes memory request)
-        internal pure
-        returns (address[] memory, string[] memory, bytes[] memory, address, string memory, bool, bool, bool, uint, uint, uint) {
-        (address[] memory targets, string[] memory signatures, bytes[] memory args, address creator, string memory message, bool isApproved, bool isRejected, bool isExecuted, uint startTimestamp, uint endTimestamp, uint timeoutTimestamp) = abi.decode(request, (address[], string[], bytes[], address, string, bool, bool, bool, uint, uint, uint));
-        return (targets, signatures, args, creator, message, isApproved, isRejected, isExecuted, startTimestamp, endTimestamp, timeoutTimestamp);
     }
 
     function _requireSuccess(bool success)
@@ -190,6 +166,27 @@ contract Hub {
         bool sameContract = contract1 == contract2;
         bool sameSignature = _isMatchingString(signature1, signature2);
         return sameContract && sameSignature;
+    }
+
+    function _requireStandardKey(uint startTimestamp, uint endTimestamp, uint balance) 
+        internal pure {
+        require(startTimestamp == 0, "Hub: key is standard but startTimestamp is not default");
+        require(endTimestamp == 0, "Hub: key is standard but endTimestamp is not default");
+        require(balance == 0, "Hub: key is standard but balance is not default");
+    }
+
+    function _requireConsumableKey(uint startTimestamp, uint endTimestamp, uint balance) 
+        internal pure {
+        require(startTimestamp == 0, "Hub: key is consumable but startTimestamp is not default");
+        require(endTimestamp == 0, "Hub: key is consumable but endTimestamp is not default");
+        require(balance >= 1, "Hub: key is consumable but balance is set to default");
+    }
+
+    function _requireTimedKey(uint startTimestamp, uint endTimestamp, uint balance)
+        internal view {
+        require(startTimestamp >= block.timestamp, "Hub: key is timed but startTimestamp is in the past");
+        require(endTimestamp >= startTimestamp, "Hub: key is timed but endTimestamp is before startTimestamp");
+        require(balance == 0, "Hub: key is timed but balance is not default");
     }
 
     function _getKeyIndexByContractAndSignature(bytes32 array, address of_, string memory signature)
@@ -219,26 +216,10 @@ contract Hub {
 
     function _requireValidKeyInput(uint type_, uint startTimestamp, uint endTimestamp, uint balance)
         internal view {
-        if (type_ == 0) {
-            require(startTimestamp == 0, "Hub: key is standard but startTimestamp is not default");
-            require(endTimestamp == 0, "Hub: key is standard but endTimestamp is not default");
-            require(balance == 0, "Hub: key is standard but balance is not default");
-        }
-
-        // timed
-        else if (type_ == 1) {
-            require(startTimestamp >= block.timestamp, "Hub: key is timed but startTimestamp is in the past");
-            require(endTimestamp >= startTimestamp, "Hub: key is timed but endTimestamp is before startTimestamp");
-            require(balance == 0, "Hub: key is timed but balance is not default");
-        }
-
-        // consumable
-        else if (type_ == 2) {
-            require(startTimestamp == 0, "Hub: key is consumable but startTimestamp is not default");
-            require(endTimestamp == 0, "Hub: key is consumable but endTimestamp is not default");
-            require(balance >= 1, "Hub: key is consumable but balance is set to default");
-        }
-
+        if (type_ == 0) { _requireStandardKey(startTimestamp, endTimestamp, balance); }
+        else if (type_ == 1) { _requireTimedKey(startTimestamp, endTimestamp, balance); }
+        else if (type_ == 2) { _requireConsumableKey(startTimestamp, endTimestamp, balance); }
+        
         else {
             revert("Hub: invalid type");
         }
@@ -495,46 +476,5 @@ contract Hub {
 
         success = true;
         return success;
-    }
-
-    // stack too deep **need to break request into 2 payloads and data
-    function _queue(address[] memory targets, string[] memory signatures, bytes[] memory args, address creator, string memory message)
-        internal
-        returns (bool, uint) {
-        
-        bool success;
-
-        bytes32 timelockDuration = __Encoder.encode("timelockDuration");
-        bytes32 timeoutDuration = __Encoder.encode("timeoutDuration");
-        uint timelock = storage_.getUint(timelockDuration);
-        uint timeout = storage_.getUint(timeoutDuration);
-        uint startTimestamp = block.timestamp;
-        uint endTimestamp = startTimestamp + timelock;
-        uint timeoutTimestamp = endTimestamp + timeout;
-        bytes32 requests = __Encoder.encode("requests");
-        bytes memory request = _encodeRequest(targets, signatures, args, creator, message, false, false, false, startTimestamp, endTimestamp, timeoutTimestamp);
-        storage_.pushBytesArray(requests, request);
-        uint index = storage_.lengthBytesArray(requests) - 1;
-        
-        success = true;
-        return (success, index);
-    }
-
-    function _approve()
-        internal 
-        returns (bool) {
-        
-    }
-
-    function _reject()
-        internal
-        returns (bool) {
-        
-    }
-
-    function _execute()
-        internal
-        returns(bool) {
-        
     }
 }
