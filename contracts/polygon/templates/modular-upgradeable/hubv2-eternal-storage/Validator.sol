@@ -224,8 +224,9 @@ contract Validator is ReentrancyGuard {
         (address of_, string memory signature, , , ,) = _decodeKey(encodedKey);
         
         bytes memory emptyBytes;
-        for (uint i = 0; i < storage_.lengthBytesArray(array); i++) {
-            bytes memory encodedKey2 = storage_.indexBytesArray(array, i);
+        bytes[] memory bytesArray = storage_.getBytesArray(array);
+        for (uint i = 0; i < bytesArray.length; i++) {
+            bytes memory encodedKey2 = bytesArray[i];
             
             // decode
             if (!_isMatchingBytes(encodedKey2, emptyBytes)) {
