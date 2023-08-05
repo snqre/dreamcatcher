@@ -188,8 +188,9 @@ contract Validator is ReentrancyGuard {
         uint index;
         bool success;
         bytes memory emptyBytes;
-        for (uint i = 0; i < storage_.lengthBytesArray(array); i++) {
-            bytes memory encodedKey = storage_.indexBytesArray(array, i);
+        bytes[] memory bytesArray = storage_.getBytesArray(array);
+        for (uint i = 0; i < bytesArray.length; i++) {
+            bytes memory encodedKey = bytesArray[i];
 
             // decode
             if (!_isMatchingBytes(encodedKey, emptyBytes)) {
@@ -242,8 +243,9 @@ contract Validator is ReentrancyGuard {
         returns (bool) {
         bool success;
         bytes memory emptyBytes;
-        for (uint i = 0; i < storage_.lengthBytesArray(array); i++) {
-            bytes memory encodedKey2 = storage_.indexBytesArray(array, i);
+        bytes[] memory bytesArray = storage_.getBytesArray(array);
+        for (uint i = 0; i < bytesArray.length; i++) {
+            bytes memory encodedKey2 = bytesArray[i];
 
             // check
             if (_isMatchingBytes(encodedKey2, emptyBytes)) {
