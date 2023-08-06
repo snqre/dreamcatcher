@@ -5,6 +5,15 @@ import "contracts/polygon/templates/__Encoder.sol";
 import "contracts/polygon/deps/openzeppelin/security/ReentrancyGuard.sol";
 
 contract Validator is ReentrancyGuard {
+
+    /**
+    
+        addressSet: role, "members"     members
+        bytesArray: role, "keys"        keys
+        
+
+     */
+
     IStorage storage_;
 
     constructor(address storage__) {
@@ -135,9 +144,21 @@ contract Validator is ReentrancyGuard {
         return (of_, signature, type_, startTimestamp, endTimestamp, balance);
     }
 
+    function _account(address account, string memory string_)
+        internal pure
+        returns (bytes32) {
+        return keccak256(abi.encode(account, string_));
+    }
+
+    function _role(string memory role, string memory string_)
+        internal pure
+        returns (bytes32) {
+        return keccak256(abi.encode(role, string_));
+    }
+
     function _requireSuccess(bool success)
         internal pure {
-        require(success, "Hub: failed execution");
+        require(success, "Validator: failed execution");
     }
 
     function _isMatchingBytes(bytes memory pBytes1, bytes memory pBytes2)
@@ -155,7 +176,6 @@ contract Validator is ReentrancyGuard {
     function _isMatchingKeyContractAndSignature(address contract1, string memory signature1, address contract2, string memory signature2)
         internal pure
         returns (bool) {
-        // **keep an eye on this one
         bool sameContract = contract1 == contract2;
         bool sameSignature = _isMatchingString(signature1, signature2);
         return sameContract && sameSignature;
@@ -163,23 +183,41 @@ contract Validator is ReentrancyGuard {
 
     function _requireStandardKey(uint startTimestamp, uint endTimestamp, uint balance) 
         internal pure {
-        require(startTimestamp == 0, "Hub: key is standard but startTimestamp is not default");
-        require(endTimestamp == 0, "Hub: key is standard but endTimestamp is not default");
-        require(balance == 0, "Hub: key is standard but balance is not default");
+        require(startTimestamp == 0, "Validator: startTimestamp must be zero");
+        require(endTimestamp == 0, "Validator: endTimestamp must be zero");
+        require(balance == 0, "Validator: balance must be zero");
     }
 
     function _requireConsumableKey(uint startTimestamp, uint endTimestamp, uint balance) 
         internal pure {
-        require(startTimestamp == 0, "Hub: key is consumable but startTimestamp is not default");
-        require(endTimestamp == 0, "Hub: key is consumable but endTimestamp is not default");
-        require(balance >= 1, "Hub: key is consumable but balance is set to default");
+        require(startTimestamp == 0, "Validator: startTimestamp must be zero");
+        require(endTimestamp == 0, "Validator: endTimestamp must be zero");
+        require(balance >= 1, "Validator: balance is less than 1");
+    }
+
+    function _verifyConsumableKey(uint balance)
+        internal pure 
+        returns (uint) {
+        require(balance >= 1, "Validator: consumable key is depleted");
+        return balance -= 1;
+    }
+
+    function _requireNotAddressZero(address account)
+        internal pure {
+        require(account != address(0x0), "Validator: address zero");
     }
 
     function _requireTimedKey(uint startTimestamp, uint endTimestamp, uint balance)
         internal view {
-        require(startTimestamp >= block.timestamp, "Hub: key is timed but startTimestamp is in the past");
-        require(endTimestamp >= startTimestamp, "Hub: key is timed but endTimestamp is before startTimestamp");
-        require(balance == 0, "Hub: key is timed but balance is not default");
+        require(block.timestamp <= startTimestamp, "Validator: startTimestamp cannot be in the past");
+        require(endTimestamp >= startTimestamp, "Validator: endTimestamp cannot be before startTimestamp");
+        require(balance == 0, "Validator: balance must be zero");
+    }
+
+    function _verifyTimedKey(uint startTimestamp, uint endTimestamp)
+        internal view {
+        require(block.timestamp >= startTimestamp, "Validator: timed key cannot be used before granted");
+        require(block.timestamp <= endTimestamp, "Validator: timed key is expired");
     }
 
     function _getKeyIndexByContractAndSignature(bytes32 array, address of_, string memory signature)
@@ -326,44 +364,36 @@ contract Validator is ReentrancyGuard {
         
         bool success;
         
-        require(account != address(0x0), "Hub: account address is zero");
+        _requireNotAddressZero(account);
+        _requireNotAddressZero(of_);
 
-        bytes32 accountKeys = __Encoder.encodeWithAccount("keys", account);
-        for (uint i = 0; i < storage_.lengthBytesArray(accountKeys); i++) {
+        // context
+        bytes32 keys = _account(account, "keys");
+        bytes[] memory bytesArray = storage_.getBytesArray(keys);
+        for (uint i = 0; i < bytesArray.length; i++) {
 
-            bytes memory encodedKey = storage_.indexBytesArray(accountKeys, i);
-            (address of__, string memory signature_, uint type_, uint startTimestamp, uint endTimestamp, uint balance) = _decodeKey(encodedKey);
-            bool sameContract = of__ == of_;
-            bool sameSignature = keccak256(abi.encodePacked(signature_)) == keccak256(abi.encodePacked(signature));
-            bool isAMatch = sameContract == true && sameSignature == true;
+            bytes memory key = storage_.indexBytesArray(keys, i);
+            (address of_2, string memory signature2, uint type_, uint startTimestamp, uint endTimestamp, uint balance) = _decodeKey(key);
 
-            if (isAMatch) {
+            if (_isMatchingKeyContractAndSignature(of_, signature, of_2, signature2)) {
 
-                // standard
-                if (type_ == 0) {
-                    // nothing happens here we already know the account has the key they are okay to pass
-                    success = true;
-                }
+                if (type_ == 0) { success = true; }
 
-                // timed
                 if (type_ == 1) {
-                    require(block.timestamp >= startTimestamp, "Hub: timed key cannot be used before granted");
-                    require(block.timestamp <= endTimestamp, "Hub: timed key is expired");
+                    _verifyTimedKey(startTimestamp, endTimestamp);
                     success = true;
                 }
                 
-                // consumable
                 if (type_ == 2) {
-                    require(balance >= 1, "Hub: consumable key is depleted");
+                   uint newBalance =  _verifyConsumableKey(balance);
                     
-                    // we encode a new key to replace the old one as now we have decreased balance by 1
-                    balance -= 1;
-                    bytes memory newEncodedKey = _encodeKey(of__, signature_, type_, startTimestamp, endTimestamp, balance);
-                    storage_.setIndexBytesArray(accountKeys, i, newEncodedKey);
+                    require(balance >= 1, "Validator: balance is zero");
+                
+                    bytes memory key2 = _encodeKey(of_2, signature2, type_, startTimestamp, endTimestamp, newBalance);
+                    storage_.setIndexBytesArray(keys, i, key2);
                     success = true;
                 }
 
-                // if have found what we are looking for so we can leave the loop
                 break;
             }
         }
@@ -374,22 +404,22 @@ contract Validator is ReentrancyGuard {
     function _grantKeyToRole(string memory role, address of_, string memory signature, uint type_, uint startTimestamp, uint endTimestamp, uint balance)
         internal 
         returns (bool) {
-        // similar key as grantKey much room for refactoring
-
+            
         bool success;
         _requireValidKeyInput(type_, startTimestamp, endTimestamp, balance);
 
-        require(of_ != address(0x0), "Hub: of_ address is zero");
+        require(of_ != address(0x0), "Validator: of_ address is zero");
 
-        bytes memory encodedKey = _encodeKey(of_, signature, type_, startTimestamp, endTimestamp, balance);
-        bytes32 roleKeys = __Encoder.encodeWithRole("keys", role);
+        // context
+        bytes memory key = _encodeKey(of_, signature, type_, startTimestamp, endTimestamp, balance);
+        bytes32 keys = _role(role, "keys");
         
-        _requireNoDuplicateKey(roleKeys, encodedKey);
-        success = _tryPushKeyToEmptyBytes(roleKeys, encodedKey);
+        _requireNoDuplicateKey(keys, key);
+        success = _tryPushKeyToEmptyBytes(keys, key);
 
         // no empty bytes were found
         if (!success) {
-            storage_.pushBytesArray(roleKeys, encodedKey);
+            storage_.pushBytesArray(keys, key);
             success = true;
         }
 
@@ -402,14 +432,15 @@ contract Validator is ReentrancyGuard {
         
         bool success;
 
-        require(of_ != address(0x0), "Hub: account address is zero");
+        require(of_ != address(0x0), "Validator: account address is zero");
 
-        bytes32  roleKeys = __Encoder.encodeWithRole("keys", role);
-        (bool gotIndex, uint index) = _getKeyIndexByContractAndSignature(roleKeys, of_, signature);
+        // context
+        bytes32 keys = _role(role, "keys");
+        (bool gotIndex, uint index) = _getKeyIndexByContractAndSignature(keys, of_, signature);
         _requireSuccess(gotIndex);
 
         bytes memory emptyBytes;
-        storage_.setIndexBytesArray(roleKeys, index, emptyBytes);
+        storage_.setIndexBytesArray(keys, index, emptyBytes);
 
         success = true;
         return success;
@@ -421,8 +452,7 @@ contract Validator is ReentrancyGuard {
         
         bool success;
 
-        bytes32 roleKeys = __Encoder.encodeWithRole("keys", role);
-        storage_.deleteBytesArray(roleKeys);
+        storage_.deleteBytesArray(_role(role, "keys"));
 
         success = true;
         return success;
@@ -436,8 +466,7 @@ contract Validator is ReentrancyGuard {
         _resetKeys(account);
         bool success;
 
-        bytes32 roleKeys = __Encoder.encodeWithRole("keys", role);
-        bytes[] memory bytesArray = storage_.getBytesArray(roleKeys);
+        bytes[] memory bytesArray = storage_.getBytesArray(_role(role, "keys"));
         for (uint i = 0; i < bytesArray.length; i++) {
             
             bytes memory encodedKey = bytesArray[i];
@@ -445,8 +474,8 @@ contract Validator is ReentrancyGuard {
             _grantKey(account, of_, signature, type_, startTimestamp, endTimestamp, balance);
         }
 
-        bytes32 roleMembers = __Encoder.encodeWithRole("members", role);
-        storage_.addAddressSet(roleMembers, account);
+        // add address as member of the role
+        storage_.addAddressSet(_role(role, "members"), account);
 
         success = true;
         return success;
@@ -458,8 +487,7 @@ contract Validator is ReentrancyGuard {
         
         bool success;
 
-        bytes32 roleKeys = __Encoder.encodeWithRole("keys", role);
-        bytes[] memory bytesArray = storage_.getBytesArray(roleKeys);
+        bytes[] memory bytesArray = storage_.getBytesArray(_role(role, "keys"));
         for (uint i = 0; i < bytesArray.length; i++) {
 
             bytes memory encodedKey = bytesArray[i];
@@ -467,8 +495,8 @@ contract Validator is ReentrancyGuard {
             _revokeKey(account, of_, signature);
         }
 
-        bytes32 roleMembers = __Encoder.encodeWithRole("members", role);
-        storage_.removeAddressSet(roleMembers, account);
+        // remove address as member of the role
+        storage_.removeAddressSet(_role(role, "members"), account);
 
         success = true;
         return success;
