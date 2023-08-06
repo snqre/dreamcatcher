@@ -10,7 +10,7 @@ contract Validator is ReentrancyGuard {
     
         addressSet: role, "members"     members
         bytesArray: role, "keys"        keys
-        
+        bytesArray: account, "keys"     keys
      */
 
     IStorage storage_;
@@ -34,100 +34,87 @@ contract Validator is ReentrancyGuard {
     function getKeys(address account)
         external view
         returns (bytes[] memory) {
-        bytes32 keys = _account(account, "keys");
-        return storage_.getBytesArray(keys);
+        return storage_.getBytesArray(_account(account, "keys"));
     }
 
     function getRoleKeys(string memory role)
         external view
         returns (bytes[] memory) {
-        bytes32 keys = _role(role, "keys");
-        return storage_.getBytesArray(keys);
+        return storage_.getBytesArray(_role(role, "keys"));
     }
 
     function getRoleMembers(string memory role)
         external view
         returns (address[] memory) {
-        bytes32 members = _role(role, "members");
-        return storage_.valuesAddressSet(members);
+        return storage_.valuesAddressSet(_role(role, "members"));
     }
 
     function getRoleSize(string memory role)
         external view
         returns (uint) {
-        bytes32 roleMembers = __Encoder.encodeWithRole("members", role);
-        return storage_.lengthAddressSet(roleMembers);
+        return storage_.lengthAddressSet(_role(role, "members"));
     }
 
     function grantKey(address account, address of_, string memory signature, uint type_, uint startTimestamp, uint endTimestamp, uint balance)
         external 
         nonReentrant {
         _verify(msg.sender, address(this), "grantKey");
-        bool success = _grantKey(account, of_, signature, type_, startTimestamp, endTimestamp, balance);
-        _requireSuccess(success);
+        _requireSuccess(_grantKey(account, of_, signature, type_, startTimestamp, endTimestamp, balance));
     }
 
     function revokeKey(address account, address of_, string memory signature)
         external 
         nonReentrant {
         _verify(msg.sender, address(this), "revokeKey");
-        bool success = _revokeKey(account, of_, signature);
-        _requireSuccess(success);
+        _requireSuccess(_revokeKey(account, of_, signature));
     }
 
     function resetKeys(address account)
         external 
         nonReentrant {
         _verify(msg.sender, address(this), "resetKeys");
-        bool success = _resetKeys(account);
-        _requireSuccess(success);
+        _requireSuccess(_resetKeys(account));
     }
 
     function verify(address account, address of_, string memory signature)
         external 
         nonReentrant {
-        bool success = _verify(account, of_, signature);
-        _requireSuccess(success);
+        _requireSuccess(_verify(account, of_, signature));
     }
 
     function grantKeyToRole(string memory role, address of_, string memory signature, uint type_, uint startTimestamp, uint endTimestamp, uint balance)
         external 
         nonReentrant {
         _verify(msg.sender, address(this), "grantKeyToRole");
-        bool success = _grantKeyToRole(role, of_, signature, type_, startTimestamp, endTimestamp, balance);
-        _requireSuccess(success);
+        _requireSuccess(_grantKeyToRole(role, of_, signature, type_, startTimestamp, endTimestamp, balance));
     }
 
     function revokeKeyFromRole(string memory role, address of_, string memory signature)
         external 
         nonReentrant {
         _verify(msg.sender, address(this), "revokeKeyFromRole");
-        bool success = _revokeKeyFromRole(role, of_, signature);
-        _requireSuccess(success);
+        _requireSuccess(_revokeKeyFromRole(role, of_, signature));
     }
 
     function resetRoleKeys(string memory role)
         external 
         nonReentrant {
         _verify(msg.sender, address(this), "resetRoleKeys");
-        bool success = _resetRoleKeys(role);
-        _requireSuccess(success);
+        _requireSuccess(_resetRoleKeys(role));
     }
 
     function grantRole(address account, string memory role)
         external 
         nonReentrant {
         _verify(msg.sender, address(this), "grantRole");
-        bool success = _grantRole(account, role);
-        _requireSuccess(success);
+        _requireSuccess(_grantRole(account, role));
     }
 
     function revokeRole(address account, string memory role)
         external 
         nonReentrant {
         _verify(msg.sender, address(this), "revokeRole");
-        bool success = _revokeRole(account, role);
-        _requireSuccess(success);
+        _requireSuccess(_revokeRole(account, role));
     }
 
     function _encodeKey(address of_, string memory signature, uint type_, uint startTimestamp, uint endTimestamp, uint balance)
@@ -197,7 +184,7 @@ contract Validator is ReentrancyGuard {
     function _verifyConsumableKey(uint balance)
         internal pure 
         returns (uint) {
-        require(balance >= 1, "Validator: consumable key is depleted");
+        require(balance >= 1, "Validator: balance is zero");
         return balance -= 1;
     }
 
@@ -215,17 +202,19 @@ contract Validator is ReentrancyGuard {
 
     function _verifyTimedKey(uint startTimestamp, uint endTimestamp)
         internal view {
-        require(block.timestamp >= startTimestamp, "Validator: timed key cannot be used before granted");
-        require(block.timestamp <= endTimestamp, "Validator: timed key is expired");
+        require(block.timestamp >= startTimestamp, "Validator: cannot use key before startTimestamp");
+        require(block.timestamp <= endTimestamp, "Validator: cannot use key after endTimestamp");
     }
 
     function _getKeyIndexByContractAndSignature(bytes32 array, address of_, string memory signature)
         internal view
         returns (bool, uint) {
+
         uint index;
         bool success;
         bytes memory emptyBytes;
         bytes[] memory bytesArray = storage_.getBytesArray(array);
+
         for (uint i = 0; i < bytesArray.length; i++) {
             bytes memory key = bytesArray[i];
 
@@ -250,7 +239,6 @@ contract Validator is ReentrancyGuard {
         if (type_ == 0) { _requireStandardKey(startTimestamp, endTimestamp, balance); }
         else if (type_ == 1) { _requireTimedKey(startTimestamp, endTimestamp, balance); }
         else if (type_ == 2) { _requireConsumableKey(startTimestamp, endTimestamp, balance); }
-        
         else {
             revert("Hub: invalid type");
         }
@@ -278,9 +266,11 @@ contract Validator is ReentrancyGuard {
     function _tryPushKeyToEmptyBytes(bytes32 array, bytes memory key)
         internal 
         returns (bool) {
+
         bool success;
         bytes memory emptyBytes;
         bytes[] memory bytesArray = storage_.getBytesArray(array);
+        
         for (uint i = 0; i < bytesArray.length; i++) {
             bytes memory key2 = bytesArray[i];
 
