@@ -11,7 +11,6 @@ contract Validator is ReentrancyGuard {
         addressSet: role, "members"     members
         bytesArray: role, "keys"        keys
         
-
      */
 
     IStorage storage_;
