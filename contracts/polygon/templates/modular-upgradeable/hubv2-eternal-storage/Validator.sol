@@ -2,20 +2,51 @@
 pragma solidity 0.8.19;
 import "contracts/polygon/templates/Storage.sol";
 import "contracts/polygon/deps/openzeppelin/security/ReentrancyGuard.sol";
+import "contracts/polygon/deps/openzeppelin/security/Pausable.sol";
 
-contract Validator is ReentrancyGuard {
+interface IValidator {
+    function encodeKey(address of_, string memory signature, uint type_, uint startTimestamp, uint endTimestamp, uint balance) external pure returns (bytes memory);
+    function decodeKey(bytes memory key) external pure returns (address, string memory, uint, uint, uint, uint);
+    function getKeys(address account) external view returns (bytes[] memory);
+    function getRoleKeys(string memory role) external view returns (bytes[] memory);
+    function getRoleMembers(string memory role) external view returns (address[] memory);
+    function getRoleSize(string memory role) external view returns (uint);
+    function grantKey(address account, address of_, string memory signature, uint type_, uint startTimestamp, uint endTimestamp, uint balance) external;
+    function revokeKey(address account, address of_, string memory signature) external;
+    function resetKeys(address account) external;
+    function verify(address account, address of_, string memory signature) external;
+    function grantKeyToRole(string memory role, address of_, string memory signature, uint type_, uint startTimestamp, uint endTimestamp, uint balance) external;
+    function revokeKeyFromRole(string memory role, address of_, string memory signature) external;
+    function resetRoleKeys(string memory role) external;
+    function grantRole(address account, string memory role) external;
+    function revokeRole(address account, string memory role) external;
+    function pause() external;
+    function unpause() external;
+}
+
+contract Validator is IValidator, ReentrancyGuard, Pausable {
 
     /**
-    
-        addressSet: role, "members"     members
-        bytesArray: role, "keys"        keys
-        bytesArray: account, "keys"     keys
+        addressSet: role,    "members"   members
+        bytesArray: role,    "keys"      keys
+        bytesArray: account, "keys"      keys
      */
 
     IStorage storage_;
-
+    
     constructor(address storage__) {
         storage_ = IStorage(storage__);
+        _grantKeyToRole("validator", address(this), "grantKey", 0, 0, 0, 0);
+        _grantKeyToRole("validator", address(this), "revokeKey", 0, 0, 0, 0);
+        _grantKeyToRole("validator", address(this), "resetKeys", 0, 0, 0, 0);
+        _grantKeyToRole("validator", address(this), "grantKeyToRole", 0, 0, 0, 0);
+        _grantKeyToRole("validator", address(this), "revokeKeyFromRole", 0, 0, 0, 0);
+        _grantKeyToRole("validator", address(this), "resetRoleKeys", 0, 0, 0, 0);
+        _grantKeyToRole("validator", address(this), "grantRole", 0, 0, 0, 0);
+        _grantKeyToRole("validator", address(this), "revokeRole", 0, 0, 0, 0);
+        _grantKeyToRole("validator", address(this), "pause", 0, 0, 0, 0);
+        _grantKeyToRole("validator", address(this), "unpause", 0, 0, 0, 0);
+        _grantRole(msg.sender, "validator");
     }
 
     function encodeKey(address of_, string memory signature, uint type_, uint startTimestamp, uint endTimestamp, uint balance)
@@ -55,65 +86,88 @@ contract Validator is ReentrancyGuard {
     }
 
     function grantKey(address account, address of_, string memory signature, uint type_, uint startTimestamp, uint endTimestamp, uint balance)
-        external 
-        nonReentrant {
-        _verify(msg.sender, address(this), "grantKey");
+        external
+        nonReentrant 
+        whenNotPaused {
+        _requireSuccess(_verify(msg.sender, address(this), "grantKey"));
         _requireSuccess(_grantKey(account, of_, signature, type_, startTimestamp, endTimestamp, balance));
     }
 
     function revokeKey(address account, address of_, string memory signature)
         external 
-        nonReentrant {
-        _verify(msg.sender, address(this), "revokeKey");
+        nonReentrant 
+        whenNotPaused {
+        _requireSuccess(_verify(msg.sender, address(this), "revokeKey"));
         _requireSuccess(_revokeKey(account, of_, signature));
     }
 
     function resetKeys(address account)
         external 
-        nonReentrant {
-        _verify(msg.sender, address(this), "resetKeys");
+        nonReentrant 
+        whenNotPaused {
+        _requireSuccess(_verify(msg.sender, address(this), "resetKeys"));
         _requireSuccess(_resetKeys(account));
     }
 
     function verify(address account, address of_, string memory signature)
         external 
         nonReentrant {
+        // verify is mainly view and cannot be paused as to fix any issues or upgrade we need to be able to use this core function
         _requireSuccess(_verify(account, of_, signature));
     }
 
     function grantKeyToRole(string memory role, address of_, string memory signature, uint type_, uint startTimestamp, uint endTimestamp, uint balance)
         external 
-        nonReentrant {
-        _verify(msg.sender, address(this), "grantKeyToRole");
+        nonReentrant 
+        whenNotPaused {
+        _requireSuccess(_verify(msg.sender, address(this), "grantKeyToRole"));
         _requireSuccess(_grantKeyToRole(role, of_, signature, type_, startTimestamp, endTimestamp, balance));
     }
 
     function revokeKeyFromRole(string memory role, address of_, string memory signature)
         external 
-        nonReentrant {
-        _verify(msg.sender, address(this), "revokeKeyFromRole");
+        nonReentrant 
+        whenNotPaused {
+        _requireSuccess(_verify(msg.sender, address(this), "revokeKeyFromRole"));
         _requireSuccess(_revokeKeyFromRole(role, of_, signature));
     }
 
     function resetRoleKeys(string memory role)
         external 
-        nonReentrant {
-        _verify(msg.sender, address(this), "resetRoleKeys");
+        nonReentrant 
+        whenNotPaused {
+        _requireSuccess(_verify(msg.sender, address(this), "resetRoleKeys"));
         _requireSuccess(_resetRoleKeys(role));
     }
 
     function grantRole(address account, string memory role)
         external 
-        nonReentrant {
-        _verify(msg.sender, address(this), "grantRole");
+        nonReentrant 
+        whenNotPaused {
+        _requireSuccess(_verify(msg.sender, address(this), "grantRole"));
         _requireSuccess(_grantRole(account, role));
     }
 
     function revokeRole(address account, string memory role)
         external 
-        nonReentrant {
-        _verify(msg.sender, address(this), "revokeRole");
+        nonReentrant 
+        whenNotPaused {
+        _requireSuccess(_verify(msg.sender, address(this), "revokeRole"));
         _requireSuccess(_revokeRole(account, role));
+    }
+
+    function pause()
+        external 
+        nonReentrant {
+        _requireSuccess(_verify(msg.sender, address(this), "pause"));
+        _pause();
+    }
+
+    function unpause()
+        external
+        nonReentrant {
+        _requireSuccess(_verify(msg.sender, address(this), "unpause"));
+        _unpause();
     }
 
     function _encodeKey(address of_, string memory signature, uint type_, uint startTimestamp, uint endTimestamp, uint balance)
@@ -349,6 +403,7 @@ contract Validator is ReentrancyGuard {
         internal 
         returns (bool) {
         
+        // does not revert just returns if true or false use external access verify for revert
         bool success;
         
         _requireNotAddressZero(account);
