@@ -9,6 +9,10 @@ DREAMCATCHER
 
 
 # Log Standards
+> **_1:_* Ensuring accurate logging of all our contracts is of paramount importance for promoting transparency, especially considering the intricate interactions among various contracts within our system. To uphold this principle, we have meticulously devised standardized protocols for recording data when deploying a new module and interfacing with the corresponding eternal storage in Storage.sol.
+
+These well-defined standards serve as a comprehensive guide for other contracts within our ecosystem, elucidating the expected data structure and communication protocols when accessing eternal storages. By adhering to these established norms, our contracts can seamlessly interact with one another, fostering a harmonious and transparent operational environment.
+
 <TAG> <MODULE ITERATION> <CLASS> <ECOSYSTEM> <CHAIN> <STATE> <ADDRESS>        
 *   TAG: A unique tag given to the storage.
 *   MODULE: A descriptive name of what it does ie. KEY or TOKEN.
