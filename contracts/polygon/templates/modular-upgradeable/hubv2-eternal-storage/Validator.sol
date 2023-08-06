@@ -34,22 +34,22 @@ contract Validator is ReentrancyGuard {
     function getKeys(address account)
         external view
         returns (bytes[] memory) {
-        bytes32 accountKeys = __Encoder.encodeWithAccount("keys", account);
-        return storage_.getBytesArray(accountKeys);
+        bytes32 keys = _account(account, "keys");
+        return storage_.getBytesArray(keys);
     }
 
     function getRoleKeys(string memory role)
         external view
         returns (bytes[] memory) {
-        bytes32 roleKeys = __Encoder.encodeWithRole("keys", role);
-        return storage_.getBytesArray(roleKeys);
+        bytes32 keys = _role(role, "keys");
+        return storage_.getBytesArray(keys);
     }
 
     function getRoleMembers(string memory role)
         external view
         returns (address[] memory) {
-        bytes32 roleMembers = __Encoder.encodeWithRole("members", role);
-        return storage_.valuesAddressSet(roleMembers);
+        bytes32 members = _role(role, "members");
+        return storage_.valuesAddressSet(members);
     }
 
     function getRoleSize(string memory role)
@@ -227,11 +227,11 @@ contract Validator is ReentrancyGuard {
         bytes memory emptyBytes;
         bytes[] memory bytesArray = storage_.getBytesArray(array);
         for (uint i = 0; i < bytesArray.length; i++) {
-            bytes memory encodedKey = bytesArray[i];
+            bytes memory key = bytesArray[i];
 
             // decode
-            if (!_isMatchingBytes(encodedKey, emptyBytes)) {
-                (address of_2, string memory signature2, , , ,) = _decodeKey(encodedKey);
+            if (!_isMatchingBytes(key, emptyBytes)) {
+                (address of_2, string memory signature2, , , ,) = _decodeKey(key);
                 bool isMatching = _isMatchingKeyContractAndSignature(of_, signature, of_2, signature2);
 
                 if (isMatching) {
@@ -256,39 +256,39 @@ contract Validator is ReentrancyGuard {
         }
     }
 
-    function _requireNoDuplicateKey(bytes32 array, bytes memory encodedKey)
+    function _requireNoDuplicateKey(bytes32 array, bytes memory key)
         internal view { 
         
-        (address of_, string memory signature, , , ,) = _decodeKey(encodedKey);
+        (address of_, string memory signature, , , ,) = _decodeKey(key);
         
         bytes memory emptyBytes;
         bytes[] memory bytesArray = storage_.getBytesArray(array);
         for (uint i = 0; i < bytesArray.length; i++) {
-            bytes memory encodedKey2 = bytesArray[i];
+            bytes memory key2 = bytesArray[i];
             
             // decode
-            if (!_isMatchingBytes(encodedKey2, emptyBytes)) {
-                (address of_2, string memory signature2, , , ,) = _decodeKey(encodedKey2);
+            if (!_isMatchingBytes(key2, emptyBytes)) {
+                (address of_2, string memory signature2, , , ,) = _decodeKey(key2);
                 bool isMatching = _isMatchingKeyContractAndSignature(of_, signature, of_2, signature2);
                 require(!isMatching, "Hub: matching contract & address to an already existing key");
             }
         }
     }
 
-    function _tryPushKeyToEmptyBytes(bytes32 array, bytes memory encodedKey)
+    function _tryPushKeyToEmptyBytes(bytes32 array, bytes memory key)
         internal 
         returns (bool) {
         bool success;
         bytes memory emptyBytes;
         bytes[] memory bytesArray = storage_.getBytesArray(array);
         for (uint i = 0; i < bytesArray.length; i++) {
-            bytes memory encodedKey2 = bytesArray[i];
+            bytes memory key2 = bytesArray[i];
 
             // check
-            if (_isMatchingBytes(encodedKey2, emptyBytes)) {
+            if (_isMatchingBytes(key2, emptyBytes)) {
                 
                 // only if empty
-                storage_.setIndexBytesArray(array, i, encodedKey);
+                storage_.setIndexBytesArray(array, i, key);
                 success = true;
                 break;
             }
@@ -303,19 +303,18 @@ contract Validator is ReentrancyGuard {
         
         bool success;
         _requireValidKeyInput(type_, startTimestamp, endTimestamp, balance);
+        _requireNotAddressZero(account);
+        _requireNotAddressZero(of_);
 
-        require(account != address(0x0), "Hub: account address is zero");
-        require(of_ != address(0x0), "Hub: of_ address is zero");
+        bytes memory key = abi.encode(of_, signature, type_, startTimestamp, endTimestamp, balance);
+        bytes32 keys = _account(account, "keys");
 
-        bytes memory encodedKey = abi.encode(of_, signature, type_, startTimestamp, endTimestamp, balance);
-        bytes32 accountKeys = __Encoder.encodeWithAccount("keys", account);
-
-        _requireNoDuplicateKey(accountKeys, encodedKey);
-        success = _tryPushKeyToEmptyBytes(accountKeys, encodedKey);
+        _requireNoDuplicateKey(keys, key);
+        success = _tryPushKeyToEmptyBytes(keys, key);
 
         // no empty bytes were found
         if (!success) {
-            storage_.pushBytesArray(accountKeys, encodedKey);
+            storage_.pushBytesArray(keys, key);
             success = true;
         }
 
@@ -328,15 +327,15 @@ contract Validator is ReentrancyGuard {
         
         bool success;
 
-        require(account != address(0x0), "Hub: account address is zero");
-        require(of_ != address(0x0), "Hub: of_ address is zero");
+        _requireNotAddressZero(account);
+        _requireNotAddressZero(of_);
         
-        bytes32 accountKeys = __Encoder.encodeWithAccount("keys", account);
-        (bool gotIndex, uint index) = _getKeyIndexByContractAndSignature(accountKeys, of_, signature);
+        bytes32 keys = _account(account, "keys");
+        (bool gotIndex, uint index) = _getKeyIndexByContractAndSignature(keys, of_, signature);
         _requireSuccess(gotIndex);
 
         bytes memory emptyBytes;
-        storage_.setIndexBytesArray(accountKeys, index, emptyBytes);
+        storage_.setIndexBytesArray(keys, index, emptyBytes);
 
         success = true;
         return success;
@@ -348,16 +347,15 @@ contract Validator is ReentrancyGuard {
         
         bool success;
 
-        require(account != address(0x0), "Hub: account address is zero");
+        _requireNotAddressZero(account);
 
-        bytes32 accountKeys = __Encoder.encodeWithAccount("keys", account);
-        storage_.deleteBytesArray(accountKeys);
+        bytes32 keys = _account(account, "keys");
+        storage_.deleteBytesArray(keys);
 
         success = true;
         return success;
     }
 
-    // not returnign true even with correct keys
     function _verify(address account, address of_, string memory signature)
         internal 
         returns (bool) {
@@ -407,8 +405,7 @@ contract Validator is ReentrancyGuard {
             
         bool success;
         _requireValidKeyInput(type_, startTimestamp, endTimestamp, balance);
-
-        require(of_ != address(0x0), "Validator: of_ address is zero");
+        _requireNotAddressZero(of_);
 
         // context
         bytes memory key = _encodeKey(of_, signature, type_, startTimestamp, endTimestamp, balance);
@@ -432,7 +429,7 @@ contract Validator is ReentrancyGuard {
         
         bool success;
 
-        require(of_ != address(0x0), "Validator: account address is zero");
+        _requireNotAddressZero(of_);
 
         // context
         bytes32 keys = _role(role, "keys");
