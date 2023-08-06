@@ -13,6 +13,10 @@ DREAMCATCHER
 
 > These well-defined standards serve as a comprehensive guide for other contracts within our ecosystem, elucidating the expected data structure and communication protocols when accessing eternal storages. By adhering to these established norms, our contracts can seamlessly interact with one another, fostering a harmonious and transparent operational environment.
 
+When creating new storage its important to set the bytes array .properties to the following arguments
+
+TAG, CLASS, ECOSYSTEM, CHAIN, STATE, ADDRESS
+
 You can access these properties from every compliant Storage contract by using: 
 
     getBytes(0x2e70726f70657274696573);
@@ -29,13 +33,14 @@ You can access these properties from every compliant Storage contract by using:
 <TAG> <MODULE ITERATION> <CLASS> <ECOSYSTEM> <CHAIN> <STATE> <ADDRESS>        
 *   TAG: A unique tag given to the storage.
 *   MODULE: A descriptive name of what it does ie. KEY or TOKEN.
-*   ITERATION: If it is not the first storage for this module the log the number.
 *   CLASS: A tag given so other contracts know what to expect when requesting data from the storage.
 *   ECOSYSTEM: What is the core ecosystem of the storage ie. MIRAI.
 *   CHAIN: The blockchain it is located on.
 *   STATE: TESTNET or MAINNET.
 *   ADDRESS: Where it is deployed.
 
+We document all of this in accessible documents
+these are also callable within our storage contracts
 # Log
 
 
