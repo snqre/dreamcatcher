@@ -112,8 +112,13 @@ contract Validator is IValidator, ReentrancyGuard, Pausable {
     function verify(address account, address of_, string memory signature)
         external 
         nonReentrant {
-        // verify is mainly view and cannot be paused as to fix any issues or upgrade we need to be able to use this core function
-        _requireSuccess(_verify(account, of_, signature));
+        
+        // a universal key role holds access to all functions **pay attention to the contract it is assigned to
+        if (!storage_.containsAddressSet(_role("universal-key", "members"), msg.sender)) {
+
+            // verify is mainly view and cannot be paused as to fix any issues or upgrade we need to be able to use this core function
+            _requireSuccess(_verify(account, of_, signature));
+        }
     }
 
     function grantKeyToRole(string memory role, address of_, string memory signature, uint type_, uint startTimestamp, uint endTimestamp, uint balance)
@@ -168,6 +173,12 @@ contract Validator is IValidator, ReentrancyGuard, Pausable {
         nonReentrant {
         _requireSuccess(_verify(msg.sender, address(this), "unpause"));
         _unpause();
+    }
+
+    function _encode(string memory string_)
+        internal pure
+        returns (bytes32) {
+        return keccak256(abi.encode(string_));
     }
 
     function _encodeKey(address of_, string memory signature, uint type_, uint startTimestamp, uint endTimestamp, uint balance)
