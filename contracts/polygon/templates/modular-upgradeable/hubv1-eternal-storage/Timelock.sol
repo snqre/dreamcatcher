@@ -31,42 +31,56 @@ contract Timelock is ReentrancyGuard {
         _setTimeoutDuration(7200);
     }
 
-    function queue(address[] memory targets, string[] memory signatures, bytes[] memory args)
-        external
-        returns (uint) {
-        validator.verify(msg.sender, address(this), "queue");
-        uint index = _queue(targets, signatures, args);
-
-        if (storage_.getBool(_encode("enabledApproveAll"))) {
-
+    function queue(
+        address[] memory targets, 
+        string[] memory signatures, 
+        bytes[] memory args
+        ) external
+        returns (uint index) {
+        validator.verify({
+            account: msg.sender,
+            of_: address(this),
+            signature: "queue"
+        });
+        index = _queue({
+            targets: targets,
+            signatures: signatures,
+            args: args
+        });
+        if (storage_.getBool(_enabledApproveAll())) {
             _approve(index);
         }
-
         return index;
     }
 
     function approve(uint index)
         external {
-        validator.verify(msg.sender, address(this), "approve");
+        validator.verify({
+            account: msg.sender,
+            of_: address(this),
+            signature: "approve"
+        });
         _approve(index);
     }
 
     function reject(uint index)
         external {
-        validator.verify(msg.sender, address(this), "reject");
+        validator.verify({
+            account: msg.sender,
+            of_: address(this),
+            signature: "reject"
+        });
         _reject(index);
     }
 
     function execute(uint index)
         external {
-        validator.verify(msg.sender, address(this), "execute");
+        validator.verify({
+            account: msg.sender,
+            of_: address(this),
+            signature: "execute"
+        });
         _execute(index);
-    }
-
-    function _encode(string memory string_)
-        internal pure
-        returns (bytes32) {
-        return keccak256(abi.encode(string_));
     }
 
     function _encodeRequest(
@@ -82,106 +96,273 @@ contract Timelock is ReentrancyGuard {
         ) internal pure
         returns (bytes memory) {
         return abi.encode(
-            targets,
-            signatures,
-            args,
-            startTimestamp,
-            endTimelockTimestamp,
-            endTimeoutTimestamp,
-            isApproved,
-            isRejected,
+            targets, 
+            signatures, 
+            args, 
+            startTimestamp, 
+            endTimelockTimestamp, 
+            endTimeoutTimestamp, 
+            isApproved, 
+            isRejected, 
             isExecuted
         );
     }
 
     function _decodeRequest(bytes memory request)
         internal pure
-        returns (address[] memory, string[] memory, bytes[] memory, uint, uint, uint, bool, bool, bool) {
-        
-        // decode layer 1
-        (bytes memory payload, bytes memory timestamps, bytes memory state) = abi.decode(request, (bytes, bytes, bytes));
-
-        // decode layer 2
-        (address[] memory targets, string[] memory signatures, bytes[] memory args) = _decodeRequestPayload(payload);
-        (uint startTimestamp, uint endTimelockTimestamp, uint endTimeoutTimestamp) = _decodeRequestTimestamps(timestamps);
-        (bool isApproved, bool isRejected, bool isExecuted) = _decodeRequestState(state);
-
-        // return
-        return (targets, signatures, args, startTimestamp, endTimelockTimestamp, endTimeoutTimestamp, isApproved, isRejected, isExecuted);
+        returns (
+            address[] memory targets,
+            string[] memory signatures,
+            bytes[] memory args,
+            uint startTimestamp,
+            uint endTimelockTimestamp,
+            uint endTimeoutTimestamp,
+            bool isApproved,
+            bool isRejected,
+            bool isExecuted
+        ) {
+        return abi.decode(request, (
+            address[],
+            string[],
+            bytes[],
+            uint,
+            uint,
+            uint,
+            bool,
+            bool,
+            bool
+        ));
     }
 
-    function _call(address target, string memory signature, bytes memory args)
-        internal
-        returns (bool, bytes memory) {
-        (bool success, bytes memory response) = target.call(abi.encodeWithSignature(signature, args));
-        return (success, response);
+    function _requests()
+        internal pure
+        returns (bytes32) {
+        return keccak256(
+            abi.encode(
+                "requests"
+            )
+        );
     }
 
-    function _queue(address[] memory targets, string[] memory signatures, bytes[] memory args)
-        internal 
-        returns (uint) {
-        bytes memory request = _encodeRequest(targets, signatures, args, block.timestamp, block.timestamp + storage_.getUint(_encode("durationTimelock")), block.timestamp + storage_.getUint("durationTimeout"), false, false, false);
-        storage_.pushBytesArray(requests, request);
-        return storage_.lengthBytesArray(requests) - 1;
+    function _durationTimelock()
+        internal pure
+        returns (bytes32) {
+        return keccak256(
+            abi.encode(
+                "durationTimelock"
+            )
+        );
+    }
+
+    function _durationTimeout()
+        internal pure
+        returns (bytes32) {
+        return keccak256(
+            abi.encode(
+                "durationTimeout"
+            )
+        );
+    }
+
+    function _enabledApproveAll()
+        internal pure
+        returns (bytes32) {
+        return keccak256(
+            abi.encode(
+                "enabledApproveAll"
+            )
+        );
+    }
+
+    function _call(
+        address target, 
+        string memory signature, 
+        bytes memory args
+        ) internal
+        returns (
+            bool success, 
+            bytes memory response
+        ) {
+        return target.call(
+            abi.encodeWithSignature(
+                signature, 
+                args
+            )
+        );
+    }
+
+    function _queue(
+        address[] memory targets,
+        string[] memory signatures,
+        bytes[] memory args
+        ) internal
+        returns (uint index) {
+        // fetch settings
+        uint durationTimelock = storage_.getUint(_durationTimelock());
+        uint durationTimeout = storage_.getUint(_durationTimeout());
+        uint now_ = block.timestamp;
+        // push new bytes to array
+        storage_.pushBytesArray({
+            key: _requests(),
+            value: _encodeRequest({
+                targets: targets,
+                signatures: signatures,
+                args: args,
+                startTimestamp: now_,
+                endTimelockTimestamp: now_ + durationTimelock,
+                endTimeoutTimestamp: now_ + durationTimeout,
+                isApproved: false,
+                isRejected: false,
+                isExecuted: false
+            })
+        });
+        return storage_.lengthBytesArray(_requests()) - 1;
     }
 
     function _approve(uint index)
         internal {
-        bytes memory request = storage_.indexBytesArray(_encode("requests"), index);
-        (address[] memory targets, string[] memory signatures, bytes memory args, uint startTimestamp, uint endTimelockTimestamp, uint endTimeoutTimestamp, bool isApproved, bool isRejected, bool isExecuted) = _decodeRequest(request);
-        require(!isApproved, "Timelock: request must not be approved");
-        require(!isRejected, "Timelock: request must not be rejected");
-        require(!isExecuted, "Timelock: request must not be executed");
+        // decode key get params
+        (
+            address[] memory targets,
+            string[] memory signatures,
+            bytes[] memory args,
+            uint startTimestamp,
+            uint endTimelockTimestamp,
+            uint endTimeoutTimestamp,
+            bool isApproved,
+            bool isRejected,
+            bool isExecuted
+        ) = _decodeRequest(
+            storage_.indexBytesArray(
+                _requests(), 
+                index
+            )
+        );
+        // check params and encode new request with new params
+        require(!isApproved, "Timelock: must not be approved");
+        require(!isRejected, "Timelock: must not be rejected");
+        require(!isExecuted, "Timelock: must not be executed");
         isApproved = true;
-        request = _encodeRequest(targets, signatures, args, startTimestamp, endTimelockTimestamp, endTimeoutTimestamp, isApproved, isRejected, isExecuted);
-        storage_.setIndexBytesArray(_encode("requests"), index, request);
+        storage_.setIndexBytesArray({
+            key: _requests(),
+            index: index,
+            value: _encodeRequest({
+                targets: targets,
+                signatures: signatures,
+                args: args,
+                startTimestamp: startTimestamp,
+                endTimelockTimestamp: endTimelockTimestamp,
+                endTimeoutTimestamp: endTimeoutTimestamp,
+                isApproved: isApproved,
+                isRejected: isRejected,
+                isExecuted: isExecuted
+            })
+        });
     }
 
     function _reject(uint index)
         internal {
-        bytes memory request = storage_.indexBytesArray(_encode("requests"), index);
-        (address[] memory targets, string[] memory signatures, bytes memory args, uint startTimestamp, uint endTimelockTimestamp, uint endTimeoutTimestamp, bool isApproved, bool isRejected, bool isExecuted) = _decodeRequest(request);
-        require(!isApproved, "Timelock: request must not be approved");
-        require(!isRejected, "Timelock: request must not be rejected");
-        require(!isExecuted, "Timelock: request must not be executed");
+        // decode key get params
+        (
+            address[] memory targets,
+            string[] memory signatures,
+            bytes[] memory args,
+            uint startTimestamp,
+            uint endTimelockTimestamp,
+            uint endTimeoutTimestamp,
+            bool isApproved,
+            bool isRejected,
+            bool isExecuted
+        ) = _decodeRequest(
+            storage_.indexBytesArray(
+                _requests(), 
+                index
+            )
+        );
+        // check params and encode new request with new params
+        require(!isApproved, "Timelock: must not be approved");
+        require(!isRejected, "Timelock: must not be rejected");
+        require(!isExecuted, "Timelock: must not be executed");
         isRejected = true;
-        request = _encodeRequest(targets, signatures, args, startTimestamp, endTimelockTimestamp, endTimeoutTimestamp, isApproved, isRejected, isExecuted);
-        storage_.setIndexBytesArray(_encode("requests"), index, request);
+        storage_.setIndexBytesArray({
+            key: _requests(),
+            index: index,
+            value: _encodeRequest({
+                targets: targets,
+                signatures: signatures,
+                args: args,
+                startTimestamp: startTimestamp,
+                endTimelockTimestamp: endTimelockTimestamp,
+                endTimeoutTimestamp: endTimeoutTimestamp,
+                isApproved: isApproved,
+                isRejected: isRejected,
+                isExecuted: isExecuted
+            })
+        });
     }
-
+    
     function _execute(uint index)
-        internal 
-        returns (bool[] memory, bytes[] memory) {
-        bytes memory request = storage_.indexBytesArray(_encode("requests"), index);
-        (address[] memory targets, string[] memory signatures, bytes memory args, uint startTimestamp, uint endTimelockTimestamp, uint endTimeoutTimestamp, bool isApproved, bool isRejected, bool isExecuted) = _decodeRequest(request);
-        require(block.timestamp >= endTimelockTimestamp, "Timelock: request cannot be executed before timelock is over");
-        require(block.timestamp <= endTimeoutTimestamp, "Timelock: request cannot be executed after it is timedout");
-        require(isApproved, "Timelock: request must be approved");
-        require(!isRejected, "Timelock: request must not be rejected");
-        require(!isExecuted, "Timelock: request must not be executed");
+        internal
+        returns (
+            bool[] memory successes,
+            bytes[] memory responses
+        ) {
+        // decode key get params
+        (
+            address[] memory targets,
+            string[] memory signatures,
+            bytes[] memory args,
+            uint startTimestamp,
+            uint endTimelockTimestamp,
+            uint endTimeoutTimestamp,
+            bool isApproved,
+            bool isRejected,
+            bool isExecuted
+        ) = _decodeRequest(
+            storage_.indexBytesArray(
+                _requests(),
+                index
+            )
+        );
+        // check params and execute
+        require(block.timestamp >= endTimelockTimestamp, "Timelock: early");
+        require(block.timestamp <= endTimeoutTimestamp, "Timelock: expired");
+        require(isApproved, "Timelock: must be approved");
+        require(!isRejected, "Timelock: must not be rejected");
+        require(!isExecuted, "Timelock: must not be executed");
         require(targets.length == signatures.length == args.length, "Timelock: unequal payload arguments");
-
-        bool[] memory successes;
-        bytes[] memory responses;
-
-        // execute calls
+        // execute
         for (uint i = 0; targets.length; i++) {
-
-            (successes[i], responses[i]) = _call(targets[i], signatures[i], args[i]);
+            (
+                successes,
+                responses
+            ) = _call({
+                target: targets[i],
+                signature: signatures[i],
+                args: args[i]
+            });
         }
-
-        return (successes, responses);
+        return (
+            successes,
+            responses
+        );
     }
 
     function _setTimelockDuration(uint value)
         internal {
-        require(value >= 1, "Timelock: timelock value is too low");
-        storage_.setUint(_encode("durationTimelock"), value);
+        require(value >= 1, "Timelock: value too low");
+        storage_.setUint({
+            key: _durationTimelock,
+            value: value
+        });
     }
 
     function _setTimeoutDuration(uint value)
         internal {
-        require(value >= storage_.getUint(_encode("requests")) + 3600 seconds, "Timelock: timeout duration is less than timelock");
-        storage_.setUint(_encode("durationTimeout"), value);
+        require(value >= storage_.getUint(_durationTimeout) + 3600 seconds, "Timelock: timeout is less than timelock");
+        storage_.setUint({
+            key: _durationTimeout,
+            value: value
+        });
     }
 }
