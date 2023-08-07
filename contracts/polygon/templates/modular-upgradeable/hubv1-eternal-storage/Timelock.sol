@@ -14,10 +14,20 @@ import "contracts/polygon/deps/openzeppelin/token/ERC20/IERC20.sol";
 
 contract Timelock is ReentrancyGuard {
 
-    bytes32 immutable requests;
-
     IStorage storage_;
     IValidator validator;
+
+    constructor(
+        address storage__,
+        address validator_,
+        bool enabledApproveAll,
+        uint durationTimelock,
+        uint durationTimeout
+        ) {
+        _setApproveAll(enabledApproveAll);
+        _setTimelockDuration(durationTimelock);
+        _setTimeoutDuration(durationTimeout);
+    }
 
     constructor(address storage__, address validator_) {
         requests = keccak256(abi.encode("requests"));
@@ -362,6 +372,14 @@ contract Timelock is ReentrancyGuard {
         require(value >= storage_.getUint(_durationTimeout) + 3600 seconds, "Timelock: timeout is less than timelock");
         storage_.setUint({
             key: _durationTimeout,
+            value: value
+        });
+    }
+
+    function _setApproveAll(bool value)
+        internal {
+        storage_.setBool({
+            key: _enabledApproveAll(),
             value: value
         });
     }
