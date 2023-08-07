@@ -4,6 +4,16 @@ import "contracts/polygon/templates/Storage.sol";
 import "contracts/polygon/deps/openzeppelin/security/ReentrancyGuard.sol";
 import "contracts/polygon/deps/openzeppelin/security/Pausable.sol";
 
+/**
+
+    **set as implementation from storage
+
+    # purpose
+    - manage roles and permissions of the ecosystem
+
+    **rated 80%
+ */
+
 interface IValidator {
     function encodeKey(address of_, string memory signature, uint type_, uint startTimestamp, uint endTimestamp, uint balance) external pure returns (bytes memory);
     function decodeKey(bytes memory key) external pure returns (address, string memory, uint, uint, uint, uint);
@@ -11,6 +21,7 @@ interface IValidator {
     function getRoleKeys(string memory role) external view returns (bytes[] memory);
     function getRoleMembers(string memory role) external view returns (address[] memory);
     function getRoleSize(string memory role) external view returns (uint);
+    function init() external;
     function grantKey(address account, address of_, string memory signature, uint type_, uint startTimestamp, uint endTimestamp, uint balance) external;
     function revokeKey(address account, address of_, string memory signature) external;
     function resetKeys(address account) external;
@@ -26,324 +37,314 @@ interface IValidator {
 
 contract Validator is IValidator, ReentrancyGuard, Pausable {
 
-    /**
-        addressSet: role,    "members"   members
-        bytesArray: role,    "keys"      keys
-        bytesArray: account, "keys"      keys
-     */
+    bool public init;
+    address public deployer;
 
-    IStorage storage_;
+    IStorage public storage_;
+
+    modifier verify_(string memory signature) {
+        _requireSuccess({success: _verify({account: msg.sender, of_: address(this), signature: signature})});
+        _;
+    }
     
     constructor(address storage__) {
-        storage_ = IStorage(storage__);
-        _grantKeyToRole("validator", address(this), "grantKey", 0, 0, 0, 0);
-        _grantKeyToRole("validator", address(this), "revokeKey", 0, 0, 0, 0);
-        _grantKeyToRole("validator", address(this), "resetKeys", 0, 0, 0, 0);
-        _grantKeyToRole("validator", address(this), "grantKeyToRole", 0, 0, 0, 0);
-        _grantKeyToRole("validator", address(this), "revokeKeyFromRole", 0, 0, 0, 0);
-        _grantKeyToRole("validator", address(this), "resetRoleKeys", 0, 0, 0, 0);
-        _grantKeyToRole("validator", address(this), "grantRole", 0, 0, 0, 0);
-        _grantKeyToRole("validator", address(this), "revokeRole", 0, 0, 0, 0);
-        _grantKeyToRole("validator", address(this), "pause", 0, 0, 0, 0);
-        _grantKeyToRole("validator", address(this), "unpause", 0, 0, 0, 0);
-        _grantRole(msg.sender, "validator");
+        storage_ =IStorage(storage__);
+        deployer =msg.sender;
     }
 
     function encodeKey(address of_, string memory signature, uint type_, uint startTimestamp, uint endTimestamp, uint balance)
-        external pure
-        returns (bytes memory) {
+    external pure
+        returns (bytes memory key) {
         return _encodeKey(of_, signature, type_, startTimestamp, endTimestamp, balance);
     }
 
     function decodeKey(bytes memory key)
-        external pure
-        returns (address, string memory, uint, uint, uint, uint) {
+    external pure
+        returns (address of_, string memory signature, uint type_, uint startTimestamp, uint endTimestamp, uint balance) {
         return _decodeKey(key);
     }
 
     function getKeys(address account)
-        external view
-        returns (bytes[] memory) {
-        return storage_.getBytesArray(_account(account, "keys"));
+    external view
+        returns (bytes[] memory keys) {
+        return storage_.getBytesArray({key: _account({account: account, string_: "keys"})});
     }
 
     function getRoleKeys(string memory role)
-        external view
-        returns (bytes[] memory) {
-        return storage_.getBytesArray(_role(role, "keys"));
+    external view
+        returns (bytes[] memory keys) {
+        return storage_.getBytesArray({key: _role({role: role, string_: "keys"})});
     }
 
     function getRoleMembers(string memory role)
-        external view
-        returns (address[] memory) {
-        return storage_.valuesAddressSet(_role(role, "members"));
+    external view
+        returns (address[] memory members) {
+        return storage_.valuesAddressSet({key: _role({role: role, string_: "members"})});
     }
 
     function getRoleSize(string memory role)
-        external view
-        returns (uint) {
-        return storage_.lengthAddressSet(_role(role, "members"));
+    external view
+        returns (uint size) {
+        return storage_.lengthAddressSet({key: _role({role: role, string_: "members"})});
+    }
+
+    function init() 
+        external {
+        require(msg.sender ==deployer, "Validator: only deployer can init");
+        _grantKeyToRole({role: "validator", of_: address(this), signature: "grantKey(address,address,string,uint,uint,uint,uint)", type_: 0, startTimestamp: 0, endTimestamp: 0, balance: 0});
+        _grantKeyToRole({role: "validator", of_: address(this), signature: "revokeKey(address,address,string)", type_: 0, startTimestamp: 0, endTimestamp: 0, balance: 0});
+        _grantKeyToRole({role: "validator", of_: address(this), signature: "resetKeys(address)", type_: 0, startTimestamp: 0, endTimestamp: 0, balance: 0});
+        _grantKeyToRole({role: "validator", of_: address(this), signature: "grantKeyToRole(string,address,string,uint,uint,uint,uint)", type_: 0, startTimestamp: 0, endTimestamp: 0, balance: 0});
+        _grantKeyToRole({role: "validator", of_: address(this), signature: "revokeKeyFromRole(string,address,string)", type_: 0, startTimestamp: 0, endTimestamp: 0, balance: 0});
+        _grantKeyToRole({role: "validator", of_: address(this), signature: "resetRoleKeys(string)", type_: 0, startTimestamp: 0, endTimestamp: 0, balance: 0});
+        _grantKeyToRole({role: "validator", of_: address(this), signature: "grantRole(address,string)", type_: 0, startTimestamp: 0, endTimestamp: 0, balance: 0});
+        _grantKeyToRole({role: "validator", of_: address(this), signature: "revokeRole(address,string)", type_: 0, startTimestamp: 0, endTimestamp: 0, balance: 0});
+        _grantKeyToRole({role: "validator", of_: address(this), signature: "pause()", type_: 0, startTimestamp: 0, endTimestamp: 0, balance: 0});
+        _grantKeyToRole({role: "validator", of_: address(this), signature: "unpause()", type_: 0, startTimestamp: 0, endTimestamp: 0, balance: 0});
+        _grantRole({account: msg.sender, role: "validator"});
     }
 
     function grantKey(address account, address of_, string memory signature, uint type_, uint startTimestamp, uint endTimestamp, uint balance)
-        external
-        nonReentrant 
-        whenNotPaused {
-        _requireSuccess(_verify(msg.sender, address(this), "grantKey"));
-        _requireSuccess(_grantKey(account, of_, signature, type_, startTimestamp, endTimestamp, balance));
+    external
+    nonReentrant
+    whenNotPaused
+    verify_("grantKey(address,address,string,uint,uint,uint,uint)") {
+        _requireSuccess({success: _grantKey({account: account, of_: of_, signature: signature, type_: type_, startTimestamp: startTimestamp, endTimestamp: endTimestamp, balance: balance})});
     }
 
     function revokeKey(address account, address of_, string memory signature)
-        external 
-        nonReentrant 
-        whenNotPaused {
-        _requireSuccess(_verify(msg.sender, address(this), "revokeKey"));
-        _requireSuccess(_revokeKey(account, of_, signature));
+    external 
+    nonReentrant 
+    whenNotPaused 
+    verify_("revokeKey(address,address,string)") {
+        _requireSuccess({success: _revokeKey({account: account, of_: of_, signature: signature})});
     }
 
     function resetKeys(address account)
-        external 
-        nonReentrant 
-        whenNotPaused {
-        _requireSuccess(_verify(msg.sender, address(this), "resetKeys"));
-        _requireSuccess(_resetKeys(account));
+    external
+    nonReentrant
+    whenNotPaused 
+    verify_("resetKeys(address)") {
+        _requireSuccess({success: _resetKeys({account: account})});
     }
 
     function verify(address account, address of_, string memory signature)
-        external 
-        nonReentrant {
-        
-        // a universal key role holds access to all functions **pay attention to the contract it is assigned to
-        if (!storage_.containsAddressSet(_role("universal-key", "members"), msg.sender)) {
-
-            // verify is mainly view and cannot be paused as to fix any issues or upgrade we need to be able to use this core function
-            _requireSuccess(_verify(account, of_, signature));
+    external 
+    nonReentrant {
+        if (!storage_.containsAddressSet({key: _role({role: "universal-key", string_: "members"}), value: msg.sender})) {
+            _requireSuccess({success: _verify({account: account, of_: of_, signature: signature})});
         }
     }
 
     function grantKeyToRole(string memory role, address of_, string memory signature, uint type_, uint startTimestamp, uint endTimestamp, uint balance)
-        external 
-        nonReentrant 
-        whenNotPaused {
-        _requireSuccess(_verify(msg.sender, address(this), "grantKeyToRole"));
-        _requireSuccess(_grantKeyToRole(role, of_, signature, type_, startTimestamp, endTimestamp, balance));
+    external 
+    nonReentrant 
+    whenNotPaused 
+    verify_("grantKeyToRole(string,address,string,uint,uint,uint,uint)") {
+        _requireSuccess({success: _grantKeyToRole({role: role, of_: of_, signature: signature, type_: type_, startTimestamp: startTimestamp, endTimestamp: endTimestamp, balance: balance})});
     }
 
     function revokeKeyFromRole(string memory role, address of_, string memory signature)
-        external 
-        nonReentrant 
-        whenNotPaused {
-        _requireSuccess(_verify(msg.sender, address(this), "revokeKeyFromRole"));
-        _requireSuccess(_revokeKeyFromRole(role, of_, signature));
+    external 
+    nonReentrant 
+    whenNotPaused 
+    verify_("revokeKeyFromRole(string,address,string)") {
+        _requireSuccess({success: _revokeKeyFromRole({role: role, of_: of_, signature: signature})});
     }
 
     function resetRoleKeys(string memory role)
-        external 
-        nonReentrant 
-        whenNotPaused {
-        _requireSuccess(_verify(msg.sender, address(this), "resetRoleKeys"));
-        _requireSuccess(_resetRoleKeys(role));
+    external 
+    nonReentrant 
+    whenNotPaused 
+    verify_("resetRoleKeys(string)") {
+        _requireSuccess({success: _resetRoleKeys({role: role})});
     }
 
     function grantRole(address account, string memory role)
-        external 
-        nonReentrant 
-        whenNotPaused {
-        _requireSuccess(_verify(msg.sender, address(this), "grantRole"));
-        _requireSuccess(_grantRole(account, role));
+    external 
+    nonReentrant 
+    whenNotPaused 
+    verify_("grantRole(address,string)") {
+        _requireSuccess({success: _grantRole({account: account, role: role})});
     }
 
     function revokeRole(address account, string memory role)
-        external 
-        nonReentrant 
-        whenNotPaused {
-        _requireSuccess(_verify(msg.sender, address(this), "revokeRole"));
-        _requireSuccess(_revokeRole(account, role));
+    external 
+    nonReentrant 
+    whenNotPaused 
+    verify_("revokeRole(address,string)") {
+        _requireSuccess({success: _revokeRole({account: account, role: role})});
     }
 
     function pause()
-        external 
-        nonReentrant {
-        _requireSuccess(_verify(msg.sender, address(this), "pause"));
+    external 
+    nonReentrant 
+    verify_("pause()") {
         _pause();
     }
 
     function unpause()
-        external
-        nonReentrant {
-        _requireSuccess(_verify(msg.sender, address(this), "unpause"));
+    external
+    nonReentrant 
+    verify_("unpause()") {
         _unpause();
     }
 
     function _encode(string memory string_)
-        internal pure
-        returns (bytes32) {
+    internal pure
+    returns (bytes32) {
         return keccak256(abi.encode(string_));
     }
 
     function _encodeKey(address of_, string memory signature, uint type_, uint startTimestamp, uint endTimestamp, uint balance)
-        internal pure
-        returns (bytes memory) {
+    internal pure
+    returns (bytes memory key) {
         return abi.encode(of_, signature, type_, startTimestamp, endTimestamp, balance);
     }
 
     function _decodeKey(bytes memory key)
-        internal pure
-        returns (address, string memory, uint, uint, uint, uint) {
-        (address of_, string memory signature, uint type_, uint startTimestamp, uint endTimestamp, uint balance) = abi.decode(key, (address, string, uint, uint, uint, uint));
-        return (of_, signature, type_, startTimestamp, endTimestamp, balance);
+    internal pure
+    returns (address of_, string memory signature, uint type_, uint startTimestamp, uint endTimestamp, uint balance) {
+        return abi.decode(key, (address,string,uint,uint,uint,uint));
     }
 
     function _account(address account, string memory string_)
-        internal pure
-        returns (bytes32) {
+    internal pure
+    returns (bytes32) {
         return keccak256(abi.encode(account, string_));
     }
 
     function _role(string memory role, string memory string_)
-        internal pure
-        returns (bytes32) {
+    internal pure
+    returns (bytes32) {
         return keccak256(abi.encode(role, string_));
     }
 
     function _requireSuccess(bool success)
-        internal pure {
-        require(success, "Validator: failed execution");
+    internal pure {
+        require(success, "Validator: !success");
     }
 
     function _isMatchingBytes(bytes memory pBytes1, bytes memory pBytes2)
-        internal pure 
-        returns (bool) {
+    internal pure 
+    returns (bool isMatching) {
         return keccak256(pBytes1) == keccak256(pBytes2);
     }
 
     function _isMatchingString(string memory pString1, string memory pString2)
-        internal pure
-        returns (bool) {
+    internal pure
+    returns (bool isMatching) {
         return keccak256(abi.encodePacked(pString1)) == keccak256(abi.encodePacked(pString2));
     }
 
     function _isMatchingKeyContractAndSignature(address contract1, string memory signature1, address contract2, string memory signature2)
-        internal pure
-        returns (bool) {
-        bool sameContract = contract1 == contract2;
-        bool sameSignature = _isMatchingString(signature1, signature2);
-        return sameContract && sameSignature;
+    internal pure
+    returns (bool isMatching) {
+        return contract1 ==contract2 && _isMatchingString({pString1: signature1, pString2: signature2});
     }
 
     function _requireStandardKey(uint startTimestamp, uint endTimestamp, uint balance) 
-        internal pure {
-        require(startTimestamp == 0, "Validator: startTimestamp must be zero");
-        require(endTimestamp == 0, "Validator: endTimestamp must be zero");
-        require(balance == 0, "Validator: balance must be zero");
+    internal pure {
+        require(startTimestamp ==0, "Validator: startTimestamp must be zero");
+        require(endTimestamp ==0, "Validator: endTimestamp must be zero");
+        require(balance ==0, "Validator: balance must be zero");
     }
 
     function _requireConsumableKey(uint startTimestamp, uint endTimestamp, uint balance) 
-        internal pure {
-        require(startTimestamp == 0, "Validator: startTimestamp must be zero");
-        require(endTimestamp == 0, "Validator: endTimestamp must be zero");
-        require(balance >= 1, "Validator: balance is less than 1");
+    internal pure {
+        require(startTimestamp ==0, "Validator: startTimestamp must be zero");
+        require(endTimestamp ==0, "Validator: endTimestamp must be zero");
+        require(balance >=1, "Validator: balance is less than 1");
     }
 
     function _verifyConsumableKey(uint balance)
-        internal pure 
-        returns (uint) {
-        require(balance >= 1, "Validator: balance is zero");
-        return balance -= 1;
+    internal pure 
+    returns (uint) {
+        require(balance >=1, "Validator: balance is zero");
+        return balance--;
     }
 
     function _requireNotAddressZero(address account)
-        internal pure {
-        require(account != address(0x0), "Validator: address zero");
+    internal pure {
+        require(account !=address(0x0), "Validator: address zero");
     }
 
     function _requireTimedKey(uint startTimestamp, uint endTimestamp, uint balance)
-        internal view {
-        require(block.timestamp <= startTimestamp, "Validator: startTimestamp cannot be in the past");
-        require(endTimestamp >= startTimestamp, "Validator: endTimestamp cannot be before startTimestamp");
-        require(balance == 0, "Validator: balance must be zero");
+    internal view {
+        require(block.timestamp <=startTimestamp, "Validator: startTimestamp cannot be in the past");
+        require(endTimestamp >=startTimestamp, "Validator: endTimestamp cannot be before startTimestamp");
+        require(balance ==0, "Validator: balance must be zero");
     }
 
     function _verifyTimedKey(uint startTimestamp, uint endTimestamp)
-        internal view {
-        require(block.timestamp >= startTimestamp, "Validator: cannot use key before startTimestamp");
-        require(block.timestamp <= endTimestamp, "Validator: cannot use key after endTimestamp");
+    internal view {
+        require(block.timestamp >=startTimestamp, "Validator: cannot use key before startTimestamp");
+        require(block.timestamp <=endTimestamp, "Validator: cannot use key after endTimestamp");
     }
 
     function _getKeyIndexByContractAndSignature(bytes32 array, address of_, string memory signature)
-        internal view
-        returns (bool, uint) {
-
-        uint index;
-        bool success;
+    internal view
+    returns (bool success, uint index) {
         bytes memory emptyBytes;
         bytes[] memory bytesArray = storage_.getBytesArray(array);
 
-        for (uint i = 0; i < bytesArray.length; i++) {
+        for (uint i =0; i <bytesArray.length; i++) {
             bytes memory key = bytesArray[i];
 
             // decode
-            if (!_isMatchingBytes(key, emptyBytes)) {
-                (address of_2, string memory signature2, , , ,) = _decodeKey(key);
-                bool isMatching = _isMatchingKeyContractAndSignature(of_, signature, of_2, signature2);
-
-                if (isMatching) {
-                    index = i;
-                    success = true;
+            if (!_isMatchingBytes({pBytes1: key, pBytes2: emptyBytes})) {
+                (address of_2, string memory signature2, , , ,) = _decodeKey({key: key});
+                if (_isMatchingKeyContractAndSignature({contract1: of_, signature1: signature, contract2: of_2, signature2: signature2})) {
+                    index =i;
+                    success =true;
                     break;
                 }
             }
         }
-
         return (success, index);
     }
 
     function _requireValidKeyInput(uint type_, uint startTimestamp, uint endTimestamp, uint balance)
-        internal view {
-        if (type_ == 0) { _requireStandardKey(startTimestamp, endTimestamp, balance); }
-        else if (type_ == 1) { _requireTimedKey(startTimestamp, endTimestamp, balance); }
-        else if (type_ == 2) { _requireConsumableKey(startTimestamp, endTimestamp, balance); }
-        else {
-            revert("Hub: invalid type");
-        }
+    internal view {
+        if (type_ ==0) { _requireStandardKey({startTimestamp: startTimestamp, endTimestamp: endTimestamp, balance: balance}); }
+        else if (type_ ==1) { _requireTimedKey({startTimestamp: startTimestamp, endTimestamp: endTimestamp, balance: balance}); }
+        else if (type_ ==2) { _requireConsumableKey({startTimestamp: startTimestamp, endTimestamp: endTimestamp, balance: balance}); }
+        else { revert("Validator: invalid type"); }
     }
 
     function _requireNoDuplicateKey(bytes32 array, bytes memory key)
-        internal view { 
-        
-        (address of_, string memory signature, , , ,) = _decodeKey(key);
+    internal view { 
+        (address of_, string memory signature, , , ,) = _decodeKey({key: key});
         
         bytes memory emptyBytes;
-        bytes[] memory bytesArray = storage_.getBytesArray(array);
-        for (uint i = 0; i < bytesArray.length; i++) {
+        bytes[] memory bytesArray = storage_.getBytesArray({key: array});
+        for (uint i =0; i <bytesArray.length; i++) {
             bytes memory key2 = bytesArray[i];
             
             // decode
-            if (!_isMatchingBytes(key2, emptyBytes)) {
-                (address of_2, string memory signature2, , , ,) = _decodeKey(key2);
-                bool isMatching = _isMatchingKeyContractAndSignature(of_, signature, of_2, signature2);
-                require(!isMatching, "Hub: matching contract & address to an already existing key");
+            if (!_isMatchingBytes({pBytes1: key2, pBytes2: emptyBytes})) {
+                (address of_2, string memory signature2, , , ,) = _decodeKey({key: key2});
+                require(
+                    _isMatchingKeyContractAndSignature({contract1: of_, signature1: signature, contract2: of_2, signature2: signature2}),
+                    "Validator: matching contract & address to an already existing key"
+                );
             }
         }
     }
 
     function _tryPushKeyToEmptyBytes(bytes32 array, bytes memory key)
-        internal 
-        returns (bool) {
-
-        bool success;
+    internal 
+    returns (bool success) {
         bytes memory emptyBytes;
-        bytes[] memory bytesArray = storage_.getBytesArray(array);
+        bytes[] memory bytesArray = storage_.getBytesArray({key: array});
         
-        for (uint i = 0; i < bytesArray.length; i++) {
+        for (uint i =0; i <bytesArray.length; i++) {
             bytes memory key2 = bytesArray[i];
 
             // check
-            if (_isMatchingBytes(key2, emptyBytes)) {
-                
-                // only if empty
-                storage_.setIndexBytesArray(array, i, key);
-                success = true;
+            if (_isMatchingBytes({pBytes1: key2, pBytes2: emptyBytes})) {
+                storage_.setIndexBytesArray({key: array, index: i, value: key});
+                success =true;
                 break;
             }
         }
@@ -352,99 +353,91 @@ contract Validator is IValidator, ReentrancyGuard, Pausable {
     }
 
     function _grantKey(address account, address of_, string memory signature, uint type_, uint startTimestamp, uint endTimestamp, uint balance)
-        internal 
-        returns (bool) {
-        
-        bool success;
-        _requireValidKeyInput(type_, startTimestamp, endTimestamp, balance);
-        _requireNotAddressZero(account);
-        _requireNotAddressZero(of_);
+    internal 
+    returns (bool success) {
+        _requireValidKeyInput({type_: type_, startTimestamp: startTimestamp, endTimestamp: endTimestamp, balance: balance});
+        _requireNotAddressZero({account: account});
+        _requireNotAddressZero({account: of_});
 
-        bytes memory key = abi.encode(of_, signature, type_, startTimestamp, endTimestamp, balance);
-        bytes32 keys = _account(account, "keys");
+        bytes memory key =abi.encode(of_, signature, type_, startTimestamp, endTimestamp, balance);
+        bytes32 keys =_account({account: account, string_: "keys"});
 
-        _requireNoDuplicateKey(keys, key);
-        success = _tryPushKeyToEmptyBytes(keys, key);
+        _requireNoDuplicateKey({array: keys, key: key});
+        success =_tryPushKeyToEmptyBytes({array: keys, key: key});
 
         // no empty bytes were found
         if (!success) {
-            storage_.pushBytesArray(keys, key);
-            success = true;
+            storage_.pushBytesArray({key: keys, value: key});
+            success =true;
         }
 
         return success;
     }
 
-    function _revokeKey(address account, address of_, string memory signature)
-        internal 
-        returns (bool) {
-        
-        bool success;
 
-        _requireNotAddressZero(account);
-        _requireNotAddressZero(of_);
+    function _revokeKey(address account, address of_, string memory signature)
+    internal 
+    returns (bool success) {
+        _requireNotAddressZero({account: account});
+        _requireNotAddressZero({account: of_});
         
-        bytes32 keys = _account(account, "keys");
-        (bool gotIndex, uint index) = _getKeyIndexByContractAndSignature(keys, of_, signature);
-        _requireSuccess(gotIndex);
+        bytes32 keys =_account({account: account, string_: "keys"});
+        
+        (bool gotIndex, uint index) =_getKeyIndexByContractAndSignature({array: keys, of_: of_, signature: signature});
+        _requireSuccess({success: gotIndex});
 
         bytes memory emptyBytes;
-        storage_.setIndexBytesArray(keys, index, emptyBytes);
+        storage_.setIndexBytesArray({key: keys, index: index, value: emptyBytes});
 
-        success = true;
+        success =true;
         return success;
     }
 
     function _resetKeys(address account)
-        internal
-        returns (bool) {
-        
-        bool success;
+    internal
+    returns (bool success) {
+        _requireNotAddressZero({account: account});
 
-        _requireNotAddressZero(account);
+        bytes32 keys =_account({account: account, string_: "keys"});
+        storage_.deleteBytesArray({key: keys});
 
-        bytes32 keys = _account(account, "keys");
-        storage_.deleteBytesArray(keys);
-
-        success = true;
+        success =true;
         return success;
     }
 
     function _verify(address account, address of_, string memory signature)
-        internal 
-        returns (bool) {
-        
+    internal 
+    returns (bool success) {
         // does not revert just returns if true or false use external access verify for revert
-        bool success;
         
-        _requireNotAddressZero(account);
-        _requireNotAddressZero(of_);
+        _requireNotAddressZero({account: account});
+        _requireNotAddressZero({account: of_});
 
         // context
-        bytes32 keys = _account(account, "keys");
-        bytes[] memory bytesArray = storage_.getBytesArray(keys);
-        for (uint i = 0; i < bytesArray.length; i++) {
+        bytes32 keys = _account({account: account, string_: "keys"});
+        bytes[] memory bytesArray = storage_.getBytesArray({key: keys});
+        for (uint i =0; i <bytesArray.length; i++) {
 
-            bytes memory key = storage_.indexBytesArray(keys, i);
-            (address of_2, string memory signature2, uint type_, uint startTimestamp, uint endTimestamp, uint balance) = _decodeKey(key);
+            bytes memory key =storage_.indexBytesArray({key: keys, index: i});
+            (address of_2, string memory signature2, uint type_, uint startTimestamp, uint endTimestamp, uint balance) =_decodeKey({key: key});
 
-            if (_isMatchingKeyContractAndSignature(of_, signature, of_2, signature2)) {
+            if (_isMatchingKeyContractAndSignature({contract1: of_, signature1: signature, contract2: of_2, signature2: signature2})) {
 
-                if (type_ == 0) { success = true; }
+                if (type_ ==0) { success =true; }
 
-                if (type_ == 1) {
-                    _verifyTimedKey(startTimestamp, endTimestamp);
-                    success = true;
+                if (type_ ==1) {
+                    _verifyTimedKey({startTimestamp: startTimestamp, endTimestamp: endTimestamp});
+                    success =true;
                 }
                 
-                if (type_ == 2) {
-                   uint newBalance =  _verifyConsumableKey(balance);
+                if (type_ ==2) {
+                   uint newBalance =_verifyConsumableKey({balance: balance});
                     
-                    require(balance >= 1, "Validator: balance is zero");
+                    require(balance >=1, "Validator: balance is zero");
                 
-                    bytes memory key2 = _encodeKey(of_2, signature2, type_, startTimestamp, endTimestamp, newBalance);
-                    storage_.setIndexBytesArray(keys, i, key2);
-                    success = true;
+                    bytes memory key2 =_encodeKey({of_: of_2, signature: signature2, type_: type_, startTimestamp: startTimestamp, endTimestamp: endTimestamp, balance: newBalance});
+                    storage_.setIndexBytesArray({key: keys, index: i, value: key2});
+                    success =true;
                 }
 
                 break;
@@ -455,102 +448,91 @@ contract Validator is IValidator, ReentrancyGuard, Pausable {
     }
 
     function _grantKeyToRole(string memory role, address of_, string memory signature, uint type_, uint startTimestamp, uint endTimestamp, uint balance)
-        internal 
-        returns (bool) {
-            
-        bool success;
-        _requireValidKeyInput(type_, startTimestamp, endTimestamp, balance);
-        _requireNotAddressZero(of_);
+    internal 
+    returns (bool success) {
+        _requireValidKeyInput({type_: type_, startTimestamp: startTimestamp, endTimestamp: endTimestamp, balance: balance});
+        _requireNotAddressZero({account: of_});
 
         // context
-        bytes memory key = _encodeKey(of_, signature, type_, startTimestamp, endTimestamp, balance);
-        bytes32 keys = _role(role, "keys");
+        bytes memory key =_encodeKey({of_: of_, signature: signature, type_: type_, startTimestamp: startTimestamp, endTimestamp: endTimestamp, balance: balance});
+        bytes32 keys =_role({role: role, string_: "keys"});
         
-        _requireNoDuplicateKey(keys, key);
-        success = _tryPushKeyToEmptyBytes(keys, key);
+        _requireNoDuplicateKey({array: keys, key: key});
+        success =_tryPushKeyToEmptyBytes({array: keys, key: key});
 
         // no empty bytes were found
         if (!success) {
-            storage_.pushBytesArray(keys, key);
-            success = true;
+            storage_.pushBytesArray({key: keys, value: key});
+            success =true;
         }
 
         return success;
     }
 
     function _revokeKeyFromRole(string memory role, address of_, string memory signature)
-        internal
-        returns (bool) {
-        
-        bool success;
-
-        _requireNotAddressZero(of_);
+    internal
+    returns (bool success) {
+        _requireNotAddressZero({account: of_});
 
         // context
-        bytes32 keys = _role(role, "keys");
-        (bool gotIndex, uint index) = _getKeyIndexByContractAndSignature(keys, of_, signature);
-        _requireSuccess(gotIndex);
+        bytes32 keys =_role({account: role, string_: "keys"});
+        (bool gotIndex, uint index) =_getKeyIndexByContractAndSignature({array: keys, of_: of_, signature: signature});
+        _requireSuccess({success: gotIndex});
 
         bytes memory emptyBytes;
-        storage_.setIndexBytesArray(keys, index, emptyBytes);
+        storage_.setIndexBytesArray({key: keys, index: index, value: emptyBytes});
 
-        success = true;
+        success =true;
         return success;
     }
 
     function _resetRoleKeys(string memory role)
-        internal
-        returns (bool) {
-        
-        bool success;
+    internal
+    returns (bool success) {
+        storage_.deleteBytesArray({key: _role({role: role, string_: "keys"})});
 
-        storage_.deleteBytesArray(_role(role, "keys"));
-
-        success = true;
+        success =true;
         return success;
     }
 
     function _grantRole(address account, string memory role)
-        internal
-        returns (bool) {
+    internal
+    returns (bool success) {
         
         // refresh account before assiging role
-        _resetKeys(account);
-        bool success;
+        _resetKeys({account: account});
 
-        bytes[] memory bytesArray = storage_.getBytesArray(_role(role, "keys"));
-        for (uint i = 0; i < bytesArray.length; i++) {
+        bytes[] memory bytesArray =storage_.getBytesArray({key: _role({role: role, string_: "keys"})});
+        for (uint i =0; i <bytesArray.length; i++) {
             
-            bytes memory encodedKey = bytesArray[i];
-            (address of_, string memory signature, uint type_, uint startTimestamp, uint endTimestamp, uint balance) = _decodeKey(encodedKey);
+            bytes memory key =bytesArray[i];
+            (address of_, string memory signature, uint type_, uint startTimestamp, uint endTimestamp, uint balance) = _decodeKey({key: key});
             _grantKey(account, of_, signature, type_, startTimestamp, endTimestamp, balance);
         }
 
         // add address as member of the role
-        storage_.addAddressSet(_role(role, "members"), account);
+        storage_.addAddressSet({key: _role({role: role, string_: "members"}), value: account});
 
-        success = true;
+        success =true;
         return success;
     }
 
     function _revokeRole(address account, string memory role)
-        internal
-        returns (bool) {
+    internal
+    returns (bool success) {
         
-        bool success;
+        bytes[] memory bytesArray = storage_.getBytesArray({key: _role({role: role, string_: "keys"})});
+        for (uint i =0; i <bytesArray.length; i++) {
 
-        bytes[] memory bytesArray = storage_.getBytesArray(_role(role, "keys"));
-        for (uint i = 0; i < bytesArray.length; i++) {
-
-            bytes memory encodedKey = bytesArray[i];
-            (address of_, string memory signature, , , ,) = _decodeKey(encodedKey);
-            _revokeKey(account, of_, signature);
+            bytes memory key = bytesArray[i];
+            (address of_, string memory signature, , , ,) = _decodeKey({key: key});
+            _revokeKey({account: account, of_: of_, signature: signature});
         }
 
         // remove address as member of the role
-        storage_.removeAddressSet(_role(role, "members"), account);
+        storage_.removeAddressSet({key: _role({role: role, string_: "members"}), value: account});
 
-        success = true;
+        success =true;
         return success;
     }
 }

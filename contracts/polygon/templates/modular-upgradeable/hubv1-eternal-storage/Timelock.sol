@@ -3,7 +3,6 @@ pragma solidity 0.8.19;
 import "contracts/polygon/templates/Storage.sol";
 import "contracts/polygon/templates/modular-upgradeable/hubv1-eternal-storage/Validator.sol";
 import "contracts/polygon/deps/openzeppelin/security/ReentrancyGuard.sol";
-import "contracts/polygon/deps/openzeppelin/token/ERC20/IERC20.sol";
 
 /**
 
@@ -15,13 +14,24 @@ import "contracts/polygon/deps/openzeppelin/token/ERC20/IERC20.sol";
     - delay calls
     - bypass validator
 
+    **rated 85%
  */
 
 interface ITimelock {
-
+    function getRequest(uint index) external view returns (address[] memory targets, string[] memory signatures, bytes[] memory args, uint startTimestamp, uint endTimelockTimestamp, uint endTimeoutTimestamp, bool isApproved, bool isRejected, bool isExecuted);
+    function init() external;
+    function queue(address[] memory targets, string[] memory signatures, bytes[] memory args) external returns (uint index);
+    function approve(uint index) external;
+    function reject(uint index) external;
+    function execute(uint index) external;
+    function setTimelockDuration(uint value) external;
+    function setTimeoutDuration(uint value) external;
+    function setApproveAll(bool value) external;
 }
 
 contract Timelock is ReentrancyGuard {
+
+    address public deployer;
 
     IStorage public storage_;
     IValidator public validator;
@@ -32,11 +42,9 @@ contract Timelock is ReentrancyGuard {
     }
 
     constructor(address storage__, address validator_, bool enabledApproveAll, uint durationTimelock, uint durationTimeout) {
-        storage_ =IStorage(storage_);
+        storage_ =IStorage(storage__);
         validator =IValidator(validator_);
-        _setApproveAll({value: enabledApproveAll});
-        _setTimelockDuration({value: durationTimelock});
-        _setTimeoutDuration({value: durationTimeout});
+        deployer =msg.sender;
     }
 
     function getRequest(uint index)
@@ -45,8 +53,17 @@ contract Timelock is ReentrancyGuard {
         return _decodeRequest(storage_.indexBytesArray({key: _requests(), index: index}));
     }
 
+    function init() 
+        external {
+        require(msg.sender ==deployer, "Timelock: only deployer can init");
+        _setApproveAll({value: enabledApproveAll});
+        _setTimelockDuration({value: durationTimelock});
+        _setTimeoutDuration({value: durationTimeout});
+    }
+
     function queue(address[] memory targets, string[] memory signatures, bytes[] memory args)
     external
+    nonReentrant
     verify("queue(address[],string[],bytes[])")
     returns (uint index) {
         index = _queue({targets: targets, signatures: signatures, args: args});
@@ -56,32 +73,44 @@ contract Timelock is ReentrancyGuard {
 
     function approve(uint index)
     external 
+    nonReentrant
     verify("approve(uint)") {
         _approve({index: index});
     }
 
     function reject(uint index)
     external
+    nonReentrant
     verify("reject(uint)") {
         _reject({index: index});
     }
 
     function execute(uint index)
     external
+    nonReentrant
     verify("execute(uint)") {
         _execute({index: index});
     }
 
     function setTimelockDuration(uint value)
     external
+    nonReentrant
     verify("setTimelockDuration(uint)") {
         _setTimelockDuration({value: value});
     }
 
     function setTimeoutDuration(uint value)
     external
+    nonReentrant
     verify("setTimeoutDuration(uint)") {
         _setTimeoutDuration({value: value});
+    }
+
+    function setApproveAll(bool value)
+    external
+    nonReentrant
+    verify("setApproveAll(bool)") {
+        _setApproveAll(value);
     }
 
     function _encodeRequest(address[] memory targets, string[] memory signatures, bytes[] memory args, uint startTimestamp, uint endTimelockTimestamp, uint endTimeoutTimestamp, bool isApproved, bool isRejected, bool isExecuted)
@@ -140,7 +169,8 @@ contract Timelock is ReentrancyGuard {
         uint durTOut =storage_.getUint({key: _durationTimeout()});
         uint now_ =block.timestamp;
         storage_.pushBytesArray({key: _requests(), value: _encodeRequest({targets: targets, signatures: signatures, args: args, startTimestamp: now_, endTimelockTimestamp: now_ +durLock, endTimeoutTimestamp: now_ +durTOut, isApproved: false, isRejected: false, isExecuted: false})});
-        return storage_.lengthBytesArray({key: _requests()})--;
+        bytes[] memory bytesArray = storage_.getBytesArray({key: _requests()});
+        return bytesArray.length -1;
     }
 
     function _approve(uint index)
@@ -166,7 +196,7 @@ contract Timelock is ReentrancyGuard {
     function _execute(uint index)
     internal
     returns (bool[] memory successes, bytes[] memory responses) {
-        (address[] memory targets, string[] memory signatures, bytes[] memory args, uint startTimestamp, uint endTimelockTimestamp, uint endTimeoutTimestamp, bool isApproved, bool isRejected, bool isExecuted) = _decodeRequest({request: storage_.indexBytesArray({key: _requests(), index: index})});
+        (address[] memory targets, string[] memory signatures, bytes[] memory args, , uint endTimelockTimestamp, uint endTimeoutTimestamp, bool isApproved, bool isRejected, bool isExecuted) = _decodeRequest({request: storage_.indexBytesArray({key: _requests(), index: index})});
         require(isApproved, "Timelock: must be approved");
         require(!isRejected, "Timelock: must not be rejected");
         require(!isExecuted, "Timelock: must not be executed");
