@@ -31,6 +31,7 @@ interface ITimelock {
 
 contract Timelock is ReentrancyGuard {
 
+    bool private _init;
     address public deployer;
 
     IStorage public storage_;
@@ -56,9 +57,11 @@ contract Timelock is ReentrancyGuard {
     function init() 
         external {
         require(msg.sender ==deployer, "Timelock: only deployer can init");
+        require(!_init, "Validator: !init");
         _setApproveAll({value: enabledApproveAll});
         _setTimelockDuration({value: durationTimelock});
         _setTimeoutDuration({value: durationTimeout});
+        _init =true;
     }
 
     function queue(address[] memory targets, string[] memory signatures, bytes[] memory args)

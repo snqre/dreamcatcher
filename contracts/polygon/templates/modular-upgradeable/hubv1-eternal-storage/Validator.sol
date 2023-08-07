@@ -37,7 +37,7 @@ interface IValidator {
 
 contract Validator is IValidator, ReentrancyGuard, Pausable {
 
-    bool public init;
+    bool private _init;
     address public deployer;
 
     IStorage public storage_;
@@ -89,8 +89,11 @@ contract Validator is IValidator, ReentrancyGuard, Pausable {
     }
 
     function init() 
-        external {
+    external 
+    nonReentrant 
+    whenNotPaused {
         require(msg.sender ==deployer, "Validator: only deployer can init");
+        require(!_init, "Validator: !init");
         _grantKeyToRole({role: "validator", of_: address(this), signature: "grantKey(address,address,string,uint,uint,uint,uint)", type_: 0, startTimestamp: 0, endTimestamp: 0, balance: 0});
         _grantKeyToRole({role: "validator", of_: address(this), signature: "revokeKey(address,address,string)", type_: 0, startTimestamp: 0, endTimestamp: 0, balance: 0});
         _grantKeyToRole({role: "validator", of_: address(this), signature: "resetKeys(address)", type_: 0, startTimestamp: 0, endTimestamp: 0, balance: 0});
@@ -102,6 +105,7 @@ contract Validator is IValidator, ReentrancyGuard, Pausable {
         _grantKeyToRole({role: "validator", of_: address(this), signature: "pause()", type_: 0, startTimestamp: 0, endTimestamp: 0, balance: 0});
         _grantKeyToRole({role: "validator", of_: address(this), signature: "unpause()", type_: 0, startTimestamp: 0, endTimestamp: 0, balance: 0});
         _grantRole({account: msg.sender, role: "validator"});
+        _init =true;
     }
 
     function grantKey(address account, address of_, string memory signature, uint type_, uint startTimestamp, uint endTimestamp, uint balance)
