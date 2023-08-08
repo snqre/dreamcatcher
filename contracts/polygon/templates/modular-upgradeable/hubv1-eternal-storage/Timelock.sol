@@ -42,7 +42,7 @@ contract Timelock is ReentrancyGuard {
         _;
     }
 
-    constructor(address storage__, address validator_, bool enabledApproveAll, uint durationTimelock, uint durationTimeout) {
+    constructor(address storage__, address validator_) {
         storage_ =IStorage(storage__);
         validator =IValidator(validator_);
         deployer =msg.sender;
@@ -54,7 +54,7 @@ contract Timelock is ReentrancyGuard {
         return _decodeRequest(storage_.indexBytesArray({key: _requests(), index: index}));
     }
 
-    function init() 
+    function init(bool enabledApproveAll, uint durationTimelock, uint durationTimeout) 
         external {
         require(msg.sender ==deployer, "Timelock: only deployer can init");
         require(!_init, "Validator: !init");

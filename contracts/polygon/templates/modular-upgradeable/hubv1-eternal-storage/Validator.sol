@@ -479,7 +479,7 @@ contract Validator is IValidator, ReentrancyGuard, Pausable {
         _requireNotAddressZero({account: of_});
 
         // context
-        bytes32 keys =_role({account: role, string_: "keys"});
+        bytes32 keys =_role({role: role, string_: "keys"});
         (bool gotIndex, uint index) =_getKeyIndexByContractAndSignature({array: keys, of_: of_, signature: signature});
         _requireSuccess({success: gotIndex});
 

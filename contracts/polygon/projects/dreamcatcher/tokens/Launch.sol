@@ -29,7 +29,7 @@ contract Launch {
             deploy timelock, pass storage & validator address and settings
         
          */
-        timelock = new Timelock({storage__: address(storage_), validator_: address(validator), enabledApproveAll: true, durationTimelock: 3600 seconds, durationTimeout: 7200 seconds});
+        timelock = new Timelock({storage__: address(storage_), validator_: address(validator)});
 
         // add implementations
         storage_.addImplementation(address(validator));
@@ -37,7 +37,7 @@ contract Launch {
 
         // init
         validator.init();
-        timelock.init();
+        timelock.init({enabledApproveAll: true, durationTimelock: 3600, durationTimeout: 7200});
 
         // grant timelock universal-key role
         validator.grantRole({account: address(timelock), role: "universal-key"});
