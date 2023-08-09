@@ -311,7 +311,6 @@ library Validator {
         db.addAddressSet({key: members, value: account});
         success =true;
         return success;
-
     }
 
     function revokeRole(IStorage db, address account, string memory role)
