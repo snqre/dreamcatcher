@@ -8,6 +8,9 @@ import "contracts/polygon/deps/openzeppelin/token/ERC20/extensions/ERC20Snapshot
 import "contracts/polygon/deps/openzeppelin/token/ERC20/extensions/ERC20Burnable.sol";
 import "contracts/polygon/deps/openzeppelin/token/ERC20/ERC20.sol";
 import "contracts/polygon/deps/openzeppelin/access/Ownable.sol";
+import "contracts/polygon/deps/openzeppelin/token/ERC721/ERC721.sol";
+import "contracts/polygon/deps/openzeppelin/utils/structs/EnumerableSet.sol";
+
 
 contract Database is Storage {}
 
@@ -53,6 +56,12 @@ library Utils {
 
 
 library Encoder {
+    function encode(string memory string_)
+    external pure
+    returns (bytes32 variable) {
+        keccak256(abi.encode(string_));
+    }
+
     function encodeKey(address contract_, string memory signature, uint type_, uint startTimestamp, uint endTimestamp, uint balance)
     external pure
     returns (bytes memory key) {
@@ -65,6 +74,18 @@ library Encoder {
         return abi.decode(key, (address,string,uint,uint,uint,uint));
     }
 
+    function encodeRequest(address[] memory targets, string[] memory signatures, bytes[] memory args, uint endTimelockTimestamp, uint endTimeoutTimestamp, bool approved, bool rejected, bool executed)
+    external pure
+    returns (bytes memory request) {
+        return abi.encode(targets, signatures, args, endTimelockTimestamp, endTimeoutTimestamp, approved, rejected, executed);
+    }
+
+    function decodeRequest(bytes memory request)
+    external pure
+    returns (address[] memory targets, string[] memory signatures, bytes[] memory args, uint endTimelockTimestamp, uint endTimeoutTimestamp, bool approved, bool rejected, bool executed) {
+        return abi.decode(request, (address[],string[],bytes[],uint,uint,bool,bool,bool));
+    }
+
     function account(address account, string memory property)
     external pure
     returns (bytes32 variable) {
@@ -75,6 +96,154 @@ library Encoder {
     external pure
     returns (bytes32 variable) {
         return keccak256(abi.encode(role, property));
+    }
+}
+
+
+
+contract Storage {
+    using EnumerableSet for EnumerableSet.AddressSet;
+    using EnumerableSet for EnumerableSet.UintSet;
+    using EnumerableSet for EnumerableSet.Bytes32Set;
+
+    EnumerableSet.AddressSet internal _admins;
+    EnumerableSet.AddressSet internal _implementations;
+
+    mapping(bytes32 => string) private _string;
+    mapping(bytes32 => bytes) private _bytes;
+    mapping(bytes32 => uint) private _uint;
+    mapping(bytes32 => int) private _int;
+    mapping(bytes32 => address) private _address;
+    mapping(bytes32 => bool) private _bool;
+    mapping(bytes32 => bytes32) private _bytes32;
+
+    mapping(bytes32 => string[]) private _stringArray;
+    mapping(bytes32 => bytes[]) private _bytesArray;
+    mapping(bytes32 => uint[]) private _uintArray;
+    mapping(bytes32 => int[]) private _intArray;
+    mapping(bytes32 => address[]) private _addressArray;
+    mapping(bytes32 => bool[]) private _boolArray;
+    mapping(bytes32 => bytes32[]) private _bytes32Array;
+
+    mapping(bytes32 => EnumerableSet.AddressSet) private _addressSet;
+    mapping(bytes32 => EnumerableSet.UintSet) private _uintSet;
+    mapping(bytes32 => EnumerableSet.Bytes32Set) private _bytes32Set;
+
+    // ADMIN & LOGIC EVENTS
+
+    event AddAdmin(address indexed admin);
+    event RemoveAdmin(address indexed admin);
+
+    event AddLogic(address indexed logic);
+    event RemoveLogic(address indexed logic);
+
+    // BASIC EVENTS
+
+    event SetString(bytes32 indexed key, string indexed value);
+    event SetBytes(bytes32 indexed key, bytes indexed value);
+    event SetUint(bytes32 indexed key, bytes indexed value);
+    event SetInt(bytes32 indexed key, int indexed value);
+    event SetAddress(bytes32 indexed key, address indexed value);
+    event SetBool(bytes32 indexed key, bool indexed value);
+    event SetBytes32(bytes32 indexed key, bytes32 indexed value);
+
+    event GetString(bytes32 indexed key);
+    event GetBytes(bytes32 indexed key);
+    event GetUint(bytes32 indexed key);
+    event GetInt(bytes32 indexed key);
+    event GetAddress(bytes32 indexed key);
+    event GetBool(bytes32 indexed key);
+    event GetBytes32(bytes32 indexed key);
+
+
+    modifier onlyAdmin() {
+        require(_admins.contain(msg.sender), "Storage: !admin");
+        _;
+    }
+
+    modifier onlyLogic() {
+        require(_implementations.contains(msg.sender), "Storage: !logic");
+        _;
+    }
+
+    constructor() {
+        _admins.add(msg.sender);
+    }
+
+    // GET ADMIN & LOGIC
+
+    function getAdmins()
+    external view
+    returns (address[] memory) {
+        return _admins.values();
+    }
+
+    function getLogics()
+    external view
+    returns (address[] memory) {
+        return _implementations.values();
+    }
+
+    // SET ADMIN & LOGIC
+
+    function addAdmin(address admin)
+    external
+    onlyAdmin {
+        require(admin !=address(0), "Storage: admin is address zero");
+        require(!_implementations.contains(admin), "Storage: admin is logic");
+        require(!_admins.contains(admin), "Storage: duplicate assignment");
+        _admins.add(admin);
+        emit AddAdmin({admin: admin});
+    }
+
+    function removeAdmin(address admin)
+    external
+    onlyAdmin {
+        require(admin !=address(0), "Storage: admin is address zero");
+        require(!_implementations.contains(admin), "Storage: admin is logic");
+        require(_admins.contains(admin), "Storage: admin not found");
+        _admins.remove(admin);
+        emit RemoveAdmin({admin: admin});
+    }
+
+    function addLogic(address logic)
+    external
+    onlyAdmin {
+        require(logic !=address(0), "Storage: logic is address zero");
+        require(!_admins.contains(logic), "Storage: logic is admin");
+        require(!_implementations.contains(logic), "Storage: duplicate assignment");
+        _implementations.add(logic);
+        emit AddLogic({logic: logic});
+    }
+
+    function removeLogic(address logic)
+    external
+    onlyAdmin {
+        require(logic !=address(0), "Storage: logic is address zero");
+        require(!_admins.contains(logic), "Storage: logic is admin");
+        require(_implementations.contains(logic), "Storage: logic not found");
+        _implementations.remove(logic);
+        emit RemoveLogic({logic: logic});
+    }
+
+    // SET BASIC
+
+    function setString(bytes32 key, string memory value)
+    external
+    onlyLogic {
+        bytes32 emptyBytes32;
+        require(key !=emptyBytes32, "Storage: empty key was given");
+        _string[key] =value;
+        emit SetString({key: key, value: value});
+    }
+    
+    function setBytes(bytes32 key, bytes memory value)
+    external
+    onlyLogic {
+        bytes32 emptyBytes32;
+        require(key !=emptyBytes32, "Storage: empty key was given");
+        _bytes[key] =value;
+        emit SetBytes({key: key, value: value});
     }
 }
 
@@ -335,6 +504,18 @@ library Validator {
 
 
 
+library Network {
+    function setUpAccount(IStorage db, address account, string memory username)
+    external {
+        bytes32 meta =Encoder.account({account: account, property: "meta"});
+        
+    }
+
+    
+}
+
+
+
 interface ISentinel {
     function init() external;
     function getKeys(address account) external view returns (bytes[] memory);
@@ -489,13 +670,45 @@ contract Sentinel is Pausable, ReentrancyGuard {
 
 
 library Timelock {
-
+    function queueRequest(address[] memory targets, string[] memory signatures, bytes[] memory args)
+    external {
+        uint now_ =block.timestamp;
+        uint durationTimelock =db.getUint({key: Encoder.encode({string_: "durationTimelock"})});
+        uint durationTimeout =db.getUint({key: Encoder.encode({string_: "durationTimeout"})});
+        bytes memory request =Encoder.encodeRequest({targets: targets, signatures: signatures, args: args, endTimelockTimestamp: now_ +durationTimelock, endTimeoutTimestamp: now_ +durationTimeout, approved: false, rejected: false, executed: false});
+        db.pushBytesArray({key: Encoder.encode({string_: "requests"}), value: request});
+    }
 }
 
 
 
 contract Key {
 
+}
+
+
+
+contract Achievements is ERC721 {
+    IStorage db;
+    ISentinel sn;
+
+    constructor(address database, address sentinel)
+    ERC721("DreamRewards", "DRMR") {
+        db =IStorage(database);
+        sn =ISentinel(sentinel);
+    }
+
+    function createCollectible(address account, string memory tokenURI)
+    external
+    returns (uint) {
+        sn.verify({account: msg.sender, contract_: address(this), signature: "createCollectibe(address,string)"});
+        bytes32 numAchievements =Encoder.encode({string_: "numAchievements"});
+        uint newItemId =db.getUint({key: numAchievements});
+        _safeMint({to: account, tokenId: newItemId});
+        _setTokenURI({tokenId: newItemId, tokenURI: tokenURI});
+        db.setUint({key: numAchievements, value: newItemId +=1});
+        return newItemId;
+    }
 }
 
 
@@ -570,10 +783,12 @@ contract DreamToken is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit {
     internal override {
         bytes32 balanceA =Encoder.account({account: to, property: "dreamTokenBalance"});
         bytes32 balanceB =Encoder.account({account: from, property: "dreamTokenBalance"});
-        uint balanceFrom =db.getUint({key: Encoder.account({account: from, property: "dreamTokenBalance"})});
-        uint balanceTo =db.getUint({key: Encoder.account({account: to, property: "dreamTokenBalance"})});
+        uint balanceTo =db.getUint({key: balanceA});
+        uint balanceFrom =db.getUint({key: balanceB});
         if (from !=address(0)) { balanceFrom -=amount; }
         if (to !=address(0)) { balanceTo +=amount; }
+        db.setUint({key: balanceA, value: balanceTo});
+        db.setUint({key: balanceB, value: balanceFrom});
         super._afterTokenTransfer({from: from, to: to, amount: amount});
     }
 
@@ -645,6 +860,14 @@ contract EmberToken is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit {
 
     function _afterTokenTransfer(address from, address to, uint amount)
     internal override {
+        bytes32 balanceA =Encoder.account({account: to, property: "emberTokenBalance"});
+        bytes32 balanceB =Encoder.account({account: from, property: "emberTokenBalance"});
+        uint balanceTo =db.getUint({key: balanceA});
+        uint balanceFrom =db.getUint({key: balanceB});
+        if (from !=address(0)) { balanceFrom -=amount; }
+        if (to !=address(0)) { balanceTo +=amount; }
+        db.setUint({key: balanceA, value: balanceTo});
+        db.setUint({key: balanceB, value: balanceFrom});
         super._afterTokenTransfer({from: from, to: to, amount: amount});
     }
 
