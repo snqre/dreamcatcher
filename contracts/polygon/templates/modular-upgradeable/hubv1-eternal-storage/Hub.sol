@@ -3,6 +3,11 @@ pragma solidity 0.8.19;
 import "contracts/polygon/templates/Storage.sol";
 import "contracts/polygon/deps/openzeppelin/security/ReentrancyGuard.sol";
 import "contracts/polygon/deps/openzeppelin/security/Pausable.sol";
+import "contracts/polygon/deps/openzeppelin/token/ERC20/extensions/draft-ERC20Permit.sol";
+import "contracts/polygon/deps/openzeppelin/token/ERC20/extensions/ERC20Snapshot.sol";
+import "contracts/polygon/deps/openzeppelin/token/ERC20/extensions/ERC20Burnable.sol";
+import "contracts/polygon/deps/openzeppelin/token/ERC20/ERC20.sol";
+import "contracts/polygon/deps/openzeppelin/access/Ownable.sol";
 
 contract Database is Storage {}
 
@@ -33,6 +38,12 @@ library Match {
 
 
 library Utils {
+    function convertToWei(uint value)
+    external pure
+    returns (uint) {
+        return value * (10**18);
+    }
+
     function requireSuccess(bool success)
     external pure {
         require(success, "Utils: !success");
@@ -325,6 +336,25 @@ library Validator {
 
 
 
+interface ISentinel {
+    function init() external;
+    function getKeys(address account) external view returns (bytes[] memory);
+    function getRoleKeys(string memory role) external view returns (bytes[] memory);
+    function getRoleMembers(string memory role) external view returns (address[] memory);
+    function getRoleSize(string memory role) external view returns (uint);
+    function verify(address account, address contract_, string memory signature) external;
+    function grantKey(address account, address contract_, string memory signature, uint type_, uint startTimestamp, uint endTimestamp, uint balance) external;
+    function revokeKey(address account, address contract_, string memory signature) external;
+    function resetKeys(address account) external;
+    function grantKeyToRole(string memory role, address contract_, string memory signature, uint type_, uint startTimestamp, uint endTimestamp, uint balance) external;
+    function revokeKeyFromRole(string memory role, address contract_, string memory signature) external;
+    function resetRoleKeys(string memory role) external;
+    function grantRole(address account, string memory role) external;
+    function revokeRole(address account, string memory role) external;
+}
+
+
+
 contract Sentinel is Pausable, ReentrancyGuard {
     bool internal _init;
     address internal _deployer;
@@ -339,15 +369,26 @@ contract Sentinel is Pausable, ReentrancyGuard {
         _deployer =msg.sender;
         db =IStorage(database);
     }
-    // only use once contract is set as implementation of storage
+
     function init()
     external {
         require(msg.sender ==_deployer, "Terminal: only _deployer can call");
-        require(!_init, "Terminal: _init");
-        // ... check storage to see if address has been added as implementation
-        Validator.grantKeyToRole({role: "validator", contract_: address(this), signature: "grantKey(address,address,string,uint256,uint256,uint256,uint256)", type_: 0, startTimestamp: 0, endTimestamp: 0, balance: 0});
-        Validator.grantKeyToRole({role: "validator", contract_: address(this), signature: "revokeKey(address,address,string)", type_: 0, startTimestamp: 0, endTimestamp: 0, balance: 0});
-        // ... and so on
+        require(!_init, "Sentienl: _init");
+        bool isImplementation;
+        address[] memory implementations =db.getImplementations();
+        for (uint i =0; i <implementations.length; i++) {
+            if (msg.sender ==implementations[i]) { isImplementation =true; }
+        }
+        require(isImplementation, "Sentinel: cannot init without setting as implementation first");
+        Validator.grantKeyToRole({db: db, role: "validator", contract_: address(this), signature: "grantKey(address,address,string,uint256,uint256,uint256,uint256)", type_: 0, startTimestamp: 0, endTimestamp: 0, balance: 0});
+        Validator.grantKeyToRole({db: db, role: "validator", contract_: address(this), signature: "revokeKey(address,address,string)", type_: 0, startTimestamp: 0, endTimestamp: 0, balance: 0});
+        Validator.grantKeyToRole({db: db, role: "validator", contract_: address(this), signature: "resetKeys(address)", type_: 0, startTimestamp: 0, endTimestamp: 0, balance: 0});
+        Validator.grantKeyToRole({db: db, role: "validator", contract_: address(this), signature: "grantKeyToRole(string,address,string,uint256,uint256,uint256,uint256)", type_: 0, startTimestamp: 0, endTimestamp: 0, balance: 0});
+        Validator.grantKeyToRole({db: db, role: "validator", contract_: address(this), signature: "revokeKeyFromRole(string,address,string)", type_: 0, startTimestamp: 0, endTimestamp: 0, balance: 0});
+        Validator.grantKeyToRole({db: db, role: "validator", contract_: address(this), signature: "resetRoleKeys(string)", type_: 0, startTimestamp: 0, endTimestamp: 0, balance: 0});
+        Validator.grantKeyToRole({db: db, role: "validator", contract_: address(this), signature: "grantRole(address,string)", type_: 0, startTimestamp: 0, endTimestamp: 0, balance: 0});
+        Validator.grantKeyToRole({db: db, role: "validator", contract_: address(this), signature: "revokeRole(address,string)", type_: 0, startTimestamp: 0, endTimestamp: 0, balance: 0});
+        Validator.grantRole({db: db, account: msg.sender, role: "validator"});
         _init =true;
     }
 
@@ -457,4 +498,170 @@ library Timelock {
 
 contract Key {
 
+}
+
+
+
+interface IDreamToken {
+    function maxSupply() external view returns (uint);
+    function totalSupply() external view returns (uint);
+    function balanceOf(address account) external view returns (uint);
+    function getCurrentSnapshotId() external view returns (uint);
+    function transfer(address to, uint amount) external returns (bool);
+    function allowance(address owner, address spender) external view returns (uint);
+    function approve(address spender, uint amount) external returns (bool);
+    function transferFrom(address from, address to, uint amount) external returns (bool);
+    function snapshot() external returns (uint);
+    function burn(uint amount) external;
+    function burnFrom(address account, uint amount) external;
+}
+
+
+
+contract DreamToken is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit {
+    uint public cap;
+    IStorage db;
+    ISentinel sn;
+
+    modifier verify(string memory signature) {
+        sn.verify({account: msg.sender, contract_: address(this), signature: signature});
+        _;
+    }
+
+    constructor(address database, address sentinel)
+    ERC20("DreamToken", "DREAM")
+    ERC20Permit("DreamToken") {
+        cap =Utils.convertToWei({value: 200000000});
+        _mint({account: msg.sender, amount: cap});
+        db =IStorage(database);
+        sn =ISentinel(sentinel);
+    }
+
+    function maxSupply()
+    external view
+    returns (uint) {
+        return cap;
+    }
+
+    function getCurrentSnapshotId()
+    external view
+    returns (uint) {
+        return _getCurrentSnapshotId();
+    }
+
+    function allowance(address owner, address spender) 
+    public view override 
+    returns (uint) {
+        return super.allowance({owner: owner, spender: spender});
+    }
+
+    function snapshot()
+    external
+    verify("snapshot()")
+    returns (uint) {
+        _snapshot();
+        return _getCurrentSnapshotId();
+    }
+
+    function _beforeTokenTransfer(address from, address to, uint amount)
+    internal override(ERC20, ERC20Snapshot) {
+        super._beforeTokenTransfer({from: from, to: to, amount: amount});
+    }
+
+    function _afterTokenTransfer(address from, address to, uint amount)
+    internal override {
+        bytes32 balanceA =Encoder.account({account: to, property: "dreamTokenBalance"});
+        bytes32 balanceB =Encoder.account({account: from, property: "dreamTokenBalance"});
+        uint balanceFrom =db.getUint({key: Encoder.account({account: from, property: "dreamTokenBalance"})});
+        uint balanceTo =db.getUint({key: Encoder.account({account: to, property: "dreamTokenBalance"})});
+        if (from !=address(0)) { balanceFrom -=amount; }
+        if (to !=address(0)) { balanceTo +=amount; }
+        super._afterTokenTransfer({from: from, to: to, amount: amount});
+    }
+
+    function _mint(address account, uint amount)
+    internal override {
+        super._mint({account: account, amount: amount});
+    }
+
+    function _burn(address account, uint amount)
+    internal override {
+        cap -= amount;
+        super._burn({account: account, amount: amount});
+    }
+}
+
+
+
+interface IEmberToken {
+    function totalSupply() external view returns (uint);
+    function balanceOf(address account) external view returns (uint);
+    function getCurrentSnapshotId() external view returns (uint);
+    function transfer(address to, uint amount) external returns (bool);
+    function allowance(address owner, address spender) external view returns (uint);
+    function approve(address spender, uint amount) external returns (bool);
+    function transferFrom(address from, address to, uint amount) external returns (bool);
+    function mint(address to, uint amount) external;
+    function snapshot() external returns (uint);
+    function burn(uint amount) external;
+    function burnFrom(address account, uint amount) external;
+}
+
+
+
+contract EmberToken is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit {
+    IStorage db;
+    ISentinel sn;
+
+    constructor(address database, address sentinel)
+    ERC20("EmberToken", "EMBER")
+    ERC20Permit("EmberToken") {
+        db =IStorage(database);
+        sn =ISentinel(sentinel);
+    }
+
+    function getCurrentSnapshotId()
+    external view
+    returns (uint) {
+        return _getCurrentSnapshotId();
+    }
+
+    function mint(address account, uint amount)
+    external
+    onlyOwner {
+        _mint({account: account, amount: amount});
+    }
+
+    function snapshot()
+    external
+    onlyOwner
+    returns (uint) {
+        _snapshot();
+        return _getCurrentSnapshotId();
+    }
+
+    function _beforeTokenTransfer(address from, address to, uint amount)
+    internal override(ERC20, ERC20Snapshot) {
+        super._beforeTokenTransfer({from: from, to: to, amount: amount});
+    }
+
+    function _afterTokenTransfer(address from, address to, uint amount)
+    internal override {
+        super._afterTokenTransfer({from: from, to: to, amount: amount});
+    }
+
+    function _transfer(address from, address to, uint amount)
+    internal override {
+        revert("EmberToken: transfer disabled by design");
+    }
+
+    function _mint(address account, uint amount)
+    internal override {
+        super._mint({account: account, amount: amount});
+    }
+
+    function _burn(address account, uint amount)
+    internal override {
+        super._burn({account: account, amount: amount});
+    }
 }
