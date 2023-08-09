@@ -73,22 +73,22 @@ library ValidatorMatch {
     function isMatchingKeyContractAndSignature(address contractA, address contractB, string memory signatureA, string memory signatureB)
     external pure
     returns (bool isMatch) {
-        return contractA ==contractB && Match.isMatchingString({stringA: signatureA, stringB: signatureB});
+        bool sameContract =contractA ==contractB;
+        bool sameString =Match.isMatchingString({stringA: signatureA, stringB: signatureB});
+        return sameContract && sameString;
     }
 }
 
 
 
 library ValidatorToolkit {
-    function getKeyIndexByContractAndSignature(address database, bytes32 array, address contract_, string memory signature)
+    function getKeyIndexByContractAndSignature(IStorage db, bytes32 array, address contract_, string memory signature)
     external view
     returns (bool success, uint index) {
-        IStorage db =IStorage(database);
         bytes memory emptyBytes;
         bytes[] memory bytesArray =db.getBytesArray({key: array});
         for (uint i =0; i <bytesArray.length; i++) {
             bytes memory key =bytesArray[i];
-            //decode
             if (!Match.isMatchingBytes({bytesA: key, bytesB: emptyBytes})) {
                 (address contract_B, string memory signatureB, , , ,) = Encoder.decodeKey({key: key});
                 if (ValidatorMatch.isMatchingKeyContractAndSignature({contractA: contract_, contractB: contract_B, signatureA: signature, signatureB: signatureB})) {
@@ -101,10 +101,9 @@ library ValidatorToolkit {
         return (success, index);
     }
 
-    function getKeyIndexByEmptyBytes(address database, bytes32 array)
+    function getKeyIndexByEmptyBytes(IStorage db, bytes32 array)
     external view
     returns (bool success, uint index) {
-        IStorage db =IStorage(database);
         bytes memory emptyBytes;
         bytes[] memory bytesArray =db.getBytesArray({key: array});
         for (uint i =0; i <bytesArray.length; i++) {
@@ -116,22 +115,6 @@ library ValidatorToolkit {
             }
         }
         return (success, index);
-    }
-
-    function requireNoDuplicateKey(address database, bytes32 array, bytes memory key)
-    external view {
-        IStorage db =IStorage(database);
-        (address contract_, string memory signature, , , ,) =Encoder.decodeKey({key: key});
-        bytes memory emptyBytes;
-        bytes[] memory bytesArray =db.getBytesArray({key: array});
-        for (uint i =0; i <bytesArray.length; i++) {
-            bytes memory keyB =bytesArray[i];
-            //decode
-            if (!Match.isMatchingBytes({bytesA: keyB, bytesB: emptyBytes})) {
-                (address contract_B, string memory signatureB, , , ,) = Encoder.decodeKey({key: key});
-                require(ValidatorMatch.isMatchingKeyContractAndSignature({contractA: contract_, contractB: contract_B, signatureA: signature, signatureB: signatureB}), "ValidatorToolkit: matching contract and address");
-            }
-        }    
     }
 
     function requireInput(uint type_, uint startTimestamp, uint endTimestamp, uint balance)
@@ -155,213 +138,323 @@ library ValidatorToolkit {
 
 
 library Validator {
-    function grantKey(address database, address account, address contract_, string memory signature, uint type_, uint startTimestamp, uint endTimestamp, uint balance)
+    function getKeys(IStorage db, address account)
+    external view
+    returns (bytes[] memory) {
+        require(account !=address(0), "Validator: account is address zero");
+        bytes32 keys =Encoder.account({account: account, property: "keys"});
+        return db.getBytesArray({key: keys});
+    }
+
+    function getRoleKeys(IStorage db, string memory role)
+    external view
+    returns (bytes[] memory) {
+        bytes32 keys =Encoder.role({role: role, property: "keys"});
+        return db.getBytesArray({key: keys});
+    }
+
+    function getRoleMembers(IStorage db, string memory role)
+    external view
+    returns (address[] memory) {
+        bytes32 members =Encoder.role({role: role, property: "members"});
+        return db.valuesAddressSet({key: members});
+    }
+
+    function getRoleSize(IStorage db, string memory role)
+    external view
+    returns (uint) {
+        bytes32 members =Encoder.role({role: role, property: "members"});
+        return db.lengthAddressSet({key: members});
+    }
+
+    function grantKey(IStorage db, address account, address contract_, string memory signature, uint type_, uint startTimestamp, uint endTimestamp, uint balance)
     external
-    returns (bool success) {
+    returns (bool success, uint index) {
         ValidatorToolkit.requireInput({type_: type_, startTimestamp: startTimestamp, endTimestamp: endTimestamp, balance: balance});
-        require(database !=address(0), "Validator: database is address zero");
         require(account !=address(0), "Validator: account is address zero");
         require(contract_ !=address(0), "Validator: contract_ is address zero");
-        IStorage db =IStorage(database);
         bytes memory key =Encoder.encodeKey({contract_: contract_, signature: signature, type_: type_, startTimestamp: startTimestamp, endTimestamp: endTimestamp, balance: balance});
         bytes32 keys =Encoder.account({account: account, property: "keys"});
-        ValidatorToolkit.requireNoDuplicateKey({database: database, array: keys, key: key});
-        // try to push key to empty bytes
-        bytes memory emptyBytes;
-        bytes[] memory bytesArray =db.getBytesArray({key: keys});
-        for (uint i =0; i <bytesArray.length; i++) {
-            bytes memory keyB =bytesArray[i];
-            //decode
-            if (Match.isMatchingBytes({bytesA: keyB, bytesB: emptyBytes})) {
-                db.setIndexBytesArray({key: keys, index: i, value: key});
-                success =true;
-                break;
-            }
-        }
-        if (!success) {
+        (success, index) =ValidatorToolkit.getKeyIndexByContractAndSignature({db: db, array: keys, contract_: contract_, signature: signature});
+        require(!success, "Validator: matching contract and address");
+        (success, index) =ValidatorToolkit.getKeyIndexByEmptyBytes({db: db, array: keys});
+        if (success) { db.setIndexBytesArray({key: keys, index: index, value: key}); }
+        else {
             db.pushBytesArray({key: keys, value: key});
+            index =db.lengthBytesArray({key: keys}) -1;
             success =true;
         }
         Utils.requireSuccess({success: success});
-        return success;
+        return (success, index);
     }
 
-    function revokeKey(address database, address account, address contract_, string memory signature)
+    function revokeKey(IStorage db, address account, address contract_, string memory signature)
     external
-    returns (bool success) {
-        require(database !=address(0), "Validator: database is address zero");
+    returns (bool success, uint index) {
         require(account !=address(0), "Validator: account is address zero");
         require(contract_ !=address(0), "Validator: contract_ is address zero");
-        IStorage db =IStorage(database);
         bytes32 keys =Encoder.account({account: account, property: "keys"});
-        (bool gotIndex, uint index) =ValidatorToolkit.getKeyIndexByContractAndSignature({database: database, array: keys, contract_: contract_, signature: signature});
-        Utils.requireSuccess({success: gotIndex});
+        (success, index) =ValidatorToolkit.getKeyIndexByContractAndSignature({db: db, array: keys, contract_: contract_, signature: signature});
+        require(success, "Validator: unable to find matching contract and address");
         bytes memory emptyBytes;
         db.setIndexBytesArray({key: keys, index: index, value: emptyBytes});
         success =true;
-        return success;
+        return (success, index);
     }
 
-    function resetKeys(address database, address account)
+    function resetKeys(IStorage db, address account)
     external
     returns (bool success) {
-        require(database !=address(0), "Validator: database is address zero");
         require(account !=address(0), "Validator: account is address zero");
-        IStorage db =IStorage(database);
         bytes32 keys =Encoder.account({account: account, property: "keys"});
         db.deleteBytesArray({key: keys});
         success =true;
         return success;
     }
 
-    function verify(address database, address account, address contract_, string memory signature)
+    function verify(IStorage db, address account, address contract_, string memory signature)
     external
-    returns (bool success) {
-        // stack too deep **had to sacrifice some readability
-        require(database !=address(0), "Validator: database is address zero");
+    returns (bool success, uint index) {
         require(account !=address(0), "Validator: account is address zero");
         require(contract_ !=address(0), "Validator: contract_ is address zero");
-        IStorage db =IStorage(database);
         bytes32 keys =Encoder.account({account: account, property: "keys"});
         bytes[] memory bytesArray =db.getBytesArray({key: keys});
-        for (uint i =0; i <bytesArray.length; i++) {
-            (address contract_B, string memory signatureB, uint type_, uint startTimestamp, uint endTimestamp, uint balance) =Encoder.decodeKey({key: db.indexBytesArray({key: keys, index: i})});
-            if (ValidatorMatch.isMatchingKeyContractAndSignature({contractA: contract_, contractB: contract_B, signatureA: signature, signatureB: signatureB})) {
-                if (type_ ==0) { success =true; }
-                else if (type_ ==1) {
-                    require(block.timestamp >=startTimestamp, "Validator: cannot use key before granted");
-                    require(block.timestamp <=endTimestamp, "Validator: expired");
-                    success =true;
-                } else if (type_ ==2) {
-                    require(balance >=1, "Validator: insufficient balance");
-                    balance--;
-                    bytes memory keyB =Encoder.encodeKey({contract_: contract_B, signature: signatureB, type_: type_, startTimestamp: startTimestamp, endTimestamp: endTimestamp, balance: balance});
-                    db.setIndexBytesArray({key: keys, index: i, value: keyB});
-                    success =true;
-                }
-                break;
-            }
+        (success, index) =ValidatorToolkit.getKeyIndexByContractAndSignature({db: db, array: keys, contract_: contract_, signature: signature});
+        require(success, "Validator: unable to find matching contract and address");
+        bytes memory key =db.indexBytesArray({key: keys, index: index});
+        (address contract_B, string memory signatureB, uint type_, uint startTimestamp, uint endTimestamp, uint balance) =Encoder.decodeKey({key: key});
+        if (type_ ==0) { success =true; }
+        else if (type_ ==1) {
+            require(block.timestamp >=startTimestamp, "Validator: cannot use key before granted");
+            require(block.timestamp <=endTimestamp, "Validator: expired");
+            success =true;
         }
-        Utils.requireSuccess({success: success});
-        return success;
-    }
-
-    function grantKeyToRole(address database, string memory role, address contract_, string memory signature, uint type_, uint startTimestamp, uint endTimestamp, uint balance)
-    external
-    returns (bool success) {
-        ValidatorToolkit.requireInput(type_, startTimestamp, endTimestamp, balance);
-        require(database !=address(0), "Validator: database is address zero");
-        require(contract_ !=address(0), "Validator: contract_ is address zero");
-        IStorage db =IStorage(database);
-        bytes memory key =Encoder.encodeKey({contract_: contract_, signature: signature, type_: type_, startTimestamp: startTimestamp, endTimestamp: endTimestamp, balance: balance});
-        bytes32 keys =Encoder.role({role: role, property: "keys"});
-        ValidatorToolkit.requireNoDuplicateKey({database: database, array: keys, key: key});
-        // try to push key to empty bytes
-        bytes memory emptyBytes;
-        bytes[] memory bytesArray =db.getBytesArray({key: keys});
-        for (uint i =0; i <bytesArray.length; i++) {
-            bytes memory keyB =bytesArray[i];
-            //decode
-            if (Match.isMatchingBytes({bytesA: keyB, bytesB: emptyBytes})) {
-                db.setIndexBytesArray({key: keys, index: i, value: key});
-                success =true;
-                break;
-            }
-        }
-        if (!success) {
-            db.pushBytesArray({key: keys, value: key});
+        else if (type_ ==2) {
+            require(balance >=1, "Validator: insufficient balance");
+            balance--;
+            bytes memory keyB =Encoder.encodeKey({contract_: contract_B, signature: signatureB, type_: type_, startTimestamp: startTimestamp, endTimestamp: endTimestamp, balance: balance});
+            db.setIndexBytesArray({key: keys, index: index, value: keyB});
             success =true;
         }
         Utils.requireSuccess({success: success});
-        return success;
+        return (success, index);
     }
 
-    function revokeKeyFromRole(address database, string memory role, address contract_, string memory signature)
+    function grantKeyToRole(IStorage db, string memory role, address contract_, string memory signature, uint type_, uint startTimestamp, uint endTimestamp, uint balance)
     external
-    returns (bool success) {
-        require(database !=address(0), "Validator: database is address zero");
+    returns (bool success, uint index) {
+        ValidatorToolkit.requireInput({type_: type_, startTimestamp: startTimestamp, endTimestamp: endTimestamp, balance: balance});
         require(contract_ !=address(0), "Validator: contract_ is address zero");
-        IStorage db =IStorage(database);
+        bytes memory key =Encoder.encodeKey({contract_: contract_, signature: signature, type_: type_, startTimestamp: startTimestamp, endTimestamp: endTimestamp, balance: balance});
         bytes32 keys =Encoder.role({role: role, property: "keys"});
-        (bool gotIndex, uint index) =ValidatorToolkit.getKeyIndexByContractAndSignature({database: database, array: keys, contract_: contract_, signature: signature});
+        (success, index) =ValidatorToolkit.getKeyIndexByContractAndSignature({db: db, array: keys, contract_: contract_, signature: signature});
+        require(!success, "Validator: matching contract and address");
+        (success, index) =ValidatorToolkit.getKeyIndexByEmptyBytes({db: db, array: keys});
+        if (success) { db.setIndexBytesArray({key: keys, index: index, value: key}); }
+        else {
+            db.pushBytesArray({key: keys, value: key});
+            index =db.lengthBytesArray({key: keys}) -1;
+            success =true;
+        }
         Utils.requireSuccess({success: success});
+        return (success, index);
+    }
+
+    function revokeKeyFromRole(IStorage db, string memory role, address contract_, string memory signature)
+    external
+    returns (bool success, uint index) {
+        require(contract_ !=address(0), "Validator: contract_ is address zero");
+        bytes32 keys =Encoder.role({role: role, property: "keys"});
+        (success, index) =ValidatorToolkit.getKeyIndexByContractAndSignature({db: db, array: keys, contract_: contract_, signature: signature});
+        require(success, "Validator: unable to find matching contract and address");
         bytes memory emptyBytes;
         db.setIndexBytesArray({key: keys, index: index, value: emptyBytes});
         success =true;
-        return success;
+        return (success, index);
     }
 
-    function resetRoleKeys(address database, string memory role)
+    function resetRoleKeys(IStorage db, string memory role)
     external
     returns (bool success) {
-        require(database !=address(0), "Validator: database is address zero");
-        IStorage db =IStorage(database);
+        bytes32 keys =Encoder.role({role: role, property: "keys"});
+        db.deleteBytesArray({key: keys});
         success =true;
         return success;
     }
-    // WIP running into stack too deep errors
-    function grantRole(address database, address account, string memory role)
+
+    function grantRole(IStorage db, address account, string memory role)
     external
     returns (bool success) {
-        // stack too deep **had to sacrifice some readability and gas efficiency
-        require(database !=address(0), "Validator: database is address zero");
         require(account !=address(0), "Validator: account is address zero");
-        // reset account
-        IStorage(database).deleteBytesArray({key: Encoder.account({account: account, property: "keys"})});
-        // grant role keys
-        for (uint i =0; i <IStorage(database).lengthBytesArray({key: Encoder.account({account: account, property: "keys"})}); i++) {
+        bytes32 keysA =Encoder.role({role: role, property: "keys"});
+        bytes32 keysB =Encoder.account({account: account, property: "keys"});
+        db.deleteBytesArray({key: keysB});
+        bytes[] memory roleKeysArray =db.getBytesArray({key: keysA});
+        for (uint i =0; i <roleKeysArray.length; i++) {
             success =false;
-            (address contract_, string memory signature, uint type_, uint startTimestamp, uint endTimestamp, uint balance) =Encoder.decodeKey({key: IStorage(database).indexBytesArray({key: Encoder.role({role: role, property: "keys"}), index: i})});
-            // grant key
-            ValidatorToolkit.requireInput({type_: type_, startTimestamp: startTimestamp, endTimestamp: endTimestamp, balance: balance});
-            require(contract_ !=address(0), "Validator: contract_ is address zero");
-            ValidatorToolkit.requireNoDuplicateKey({database: database, array: Encoder.account({account: account, property: "keys"}), key: Encoder.encodeKey({contract_: contract_, signature: signature, type_: type_, startTimestamp: startTimestamp, endTimestamp: endTimestamp, balance: balance})});
-            // try to push key to empty bytes
-            uint index;
-            (success, index) =ValidatorToolkit.getKeyIndexByEmptyBytes(database, Encoder.account({account: account, property: "keys"}));
-            if (success) {
-                IStorage(database).setIndexBytesArray({key: Encoder.account({account: account, property: "keys"}), index: index, value: Encoder.encodeKey({contract_: contract_, signature: signature, type_: type_, startTimestamp: startTimestamp, endTimestamp: endTimestamp, balance: balance})});
-            } else {
-                IStorage(database).pushBytesArray({key: Encoder.account({account: account, property: "keys"}), value: Encoder.encodeKey({contract_: contract_, signature: signature, type_: type_, startTimestamp: startTimestamp, endTimestamp: endTimestamp, balance: balance})});
-            }
+            (address contract_, string memory signature, uint type_, uint startTimestamp, uint endTimestamp, uint balance) =Encoder.decodeKey({key: roleKeysArray[i]});
+            ValidatorToolkit.requireInput(type_, startTimestamp, endTimestamp, balance);
+            db.pushBytesArray({key: keysB, value: roleKeysArray[i]});
         }
-        IStorage(database).addAddressSet({key: Encoder.role({role: role, property: "members"}), value: account});
+        bytes32 members =Encoder.role({role: role, property: "members"});
+        db.addAddressSet({key: members, value: account});
         success =true;
         return success;
+
     }
 
-
-    
-
-    function _tryPushKeyToEmptyBytes(address db_, bytes32 array, bytes memory key)
-    internal
-    returns (bool success) {
-        IStorage db =IStorage(db_);
+    function revokeRole(IStorage db, address account, string memory role)
+    external
+    returns (bool success, uint index) {
+        require(account !=address(0), "Validator: account is address zero");
+        bytes32 keys =Encoder.role({role: role, property: "keys"});
+        bytes32 keysB =Encoder.account({account: account, property: "keys"});
+        bytes[] memory roleKeysArray =db.getBytesArray({key: keys});
         bytes memory emptyBytes;
-        bytes[] memory bytesArray =db.getBytesArray({key: array});
-        for (uint i =0; i <bytesArray.length; i++) {
-            bytes memory keyB =bytesArray[i];
-            //decode
-            if (!Match.isMatchingBytes({bytesA: keyB, bytesB: emptyBytes})) {
-                db.setIndexBytesArray({key: array, index: i, value: key});
-                success =true;
-                break;
-            }
+        for (uint i =0; i <roleKeysArray.length; i++) {
+            (address contract_, string memory signature, , , ,) =Encoder.decodeKey({key: roleKeysArray[i]});
+            success =false;
+            index =0;
+            (success, index) =ValidatorToolkit.getKeyIndexByContractAndSignature({db: db, array: keys, contract_: contract_, signature: signature});
+            if (success) { db.setIndexBytesArray({key: keysB, index: index, value: emptyBytes}); }
         }
-        return success;
+        success =true;
+        return (success, index);
     }
+}
+
+
+
+contract Sentinel is Pausable, ReentrancyGuard {
+    bool internal _init;
+    address internal _deployer;
+    IStorage db;
+
+    modifier verify_(string memory signature) {
+        Validator.verify({db: db, account: msg.sender, contract_: address(this), signature: signature});
+        _;
+    }
+
+    constructor(address database) {
+        _deployer =msg.sender;
+        db =IStorage(database);
+    }
+    // only use once contract is set as implementation of storage
+    function init()
+    external {
+        require(msg.sender ==_deployer, "Terminal: only _deployer can call");
+        require(!_init, "Terminal: _init");
+        // ... check storage to see if address has been added as implementation
+        Validator.grantKeyToRole({role: "validator", contract_: address(this), signature: "grantKey(address,address,string,uint256,uint256,uint256,uint256)", type_: 0, startTimestamp: 0, endTimestamp: 0, balance: 0});
+        Validator.grantKeyToRole({role: "validator", contract_: address(this), signature: "revokeKey(address,address,string)", type_: 0, startTimestamp: 0, endTimestamp: 0, balance: 0});
+        // ... and so on
+        _init =true;
+    }
+
+    function getKeys(address account)
+    external view
+    returns (bytes[] memory) {
+        return Validator.getKeys({db: db, account: account});
+    }
+
+    function getRoleKeys(string memory role)
+    external view
+    returns (bytes[] memory) {
+        return Validator.getRoleKeys({db: db, role: role});
+    }
+
+    function getRoleMembers(string memory role)
+    external view
+    returns (address[] memory) {
+        return Validator.getRoleMembers({db: db, role: role});
+    }
+
+    function getRoleSize(string memory role)
+    external view
+    returns (uint) {
+        return Validator.getRoleSize({db: db, role: role});
+    }
+
+    function verify(address account, address contract_, string memory signature)
+    external 
+    nonReentrant {
+        Validator.verify({db: db, account: account, contract_: contract_, signature: signature});
+    }
+
+    function grantKey(address account, address contract_, string memory signature, uint type_, uint startTimestamp, uint endTimestamp, uint balance)
+    external 
+    nonReentrant 
+    whenNotPaused 
+    verify_("grantKey(address,address,string,uint256,uint256,uint256,uint256)") {
+        Validator.grantKey({db: db, account: account, contract_: contract_, signature: signature, type_: type_, startTimestamp: startTimestamp, endTimestamp: endTimestamp, balance: balance});
+    }
+
+    function revokeKey(address account, address contract_, string memory signature)
+    external
+    nonReentrant
+    whenNotPaused 
+    verify_("revokeKey(address,address,string)") {
+        Validator.revokeKey({db: db, account: account, contract_: contract_, signature: signature});
+    }
+
+    function resetKeys(address account)
+    external 
+    nonReentrant 
+    whenNotPaused 
+    verify_("resetKeys(address)") {
+        Validator.resetKeys({db: db, account: account});
+    }
+
+    function grantKeyToRole(string memory role, address contract_, string memory signature, uint type_, uint startTimestamp, uint endTimestamp, uint balance)
+    external 
+    nonReentrant
+    whenNotPaused
+    verify_("grantKeyToRole(string,address,string,uint256,uint256,uint256,uint256)") {
+        Validator.grantKeyToRole({db: db, role: role, contract_: contract_, signature: signature, type_: type_, startTimestamp: startTimestamp, endTimestamp: endTimestamp, balance: balance});
+    }
+
+    function revokeKeyFromRole(string memory role, address contract_, string memory signature)
+    external 
+    nonReentrant 
+    whenNotPaused 
+    verify_("revokeKeyFromRole(string,address,string)") {
+        Validator.revokeKeyFromRole({db: db, role: role, contract_: contract_, signature: signature});
+    }
+
+    function resetRoleKeys(string memory role)
+    external 
+    nonReentrant
+    whenNotPaused
+    verify_("resetRoleKeys(string)") {
+        Validator.resetRoleKeys({db: db, role: role});
+    }
+
+    function grantRole(address account, string memory role)
+    external 
+    nonReentrant 
+    whenNotPaused 
+    verify_("grantRole(address,string)") {
+        Validator.grantRole({db: db, account: account, role: role});
+    }
+
+    function revokeRole(address account, string memory role)
+    external 
+    nonReentrant
+    whenNotPaused
+    verify_("revokeRole(address,string)") {
+        Validator.revokeRole({db: db, account: account, role: role});
+    }
+}
+
+
+
+library Timelock {
 
 }
 
 
 
-contract Hub {
-    bool internal _init;
-    address internal _deployer;
-    IStorage internal _db;
 
-    constructor(address db) { db =_db; }
-
-
+contract Key {
 
 }
