@@ -1584,6 +1584,7 @@ contract Sentinel is ISentinel, Pausable, ReentrancyGuard {
 }
 
 
+
 /** STORAGE VARS USAGE
     "durationTimelock"           _uint
     "durationTimeout"            _uint
@@ -1635,6 +1636,7 @@ contract Key {
     **represent achievements from the community
     **conditions for earning rewards are checked from storage
     **some anima have byte code which when checked by contract can "do certain things"
+    **community can create new anima conditions for any achievement with costum code
  */
 contract Achievements is ERC721 {
     IStorage storage_;
