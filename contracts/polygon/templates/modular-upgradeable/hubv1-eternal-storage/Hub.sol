@@ -133,6 +133,39 @@ library Encoder {
 
 
 
+interface IStorage {
+    // GET ADMIN & LOGIC
+
+    function getAdmins() external view returns (address[] memory);
+    function getLogics() external view returns (address[] memory);
+
+    // GET BASIC
+
+    function getString(bytes32 key) external view returns (string memory);
+    function getBytes(bytes32 key) external view returns (bytes memory);
+    function getUint(bytes32 key) external view returns (uint);
+    function getInt(bytes32 key) external view returns (int);
+    function getAddress(bytes32 key) external view returns (address);
+    function getBool(bytes32 key) external view returns (bool);
+    function getBytes32(bytes32 key) external view returns (bytes32);
+
+    // GET ARRAYS
+
+    function getStringArray(bytes32 key) external view returns (string[] memory);
+    function getBytesArray(bytes32 key) external view returns (bytes[] memory);
+    function getUintArray(bytes32 key) external view returns (uint[] memory);
+    function getIntArray(bytes32 key) external view returns (int[] memory);
+    function getAddressArray(bytes32 key) external view returns (address[] memory);
+    function getBoolArray(bytes32 key) external view returns (bool[] memory);
+    function getBytes32Array(bytes32 key) external view returns (bytes32[] memory);
+
+    // GET INDEXED ARRAYS
+
+    
+}
+
+
+
 contract Storage {
     using EnumerableSet for EnumerableSet.AddressSet;
     using EnumerableSet for EnumerableSet.UintSet;
@@ -218,35 +251,28 @@ contract Storage {
     event RemoveBytes32Set(bytes32 indexed key, bytes32 indexed value);
 
     modifier onlyAdmin() {
-        require(_admins.contain(msg.sender), "Storage: !admin");
+        _onlyAdmin();
         _;
     }
 
     modifier onlyLogic() {
-        require(_implementations.contains(msg.sender), "Storage: !logic");
+        _onlyLogic();
         _;
     }
 
     modifier onlyDataType(bytes32 key, DataType dataType) {
-        require(
-            _usedKeys[key] ==DataType.NONE || _usedKeys[key] ==dataType,
-            "Storage: key is already being assigned to a different datatype"
-        );
+        _onlyDataTypeCheck({key: key, dataType: dataType});
         _;
-        if (_usedKeys[key] ==DataType.NULL) { _usedKeys[key] =dataType; }
+        _afterCheckDataTypeSet({key: key, dataType: dataType});
     }
 
     modifier onlyDataTypeCheck(bytes32 key, DataType dataType) {
-        require(
-            _usedKeys[key] ==DataType.NONE || _usedKeys[key] ==dataType,
-            "Storage: key is already being assigned to a different datatype"
-        );
+        _onlyDataTypeCheck({key: key, dataType: dataType});
         _;
     }
 
     modifier onlyNotEmptyKey(bytes32 key) {
-        bytes32 emptyBytes32;
-        require(key !=emptyBytes32, "Storage: empty key was given");
+        _onlyNotEmptyKey({key: key});
         _;
     }
 
@@ -449,7 +475,59 @@ contract Storage {
         return _bytes32Array[key][index];
     }
 
-    // CONTAINS SET
+    // GET SETS
+
+    function getAddressSet(bytes32 key)
+    external view
+    onlyNotEmptyKey(key)
+    onlyDataTypeCheck(key, DataType.ADDRESS_SET)
+    returns (address[] memory) {
+        return _addressSet[key].values();
+    }
+
+    function getUintSet(bytes32 key)
+    external view
+    onlyNotEmptyKey(key)
+    onlyDataTypeCheck(key, DataType.UINT_SET)
+    returns (uint[] memory) {
+        return _uintSet[key].values();
+    }
+
+    function getBytes32Set(bytes32 key)
+    external view
+    onlyNotEmptyKey(key)
+    onlyDataTypeCheck(key, DataType.BYTES32_SET)
+    returns (bytes32[] memory) {
+        return _bytes32Set[key].values();
+    }
+
+    // GET INDEXED SETS
+
+    function indexAddressSet(bytes32 key, uint index)
+    external view
+    onlyNotEmptyKey(key)
+    onlyDataTypeCheck(key, DataType.ADDRESS_SET)
+    returns (address) {
+        return _addressSet[key].at(index);
+    }
+
+    function indexUintSet(bytes32 key, uint index)
+    external view
+    onlyNotEmptyKey(key)
+    onlyDataTypeCheck(key, DataType.UINT_SET)
+    returns (uint) {
+        return _uintSet[key].at(index);
+    }
+
+    function indexBytes32Set(bytes32 key, uint index)
+    external view
+    onlyNotEmptyKey(key)
+    onlyDataTypeCheck(key, DataType.BYTES32_SET)
+    returns (bytes32) {
+        return _bytes32Set[key].at(index);
+    }
+
+    // CONTAINS SETS
 
     function containsAddressSet(bytes32 key, address value)
     external view
@@ -836,6 +914,36 @@ contract Storage {
         emit RemoveBytes32Set({key: key, value: value});
     }
 
+    // MODIFIERS
+    
+    function _onlyAdmin()
+    internal view {
+        require(_admins.contains(msg.sender), "Storage: !admin");
+    }
+
+    function _onlyLogic()
+    internal view {
+        require(_implementations.contains(msg.sender), "Storage: !logic");
+    }
+
+    function _onlyNotEmptyKey(bytes32 key)
+    internal view {
+        bytes32 emptyBytes32;
+        require(key !=emptyBytes32, "Storage: empty key was given");
+    }
+
+    function _onlyDataTypeCheck(bytes32 key, DataType dataType)
+    internal view {
+        require(
+            _usedKeys[key] ==DataType.NONE || _usedKeys[key] ==dataType,
+            "Storage: key is already being assigned to a different datatype"
+        );
+    }
+
+    function _afterCheckDataTypeSet(bytes32 key, DataType dataType)
+    internal {
+        if (_usedKeys[key] ==DataType.NULL) { _usedKeys[key] =dataType; }
+    }
 }
 
 
