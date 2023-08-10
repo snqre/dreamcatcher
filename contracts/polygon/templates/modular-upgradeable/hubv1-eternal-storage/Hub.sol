@@ -11,6 +11,26 @@ import "contracts/polygon/deps/openzeppelin/access/Ownable.sol";
 import "contracts/polygon/deps/openzeppelin/token/ERC721/ERC721.sol";
 import "contracts/polygon/deps/openzeppelin/utils/structs/EnumerableSet.sol";
 
+enum DataType {
+    NONE,
+    STRING,
+    BYTES,
+    UINT,
+    INT,
+    ADDRESS,
+    BOOL,
+    BYTES32,
+    STRING_ARRAY,
+    BYTES_ARRAY,
+    UINT_ARRAY,
+    INT_ARRAY,
+    ADDRESS_ARRAY,
+    BOOL_ARRAY,
+    BYTES32_ARRAY,
+    ADDRESS_SET,
+    UINT_SET,
+    BYTES32_SET
+}
 
 contract Database is Storage {}
 
@@ -86,6 +106,18 @@ library Encoder {
         return abi.decode(request, (address[],string[],bytes[],uint,uint,bool,bool,bool));
     }
 
+    function encodeUsedBytes32Key(bytes32 usedBytes32Key, DataType dataType)
+    external pure
+    returns (bytes memory) {
+        return abi.encode(usedBytes32Key, dataType);
+    }
+
+    function decodeUsedBytes32Key(bytes memory usedBytes32Key)
+    external pure
+    returns (bytes32, DataType) {
+        return abi.decode(usedBytes32Key, (bytes32, DataType));
+    }
+
     function account(address account, string memory property)
     external pure
     returns (bytes32 variable) {
@@ -109,25 +141,27 @@ contract Storage {
     EnumerableSet.AddressSet internal _admins;
     EnumerableSet.AddressSet internal _implementations;
 
-    mapping(bytes32 => string) private _string;
-    mapping(bytes32 => bytes) private _bytes;
-    mapping(bytes32 => uint) private _uint;
-    mapping(bytes32 => int) private _int;
-    mapping(bytes32 => address) private _address;
-    mapping(bytes32 => bool) private _bool;
-    mapping(bytes32 => bytes32) private _bytes32;
+    mapping(bytes32 => DataType) internal _usedKeys;
 
-    mapping(bytes32 => string[]) private _stringArray;
-    mapping(bytes32 => bytes[]) private _bytesArray;
-    mapping(bytes32 => uint[]) private _uintArray;
-    mapping(bytes32 => int[]) private _intArray;
-    mapping(bytes32 => address[]) private _addressArray;
-    mapping(bytes32 => bool[]) private _boolArray;
+    mapping(bytes32 => string) internal _string;
+    mapping(bytes32 => bytes) internal _bytes;
+    mapping(bytes32 => uint) internal _uint;
+    mapping(bytes32 => int) internal _int;
+    mapping(bytes32 => address) internal _address;
+    mapping(bytes32 => bool) internal _bool;
+    mapping(bytes32 => bytes32) internal _bytes32;
+
+    mapping(bytes32 => string[]) internal _stringArray;
+    mapping(bytes32 => bytes[]) internal _bytesArray;
+    mapping(bytes32 => uint[]) internal _uintArray;
+    mapping(bytes32 => int[]) internal _intArray;
+    mapping(bytes32 => address[]) internal _addressArray;
+    mapping(bytes32 => bool[]) internal _boolArray;
     mapping(bytes32 => bytes32[]) private _bytes32Array;
 
-    mapping(bytes32 => EnumerableSet.AddressSet) private _addressSet;
-    mapping(bytes32 => EnumerableSet.UintSet) private _uintSet;
-    mapping(bytes32 => EnumerableSet.Bytes32Set) private _bytes32Set;
+    mapping(bytes32 => EnumerableSet.AddressSet) internal _addressSet;
+    mapping(bytes32 => EnumerableSet.UintSet) internal _uintSet;
+    mapping(bytes32 => EnumerableSet.Bytes32Set) internal _bytes32Set;
 
     // ADMIN & LOGIC EVENTS
 
@@ -141,20 +175,31 @@ contract Storage {
 
     event SetString(bytes32 indexed key, string indexed value);
     event SetBytes(bytes32 indexed key, bytes indexed value);
-    event SetUint(bytes32 indexed key, bytes indexed value);
+    event SetUint(bytes32 indexed key, uint indexed value);
     event SetInt(bytes32 indexed key, int indexed value);
     event SetAddress(bytes32 indexed key, address indexed value);
     event SetBool(bytes32 indexed key, bool indexed value);
     event SetBytes32(bytes32 indexed key, bytes32 indexed value);
 
-    event GetString(bytes32 indexed key);
-    event GetBytes(bytes32 indexed key);
-    event GetUint(bytes32 indexed key);
-    event GetInt(bytes32 indexed key);
-    event GetAddress(bytes32 indexed key);
-    event GetBool(bytes32 indexed key);
-    event GetBytes32(bytes32 indexed key);
+    // ARRAY EVENTS
 
+    event SetIndexStringArray(bytes32 indexed key, uint indexed index, string indexed value);
+    event SetIndexBytesArray(bytes32 indexed key, uint indexed index, bytes indexed value);
+    event SetIndexUintArray(bytes32 indexed key, uint indexed index, uint indexed value);
+    event SetIndexIntArray(bytes32 indexed key, uint indexed index, int indexed value);
+    event SetIndexAddressArray(bytes32 indexed key, uint indexed index, address indexed value);
+    event SetIndexBoolArray(bytes32 indexed key, uint indexed index, bool indexed value);
+    event SetIndexBytes32Array(bytes32 indexed key, uint indexed index, bytes32 indexed value);
+
+    event PushStringArray(bytes32 indexed key, string indexed value);
+    event PushBytesArray(bytes32 indexed key, bytes indexed value);
+    event PushUintArray(bytes32 indexed key, uint indexed value);
+    event PushIntArray(bytes32 indexed key, int indexed value);
+    event PushAddressArray(bytes32 indexed key, address indexed value);
+    event PushBoolArray(bytes32 indexed key, bool indexed value);
+    event PushBytes32Array(bytes32 indexed key, bytes32 indexed value);
+    
+    event DeleteStringArray(bytes32 indexed key);
 
     modifier onlyAdmin() {
         require(_admins.contain(msg.sender), "Storage: !admin");
@@ -163,6 +208,29 @@ contract Storage {
 
     modifier onlyLogic() {
         require(_implementations.contains(msg.sender), "Storage: !logic");
+        _;
+    }
+
+    modifier onlyDataType(bytes32 key, DataType dataType) {
+        require(
+            _usedKeys[key] ==DataType.NONE || _usedKeys[key] ==dataType,
+            "Storage: key is already being assigned to a different datatype"
+        );
+        _;
+        if (_usedKeys[key] ==DataType.NULL) { _usedKeys[key] =dataType; }
+    }
+
+    modifier onlyDataTypeCheck(bytes32 key, DataType dataType) {
+        require(
+            _usedKeys[key] ==DataType.NONE || _usedKeys[key] ==dataType,
+            "Storage: key is already being assigned to a different datatype"
+        );
+        _;
+    }
+
+    modifier onlyNotEmptyKey(bytes32 key) {
+        bytes32 emptyBytes32;
+        require(key !=emptyBytes32, "Storage: empty key was given");
         _;
     }
 
@@ -182,6 +250,57 @@ contract Storage {
     external view
     returns (address[] memory) {
         return _implementations.values();
+    }
+
+    // GET BASIC
+
+    function getString(bytes32 key)
+    external view
+    onlyDataTypeCheck(key, DataType.STRING)
+    returns (string memory) {
+        return _string[key];
+    }
+
+    function getBytes(bytes32 key)
+    external view
+    onlyDataTypeCheck(key, DataType.BYTES)
+    returns (bytes memory) {
+        return _bytes[key];
+    }
+
+    function getUint(bytes32 key)
+    external view
+    onlyDataTypeCheck(key, DataType.UINT)
+    returns (uint) {
+        return _uint[key];
+    }
+
+    function getInt(bytes32 key)
+    external view
+    onlyDataTypeCheck(key, DataType.INT)
+    returns (int) {
+        return _int[key];
+    }
+
+    function getAddress(bytes32 key)
+    external view
+    onlyDataTypeCheck(key, DataType.ADDRESS)
+    returns (address) {
+        return _address[key];
+    }
+
+    function getBool(bytes32 key)
+    external view
+    onlyDataTypeCheck(key, DataType.BOOL)
+    returns (bool) {
+        return _bool[key];
+    }
+
+    function getBytes32(bytes32 key)
+    external view
+    onlyDataTypeCheck(key, DataType.BYTES32)
+    returns (bytes32) {
+        return _bytes32[key];
     }
 
     // SET ADMIN & LOGIC
@@ -230,20 +349,77 @@ contract Storage {
 
     function setString(bytes32 key, string memory value)
     external
-    onlyLogic {
-        bytes32 emptyBytes32;
-        require(key !=emptyBytes32, "Storage: empty key was given");
+    onlyLogic 
+    onlyNotEmptyKey(key) 
+    onlyDataType(key, DataType.STRING) {
         _string[key] =value;
+        if (_usedKeys[key] ==DataType.NULL)
         emit SetString({key: key, value: value});
     }
     
     function setBytes(bytes32 key, bytes memory value)
     external
-    onlyLogic {
-        bytes32 emptyBytes32;
-        require(key !=emptyBytes32, "Storage: empty key was given");
+    onlyLogic 
+    onlyNotEmptyKey(key) 
+    onlyDataType(key, DataType.BYTES) {
         _bytes[key] =value;
         emit SetBytes({key: key, value: value});
+    }
+
+    function setUint(bytes32 key, uint value)
+    external
+    onlyLogic 
+    onlyNotEmptyKey(key) 
+    onlyDataType(key, DataType.UINT) {
+        _uint[key] =value;
+        emit SetUint({key: key, value: value});
+    }
+
+    function setInt(bytes32 key, int value)
+    external
+    onlyLogic
+    onlyNotEmptyKey(key) 
+    onlyDataType(key, DataType.INT) {
+        _int[key] =value;
+        emit SetInt({key: key, value: value});
+    }
+
+    function setAddress(bytes32 key, address value)
+    external
+    onlyLogic
+    onlyNotEmptyKey(key) 
+    onlyDataType(key, DataType.ADDRESS) {
+        _address[key] =value;
+        emit SetAddress({key: key, value: value});
+    }
+
+    function setBool(bytes32 key, bool value)
+    external
+    onlyLogic
+    onlyNotEmptyKey(key) 
+    onlyDataType(key, DataType.BOOL) {
+        _bool[key] =value;
+        emit SetBool({key: key, value: value});
+    }
+
+    function setBytes32(bytes32 key, bytes32 value)
+    external
+    onlyLogic 
+    onlyNotEmptyKey(key) 
+    onlyDataType(key, DataType.BYTES32) {
+        _bytes32[key] =value;
+        emit SetBytes32({key: key, value: value});
+    }
+
+    // SET ARRAYS
+
+    function setIndexStringArray(bytes32 key, uint index, string memory value)
+    external
+    onlyLogic
+    onlyNotEmptyKey(key)
+    onlyDataType(key, DataType.STRING_ARRAY) {
+        _stringArray[key][index] =value;
+
     }
 }
 
