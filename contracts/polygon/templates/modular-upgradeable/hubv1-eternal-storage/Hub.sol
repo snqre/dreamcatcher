@@ -200,6 +200,22 @@ contract Storage {
     event PushBytes32Array(bytes32 indexed key, bytes32 indexed value);
     
     event DeleteStringArray(bytes32 indexed key);
+    event DeleteBytesArray(bytes32 indexed key);
+    event DeleteUintArray(bytes32 indexed key);
+    event DeleteIntArray(bytes32 indexed key);
+    event DeleteAddressArray(bytes32 indexed key);
+    event DeleteBoolArray(bytes32 indexed key);
+    event DeleteBytes32Array(bytes32 indexed key);
+
+    // SET EVENTS
+
+    event addAddressSet(bytes32 indexed key, address indexed value);
+    event addUintSet(bytes32 indexed key, uint indexed value);
+    event addBytes32Set(bytes32 indexed key, bytes32 indexed value);
+
+    event removeAddressSet(bytes32 indexed key, address indexed value);
+    event removeUintSet(bytes32 indexed key, uint indexed value);
+    event removeBytes32Set(bytes32 indexed key, bytes32 indexed value);
 
     modifier onlyAdmin() {
         require(_admins.contain(msg.sender), "Storage: !admin");
@@ -419,8 +435,39 @@ contract Storage {
     onlyNotEmptyKey(key)
     onlyDataType(key, DataType.STRING_ARRAY) {
         _stringArray[key][index] =value;
-
+        emit SetIndexStringArray({key: key, index: index, value: value});
     }
+
+    function setIndexBytesArray(bytes32 key, uint index, bytes memory value)
+    external
+    onlyLogic
+    onlyNotEmptyKey(key)
+    onlyDataType(key, DataType.BYTES_ARRAY) {
+        _bytesArray[key][index] =value;
+        emit SetIndexBytesArray({key: key, index: index, value: value});
+    }
+
+    function setIndexUintArray(bytes32 key, uint index, uint value)
+    external
+    onlyLogic
+    onlyNotEmptyKey(key)
+    onlyDataType(key, DataType.UINT_ARRAY) {
+        _uintArray[key][index] =value;
+        emit SetIndexUintArray({key: key, index: index, value: value});
+    }
+
+    function setIndexIntArray(bytes32 key, uint index, int value)
+    external
+    onlyLogic
+    onlyNotEmptyKey(key)
+    onlyDataType(key, DataType.INT_ARRAY) {
+        _intArray[key][index] =value;
+        emit SetIndexIntArray({key: key, index: index, value: value});
+    }
+
+    
+
+
 }
 
 
