@@ -209,13 +209,13 @@ contract Storage {
 
     // SET EVENTS
 
-    event addAddressSet(bytes32 indexed key, address indexed value);
-    event addUintSet(bytes32 indexed key, uint indexed value);
-    event addBytes32Set(bytes32 indexed key, bytes32 indexed value);
+    event AddAddressSet(bytes32 indexed key, address indexed value);
+    event AddUintSet(bytes32 indexed key, uint indexed value);
+    event AddBytes32Set(bytes32 indexed key, bytes32 indexed value);
 
-    event removeAddressSet(bytes32 indexed key, address indexed value);
-    event removeUintSet(bytes32 indexed key, uint indexed value);
-    event removeBytes32Set(bytes32 indexed key, bytes32 indexed value);
+    event RemoveAddressSet(bytes32 indexed key, address indexed value);
+    event RemoveUintSet(bytes32 indexed key, uint indexed value);
+    event RemoveBytes32Set(bytes32 indexed key, bytes32 indexed value);
 
     modifier onlyAdmin() {
         require(_admins.contain(msg.sender), "Storage: !admin");
@@ -342,6 +342,137 @@ contract Storage {
     onlyDataTypeCheck(key, DataType.BYTES_ARRAY)
     returns (bytes[] memory) {
         return _bytesArray[key];
+    }
+
+    function getUintArray(bytes32 key)
+    external view
+    onlyNotEmptyKey(key)
+    onlyDataTypeCheck(key, DataType.UINT_ARRAY)
+    returns (uint[] memory) {
+        return _uintArray[key];
+    }
+
+    function getIntArray(bytes32 key)
+    external view
+    onlyNotEmptyKey(key)
+    onlyDataTypeCheck(key, DataType.INT_ARRAY)
+    returns (int[] memory) {
+        return _intArray[key];
+    }
+
+    function getAddressArray(bytes32 key)
+    external view
+    onlyNotEmptyKey(key)
+    onlyDataTypeCheck(key, DataType.ADDRESS_ARRAY)
+    returns (address[] memory) {
+        return _addressArray[key];
+    }
+
+    function getBoolArray(bytes32 key)
+    external view
+    onlyNotEmptyKey(key)
+    onlyDataTypeCheck(key, DataType.BOOL_ARRAY)
+    returns (bool[] memory) {
+        return _boolArray[key];
+    }
+
+    function getBytes32Array(bytes32 key)
+    external view
+    onlyNotEmptyKey(key)
+    onlyDataTypeCheck(key, DataType.BYTES32_ARRAY)
+    returns (bytes32[] memory) {
+        return _bytes32Array[key];
+    }
+
+    // GET INDEXED ARRAYS
+
+    function indexStringArray(bytes32 key, uint index)
+    external view
+    onlyNotEmptyKey(key)
+    onlyDataTypeCheck(key, DataType.STRING_ARRAY)
+    returns (string memory) {
+        require(index <_stringArray[key].length, "Storage: index not found");
+        return _stringArray[key][index];
+    }
+
+    function indexBytesArray(bytes32 key, uint index)
+    external view
+    onlyNotEmptyKey(key)
+    onlyDataTypeCheck(key, DataType.BYTES_ARRAY)
+    returns (bytes memory) {
+        require(index <_bytesArray[key].length, "Storage: index not found");
+        return _bytesArray[key][index];
+    }
+
+    function indexUintArray(bytes32 key, uint index)
+    external view
+    onlyNotEmptyKey(key)
+    onlyDataTypeCheck(key, DataType.UINT_ARRAY)
+    returns (uint) {
+        require(index <_uintArray[key].length, "Storage: index not found");
+        return _uintArray[key][index];
+    }
+
+    function indexIntArray(bytes32 key, uint index)
+    external view
+    onlyNotEmptyKey(key)
+    onlyDataTypeCheck(key, DataType.INT_ARRAY)
+    returns (int) {
+        require(index <_intArray[key].length, "Storage: index not found");
+        return _intArray[key][index];
+    }
+
+    function indexAddressArray(bytes32 key, uint index)
+    external view
+    onlyNotEmptyKey(key)
+    onlyDataTypeCheck(key, DataType.ADDRESS_ARRAY)
+    returns (address) {
+        require(index <_addressArray[key].length, "Storage: index not found");
+        return _addressArray[key][index];
+    }
+
+    function indexBoolArray(bytes32 key, uint index)
+    external view
+    onlyNotEmptyKey(key)
+    onlyDataTypeCheck(key, DataType.BOOL_ARRAY)
+    returns (bool) {
+        require(index <_boolArray[key].length, "Storage: index not found");
+        return _boolArray[key][index];
+    }
+
+    function indexBytes32Array(bytes32 key, uint index)
+    external view
+    onlyNotEmptyKey(key)
+    onlyDataTypeCheck(key, DataType.BYTES32_ARRAY)
+    returns (bytes32) {
+        require(index <_bytes32Array[key].length, "Storage: index not found");
+        return _bytes32Array[key][index];
+    }
+
+    // CONTAINS SET
+
+    function containsAddressSet(bytes32 key, address value)
+    external view
+    onlyNotEmptyKey(key)
+    onlyDataTypeCheck(key, DataType.ADDRESS_SET)
+    returns (bool) {
+        return _addressSet[key].contains(value);
+    }
+
+    function containsUintSet(bytes32 key, uint value)
+    external view
+    onlyNotEmptyKey(key)
+    onlyDataTypeCheck(key, DataType.UINT_SET)
+    returns (bool) {
+        return _uintSet[key].contains(value);
+    }
+
+    function containsBytes32Set(bytes32 key, bytes32 value)
+    external view
+    onlyNotEmptyKey(key)
+    onlyDataTypeCehck(key, DataType.BYTES32_SET)
+    returns (bool) {
+        return _bytes32Set[key].contains(value);
     }
 
     // SET ADMIN & LOGIC
@@ -645,6 +776,64 @@ contract Storage {
     onlyDataType(key, DataType.BYTES32_ARRAY) {
         delete _bytes32Array[key];
         emit DeleteBytes32Array({key: key});
+    }
+
+    // ADD SETS
+
+    function addAddressSet(bytes32 key, address value)
+    external
+    onlyLogic
+    onlyNotEmptyKey(key)
+    onlyDataType(key, DataType.ADDRESS_SET) {
+        _addressSet[key].add(value);
+        emit AddAddressSet({key: key, value: value});
+    }
+
+    function addUintSet(bytes32 key, uint value)
+    external
+    onlyLogic
+    onlyNotEmptyKey(key)
+    onlyDataType(key, DataType.UINT_SET) {
+        _uintSet[key].add(value);
+        emit AddUintSet({key: key, value: value});
+    }
+
+    function addBytes32Set(bytes32 key, uint value)
+    external
+    onlyLogic
+    onlyNotEmptyKey(key)
+    onlyDataType(key, DataType.BYTES32_SET) {
+        _bytes32Set[key].add(value);
+        emit AddBytes32Set({key: key, value: value});
+    }
+
+    // REMOVE SETS
+
+    function removeAddressSet(bytes32 key, address value)
+    external
+    onlyLogic
+    onlyNotEmptyKey(key)
+    onlyDataType(key, DataType.ADDRESS_SET) {
+        _addressSet[key].remove(value);
+        emit RemoveAddressSet({key: key, value: value});
+    }
+
+    function removeUintSet(bytes32 key, uint value)
+    external
+    onlyLogic
+    onlyNotEmptyKey(key)
+    onlyDataType(key, DataType.UINT_SET) {
+        _uintSet[key].remove(value);
+        emit RemoveUintSet({key: key, value: value});
+    }
+
+    function removeBytes32Set(bytes32 key, bytes32 value)
+    external
+    onlyLogic
+    onlyNotEmptyKey(key)
+    onlyDataType(key, DataType.BYTES32_SET) {
+        _bytes32Set[key].remove(value);
+        emit RemoveBytes32Set({key: key, value: value});
     }
 
 }
