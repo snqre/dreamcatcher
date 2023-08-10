@@ -37,17 +37,12 @@ enum KeyType {
     CONSUMABLE
 }
 
-contract Database is Storage {}
-
-/**
-
-    #purpose
-    1) manage roles
-    2) manage access to individual functions
-    3) act as a universal access to bypass validation
-    4) timelock
-
- */
+enum RequestStage {
+    PENDING,
+    REJECTED,
+    APPROVED,
+    EXECUTED
+}
 
 library Match {
     function isMatchingBytes(bytes memory bytesA, bytes memory bytesB)
@@ -99,16 +94,16 @@ library Encoder {
         return abi.decode(key, (address,string,KeyType,uint,uint,uint));
     }
 
-    function encodeRequest(address[] memory targets, string[] memory signatures, bytes[] memory args, uint endTimelockTimestamp, uint endTimeoutTimestamp, bool approved, bool rejected, bool executed)
+    function encodeRequest(address[] memory targets, string[] memory signatures, bytes[] memory args, uint endTimelockTimestamp, uint endTimeoutTimestamp, RequestStage requestStage)
     external pure
     returns (bytes memory request) {
-        return abi.encode(targets, signatures, args, endTimelockTimestamp, endTimeoutTimestamp, approved, rejected, executed);
+        return abi.encode(targets, signatures, args, endTimelockTimestamp, endTimeoutTimestamp, requestStage);
     }
 
     function decodeRequest(bytes memory request)
     external pure
-    returns (address[] memory targets, string[] memory signatures, bytes[] memory args, uint endTimelockTimestamp, uint endTimeoutTimestamp, bool approved, bool rejected, bool executed) {
-        return abi.decode(request, (address[],string[],bytes[],uint,uint,bool,bool,bool));
+    returns (address[] memory targets, string[] memory signatures, bytes[] memory args, uint endTimelockTimestamp, uint endTimeoutTimestamp, RequestStage requestStage) {
+        return abi.decode(request, (address[],string[],bytes[],uint,uint,RequestStage));
     }
 
     function account(address account, string memory property)
@@ -242,7 +237,7 @@ interface IStorage {
 
 
 
-contract Storage {
+contract Storage is IStorage{
     using EnumerableSet for EnumerableSet.AddressSet;
     using EnumerableSet for EnumerableSet.UintSet;
     using EnumerableSet for EnumerableSet.Bytes32Set;
@@ -624,7 +619,7 @@ contract Storage {
     function containsBytes32Set(bytes32 key, bytes32 value)
     external view
     onlyNotEmptyKey(key)
-    onlyDataTypeCehck(key, DataType.BYTES32_SET)
+    onlyDataTypeCheck(key, DataType.BYTES32_SET)
     returns (bool) {
         return _bytes32Set[key].contains(value);
     }
@@ -679,7 +674,6 @@ contract Storage {
     onlyNotEmptyKey(key) 
     onlyDataType(key, DataType.STRING) {
         _string[key] =value;
-        if (_usedKeys[key] ==DataType.NULL)
         emit SetString({key: key, value: value});
     }
     
@@ -1056,13 +1050,15 @@ library ValidatorMatch {
 
 
 library ValidatorToolkit {
-    /// @dev Retrieves the index of a key by comparing contract address and signature in a given storage variable
-    /// @param storage_ The storage contract where the keys are stored
-    /// @param variable The variable containing the keys in the storage
-    /// @param contract_ The contract address to compare against
-    /// @param signature The signature string to compare against
-    /// @return success True if a matching key is found, false otherwise
-    /// @return index The index of the matching key, if found, otherwise 0
+    /**
+    * @dev Retrieves the index of the first matching key in the given bytes array based on contract and signature.
+    * @param storage_ The storage contract where the bytes array is stored.
+    * @param variable The key identifying the bytes array in storage.
+    * @param contract_ The address of the contract associated with the key.
+    * @param signature The function signature associated with the key.
+    * @return success True if a matching key is found, false otherwise.
+    * @return index The index of the first matching key, or the length of the array if not found.
+    */
     function getKeyIndexByContractAndSignature(IStorage storage_, bytes32 variable, address contract_, string memory signature)
     external view
     returns (bool success, uint index) {
@@ -1082,11 +1078,13 @@ library ValidatorToolkit {
         return (success, index);
     }
 
-    /// @dev Retrieves the index of a key containing empty bytes in a given storage variable
-    /// @param storage_ The storage contract where the keys are stored
-    /// @param variable The variable containing the keys in the storage
-    /// @return success True if a key with empty bytes is found, false otherwise
-    /// @return index The index of the key with empty bytes, if found, otherwise 0
+    /**
+    * @dev Retrieves the index of the first empty bytes entry in the given bytes array.
+    * @param storage_ The storage contract where the bytes array is stored.
+    * @param variable The key identifying the bytes array in storage.
+    * @return success True if an empty bytes entry is found, false otherwise.
+    * @return index The index of the first empty bytes entry, or the length of the array if not found.
+    */
     function getKeyIndexByEmptyBytes(IStorage storage_, bytes32 variable)
     external view
     returns (bool success, uint index) {
@@ -1103,11 +1101,13 @@ library ValidatorToolkit {
         return (success, index);
     }
 
-    /// @dev Validates the input parameters based on the specified key type
-    /// @param keyType The type of the key (STANDARD, TIMED, CONSUMABLE)
-    /// @param startTimestamp The start timestamp for the key
-    /// @param endTimestamp The end timestamp for the key
-    /// @param balance The balance associated with the key
+    /**
+    * @dev Checks the correctness of input parameters based on the key type.
+    * @param keyType The type of the key (STANDARD, TIMED, CONSUMABLE).
+    * @param startTimestamp The start timestamp for the key.
+    * @param endTimestamp The end timestamp for the key.
+    * @param balance The balance associated with the key.
+    */
     function requireCorrectInput(KeyType keyType, uint startTimestamp, uint endTimestamp, uint balance)
     external view {
         if (keyType ==KeyType.STANDARD) {
@@ -1131,16 +1131,20 @@ library ValidatorToolkit {
 
 
 
-/** STORAGE VARS USABLE
+/** STORAGE VARS USAGE
     <addr/account>  "keys"       _bytesArray
     <str/role>      "keys"       _bytesArray
     <str/role>      "members"    _addressSet
+
+    **note ie. dKey dContract stands for decoded key or decoded contract
  */
 library Validator {
-    /// @dev Retrieves the keys associated with a specific account from the provided storage
-    /// @param storage_ The storage contract where the keys are stored
-    /// @param account The address of the account to retrieve keys for
-    /// @return keys An array containing the keys associated with the specified account
+    /**
+    * @dev Retrieves the keys associated with a specific account from the provided storage.
+    * @param storage_ The storage contract where the keys are stored.
+    * @param account The address of the account to retrieve keys for.
+    * @return keys An array containing the keys associated with the specified account.
+    */
     function getKeys(IStorage storage_, address account)
     external view
     returns (bytes[] memory keys) {
@@ -1149,10 +1153,12 @@ library Validator {
         return storage_.getBytesArray({key: varAccountKeys});
     }
 
-    /// @dev Retrieves the keys associated with a specific role from the provided storage
-    /// @param storage_ The storage contract where the keys are stored
-    /// @param role The name of the role to retrieve keys for
-    /// @return keys An array containing the keys associated with the specified role
+    /**
+    * @dev Retrieves the keys associated with a specific role from the provided storage.
+    * @param storage_ The storage contract where the keys are stored.
+    * @param role The name of the role to retrieve keys for.
+    * @return keys An array containing the keys associated with the specified role.
+    */
     function getRoleKeys(IStorage storage_, string memory role)
     external view
     returns (bytes[] memory keys) {
@@ -1160,10 +1166,12 @@ library Validator {
         return storage_.getBytesArray({key: varRoleKeys});
     }
 
-    /// @dev Retrieves the members associated with a specific role from the provided storage
-    /// @param storage_ The storage contract where the members are stored
-    /// @param role The name of the role to retrieve members for
-    /// @return members An array containing the addresses of members associated with the specified role
+    /**
+    * @dev Retrieves the members associated with a specific role from the provided storage.
+    * @param storage_ The storage contract where the members are stored.
+    * @param role The name of the role to retrieve members for.
+    * @return members An array containing the addresses of members associated with the specified role.
+    */
     function getRoleMembers(IStorage storage_, string memory role)
     external view
     returns (address[] memory members) {
@@ -1171,10 +1179,12 @@ library Validator {
         return storage_.getAddressSet({key: varRoleMembers});
     }
 
-    /// @dev Retrieves the number of members associated with a specific role from the provided storage
-    /// @param storage_ The storage contract where the members are stored
-    /// @param role The name of the role to retrieve the size for
-    /// @return size The number of members associated with the specified role
+    /**
+    * @dev Retrieves the number of members associated with a specific role from the provided storage.
+    * @param storage_ The storage contract where the members are stored.
+    * @param role The name of the role to retrieve the size for.
+    * @return size The number of members associated with the specified role.
+    */
     function getRoleSize(IStorage storage_, string memory role)
     external view
     returns (uint size) {
@@ -1183,17 +1193,19 @@ library Validator {
         return addressArray.length;
     }
 
-    /// @dev Grants a key to an account with the specified parameters
-    /// @param storage_ The storage contract where the key will be stored
-    /// @param account The address of the account to which the key will be granted
-    /// @param contract_ The address of the contract associated with the key
-    /// @param signature The signature string for the key
-    /// @param keyType The type of the key (STANDARD, TIMED, CONSUMABLE)
-    /// @param startTimestamp The start timestamp for the key
-    /// @param endTimestamp The end timestamp for the key
-    /// @param balance The balance associated with the key
-    /// @return success True if the key granting was successful, false otherwise
-    /// @return index The index of the granted key in the account's key list
+    /**
+    * @dev Grants a key to an account with the specified parameters.
+    * @param storage_ The storage contract where the key will be stored.
+    * @param account The address of the account to which the key will be granted.
+    * @param contract_ The address of the contract associated with the key.
+    * @param signature The signature string for the key.
+    * @param keyType The type of the key (STANDARD, TIMED, CONSUMABLE).
+    * @param startTimestamp The start timestamp for the key.
+    * @param endTimestamp The end timestamp for the key.
+    * @param balance The balance associated with the key.
+    * @return success True if the key granting was successful, false otherwise.
+    * @return index The index of the granted key in the account's key list.
+    */
     function grantKey(IStorage storage_, address account, address contract_, string memory signature, KeyType keyType, uint startTimestamp, uint endTimestamp, uint balance)
     external
     returns (bool success, uint index) {
@@ -1216,152 +1228,206 @@ library Validator {
         return (success, index);
     }
 
-
-
-    function revokeKey(IStorage db, address account, address contract_, string memory signature)
+    /**
+    * @dev Revokes a key associated with an account and contract address.
+    * @param storage_ The storage contract where the key is stored.
+    * @param account The address of the account for which the key will be revoked.
+    * @param contract_ The address of the contract associated with the key.
+    * @param signature The signature string of the key to be revoked.
+    * @return success True if the key revocation was successful, false otherwise.
+    * @return index The index of the revoked key in the account's key list.
+    */
+    function revokeKey(IStorage storage_, address account, address contract_, string memory signature)
     external
     returns (bool success, uint index) {
         require(account !=address(0), "Validator: account is address zero");
-        require(contract_ !=address(0), "Validator: contract_ is address zero");
-        bytes32 keys =Encoder.account({account: account, property: "keys"});
-        (success, index) =ValidatorToolkit.getKeyIndexByContractAndSignature({db: db, array: keys, contract_: contract_, signature: signature});
-        require(success, "Validator: unable to find matching contract and address");
+        require(contract_ !=address(0), "Validator: contract is address zero");
+        bytes32 varAccountKeys =Encoder.account({account: account, property: "keys"});
+        (success, index) =ValidatorToolkit.getKeyIndexByContractAndSignature({storage_: storage_, variable: varAccountKeys, contract_: contract_, signature: signature});
+        require(success, "Validator: unable to find key: contract and address");
         bytes memory emptyBytes;
-        db.setIndexBytesArray({key: keys, index: index, value: emptyBytes});
+        storage_.setIndexBytesArray({key: varAccountKeys, index: index, value: emptyBytes});
         success =true;
         return (success, index);
     }
 
-    function resetKeys(IStorage db, address account)
+    /**
+    * @dev Resets (deletes) all keys associated with a specific account.
+    * @param storage_ The storage contract where the keys are stored.
+    * @param account The address of the account for which keys will be reset.
+    * @return success True if the key reset was successful, false otherwise.
+    */
+    function resetKeys(IStorage storage_, address account)
     external
     returns (bool success) {
         require(account !=address(0), "Validator: account is address zero");
-        bytes32 keys =Encoder.account({account: account, property: "keys"});
-        db.deleteBytesArray({key: keys});
+        bytes32 varAccountKeys =Encoder.account({account: account, property: "keys"});
+        storage_.deleteBytesArray({key: varAccountKeys});
         success =true;
         return success;
     }
 
-    function verify(IStorage db, address account, address contract_, string memory signature)
+    /**
+    * @dev Verifies a key associated with an account and contract address, and performs actions based on key type.
+    * @param storage_ The storage contract where the keys are stored.
+    * @param account The address of the account for which the key will be verified.
+    * @param contract_ The address of the contract associated with the key.
+    * @param signature The signature string of the key to be verified.
+    * @return success True if the key verification was successful, false otherwise.
+    * @return index The index of the verified key in the account's key list.
+    */
+    function verify(IStorage storage_, address account, address contract_, string memory signature)
     external
-    returns (bool success, uint index) {
+    returns(bool success, uint index) {
         require(account !=address(0), "Validator: account is address zero");
         require(contract_ !=address(0), "Validator: contract_ is address zero");
-        bytes32 keys =Encoder.account({account: account, property: "keys"});
-        bytes[] memory bytesArray =db.getBytesArray({key: keys});
-        (success, index) =ValidatorToolkit.getKeyIndexByContractAndSignature({db: db, array: keys, contract_: contract_, signature: signature});
-        require(success, "Validator: unable to find matching contract and address");
-        bytes memory key =db.indexBytesArray({key: keys, index: index});
-        (address contract_B, string memory signatureB, uint type_, uint startTimestamp, uint endTimestamp, uint balance) =Encoder.decodeKey({key: key});
-        if (type_ ==0) { success =true; }
-        else if (type_ ==1) {
-            require(block.timestamp >=startTimestamp, "Validator: cannot use key before granted");
-            require(block.timestamp <=endTimestamp, "Validator: expired");
+        bytes32 varAccountKeys =Encoder.account({account: account, property: "keys"});
+        bytes[] memory bytesArray =storage_.getBytesArray({key: varAccountKeys});
+        (success, index) =ValidatorToolkit.getKeyIndexByContractAndSignature({storage_: storage_, variable: varAccountKeys, contract_: contract_, signature: signature});
+        require(success, "Validator: unable to find key: contract and address");
+        bytes memory key =storage_.indexBytesArray({key: varAccountKeys, index: index});
+        (address dContract, string memory dSignature, KeyType dKeyType, uint dStartTimestamp, uint dEndTimestamp, uint dBalance) =Encoder.decodeKey({key: key});
+        if (dKeyType ==KeyType.STANDARD) { success =true; }
+        else if (dKeyType ==KeyType.TIMED) {
+            require(block.timestamp >=dStartTimestamp, "Validator: cannot use key before granted");
+            require(block.timestamp <=dEndTimestamp, "Validator: expired");
             success =true;
         }
-        else if (type_ ==2) {
-            require(balance >=1, "Validator: insufficient balance");
-            balance--;
-            bytes memory keyB =Encoder.encodeKey({contract_: contract_B, signature: signatureB, type_: type_, startTimestamp: startTimestamp, endTimestamp: endTimestamp, balance: balance});
-            db.setIndexBytesArray({key: keys, index: index, value: keyB});
+        else if (dKeyType ==KeyType.CONSUMABLE) {
+            require(dBalance >=1, "Validator: insufficient balance");
+            dBalance--;
+            bytes memory newKey =Encoder.encodeKey({contract_: dContract, signature: dSignature, keyType: dKeyType, startTimestamp: dStartTimestamp, endTimestamp: dEndTimestamp, balance: dBalance});
+            storage_.setIndexBytesArray({key: varAccountKeys, index: index, value: newKey});
             success =true;
         }
         Utils.requireSuccess({success: success});
         return (success, index);
     }
 
-    function grantKeyToRole(IStorage db, string memory role, address contract_, string memory signature, uint type_, uint startTimestamp, uint endTimestamp, uint balance)
+    /**
+    * @dev Grants a key to a role with the specified parameters.
+    * @param storage_ The storage contract where the key will be stored.
+    * @param role The name of the role to which the key will be granted.
+    * @param contract_ The address of the contract associated with the key.
+    * @param signature The signature string for the key.
+    * @param keyType The type of the key (STANDARD, TIMED, CONSUMABLE).
+    * @param startTimestamp The start timestamp for the key.
+    * @param endTimestamp The end timestamp for the key.
+    * @param balance The balance associated with the key.
+    * @return success True if the key granting to the role was successful, false otherwise.
+    * @return index The index of the granted key in the role's key list.
+    */
+    function grantKeyToRole(IStorage storage_, string memory role, address contract_, string memory signature, KeyType keyType, uint startTimestamp, uint endTimestamp, uint balance)
     external
     returns (bool success, uint index) {
-        ValidatorToolkit.requireInput({type_: type_, startTimestamp: startTimestamp, endTimestamp: endTimestamp, balance: balance});
+        ValidatorToolkit.requireCorrectInput({keyType: keyType, startTimestamp: startTimestamp, endTimestamp: endTimestamp, balance: balance});
         require(contract_ !=address(0), "Validator: contract_ is address zero");
-        bytes memory key =Encoder.encodeKey({contract_: contract_, signature: signature, type_: type_, startTimestamp: startTimestamp, endTimestamp: endTimestamp, balance: balance});
-        bytes32 keys =Encoder.role({role: role, property: "keys"});
-        (success, index) =ValidatorToolkit.getKeyIndexByContractAndSignature({db: db, array: keys, contract_: contract_, signature: signature});
-        require(!success, "Validator: matching contract and address");
-        (success, index) =ValidatorToolkit.getKeyIndexByEmptyBytes({db: db, array: keys});
-        if (success) { db.setIndexBytesArray({key: keys, index: index, value: key}); }
+        bytes memory key =Encoder.encodeKey({contract_: contract_, signature: signature, keyType: keyType, startTimestamp: startTimestamp, endTimestamp: endTimestamp, balance: balance});
+        bytes32 varRoleKeys =Encoder.role({role: role, property: "keys"});
+        (success, index) =ValidatorToolkit.getKeyIndexByContractAndSignature({storage_: storage_, variable: varRoleKeys, contract_: contract_, signature: signature});
+        require(!success, "Validator: matching existing key: contract and address");
+        (success, index) =ValidatorToolkit.getKeyIndexByEmptyBytes({storage_: storage_, variable: varRoleKeys});
+        if (success) { storage_.setIndexBytesArray({key: varRoleKeys, index: index, value: key}); }
         else {
-            db.pushBytesArray({key: keys, value: key});
-            index =db.lengthBytesArray({key: keys}) -1;
+            storage_.pushBytesArray({key: varRoleKeys, value: key});
+            bytes[] memory bytesArray =storage_.getBytesArray({key: varRoleKeys});
+            index =bytesArray.length -1;
             success =true;
         }
         Utils.requireSuccess({success: success});
         return (success, index);
     }
 
-    function revokeKeyFromRole(IStorage db, string memory role, address contract_, string memory signature)
+    /**
+    * @dev Revokes a key associated with a role.
+    * @param storage_ The storage contract where the keys are stored.
+    * @param role The name of the role from which the key will be revoked.
+    * @param contract_ The address of the contract associated with the key.
+    * @param signature The signature string of the key to be revoked.
+    * @return success True if the key revocation from the role was successful, false otherwise.
+    * @return index The index of the revoked key in the role's key list.
+    */
+    function revokeKeyFromRole(IStorage storage_, string memory role, address contract_, string memory signature)
     external
     returns (bool success, uint index) {
         require(contract_ !=address(0), "Validator: contract_ is address zero");
-        bytes32 keys =Encoder.role({role: role, property: "keys"});
-        (success, index) =ValidatorToolkit.getKeyIndexByContractAndSignature({db: db, array: keys, contract_: contract_, signature: signature});
-        require(success, "Validator: unable to find matching contract and address");
+        bytes32 varRoleKeys =Encoder.role({role: role, property: "keys"});
+        (success, index) =ValidatorToolkit.getKeyIndexByContractAndSignature({storage_: storage_, variable: varRoleKeys, contract_: contract_, signature: signature});
+        require(success, "Validator: unable to find key: contract and address");
         bytes memory emptyBytes;
-        db.setIndexBytesArray({key: keys, index: index, value: emptyBytes});
+        storage_.setIndexAddressArray({key: varRoleKeys, index: index, value: emptyBytes});
         success =true;
         return (success, index);
     }
 
-    function resetRoleKeys(IStorage db, string memory role)
+    /**
+    * @dev Resets (deletes) all keys associated with a specific role.
+    * @param storage_ The storage contract where the keys are stored.
+    * @param role The name of the role for which keys will be reset.
+    * @return success True if the role's keys reset was successful, false otherwise.
+    */
+    function resetRoleKeys(IStorage storage_, string memory role)
     external
     returns (bool success) {
-        bytes32 keys =Encoder.role({role: role, property: "keys"});
-        db.deleteBytesArray({key: keys});
+        bytes32 varRoleKeys =Encoder.role({role: role, property: "keys"});
+        storage_.deleteBytesArray({key: varRoleKeys});
         success =true;
         return success;
     }
 
-    function grantRole(IStorage db, address account, string memory role)
+    /**
+    * @dev Grants a role to an account, copying keys associated with the role to the account.
+    * @param storage_ The storage contract where the keys and roles are stored.
+    * @param account The address of the account to which the role will be granted.
+    * @param role The name of the role to be granted.
+    * @return success True if the role granting was successful, false otherwise.
+    */
+    function grantRole(IStorage storage_, address account, string memory role)
     external
     returns (bool success) {
         require(account !=address(0), "Validator: account is address zero");
-        bytes32 keysA =Encoder.role({role: role, property: "keys"});
-        bytes32 keysB =Encoder.account({account: account, property: "keys"});
-        db.deleteBytesArray({key: keysB});
-        bytes[] memory roleKeysArray =db.getBytesArray({key: keysA});
-        for (uint i =0; i <roleKeysArray.length; i++) {
+        bytes32 varRoleKeys =Encoder.role({role: role, property: "keys"});
+        bytes32 varAccountKeys =Encoder.account({account: account, property: "keys"});
+        storage_.deleteBytesArray({key: varAccountKeys});
+        bytes[] memory roleKeys =storage_.getBytesArray({key: varRoleKeys});
+        for (uint i =0; i <roleKeys.length; i++) {
             success =false;
-            (address contract_, string memory signature, uint type_, uint startTimestamp, uint endTimestamp, uint balance) =Encoder.decodeKey({key: roleKeysArray[i]});
-            ValidatorToolkit.requireInput(type_, startTimestamp, endTimestamp, balance);
-            db.pushBytesArray({key: keysB, value: roleKeysArray[i]});
+            (address contract_, string memory signature, KeyType keyType, uint startTimestamp, uint endTimestamp, uint balance) =Encoder.decodeKey({key: roleKeys[i]});
+            ValidatorToolkit.requireCorrectInput({keyType: keyType, startTimestamp: startTimestamp, endTimestamp: endTimestamp, balance: balance});
+            storage_.pushBytesArray({key: varAccountKeys, value: roleKeys[i]});
         }
-        bytes32 members =Encoder.role({role: role, property: "members"});
-        db.addAddressSet({key: members, value: account});
+        bytes32 varRoleMembers =Encoder.role({role: role, property: "members"});
+        storage_.addAddressSet({key: varRoleMembers, value: account});
         success =true;
         return success;
     }
 
-    function revokeRole(IStorage db, address account, string memory role)
+    /**
+    * @dev Revokes a role from an account, removing associated keys from the account.
+    * @param storage_ The storage contract where the keys and roles are stored.
+    * @param account The address of the account from which the role will be revoked.
+    * @param role The name of the role to be revoked.
+    * @return success True if the role revocation was successful, false otherwise.
+    * @return index The index of the last revoked key in the role's key list.
+    */
+    function revokeRole(IStorage storage_, address account, string memory role)
     external
     returns (bool success, uint index) {
         require(account !=address(0), "Validator: account is address zero");
-        bytes32 keys =Encoder.role({role: role, property: "keys"});
-        bytes32 keysB =Encoder.account({account: account, property: "keys"});
-        bytes[] memory roleKeysArray =db.getBytesArray({key: keys});
+        bytes32 varRoleKeys =Encoder.role({role: role, property: "keys"});
+        bytes32 varAccountKeys =Encoder.account({account: account, property: "keys"});
+        bytes[] memory roleKeys =storage_.getBytesArray({key: varRoleKeys});
         bytes memory emptyBytes;
-        for (uint i =0; i <roleKeysArray.length; i++) {
-            (address contract_, string memory signature, , , ,) =Encoder.decodeKey({key: roleKeysArray[i]});
+        for (uint i =0; i <roleKeys.length; i++) {
+            (address contract_, string memory signature, , , ,) =Encoder.decodeKey({key: roleKeys[i]});
             success =false;
             index =0;
-            (success, index) =ValidatorToolkit.getKeyIndexByContractAndSignature({db: db, array: keys, contract_: contract_, signature: signature});
-            if (success) { db.setIndexBytesArray({key: keysB, index: index, value: emptyBytes}); }
+            (success, index) =ValidatorToolkit.getKeyIndexByContractAndSignature({storage_: storage_, variable: varRoleKeys, contract_: contract_, signature: signature});
+            if (success) { storage_.setIndexBytesArray({key: varAccountKeys, index: index, value: emptyBytes}); }
         }
         success =true;
         return (success, index);
     }
-}
-
-
-
-library Network {
-    function setUpAccount(IStorage db, address account, string memory username)
-    external {
-        bytes32 meta =Encoder.account({account: account, property: "meta"});
-        
-    }
-
-    
 }
 
 
@@ -1385,19 +1451,19 @@ interface ISentinel {
 
 
 
-contract Sentinel is Pausable, ReentrancyGuard {
+contract Sentinel is ISentinel, Pausable, ReentrancyGuard {
     bool internal _init;
     address internal _deployer;
-    IStorage db;
+    IStorage storage_;
 
     modifier verify_(string memory signature) {
-        Validator.verify({db: db, account: msg.sender, contract_: address(this), signature: signature});
+        Validator.verify({storage_: storage_, account: msg.sender, contract_: address(this), signature: signature});
         _;
     }
 
-    constructor(address database) {
+    constructor(address storage__) {
         _deployer =msg.sender;
-        db =IStorage(database);
+        storage_ =IStorage(storage__);
     }
 
     function init()
@@ -1405,51 +1471,51 @@ contract Sentinel is Pausable, ReentrancyGuard {
         require(msg.sender ==_deployer, "Terminal: only _deployer can call");
         require(!_init, "Sentienl: _init");
         bool isImplementation;
-        address[] memory implementations =db.getImplementations();
+        address[] memory implementations =storage_.getImplementations();
         for (uint i =0; i <implementations.length; i++) {
             if (msg.sender ==implementations[i]) { isImplementation =true; }
         }
         require(isImplementation, "Sentinel: cannot init without setting as implementation first");
-        Validator.grantKeyToRole({db: db, role: "validator", contract_: address(this), signature: "grantKey(address,address,string,uint256,uint256,uint256,uint256)", type_: 0, startTimestamp: 0, endTimestamp: 0, balance: 0});
-        Validator.grantKeyToRole({db: db, role: "validator", contract_: address(this), signature: "revokeKey(address,address,string)", type_: 0, startTimestamp: 0, endTimestamp: 0, balance: 0});
-        Validator.grantKeyToRole({db: db, role: "validator", contract_: address(this), signature: "resetKeys(address)", type_: 0, startTimestamp: 0, endTimestamp: 0, balance: 0});
-        Validator.grantKeyToRole({db: db, role: "validator", contract_: address(this), signature: "grantKeyToRole(string,address,string,uint256,uint256,uint256,uint256)", type_: 0, startTimestamp: 0, endTimestamp: 0, balance: 0});
-        Validator.grantKeyToRole({db: db, role: "validator", contract_: address(this), signature: "revokeKeyFromRole(string,address,string)", type_: 0, startTimestamp: 0, endTimestamp: 0, balance: 0});
-        Validator.grantKeyToRole({db: db, role: "validator", contract_: address(this), signature: "resetRoleKeys(string)", type_: 0, startTimestamp: 0, endTimestamp: 0, balance: 0});
-        Validator.grantKeyToRole({db: db, role: "validator", contract_: address(this), signature: "grantRole(address,string)", type_: 0, startTimestamp: 0, endTimestamp: 0, balance: 0});
-        Validator.grantKeyToRole({db: db, role: "validator", contract_: address(this), signature: "revokeRole(address,string)", type_: 0, startTimestamp: 0, endTimestamp: 0, balance: 0});
-        Validator.grantRole({db: db, account: msg.sender, role: "validator"});
+        Validator.grantKeyToRole({storage_: storage_, role: "validator", contract_: address(this), signature: "grantKey(address,address,string,uint256,uint256,uint256,uint256)", type_: 0, startTimestamp: 0, endTimestamp: 0, balance: 0});
+        Validator.grantKeyToRole({storage_: storage_, role: "validator", contract_: address(this), signature: "revokeKey(address,address,string)", type_: 0, startTimestamp: 0, endTimestamp: 0, balance: 0});
+        Validator.grantKeyToRole({storage_: storage_, role: "validator", contract_: address(this), signature: "resetKeys(address)", type_: 0, startTimestamp: 0, endTimestamp: 0, balance: 0});
+        Validator.grantKeyToRole({storage_: storage_, role: "validator", contract_: address(this), signature: "grantKeyToRole(string,address,string,uint256,uint256,uint256,uint256)", type_: 0, startTimestamp: 0, endTimestamp: 0, balance: 0});
+        Validator.grantKeyToRole({storage_: storage_, role: "validator", contract_: address(this), signature: "revokeKeyFromRole(string,address,string)", type_: 0, startTimestamp: 0, endTimestamp: 0, balance: 0});
+        Validator.grantKeyToRole({storage_: storage_, role: "validator", contract_: address(this), signature: "resetRoleKeys(string)", type_: 0, startTimestamp: 0, endTimestamp: 0, balance: 0});
+        Validator.grantKeyToRole({storage_: storage_, role: "validator", contract_: address(this), signature: "grantRole(address,string)", type_: 0, startTimestamp: 0, endTimestamp: 0, balance: 0});
+        Validator.grantKeyToRole({storage_: storage_, role: "validator", contract_: address(this), signature: "revokeRole(address,string)", type_: 0, startTimestamp: 0, endTimestamp: 0, balance: 0});
+        Validator.grantRole({storage_: storage_, account: msg.sender, role: "validator"});
         _init =true;
     }
 
     function getKeys(address account)
     external view
     returns (bytes[] memory) {
-        return Validator.getKeys({db: db, account: account});
+        return Validator.getKeys({storage_: storage_, account: account});
     }
 
     function getRoleKeys(string memory role)
     external view
     returns (bytes[] memory) {
-        return Validator.getRoleKeys({db: db, role: role});
+        return Validator.getRoleKeys({storage_: storage_, role: role});
     }
 
     function getRoleMembers(string memory role)
     external view
     returns (address[] memory) {
-        return Validator.getRoleMembers({db: db, role: role});
+        return Validator.getRoleMembers({storage_: storage_, role: role});
     }
 
     function getRoleSize(string memory role)
     external view
     returns (uint) {
-        return Validator.getRoleSize({db: db, role: role});
+        return Validator.getRoleSize({storage_: storage_, role: role});
     }
 
     function verify(address account, address contract_, string memory signature)
     external 
     nonReentrant {
-        Validator.verify({db: db, account: account, contract_: contract_, signature: signature});
+        Validator.verify({storage_: storage_, account: account, contract_: contract_, signature: signature});
     }
 
     function grantKey(address account, address contract_, string memory signature, uint type_, uint startTimestamp, uint endTimestamp, uint balance)
@@ -1457,7 +1523,7 @@ contract Sentinel is Pausable, ReentrancyGuard {
     nonReentrant 
     whenNotPaused 
     verify_("grantKey(address,address,string,uint256,uint256,uint256,uint256)") {
-        Validator.grantKey({db: db, account: account, contract_: contract_, signature: signature, type_: type_, startTimestamp: startTimestamp, endTimestamp: endTimestamp, balance: balance});
+        Validator.grantKey({storage_: storage_, account: account, contract_: contract_, signature: signature, type_: type_, startTimestamp: startTimestamp, endTimestamp: endTimestamp, balance: balance});
     }
 
     function revokeKey(address account, address contract_, string memory signature)
@@ -1465,7 +1531,7 @@ contract Sentinel is Pausable, ReentrancyGuard {
     nonReentrant
     whenNotPaused 
     verify_("revokeKey(address,address,string)") {
-        Validator.revokeKey({db: db, account: account, contract_: contract_, signature: signature});
+        Validator.revokeKey({storage_: storage_, account: account, contract_: contract_, signature: signature});
     }
 
     function resetKeys(address account)
@@ -1473,7 +1539,7 @@ contract Sentinel is Pausable, ReentrancyGuard {
     nonReentrant 
     whenNotPaused 
     verify_("resetKeys(address)") {
-        Validator.resetKeys({db: db, account: account});
+        Validator.resetKeys({storage_: storage_, account: account});
     }
 
     function grantKeyToRole(string memory role, address contract_, string memory signature, uint type_, uint startTimestamp, uint endTimestamp, uint balance)
@@ -1481,7 +1547,7 @@ contract Sentinel is Pausable, ReentrancyGuard {
     nonReentrant
     whenNotPaused
     verify_("grantKeyToRole(string,address,string,uint256,uint256,uint256,uint256)") {
-        Validator.grantKeyToRole({db: db, role: role, contract_: contract_, signature: signature, type_: type_, startTimestamp: startTimestamp, endTimestamp: endTimestamp, balance: balance});
+        Validator.grantKeyToRole({storage_: storage_, role: role, contract_: contract_, signature: signature, type_: type_, startTimestamp: startTimestamp, endTimestamp: endTimestamp, balance: balance});
     }
 
     function revokeKeyFromRole(string memory role, address contract_, string memory signature)
@@ -1489,7 +1555,7 @@ contract Sentinel is Pausable, ReentrancyGuard {
     nonReentrant 
     whenNotPaused 
     verify_("revokeKeyFromRole(string,address,string)") {
-        Validator.revokeKeyFromRole({db: db, role: role, contract_: contract_, signature: signature});
+        Validator.revokeKeyFromRole({storage_: storage_, role: role, contract_: contract_, signature: signature});
     }
 
     function resetRoleKeys(string memory role)
@@ -1497,7 +1563,7 @@ contract Sentinel is Pausable, ReentrancyGuard {
     nonReentrant
     whenNotPaused
     verify_("resetRoleKeys(string)") {
-        Validator.resetRoleKeys({db: db, role: role});
+        Validator.resetRoleKeys({storage_: storage_, role: role});
     }
 
     function grantRole(address account, string memory role)
@@ -1505,7 +1571,7 @@ contract Sentinel is Pausable, ReentrancyGuard {
     nonReentrant 
     whenNotPaused 
     verify_("grantRole(address,string)") {
-        Validator.grantRole({db: db, account: account, role: role});
+        Validator.grantRole({storage_: storage_, account: account, role: role});
     }
 
     function revokeRole(address account, string memory role)
@@ -1513,20 +1579,45 @@ contract Sentinel is Pausable, ReentrancyGuard {
     nonReentrant
     whenNotPaused
     verify_("revokeRole(address,string)") {
-        Validator.revokeRole({db: db, account: account, role: role});
+        Validator.revokeRole({storage_: storage_, account: account, role: role});
     }
 }
 
 
+/** STORAGE VARS USAGE
+    "durationTimelock"           _uint
+    "durationTimeout"            _uint
+    "requests"                   _bytesArray
 
+    | o ---------- lock
+    | o ------------------------ out
+    | o           -------------- window of execution
+    
+    **request is pending during lock period
+    **request can be executed after lock but before timeout
+    **request cannot be executed after timeout
+    **request can only be executed once
+    **timelock can never be less than 3600 seconds
+    **timeout can never be less than timelock + 3600 seconds
+ */
 library Timelock {
-    function queueRequest(address[] memory targets, string[] memory signatures, bytes[] memory args)
+    /**
+    * @dev Queues a new request by encoding and storing it in the contract.
+    * @param storage_ The storage contract where the request and its details will be stored.
+    * @param targets An array of target addresses for the function calls within the request.
+    * @param signatures An array of function signatures for the function calls within the request.
+    * @param args An array of encoded arguments for the function calls within the request.
+    */
+    function queueRequest(IStorage storage_, address[] memory targets, string[] memory signatures, bytes[] memory args)
     external {
         uint now_ =block.timestamp;
-        uint durationTimelock =db.getUint({key: Encoder.encode({string_: "durationTimelock"})});
-        uint durationTimeout =db.getUint({key: Encoder.encode({string_: "durationTimeout"})});
-        bytes memory request =Encoder.encodeRequest({targets: targets, signatures: signatures, args: args, endTimelockTimestamp: now_ +durationTimelock, endTimeoutTimestamp: now_ +durationTimeout, approved: false, rejected: false, executed: false});
-        db.pushBytesArray({key: Encoder.encode({string_: "requests"}), value: request});
+        bytes32 varDurationTimelock =Encoder.encode({string_: "durationTimelock"});
+        bytes32 varDurationTimeout =Encoder.encode({string_: "durationTimeout"});
+        uint durationTimelock =storage_.getUint({key: varDurationTimelock});
+        uint durationTimeout =storage_.getUint({key: varDurationTimeout});
+        bytes memory request =Encoder.encodeRequest({targets: targets, signatures: signatures, args: args, endTimelockTimestamp: now_ +durationTimelock, endTimeoutTimestamp: now_ +durationTimeout, requestStage: RequestStage.PENDING});
+        bytes32 varRequests =Encoder.encode({string_: "requests"});
+        storage_.pushBytesArray({key: varRequests, value: request});
     }
 }
 
@@ -1555,7 +1646,7 @@ contract Achievements is ERC721 {
         bytes32 numAchievements =Encoder.encode({string_: "numAchievements"});
         uint newItemId =db.getUint({key: numAchievements});
         _safeMint({to: account, tokenId: newItemId});
-        _setTokenURI({tokenId: newItemId, tokenURI: tokenURI});
+        //_setTokenURI({tokenId: newItemId, tokenURI: tokenURI});
         db.setUint({key: numAchievements, value: newItemId +=1});
         return newItemId;
     }
