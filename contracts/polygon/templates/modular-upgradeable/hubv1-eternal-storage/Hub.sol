@@ -272,6 +272,7 @@ contract Storage {
 
     function getString(bytes32 key)
     external view
+    onlyNotEmptyKey(key)
     onlyDataTypeCheck(key, DataType.STRING)
     returns (string memory) {
         return _string[key];
@@ -279,6 +280,7 @@ contract Storage {
 
     function getBytes(bytes32 key)
     external view
+    onlyNotEmptyKey(key)
     onlyDataTypeCheck(key, DataType.BYTES)
     returns (bytes memory) {
         return _bytes[key];
@@ -286,6 +288,7 @@ contract Storage {
 
     function getUint(bytes32 key)
     external view
+    onlyNotEmptyKey(key)
     onlyDataTypeCheck(key, DataType.UINT)
     returns (uint) {
         return _uint[key];
@@ -293,6 +296,7 @@ contract Storage {
 
     function getInt(bytes32 key)
     external view
+    onlyNotEmptyKey(key)
     onlyDataTypeCheck(key, DataType.INT)
     returns (int) {
         return _int[key];
@@ -300,6 +304,7 @@ contract Storage {
 
     function getAddress(bytes32 key)
     external view
+    onlyNotEmptyKey(key)
     onlyDataTypeCheck(key, DataType.ADDRESS)
     returns (address) {
         return _address[key];
@@ -307,6 +312,7 @@ contract Storage {
 
     function getBool(bytes32 key)
     external view
+    onlyNotEmptyKey(key)
     onlyDataTypeCheck(key, DataType.BOOL)
     returns (bool) {
         return _bool[key];
@@ -314,9 +320,28 @@ contract Storage {
 
     function getBytes32(bytes32 key)
     external view
+    onlyNotEmptyKey(key)
     onlyDataTypeCheck(key, DataType.BYTES32)
     returns (bytes32) {
         return _bytes32[key];
+    }
+
+    // GET ARRAYS
+
+    function getStringArray(bytes32 key)
+    external view
+    onlyNotEmptyKey(key)
+    onlyDataTypeCheck(key, DataType.STRING_ARRAY) 
+    returns (string[] memory) {
+        return _stringArray[key];
+    }
+
+    function getBytesArray(bytes32 key)
+    external view
+    onlyNotEmptyKey(key)
+    onlyDataTypeCheck(key, DataType.BYTES_ARRAY)
+    returns (bytes[] memory) {
+        return _bytesArray[key];
     }
 
     // SET ADMIN & LOGIC
@@ -465,8 +490,162 @@ contract Storage {
         emit SetIndexIntArray({key: key, index: index, value: value});
     }
 
-    
+    function setIndexAddressArray(bytes32 key, uint index, address value)
+    external
+    onlyLogic
+    onlyNotEmptyKey(key)
+    onlyDataType(key, DataType.ADDRESS_ARRAY) {
+        _addressArray[key][index] =value;
+        emit SetIndexAddressArray({key: key, index: index, value: value});
+    }
 
+    function setIndexBoolArray(bytes32 key, uint index, bool value)
+    external
+    onlyLogic
+    onlyNotEmptyKey(key)
+    onlyDataType(key, DataType.BOOL_ARRAY) {
+        _boolArray[key][index] =value;
+        emit SetIndexBoolArray({key: key, index: index, value: value});
+    }
+
+    function setIndexBytes32Array(bytes32 key, uint index, bytes32 value)
+    external
+    onlyLogic
+    onlyNotEmptyKey(key)
+    onlyDataType(key, DataType.BYTES32_ARRAY) {
+        _bytes32Array[key][index] =value;
+        emit SetIndexBytes32Array({key: key, index: index, value: value});
+    }
+
+    // PUSH ARRAYS
+
+    function pushStringArray(bytes32 key, string memory value)
+    external
+    onlyLogic
+    onlyNotEmptyKey(key)
+    onlyDataType(key, DataType.STRING_ARRAY) {
+        _stringArray.push(value);
+        emit PushStringArray({key: key, value: value});
+    }
+
+    function pushBytesArray(bytes32 key, bytes memory value)
+    external
+    onlyLogic
+    onlyNotEmptyKey(key)
+    onlyDataType(key, DataType.BYTES_ARRAY) {
+        _bytesArray.push(value);
+        emit PushBytesArray({key: key, value: value});
+    }
+
+    function pushUintArray(bytes32 key, uint value)
+    external
+    onlyLogic
+    onlyNotEmptyKey(key)
+    onlyDataType(key, DataType.UINT_ARRAY) {
+        _uintArray.push(value);
+        emit PushUintArray({key: key, value: value});
+    }
+
+    function pushIntArray(bytes32 key, int value)
+    external
+    onlyLogic
+    onlyNotEmptyKey(key)
+    onlyDataType(key, DataType.INT_ARRAY) {
+        _intArray.push(value);
+        emit PushIntArray({key: key, value: value});
+    }
+
+    function pushAddressArray(bytes32 key, address value)
+    external
+    onlyLogic
+    onlyNotEmptyKey(key)
+    onlyDataType(key, DataType.ADDRESS_ARRAY) {
+        _addressArray.push(value);
+        emit PushAddressArray({key: key, value: value});
+    }
+
+    function pushBoolArray(bytes32 key, bool value)
+    external
+    onlyLogic
+    onlyNotEmptyKey(key)
+    onlyDataType(key, DataType.BOOL_ARRAY) {
+        _boolArray.push(value);
+        emit PushBoolArray({key: key, value: value});
+    }
+
+    function pushBytes32Array(bytes32 key, bytes32 value)
+    external
+    onlyLogic
+    onlyNotEmptyKey(key)
+    onlyDataType(key, DataType.BYTES32_ARRAY) {
+        _bytes32Array.push(value);
+        emit PushBytes32Array({key: key, value: value});
+    }
+
+    // DELETE ARRAYS
+
+    function deleteStringArray(bytes32 key)
+    external
+    onlyLogic
+    onlyNotEmptyKey(key)
+    onlyDataType(key, DataType.STRING_ARRAY) {
+        delete _stringArray[key];
+        emit DeleteStringArray({key: key});
+    }
+
+    function deleteBytesArray(bytes32 key)
+    external
+    onlyLogic
+    onlyNotEmptyKey(key)
+    onlyDataType(key, DataType.BYTES_ARRAY) {
+        delete _bytesArray[key];
+        emit DeleteBytesArray({key: key});
+    }
+
+    function deleteUintArray(bytes32 key)
+    external
+    onlyLogic
+    onlyNotEmptyKey(key)
+    onlyDataType(key, DataType.UINT_ARRAY) {
+        delete _uintArray[key];
+        emit DeleteUintArray({key: key});
+    }
+
+    function deleteIntArray(bytes32 key)
+    external
+    onlyLogic
+    onlyNotEmptyKey(key)
+    onlyDataType(key, DataType.INT_ARRAY) {
+        delete _intArray[key];
+        emit DeleteIntArray({key: key});
+    }
+
+    function deleteAddressArray(bytes32 key)
+    external
+    onlyLogic
+    onlyNotEmptyKey(key)
+    onlyDataType(key, DataType.ADDRESS_ARRAY) {
+        delete _addressArray[key];
+        emit DeleteAddressArray({key: key});
+    }
+
+    function deleteBoolArray(bytes32 key)
+    external
+    onlyLogic
+    onlyNotEmptyKey(key)
+    onlyDataType(key, DataType.BOOL_ARRAY) {
+        delete _boolArray[key];
+        emit DeleteBoolArray({key: key});
+    }
+
+    function deleteBytes32Array(bytes32 key)
+    external
+    onlyLogic
+    onlyNotEmptyKey(key)
+    onlyDataType(key, DataType.BYTES32_ARRAY) {
+        delete _bytes32Array[key];
+        emit DeleteBytes32Array({key: key});
+    }
 
 }
 
