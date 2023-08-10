@@ -1628,26 +1628,33 @@ contract Key {
 }
 
 
+/** STORAGE VARS USAGE
 
+
+    **community earns anima by achieving goals within the ecosystem
+    **represent achievements from the community
+    **conditions for earning rewards are checked from storage
+    **some anima have byte code which when checked by contract can "do certain things"
+ */
 contract Achievements is ERC721 {
-    IStorage db;
-    ISentinel sn;
+    IStorage storage_;
+    ISentinel sentinel;
 
-    constructor(address database, address sentinel)
-    ERC721("DreamRewards", "DRMR") {
-        db =IStorage(database);
-        sn =ISentinel(sentinel);
+    constructor(address storage__, address sentinel_)
+    ERC721("AnimaRewards", "ANIMA") {
+        storage_ =IStorage(storage__);
+        sentinel =ISentinel(sentinel_);
     }
 
     function createCollectible(address account, string memory tokenURI)
     external
     returns (uint) {
-        sn.verify({account: msg.sender, contract_: address(this), signature: "createCollectibe(address,string)"});
+        sentinel.verify({account: msg.sender, contract_: address(this), signature: "createCollectibe(address,string)"});
         bytes32 numAchievements =Encoder.encode({string_: "numAchievements"});
-        uint newItemId =db.getUint({key: numAchievements});
+        uint newItemId =storage_.getUint({key: numAchievements});
         _safeMint({to: account, tokenId: newItemId});
         //_setTokenURI({tokenId: newItemId, tokenURI: tokenURI});
-        db.setUint({key: numAchievements, value: newItemId +=1});
+        storage_.setUint({key: numAchievements, value: newItemId +=1});
         return newItemId;
     }
 }
