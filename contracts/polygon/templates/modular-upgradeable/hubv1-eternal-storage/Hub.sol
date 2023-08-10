@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity 0.8.19;
-import "contracts/polygon/templates/Storage.sol";
 import "contracts/polygon/deps/openzeppelin/security/ReentrancyGuard.sol";
 import "contracts/polygon/deps/openzeppelin/security/Pausable.sol";
 import "contracts/polygon/deps/openzeppelin/token/ERC20/extensions/draft-ERC20Permit.sol";
@@ -30,6 +29,12 @@ enum DataType {
     ADDRESS_SET,
     UINT_SET,
     BYTES32_SET
+}
+
+enum KeyType {
+    STANDARD,
+    TIMED,
+    CONSUMABLE
 }
 
 contract Database is Storage {}
@@ -82,16 +87,16 @@ library Encoder {
         keccak256(abi.encode(string_));
     }
 
-    function encodeKey(address contract_, string memory signature, uint type_, uint startTimestamp, uint endTimestamp, uint balance)
+    function encodeKey(address contract_, string memory signature, KeyType keyType, uint startTimestamp, uint endTimestamp, uint balance)
     external pure
     returns (bytes memory key) {
-        return abi.encode(contract_, signature, type_, startTimestamp, endTimestamp, balance);
+        return abi.encode(contract_, signature, keyType, startTimestamp, endTimestamp, balance);
     }
 
     function decodeKey(bytes memory key)
     external pure
-    returns (address contract_, string memory signature, uint type_, uint startTimestamp, uint endTimestamp, uint balance) {
-        return abi.decode(key, (address,string,uint,uint,uint,uint));
+    returns (address contract_, string memory signature, KeyType keyType, uint startTimestamp, uint endTimestamp, uint balance) {
+        return abi.decode(key, (address,string,KeyType,uint,uint,uint));
     }
 
     function encodeRequest(address[] memory targets, string[] memory signatures, bytes[] memory args, uint endTimelockTimestamp, uint endTimeoutTimestamp, bool approved, bool rejected, bool executed)
@@ -104,18 +109,6 @@ library Encoder {
     external pure
     returns (address[] memory targets, string[] memory signatures, bytes[] memory args, uint endTimelockTimestamp, uint endTimeoutTimestamp, bool approved, bool rejected, bool executed) {
         return abi.decode(request, (address[],string[],bytes[],uint,uint,bool,bool,bool));
-    }
-
-    function encodeUsedBytes32Key(bytes32 usedBytes32Key, DataType dataType)
-    external pure
-    returns (bytes memory) {
-        return abi.encode(usedBytes32Key, dataType);
-    }
-
-    function decodeUsedBytes32Key(bytes memory usedBytes32Key)
-    external pure
-    returns (bytes32, DataType) {
-        return abi.decode(usedBytes32Key, (bytes32, DataType));
     }
 
     function account(address account, string memory property)
@@ -161,7 +154,90 @@ interface IStorage {
 
     // GET INDEXED ARRAYS
 
-    
+    function indexStringArray(bytes32 key, uint index) external view returns (string memory);
+    function indexBytesArray(bytes32 key, uint index) external view returns (bytes memory);
+    function indexUintArray(bytes32 key, uint index) external view returns (uint);
+    function indexIntArray(bytes32 key, uint index) external view returns (int);
+    function indexAddressArray(bytes32 key, uint index) external view returns (address);
+    function indexBoolArray(bytes32 key, uint index) external view returns (bool);
+    function indexBytes32Array(bytes32 key, uint index) external view returns (bytes32);
+
+    // GET SETS
+
+    function getAddressSet(bytes32 key) external view returns (address[] memory);
+    function getUintSet(bytes32 key) external view returns (uint[] memory);
+    function getBytes32Set(bytes32 key) external view returns (bytes32[] memory);
+
+    // GET INDEXED SETS
+
+    function indexAddressSet(bytes32 key, uint index) external view returns (address);
+    function indexUintSet(bytes32 key, uint index) external view returns (uint);
+    function indexBytes32Set(bytes32 key, uint index) external view returns (bytes32);
+
+    // CONTAINS SETS
+
+    function containsAddressSet(bytes32 key, address value) external view returns (bool);
+    function containsUintSet(bytes32 key, uint value) external view returns (bool);
+    function containsBytes32Set(bytes32 key, bytes32 value) external view returns (bool);
+
+    // SET ADMIN & LOGIC
+
+    function addAdmin(address admin) external;
+    function removeAdmin(address admin) external;
+    function addLogic(address logic) external;
+    function removeLogic(address logic) external;
+
+    // SET BASIC
+
+    function setString(bytes32 key, string memory value) external;
+    function setBytes(bytes32 key, bytes memory value) external;
+    function setUint(bytes32 key, uint value) external;
+    function setInt(bytes32 key, int value) external;
+    function setAddress(bytes32 key, address value) external;
+    function setBool(bytes32 key, bool value) external;
+    function setBytes32(bytes32 key, bytes32 value) external;
+
+    // SET ARRAYS
+
+    function setIndexStringArray(bytes32 key, uint index, string memory value) external;
+    function setIndexBytesArray(bytes32 key, uint index, bytes memory value) external;
+    function setIndexUintArray(bytes32 key, uint index, uint value) external;
+    function setIndexIntArray(bytes32 key, uint index, int value) external;
+    function setIndexAddressArray(bytes32 key, uint index, address value) external;
+    function setIndexBoolArray(bytes32 key, uint index, bool value) external;
+    function setIndexBytes32Array(bytes32 key, uint index, bytes32 value) external;
+
+    // PUSH ARRAYS
+
+    function pushStringArray(bytes32 key, string memory value) external;
+    function pushBytesArray(bytes32 key, bytes memory value) external;
+    function pushUintArray(bytes32 key, uint value) external;
+    function pushIntArray(bytes32 key, int value) external;
+    function pushAddressArray(bytes32 key, address value) external;
+    function pushBoolArray(bytes32 key, bool value) external;
+    function pushBytes32Array(bytes32 key, bytes32 value) external;
+
+    // DELETE ARRAYS
+
+    function deleteStringArray(bytes32 key) external;
+    function deleteBytesArray(bytes32 key) external;
+    function deleteUintArray(bytes32 key) external;
+    function deleteIntArray(bytes32 key) external;
+    function deleteAddressArray(bytes32 key) external;
+    function deleteBoolArray(bytes32 key) external;
+    function deleteBytes32Array(bytes32 key) external;
+
+    // ADD SETS
+
+    function addAddressSet(bytes32 key, address value) external;
+    function addUintSet(bytes32 key, uint value) external;
+    function addBytes32Set(bytes32 key, bytes32 value) external;
+
+    // REMOVE SETS
+
+    function removeAddressSet(bytes32 key, address value) external;
+    function removeUintSet(bytes32 key, uint value) external;
+    function removeBytes32Set(bytes32 key, bytes32 value) external;
 }
 
 
@@ -798,6 +874,7 @@ contract Storage {
     onlyLogic
     onlyNotEmptyKey(key)
     onlyDataType(key, DataType.STRING_ARRAY) {
+        require(_stringArray[key].length >0, "Storage: array is empty");
         delete _stringArray[key];
         emit DeleteStringArray({key: key});
     }
@@ -807,6 +884,7 @@ contract Storage {
     onlyLogic
     onlyNotEmptyKey(key)
     onlyDataType(key, DataType.BYTES_ARRAY) {
+        require(_bytesArray[key].length >0, "Storage: array is empty");
         delete _bytesArray[key];
         emit DeleteBytesArray({key: key});
     }
@@ -816,6 +894,7 @@ contract Storage {
     onlyLogic
     onlyNotEmptyKey(key)
     onlyDataType(key, DataType.UINT_ARRAY) {
+        require(_uintArray[key].length >0, "Storage: array is empty");
         delete _uintArray[key];
         emit DeleteUintArray({key: key});
     }
@@ -825,6 +904,7 @@ contract Storage {
     onlyLogic
     onlyNotEmptyKey(key)
     onlyDataType(key, DataType.INT_ARRAY) {
+        require(_intArray[key].length >0, "Storage: array is empty");
         delete _intArray[key];
         emit DeleteIntArray({key: key});
     }
@@ -834,6 +914,7 @@ contract Storage {
     onlyLogic
     onlyNotEmptyKey(key)
     onlyDataType(key, DataType.ADDRESS_ARRAY) {
+        require(_addressArray[key].length >0, "Storage: array is empty");
         delete _addressArray[key];
         emit DeleteAddressArray({key: key});
     }
@@ -843,6 +924,7 @@ contract Storage {
     onlyLogic
     onlyNotEmptyKey(key)
     onlyDataType(key, DataType.BOOL_ARRAY) {
+        require(_boolArray[key].length >0, "Storage: array is empty");
         delete _boolArray[key];
         emit DeleteBoolArray({key: key});
     }
@@ -852,6 +934,7 @@ contract Storage {
     onlyLogic
     onlyNotEmptyKey(key)
     onlyDataType(key, DataType.BYTES32_ARRAY) {
+        require(_bytes32Array[key].length >0, "Storage: array is empty");
         delete _bytes32Array[key];
         emit DeleteBytes32Array({key: key});
     }
@@ -863,6 +946,7 @@ contract Storage {
     onlyLogic
     onlyNotEmptyKey(key)
     onlyDataType(key, DataType.ADDRESS_SET) {
+        require(!_addressSet[key].contains(value), "Storage: set already contains value");
         _addressSet[key].add(value);
         emit AddAddressSet({key: key, value: value});
     }
@@ -872,15 +956,17 @@ contract Storage {
     onlyLogic
     onlyNotEmptyKey(key)
     onlyDataType(key, DataType.UINT_SET) {
+        require(!_uintSet[key].contains(value), "Storage: set already contains value");
         _uintSet[key].add(value);
         emit AddUintSet({key: key, value: value});
     }
 
-    function addBytes32Set(bytes32 key, uint value)
+    function addBytes32Set(bytes32 key, bytes32 value)
     external
     onlyLogic
     onlyNotEmptyKey(key)
     onlyDataType(key, DataType.BYTES32_SET) {
+        require(!_bytes32Set[key].contains(value), "Storage: set already contains value");
         _bytes32Set[key].add(value);
         emit AddBytes32Set({key: key, value: value});
     }
@@ -892,6 +978,7 @@ contract Storage {
     onlyLogic
     onlyNotEmptyKey(key)
     onlyDataType(key, DataType.ADDRESS_SET) {
+        require(_addressSet[key].contains(value), "Storage: value not found");
         _addressSet[key].remove(value);
         emit RemoveAddressSet({key: key, value: value});
     }
@@ -901,6 +988,7 @@ contract Storage {
     onlyLogic
     onlyNotEmptyKey(key)
     onlyDataType(key, DataType.UINT_SET) {
+        require(_uintSet[key].contains(value), "Storage: value not found");
         _uintSet[key].remove(value);
         emit RemoveUintSet({key: key, value: value});
     }
@@ -910,6 +998,7 @@ contract Storage {
     onlyLogic
     onlyNotEmptyKey(key)
     onlyDataType(key, DataType.BYTES32_SET) {
+        require(_bytes32Set[key].contains(value), "Storage: value not found");
         _bytes32Set[key].remove(value);
         emit RemoveBytes32Set({key: key, value: value});
     }
@@ -949,6 +1038,12 @@ contract Storage {
 
 
 library ValidatorMatch {
+    /// @dev Checks if an access key meta data has the same address and if two string signatures match
+    /// @param contractA The address of the first contract
+    /// @param contractB The address of the second contract
+    /// @param signatureA The first string signature
+    /// @param signatureB The second string signature
+    /// @return isMatch True if both contracts are the same and signatures match, false otherwise
     function isMatchingKeyContractAndSignature(address contractA, address contractB, string memory signatureA, string memory signatureB)
     external pure
     returns (bool isMatch) {
@@ -961,16 +1056,23 @@ library ValidatorMatch {
 
 
 library ValidatorToolkit {
-    function getKeyIndexByContractAndSignature(IStorage db, bytes32 array, address contract_, string memory signature)
+    /// @dev Retrieves the index of a key by comparing contract address and signature in a given storage variable
+    /// @param storage_ The storage contract where the keys are stored
+    /// @param variable The variable containing the keys in the storage
+    /// @param contract_ The contract address to compare against
+    /// @param signature The signature string to compare against
+    /// @return success True if a matching key is found, false otherwise
+    /// @return index The index of the matching key, if found, otherwise 0
+    function getKeyIndexByContractAndSignature(IStorage storage_, bytes32 variable, address contract_, string memory signature)
     external view
     returns (bool success, uint index) {
         bytes memory emptyBytes;
-        bytes[] memory bytesArray =db.getBytesArray({key: array});
+        bytes[] memory bytesArray =storage_.getBytesArray({key: variable});
         for (uint i =0; i <bytesArray.length; i++) {
             bytes memory key =bytesArray[i];
             if (!Match.isMatchingBytes({bytesA: key, bytesB: emptyBytes})) {
-                (address contract_B, string memory signatureB, , , ,) = Encoder.decodeKey({key: key});
-                if (ValidatorMatch.isMatchingKeyContractAndSignature({contractA: contract_, contractB: contract_B, signatureA: signature, signatureB: signatureB})) {
+                (address dContract, string memory dSignature, , , ,) =Encoder.decodeKey({key: key});
+                if (ValidatorMatch.isMatchingKeyContractAndSignature({contractA: contract_, contractB: dContract, signatureA: signature, signatureB: dSignature})) {
                     index =i;
                     success =true;
                     break;
@@ -980,11 +1082,16 @@ library ValidatorToolkit {
         return (success, index);
     }
 
-    function getKeyIndexByEmptyBytes(IStorage db, bytes32 array)
+    /// @dev Retrieves the index of a key containing empty bytes in a given storage variable
+    /// @param storage_ The storage contract where the keys are stored
+    /// @param variable The variable containing the keys in the storage
+    /// @return success True if a key with empty bytes is found, false otherwise
+    /// @return index The index of the key with empty bytes, if found, otherwise 0
+    function getKeyIndexByEmptyBytes(IStorage storage_, bytes32 variable)
     external view
     returns (bool success, uint index) {
         bytes memory emptyBytes;
-        bytes[] memory bytesArray =db.getBytesArray({key: array});
+        bytes[] memory bytesArray =storage_.getBytesArray({key: variable});
         for (uint i =0; i <bytesArray.length; i++) {
             bytes memory key =bytesArray[i];
             if (Match.isMatchingBytes({bytesA: key, bytesB: emptyBytes})) {
@@ -996,76 +1103,120 @@ library ValidatorToolkit {
         return (success, index);
     }
 
-    function requireInput(uint type_, uint startTimestamp, uint endTimestamp, uint balance)
+    /// @dev Validates the input parameters based on the specified key type
+    /// @param keyType The type of the key (STANDARD, TIMED, CONSUMABLE)
+    /// @param startTimestamp The start timestamp for the key
+    /// @param endTimestamp The end timestamp for the key
+    /// @param balance The balance associated with the key
+    function requireCorrectInput(KeyType keyType, uint startTimestamp, uint endTimestamp, uint balance)
     external view {
-        if (type_ ==0) {
+        if (keyType ==KeyType.STANDARD) {
             require(startTimestamp ==0, "ValidatorToolkit: startTimestamp must be zero");
             require(endTimestamp ==0, "ValidatorToolkit: endTimestamp must be zero");
             require(balance ==0, "ValidatorToolkit: balance must be zero");
-        } else if (type_ ==1) {
+        } else if (keyType ==KeyType.TIMED) {
             require(block.timestamp <=startTimestamp, "ValidatorToolkit: cannot grant in the past");
             require(endTimestamp >=startTimestamp, "ValidatorToolkit: cannot expire before granted");
             require(balance ==0, "Validator: balance must be zero");
-        } else if (type_ ==2) {
+        } else if (keyType ==KeyType.CONSUMABLE) {
             require(startTimestamp ==0, "ValidatorToolkit: startTimestamp must be zero");
             require(endTimestamp ==0, "ValidatorToolkit: endTimestamp must be zero");
             require(balance >= 1, "ValidatorToolkit: balance is less than one");
+        }
+        else {
+            revert("ValidatorToolkit: invalid keyType");
         }
     }
 }
 
 
 
+/** STORAGE VARS USABLE
+    <addr/account>  "keys"       _bytesArray
+    <str/role>      "keys"       _bytesArray
+    <str/role>      "members"    _addressSet
+ */
 library Validator {
-    function getKeys(IStorage db, address account)
+    /// @dev Retrieves the keys associated with a specific account from the provided storage
+    /// @param storage_ The storage contract where the keys are stored
+    /// @param account The address of the account to retrieve keys for
+    /// @return keys An array containing the keys associated with the specified account
+    function getKeys(IStorage storage_, address account)
     external view
-    returns (bytes[] memory) {
+    returns (bytes[] memory keys) {
         require(account !=address(0), "Validator: account is address zero");
-        bytes32 keys =Encoder.account({account: account, property: "keys"});
-        return db.getBytesArray({key: keys});
+        bytes32 varAccountKeys =Encoder.account({account: account, property: "keys"});
+        return storage_.getBytesArray({key: varAccountKeys});
     }
 
-    function getRoleKeys(IStorage db, string memory role)
+    /// @dev Retrieves the keys associated with a specific role from the provided storage
+    /// @param storage_ The storage contract where the keys are stored
+    /// @param role The name of the role to retrieve keys for
+    /// @return keys An array containing the keys associated with the specified role
+    function getRoleKeys(IStorage storage_, string memory role)
     external view
-    returns (bytes[] memory) {
-        bytes32 keys =Encoder.role({role: role, property: "keys"});
-        return db.getBytesArray({key: keys});
+    returns (bytes[] memory keys) {
+        bytes32 varRoleKeys =Encoder.role({role: role, property: "keys"});
+        return storage_.getBytesArray({key: varRoleKeys});
     }
 
-    function getRoleMembers(IStorage db, string memory role)
+    /// @dev Retrieves the members associated with a specific role from the provided storage
+    /// @param storage_ The storage contract where the members are stored
+    /// @param role The name of the role to retrieve members for
+    /// @return members An array containing the addresses of members associated with the specified role
+    function getRoleMembers(IStorage storage_, string memory role)
     external view
-    returns (address[] memory) {
-        bytes32 members =Encoder.role({role: role, property: "members"});
-        return db.valuesAddressSet({key: members});
+    returns (address[] memory members) {
+        bytes32 varRoleMembers =Encoder.role({role: role, property: "members"});
+        return storage_.getAddressSet({key: varRoleMembers});
     }
 
-    function getRoleSize(IStorage db, string memory role)
+    /// @dev Retrieves the number of members associated with a specific role from the provided storage
+    /// @param storage_ The storage contract where the members are stored
+    /// @param role The name of the role to retrieve the size for
+    /// @return size The number of members associated with the specified role
+    function getRoleSize(IStorage storage_, string memory role)
     external view
-    returns (uint) {
-        bytes32 members =Encoder.role({role: role, property: "members"});
-        return db.lengthAddressSet({key: members});
+    returns (uint size) {
+        bytes32 varRoleMembers =Encoder.role({role: role, property: "members"});
+        address[] memory addressArray =storage_.getAddressSet({key: varRoleMembers});
+        return addressArray.length;
     }
 
-    function grantKey(IStorage db, address account, address contract_, string memory signature, uint type_, uint startTimestamp, uint endTimestamp, uint balance)
+    /// @dev Grants a key to an account with the specified parameters
+    /// @param storage_ The storage contract where the key will be stored
+    /// @param account The address of the account to which the key will be granted
+    /// @param contract_ The address of the contract associated with the key
+    /// @param signature The signature string for the key
+    /// @param keyType The type of the key (STANDARD, TIMED, CONSUMABLE)
+    /// @param startTimestamp The start timestamp for the key
+    /// @param endTimestamp The end timestamp for the key
+    /// @param balance The balance associated with the key
+    /// @return success True if the key granting was successful, false otherwise
+    /// @return index The index of the granted key in the account's key list
+    function grantKey(IStorage storage_, address account, address contract_, string memory signature, KeyType keyType, uint startTimestamp, uint endTimestamp, uint balance)
     external
     returns (bool success, uint index) {
-        ValidatorToolkit.requireInput({type_: type_, startTimestamp: startTimestamp, endTimestamp: endTimestamp, balance: balance});
+        ValidatorToolkit.requireCorrectInput({keyType: keyType, startTimestamp: startTimestamp, endTimestamp: endTimestamp, balance: balance});
         require(account !=address(0), "Validator: account is address zero");
-        require(contract_ !=address(0), "Validator: contract_ is address zero");
-        bytes memory key =Encoder.encodeKey({contract_: contract_, signature: signature, type_: type_, startTimestamp: startTimestamp, endTimestamp: endTimestamp, balance: balance});
-        bytes32 keys =Encoder.account({account: account, property: "keys"});
-        (success, index) =ValidatorToolkit.getKeyIndexByContractAndSignature({db: db, array: keys, contract_: contract_, signature: signature});
-        require(!success, "Validator: matching contract and address");
-        (success, index) =ValidatorToolkit.getKeyIndexByEmptyBytes({db: db, array: keys});
-        if (success) { db.setIndexBytesArray({key: keys, index: index, value: key}); }
+        require(contract_ !=address(0), "Validator: contract is address zero");
+        bytes memory key =Encoder.account({contract_: contract_, signature: signature, keyType: keyType, startTimestamp: startTimestamp, endTimestamp: endTimestamp, balance: balance});
+        bytes32 varAccountKeys =Encoder.account({account: account, property: "keys"});
+        (success, index) =ValidatorToolkit.getKeyIndexByContractAndSignature({storage_: storage_, variable: varAccountKeys, contract_: contract_, signature: signature});
+        require(!success, "Validator: matching existing key: contract and address");
+        (success, index) =ValidatorToolkit.getKeyIndexByEmptyBytes({storage_: storage_, variable: varAccountKeys});
+        if (success) { storage_.setindexBytesArray({key: varAccountKeys, index: index, value: key}); }
         else {
-            db.pushBytesArray({key: keys, value: key});
-            index =db.lengthBytesArray({key: keys}) -1;
+            storage_.pushBytesArray({key: varAccountKeys, value: key});
+            bytes[] memory bytesArray =storage_.getBytesArray({key: varAccountKeys});
+            index =bytesArray.length -1;
             success =true;
         }
         Utils.requireSuccess({success: success});
         return (success, index);
     }
+
+
 
     function revokeKey(IStorage db, address account, address contract_, string memory signature)
     external
