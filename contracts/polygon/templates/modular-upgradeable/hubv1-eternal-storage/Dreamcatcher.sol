@@ -10,6 +10,16 @@ import "contracts/polygon/deps/openzeppelin/access/Ownable.sol";
 import "contracts/polygon/deps/openzeppelin/token/ERC721/ERC721.sol";
 import "contracts/polygon/deps/openzeppelin/utils/structs/EnumerableSet.sol";
 
+
+
+/**
+
+    Storage Vars Usage: the bytes encoding used to store data on storage
+
+    **vars must never conflict
+ */
+
+
 enum DataType {
     NONE,
     STRING,
@@ -1678,7 +1688,10 @@ interface IDreamToken {
 }
 
 
+/** STORAGE VARS USAGE
+    <ddr/account>   "dreamTokenBalance"     _uint
 
+ */
 contract DreamToken is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit {
     uint public cap;
     IStorage db;
