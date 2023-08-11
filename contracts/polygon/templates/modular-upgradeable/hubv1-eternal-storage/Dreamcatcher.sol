@@ -1849,3 +1849,9 @@ contract EmberToken is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit {
         super._burn({account: account, amount: amount});
     }
 }
+
+
+
+contract Bridge {
+    
+}
