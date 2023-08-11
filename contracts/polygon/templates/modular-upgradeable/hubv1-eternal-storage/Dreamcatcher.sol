@@ -131,6 +131,17 @@ library Encoder {
 
 
 
+library Calls {
+    function call(address target, string memory signature, bytes memory args)
+    external
+    returns (bool success, bytes memory response) {
+        (success, response) =target.call(abi.encodeWithSignature(signature, args));
+        return (success, response);
+    }
+}
+
+
+
 interface IStorage {
     // GET ADMIN & LOGIC
 
@@ -813,7 +824,7 @@ contract Storage is IStorage{
     onlyLogic
     onlyNotEmptyKey(key)
     onlyDataType(key, DataType.STRING_ARRAY) {
-        _stringArray.push(value);
+        _stringArray[key].push(value);
         emit PushStringArray({key: key, value: value});
     }
 
@@ -822,7 +833,7 @@ contract Storage is IStorage{
     onlyLogic
     onlyNotEmptyKey(key)
     onlyDataType(key, DataType.BYTES_ARRAY) {
-        _bytesArray.push(value);
+        _bytesArray[key].push(value);
         emit PushBytesArray({key: key, value: value});
     }
 
@@ -831,7 +842,7 @@ contract Storage is IStorage{
     onlyLogic
     onlyNotEmptyKey(key)
     onlyDataType(key, DataType.UINT_ARRAY) {
-        _uintArray.push(value);
+        _uintArray[key].push(value);
         emit PushUintArray({key: key, value: value});
     }
 
@@ -840,7 +851,7 @@ contract Storage is IStorage{
     onlyLogic
     onlyNotEmptyKey(key)
     onlyDataType(key, DataType.INT_ARRAY) {
-        _intArray.push(value);
+        _intArray[key].push(value);
         emit PushIntArray({key: key, value: value});
     }
 
@@ -849,7 +860,7 @@ contract Storage is IStorage{
     onlyLogic
     onlyNotEmptyKey(key)
     onlyDataType(key, DataType.ADDRESS_ARRAY) {
-        _addressArray.push(value);
+        _addressArray[key].push(value);
         emit PushAddressArray({key: key, value: value});
     }
 
@@ -858,7 +869,7 @@ contract Storage is IStorage{
     onlyLogic
     onlyNotEmptyKey(key)
     onlyDataType(key, DataType.BOOL_ARRAY) {
-        _boolArray.push(value);
+        _boolArray[key].push(value);
         emit PushBoolArray({key: key, value: value});
     }
 
@@ -867,7 +878,7 @@ contract Storage is IStorage{
     onlyLogic
     onlyNotEmptyKey(key)
     onlyDataType(key, DataType.BYTES32_ARRAY) {
-        _bytes32Array.push(value);
+        _bytes32Array[key].push(value);
         emit PushBytes32Array({key: key, value: value});
     }
 
@@ -878,7 +889,7 @@ contract Storage is IStorage{
     onlyLogic
     onlyNotEmptyKey(key)
     onlyDataType(key, DataType.STRING_ARRAY) {
-        require(_stringArray[key].length >0, "Storage: array is empty");
+        // require(_stringArray[key].length >0, "Storage: array is empty");
         delete _stringArray[key];
         emit DeleteStringArray({key: key});
     }
@@ -888,7 +899,7 @@ contract Storage is IStorage{
     onlyLogic
     onlyNotEmptyKey(key)
     onlyDataType(key, DataType.BYTES_ARRAY) {
-        require(_bytesArray[key].length >0, "Storage: array is empty");
+        // require(_bytesArray[key].length >0, "Storage: array is empty");
         delete _bytesArray[key];
         emit DeleteBytesArray({key: key});
     }
@@ -898,7 +909,7 @@ contract Storage is IStorage{
     onlyLogic
     onlyNotEmptyKey(key)
     onlyDataType(key, DataType.UINT_ARRAY) {
-        require(_uintArray[key].length >0, "Storage: array is empty");
+        // require(_uintArray[key].length >0, "Storage: array is empty");
         delete _uintArray[key];
         emit DeleteUintArray({key: key});
     }
@@ -908,7 +919,7 @@ contract Storage is IStorage{
     onlyLogic
     onlyNotEmptyKey(key)
     onlyDataType(key, DataType.INT_ARRAY) {
-        require(_intArray[key].length >0, "Storage: array is empty");
+        // require(_intArray[key].length >0, "Storage: array is empty");
         delete _intArray[key];
         emit DeleteIntArray({key: key});
     }
@@ -918,7 +929,7 @@ contract Storage is IStorage{
     onlyLogic
     onlyNotEmptyKey(key)
     onlyDataType(key, DataType.ADDRESS_ARRAY) {
-        require(_addressArray[key].length >0, "Storage: array is empty");
+        // require(_addressArray[key].length >0, "Storage: array is empty");
         delete _addressArray[key];
         emit DeleteAddressArray({key: key});
     }
@@ -928,7 +939,7 @@ contract Storage is IStorage{
     onlyLogic
     onlyNotEmptyKey(key)
     onlyDataType(key, DataType.BOOL_ARRAY) {
-        require(_boolArray[key].length >0, "Storage: array is empty");
+        // require(_boolArray[key].length >0, "Storage: array is empty");
         delete _boolArray[key];
         emit DeleteBoolArray({key: key});
     }
@@ -938,7 +949,7 @@ contract Storage is IStorage{
     onlyLogic
     onlyNotEmptyKey(key)
     onlyDataType(key, DataType.BYTES32_ARRAY) {
-        require(_bytes32Array[key].length >0, "Storage: array is empty");
+        // require(_bytes32Array[key].length >0, "Storage: array is empty");
         delete _bytes32Array[key];
         emit DeleteBytes32Array({key: key});
     }
@@ -1035,7 +1046,7 @@ contract Storage is IStorage{
 
     function _afterCheckDataTypeSet(bytes32 key, DataType dataType)
     internal {
-        if (_usedKeys[key] ==DataType.NULL) { _usedKeys[key] =dataType; }
+        if (_usedKeys[key] ==DataType.NONE) { _usedKeys[key] =dataType; }
     }
 }
 
@@ -1222,12 +1233,12 @@ library Validator {
         ValidatorToolkit.requireCorrectInput({keyType: keyType, startTimestamp: startTimestamp, endTimestamp: endTimestamp, balance: balance});
         require(account !=address(0), "Validator: account is address zero");
         require(contract_ !=address(0), "Validator: contract is address zero");
-        bytes memory key =Encoder.account({contract_: contract_, signature: signature, keyType: keyType, startTimestamp: startTimestamp, endTimestamp: endTimestamp, balance: balance});
+        bytes memory key =Encoder.encodeKey({contract_: contract_, signature: signature, keyType: keyType, startTimestamp: startTimestamp, endTimestamp: endTimestamp, balance: balance});
         bytes32 varAccountKeys =Encoder.account({account: account, property: "keys"});
         (success, index) =ValidatorToolkit.getKeyIndexByContractAndSignature({storage_: storage_, variable: varAccountKeys, contract_: contract_, signature: signature});
         require(!success, "Validator: matching existing key: contract and address");
         (success, index) =ValidatorToolkit.getKeyIndexByEmptyBytes({storage_: storage_, variable: varAccountKeys});
-        if (success) { storage_.setindexBytesArray({key: varAccountKeys, index: index, value: key}); }
+        if (success) { storage_.setIndexBytesArray({key: varAccountKeys, index: index, value: key}); }
         else {
             storage_.pushBytesArray({key: varAccountKeys, value: key});
             bytes[] memory bytesArray =storage_.getBytesArray({key: varAccountKeys});
@@ -1365,7 +1376,7 @@ library Validator {
         (success, index) =ValidatorToolkit.getKeyIndexByContractAndSignature({storage_: storage_, variable: varRoleKeys, contract_: contract_, signature: signature});
         require(success, "Validator: unable to find key: contract and address");
         bytes memory emptyBytes;
-        storage_.setIndexAddressArray({key: varRoleKeys, index: index, value: emptyBytes});
+        storage_.setIndexBytesArray({key: varRoleKeys, index: index, value: emptyBytes});
         success =true;
         return (success, index);
     }
@@ -1461,13 +1472,34 @@ interface ISentinel {
 
 
 
-contract Sentinel is ISentinel, Pausable, ReentrancyGuard {
+/** STORAGE VARS USAGE
+    "governor"      _address
+
+**governor can bypass verification
+**governor must not be address zero to bypass verification
+
+ * @title Sentinel Contract
+ * @dev The Sentinel contract serves as a secure key management system with role-based access control.
+ * It allows users to manage keys, roles, and perform key verification securely. The contract implements
+ * the ISentinel interface and inherits from the Pausable and ReentrancyGuard contracts to ensure
+ * proper functioning and protection against reentrancy attacks.
+ *
+ * This contract enables the verification of keys, retrieval of keys associated with accounts and roles,
+ * management of roles, and initialization of permissions. It provides a secure environment for managing
+ * access to various functions and operations within a decentralized application.
+ */
+contract Sentinel is Pausable, ReentrancyGuard {
     bool internal _init;
     address internal _deployer;
     IStorage storage_;
 
+    /**
+    * @dev Verifies a key for the sender (msg.sender) using a specified signature.
+    * @param signature The signature of the key to be verified.
+    * @notice This modifier verifies a key for the sender and can be used to secure functions.
+    */
     modifier verify_(string memory signature) {
-        Validator.verify({storage_: storage_, account: msg.sender, contract_: address(this), signature: signature});
+        _verify({account: msg.sender, contract_: address(this), signature: signature});
         _;
     }
 
@@ -1476,66 +1508,113 @@ contract Sentinel is ISentinel, Pausable, ReentrancyGuard {
         storage_ =IStorage(storage__);
     }
 
+    /**
+    * @dev Initializes the contract and grants necessary permissions to the deployer.
+    * This function should be called only once after the contract is deployed by the designated deployer.
+    */
     function init()
     external {
-        require(msg.sender ==_deployer, "Terminal: only _deployer can call");
+        require(msg.sender ==_deployer, "Sentinel: only _deployer can call");
         require(!_init, "Sentienl: _init");
-        bool isImplementation;
-        address[] memory implementations =storage_.getImplementations();
-        for (uint i =0; i <implementations.length; i++) {
-            if (msg.sender ==implementations[i]) { isImplementation =true; }
+        bool isLogic;
+        address[] memory logics =storage_.getLogics();
+        for (uint i =0; i <logics.length; i++) {
+            if (address(this) ==logics[i]) { isLogic =true; }
         }
-        require(isImplementation, "Sentinel: cannot init without setting as implementation first");
-        Validator.grantKeyToRole({storage_: storage_, role: "validator", contract_: address(this), signature: "grantKey(address,address,string,uint256,uint256,uint256,uint256)", type_: 0, startTimestamp: 0, endTimestamp: 0, balance: 0});
-        Validator.grantKeyToRole({storage_: storage_, role: "validator", contract_: address(this), signature: "revokeKey(address,address,string)", type_: 0, startTimestamp: 0, endTimestamp: 0, balance: 0});
-        Validator.grantKeyToRole({storage_: storage_, role: "validator", contract_: address(this), signature: "resetKeys(address)", type_: 0, startTimestamp: 0, endTimestamp: 0, balance: 0});
-        Validator.grantKeyToRole({storage_: storage_, role: "validator", contract_: address(this), signature: "grantKeyToRole(string,address,string,uint256,uint256,uint256,uint256)", type_: 0, startTimestamp: 0, endTimestamp: 0, balance: 0});
-        Validator.grantKeyToRole({storage_: storage_, role: "validator", contract_: address(this), signature: "revokeKeyFromRole(string,address,string)", type_: 0, startTimestamp: 0, endTimestamp: 0, balance: 0});
-        Validator.grantKeyToRole({storage_: storage_, role: "validator", contract_: address(this), signature: "resetRoleKeys(string)", type_: 0, startTimestamp: 0, endTimestamp: 0, balance: 0});
-        Validator.grantKeyToRole({storage_: storage_, role: "validator", contract_: address(this), signature: "grantRole(address,string)", type_: 0, startTimestamp: 0, endTimestamp: 0, balance: 0});
-        Validator.grantKeyToRole({storage_: storage_, role: "validator", contract_: address(this), signature: "revokeRole(address,string)", type_: 0, startTimestamp: 0, endTimestamp: 0, balance: 0});
+        require(isLogic, "Sentinel: cannot init without setting as logic first");
+        Validator.grantKeyToRole({storage_: storage_, role: "validator", contract_: address(this), signature: "grantKey(address,address,string,uint256,uint256,uint256,uint256)", keyType: KeyType.STANDARD, startTimestamp: 0, endTimestamp: 0, balance: 0});
+        Validator.grantKeyToRole({storage_: storage_, role: "validator", contract_: address(this), signature: "revokeKey(address,address,string)", keyType: KeyType.STANDARD, startTimestamp: 0, endTimestamp: 0, balance: 0});
+        Validator.grantKeyToRole({storage_: storage_, role: "validator", contract_: address(this), signature: "resetKeys(address)", keyType: KeyType.STANDARD, startTimestamp: 0, endTimestamp: 0, balance: 0});
+        Validator.grantKeyToRole({storage_: storage_, role: "validator", contract_: address(this), signature: "grantKeyToRole(string,address,string,uint256,uint256,uint256,uint256)", keyType: KeyType.STANDARD, startTimestamp: 0, endTimestamp: 0, balance: 0});
+        Validator.grantKeyToRole({storage_: storage_, role: "validator", contract_: address(this), signature: "revokeKeyFromRole(string,address,string)", keyType: KeyType.STANDARD, startTimestamp: 0, endTimestamp: 0, balance: 0});
+        Validator.grantKeyToRole({storage_: storage_, role: "validator", contract_: address(this), signature: "resetRoleKeys(string)", keyType: KeyType.STANDARD, startTimestamp: 0, endTimestamp: 0, balance: 0});
+        Validator.grantKeyToRole({storage_: storage_, role: "validator", contract_: address(this), signature: "grantRole(address,string)", keyType: KeyType.STANDARD, startTimestamp: 0, endTimestamp: 0, balance: 0});
+        Validator.grantKeyToRole({storage_: storage_, role: "validator", contract_: address(this), signature: "revokeRole(address,string)", keyType: KeyType.STANDARD, startTimestamp: 0, endTimestamp: 0, balance: 0});
         Validator.grantRole({storage_: storage_, account: msg.sender, role: "validator"});
         _init =true;
     }
 
+    /**
+    * @dev Retrieves the keys associated with a specific account.
+    * @param account The address of the account to retrieve keys for.
+    * @return keys An array containing the keys associated with the specified account.
+    */
     function getKeys(address account)
     external view
     returns (bytes[] memory) {
         return Validator.getKeys({storage_: storage_, account: account});
     }
 
+    /**
+    * @dev Retrieves the keys associated with a specific role.
+    * @param role The role for which to retrieve keys.
+    * @return keys An array containing the keys associated with the specified role.
+    */
     function getRoleKeys(string memory role)
     external view
     returns (bytes[] memory) {
         return Validator.getRoleKeys({storage_: storage_, role: role});
     }
 
+    /**
+    * @dev Retrieves the members associated with a specific role.
+    * @param role The role for which to retrieve members.
+    * @return members An array containing the members associated with the specified role.
+    */
     function getRoleMembers(string memory role)
     external view
     returns (address[] memory) {
         return Validator.getRoleMembers({storage_: storage_, role: role});
     }
 
+    /**
+    * @dev Retrieves the number of members in a specific role.
+    * @param role The role for which to retrieve the member count.
+    * @return size The number of members associated with the specified role.
+    */
     function getRoleSize(string memory role)
     external view
     returns (uint) {
         return Validator.getRoleSize({storage_: storage_, role: role});
     }
 
+    /**
+    * @dev Verifies a key for a specific account using a provided signature.
+    * If the sender is the governor, additional checks are performed.
+    * @param account The address of the account to verify the key for.
+    * @param contract_ The address of the contract associated with the key.
+    * @param signature The signature of the key to be verified.
+    * @notice This function is non-reentrant to prevent reentrancy attacks.
+    */
     function verify(address account, address contract_, string memory signature)
     external 
     nonReentrant {
-        Validator.verify({storage_: storage_, account: account, contract_: contract_, signature: signature});
+        bytes32 varGovernor =Encoder.encode({string_: "governor"});
+        address governor =storage_.getAddress({key: varGovernor});
+        if (msg.sender !=governor) {
+            _verify({account: account, contract_: contract_, signature: signature});
+        } else {
+            require(governor !=address(0), "Sentinel: governor is address zero");
+            // ... verified
+        }
     }
 
-    function grantKey(address account, address contract_, string memory signature, uint type_, uint startTimestamp, uint endTimestamp, uint balance)
+    function grantKey(address account, address contract_, string memory signature, KeyType keyType, uint startTimestamp, uint endTimestamp, uint balance)
     external 
     nonReentrant 
     whenNotPaused 
     verify_("grantKey(address,address,string,uint256,uint256,uint256,uint256)") {
-        Validator.grantKey({storage_: storage_, account: account, contract_: contract_, signature: signature, type_: type_, startTimestamp: startTimestamp, endTimestamp: endTimestamp, balance: balance});
+        Validator.grantKey({storage_: storage_, account: account, contract_: contract_, signature: signature, keyType: keyType, startTimestamp: startTimestamp, endTimestamp: endTimestamp, balance: balance});
     }
 
+    /**
+    * @dev Revokes a previously granted key associated with a specified account.
+    * @param account The address of the account from which to revoke the key.
+    * @param contract_ The address of the contract associated with the key.
+    * @param signature The signature of the key.
+    * @notice This function is non-reentrant and can only be called when the contract is not paused.
+    *         It verifies the provided key and revokes access accordingly.
+    */
     function revokeKey(address account, address contract_, string memory signature)
     external
     nonReentrant
@@ -1544,6 +1623,12 @@ contract Sentinel is ISentinel, Pausable, ReentrancyGuard {
         Validator.revokeKey({storage_: storage_, account: account, contract_: contract_, signature: signature});
     }
 
+    /**
+    * @dev Resets all keys associated with a specific account.
+    * @param account The address of the account for which to reset keys.
+    * @notice This function is non-reentrant and can only be called when the contract is not paused.
+    *         It verifies the provided signature and resets all keys associated with the given account.
+    */
     function resetKeys(address account)
     external 
     nonReentrant 
@@ -1552,14 +1637,22 @@ contract Sentinel is ISentinel, Pausable, ReentrancyGuard {
         Validator.resetKeys({storage_: storage_, account: account});
     }
 
-    function grantKeyToRole(string memory role, address contract_, string memory signature, uint type_, uint startTimestamp, uint endTimestamp, uint balance)
+    function grantKeyToRole(string memory role, address contract_, string memory signature, KeyType keyType, uint startTimestamp, uint endTimestamp, uint balance)
     external 
     nonReentrant
     whenNotPaused
     verify_("grantKeyToRole(string,address,string,uint256,uint256,uint256,uint256)") {
-        Validator.grantKeyToRole({storage_: storage_, role: role, contract_: contract_, signature: signature, type_: type_, startTimestamp: startTimestamp, endTimestamp: endTimestamp, balance: balance});
+        Validator.grantKeyToRole({storage_: storage_, role: role, contract_: contract_, signature: signature, keyType: keyType, startTimestamp: startTimestamp, endTimestamp: endTimestamp, balance: balance});
     }
 
+    /**
+    * @dev Revokes a key from a specified role.
+    * @param role The role from which the key will be revoked.
+    * @param contract_ The address of the contract associated with the key.
+    * @param signature The signature of the key.
+    * @notice This function is non-reentrant and can only be called when the contract is not paused.
+    *         It verifies the provided signature and revokes a key from the specified role.
+    */
     function revokeKeyFromRole(string memory role, address contract_, string memory signature)
     external 
     nonReentrant 
@@ -1568,6 +1661,12 @@ contract Sentinel is ISentinel, Pausable, ReentrancyGuard {
         Validator.revokeKeyFromRole({storage_: storage_, role: role, contract_: contract_, signature: signature});
     }
 
+    /**
+    * @dev Resets the keys associated with a specified role.
+    * @param role The role for which keys will be reset.
+    * @notice This function is non-reentrant and can only be called when the contract is not paused.
+    *         It verifies the provided signature and resets the keys associated with the specified role.
+    */
     function resetRoleKeys(string memory role)
     external 
     nonReentrant
@@ -1576,6 +1675,13 @@ contract Sentinel is ISentinel, Pausable, ReentrancyGuard {
         Validator.resetRoleKeys({storage_: storage_, role: role});
     }
 
+    /**
+    * @dev Grants a role to a specified account.
+    * @param account The address of the account to be granted the role.
+    * @param role The role to be granted to the account.
+    * @notice This function is non-reentrant and can only be called when the contract is not paused.
+    *         It verifies the provided signature and grants the specified role to the given account.
+    */
     function grantRole(address account, string memory role)
     external 
     nonReentrant 
@@ -1584,12 +1690,31 @@ contract Sentinel is ISentinel, Pausable, ReentrancyGuard {
         Validator.grantRole({storage_: storage_, account: account, role: role});
     }
 
+    /**
+    * @dev Revokes a role from a specified account.
+    * @param account The address of the account from which the role will be revoked.
+    * @param role The role to be revoked from the account.
+    * @notice This function is non-reentrant and can only be called when the contract is not paused.
+    *         It verifies the provided signature and revokes the specified role from the given account.
+    */
     function revokeRole(address account, string memory role)
     external 
     nonReentrant
     whenNotPaused
     verify_("revokeRole(address,string)") {
         Validator.revokeRole({storage_: storage_, account: account, role: role});
+    }
+
+    /**
+    * @dev Verifies a key for a specific account using a provided signature.
+    * @param account The address of the account to verify the key for.
+    * @param contract_ The address of the contract associated with the key.
+    * @param signature The signature of the key to be verified.
+    * @notice This function is used internally to verify a key for a specific account.
+    */
+    function _verify(address account, address contract_, string memory signature)
+    internal {
+        Validator.verify({storage_: storage_, account: account, contract_: contract_, signature: signature});
     }
 }
 
@@ -1599,6 +1724,7 @@ contract Sentinel is ISentinel, Pausable, ReentrancyGuard {
     "durationTimelock"           _uint
     "durationTimeout"            _uint
     "requests"                   _bytesArray
+    "selfApprove"                _bool
 
     | o ---------- lock
     | o ------------------------ out
@@ -1610,6 +1736,17 @@ contract Sentinel is ISentinel, Pausable, ReentrancyGuard {
     **request can only be executed once
     **timelock can never be less than 3600 seconds
     **timeout can never be less than timelock + 3600 seconds
+    **d stands for decoded ie. dArgs is decoded args
+
+    pending -> approved -> executed
+    pending -> rejected
+
+    **request can only be executed if approved
+    **request cannot be executed if rejected
+    **request cannot be approved from rejected or vice versa
+    **request cannot go backwards within the logic tree must always start from pending
+    **request can only be approved or rejected during timelock
+    **if self approve is true then all requests are automatically approved
  */
 library Timelock {
     /**
@@ -1620,23 +1757,134 @@ library Timelock {
     * @param args An array of encoded arguments for the function calls within the request.
     */
     function queueRequest(IStorage storage_, address[] memory targets, string[] memory signatures, bytes[] memory args)
-    external {
+    external 
+    returns (uint index) {
         uint now_ =block.timestamp;
         bytes32 varDurationTimelock =Encoder.encode({string_: "durationTimelock"});
         bytes32 varDurationTimeout =Encoder.encode({string_: "durationTimeout"});
+        bytes32 varSelfApprove =Encoder.encode({string_: "selfApprove"});
         uint durationTimelock =storage_.getUint({key: varDurationTimelock});
         uint durationTimeout =storage_.getUint({key: varDurationTimeout});
-        bytes memory request =Encoder.encodeRequest({targets: targets, signatures: signatures, args: args, endTimelockTimestamp: now_ +durationTimelock, endTimeoutTimestamp: now_ +durationTimeout, requestStage: RequestStage.PENDING});
+        bool selfApprove =storage_.getBool({key: varSelfApprove});
+        RequestStage requestStage;
+        if (selfApprove) { requestStage =RequestStage.APPROVED; }
+        else { requestStage =RequestStage.PENDING; }
+        bytes memory request =Encoder.encodeRequest({targets: targets, signatures: signatures, args: args, endTimelockTimestamp: now_ +durationTimelock, endTimeoutTimestamp: now_ +durationTimeout, requestStage: requestStage});
         bytes32 varRequests =Encoder.encode({string_: "requests"});
         storage_.pushBytesArray({key: varRequests, value: request});
+        bytes[] memory bytesArray =storage_.getBytesArray({key: varRequests});
+        return bytesArray.length -1;
+    }
+
+    /**
+    * @dev Approves a request at the specified index by updating its request stage to APPROVED.
+    * @param storage_ The storage contract where the request and its array are stored.
+    * @param index The index of the request to be approved.
+    */
+    function approveRequest(IStorage storage_, uint index)
+    external {
+        bytes32 varRequests =Encoder.encode({string_: "requests"});
+        bytes memory request =storage_.indexBytesArray({key: varRequests, index: index});
+        (address[] memory dTargets, string[] memory dSignatures, bytes[] memory dArgs, uint dEndTimelockTimestamp, uint dEndTimeoutTimestamp, RequestStage dRequestStage) =Encoder.decodeRequest({request: request});
+        require(dRequestStage ==RequestStage.PENDING, "Timelock: must be pending");
+        require(block.timestamp <=dEndTimelockTimestamp, "Timelock: cannot approve after timelock");
+        dRequestStage =RequestStage.APPROVED;
+        bytes memory newRequest =Encoder.encodeRequest({targets: dTargets, signatures: dSignatures, args: dArgs, endTimelockTimestamp: dEndTimelockTimestamp, endTimeoutTimestamp: dEndTimeoutTimestamp, requestStage: dRequestStage});
+        storage_.setIndexBytesArray({key: varRequests, index: index, value: newRequest});
+    }
+
+    /**
+    * @dev Rejects a request at the specified index by updating its request stage to REJECTED.
+    * @param storage_ The storage contract where the request and its array are stored.
+    * @param index The index of the request to be rejected.
+    */
+    function rejectRequest(IStorage storage_, uint index)
+    external {
+        bytes32 varRequests =Encoder.encode({string_: "requests"});
+        bytes memory request =storage_.indexBytesArray({key: varRequests, index: index});
+        (address[] memory dTargets, string[] memory dSignature, bytes[] memory dArgs, uint dEndTimelockTimestamp, uint dEndTimeoutTimestamp, RequestStage dRequestStage) =Encoder.decodeRequest({request: request});
+        require(dRequestStage ==RequestStage.PENDING, "Timelock: must be pending");
+        require(block.timestamp <=dEndTimelockTimestamp, "Timelock: cannot approve after timelock");
+        dRequestStage =RequestStage.REJECTED;
+        bytes memory newRequest =Encoder.encodeRequest({targets: dTargets, signatures: dSignature, args: dArgs, endTimelockTimestamp: dEndTimelockTimestamp, endTimeoutTimestamp: dEndTimeoutTimestamp, requestStage: dRequestStage});
+        storage_.setIndexBytesArray({key: varRequests, index: index, value: newRequest});
+    }
+
+    /**
+    * @dev Executes a previously approved request at the specified index.
+    * @param storage_ The storage contract where the request and its array are stored.
+    * @param index The index of the request to be executed.
+    * @return successes An array of boolean values indicating the success of each external call.
+    * @return responses An array of response data from each external call.
+    */
+    function executeRequest(IStorage storage_, uint index)
+    external 
+    returns (bool[] memory successes, bytes[] memory responses) {
+        bytes32 varRequests =Encoder.encode({string_: "requests"});
+        bytes memory request =storage_.indexBytesArray({key: varRequests, index: index});
+        (address[] memory dTargets, string[] memory dSignature, bytes[] memory dArgs, uint dEndTimelockTimestamp, uint dEndTimeoutTimestamp, RequestStage dRequestStage) =Encoder.decodeRequest({request: request});
+        require(dRequestStage ==RequestStage.APPROVED, "Timelock: must be approved");
+        require(block.timestamp >dEndTimelockTimestamp, "Timelock: cannot execute before timelock");
+        require(block.timestamp <=dEndTimeoutTimestamp, "Timelock: cannot execute after timeout");
+        dRequestStage =RequestStage.EXECUTED;
+        bytes memory newRequest =Encoder.encodeRequest({targets: dTargets, signatures: dSignature, args: dArgs, endTimelockTimestamp: dEndTimelockTimestamp, endTimeoutTimestamp: dEndTimeoutTimestamp, requestStage: dRequestStage});
+        storage_.setIndexBytesArray({key: varRequests, index: index, value: newRequest});
+        for (uint i =0; i <dTargets.length; i++) {
+            (successes[i], responses[i]) =Calls.call({target: dTargets[i], signature: dSignature[i], args: dArgs[i]});
+        }
+        return (successes, responses);
     }
 }
 
 
 
-contract Key {
+contract Key is Pausable, ReentrancyGuard {
+    bool internal _init;
+    address internal _deployer;
+    IStorage storage_;
+    ISentinel sentinel;
 
+    modifier verify(string memory signature) {
+        _verify({account: msg.sender, contract_: address(this), signature: signature});
+        _;
+    }
+
+    constructor(address storage__, address sentinel_) {
+        _deployer =msg.sender;
+        storage_ =IStorage(storage__);
+        sentinel =ISentinel(sentinel_);
+    }
+
+    function init()
+    external {
+        require(msg.sender ==_deployer, "Key: only _deployer can call");
+        require(!_init, "Key: _init");
+        bool isLogic;
+        address[] memory logics =storage_.getLogics();
+        for (uint i =0; i <logics.length; i++) {
+            if (address(this) ==logics[i]) { isLogic =true; }
+        }
+        require(isLogic, "Key: cannot init without setting as logic first");
+        bytes32 varSelfApprove =Encoder.encode({string_: "selfApprove"});
+        storage_.setBool({key: varSelfApprove, value: true});
+        _init =true;
+    }
+
+    function queueRequest(address[] memory targets, string[] memory signatures, bytes[] memory args)
+    external
+    nonReentrant
+    whenNotPaused
+    verify("queueRequest(address[],string[],bytes[])")
+    returns (uint index) {
+        return Timelock.queueRequest({storage_: storage_, targets: targets, signatures: signatures, args: args});
+    }
+
+    function _verify(address account, address contract_, string memory signature)
+    internal {
+        sentinel.verify({account: account, contract_: contract_, signature: signature});
+    }
 }
+
 
 
 /** STORAGE VARS USAGE
@@ -1694,21 +1942,21 @@ interface IDreamToken {
  */
 contract DreamToken is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit {
     uint public cap;
-    IStorage db;
-    ISentinel sn;
+    IStorage storage_;
+    ISentinel sentinel;
 
     modifier verify(string memory signature) {
-        sn.verify({account: msg.sender, contract_: address(this), signature: signature});
+        _verify({account: msg.sender, contract_: address(this), signature: signature});
         _;
     }
 
-    constructor(address database, address sentinel)
+    constructor(address storage__, address sentinel_)
     ERC20("DreamToken", "DREAM")
     ERC20Permit("DreamToken") {
         cap =Utils.convertToWei({value: 200000000});
         _mint({account: msg.sender, amount: cap});
-        db =IStorage(database);
-        sn =ISentinel(sentinel);
+        storage_ =IStorage(storage__);
+        sentinel =ISentinel(sentinel_);
     }
 
     function maxSupply()
@@ -1719,7 +1967,7 @@ contract DreamToken is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit {
 
     function getCurrentSnapshotId()
     external view
-    returns (uint) {
+    returns (uint index) {
         return _getCurrentSnapshotId();
     }
 
@@ -1732,7 +1980,7 @@ contract DreamToken is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit {
     function snapshot()
     external
     verify("snapshot()")
-    returns (uint) {
+    returns (uint index) {
         _snapshot();
         return _getCurrentSnapshotId();
     }
@@ -1746,12 +1994,12 @@ contract DreamToken is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit {
     internal override {
         bytes32 balanceA =Encoder.account({account: to, property: "dreamTokenBalance"});
         bytes32 balanceB =Encoder.account({account: from, property: "dreamTokenBalance"});
-        uint balanceTo =db.getUint({key: balanceA});
-        uint balanceFrom =db.getUint({key: balanceB});
+        uint balanceTo =storage_.getUint({key: balanceA});
+        uint balanceFrom =storage_.getUint({key: balanceB});
         if (from !=address(0)) { balanceFrom -=amount; }
         if (to !=address(0)) { balanceTo +=amount; }
-        db.setUint({key: balanceA, value: balanceTo});
-        db.setUint({key: balanceB, value: balanceFrom});
+        storage_.setUint({key: balanceA, value: balanceTo});
+        storage_.setUint({key: balanceB, value: balanceFrom});
         super._afterTokenTransfer({from: from, to: to, amount: amount});
     }
 
@@ -1764,6 +2012,11 @@ contract DreamToken is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit {
     internal override {
         cap -= amount;
         super._burn({account: account, amount: amount});
+    }
+
+    function _verify(address account, address contract_, string memory signature)
+    internal {
+        sentinel.verify({account: account, contract_: contract_, signature: signature});
     }
 }
 
@@ -1786,32 +2039,37 @@ interface IEmberToken {
 
 
 contract EmberToken is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit {
-    IStorage db;
-    ISentinel sn;
+    IStorage storage_;
+    ISentinel sentinel;
 
-    constructor(address database, address sentinel)
+    modifier verify(string memory signature) {
+        _verify({account: msg.sender, contract_: address(this), signature: signature});
+        _;
+    }
+
+    constructor(address storage__, address sentinel_)
     ERC20("EmberToken", "EMBER")
     ERC20Permit("EmberToken") {
-        db =IStorage(database);
-        sn =ISentinel(sentinel);
+        storage_ =IStorage(storage__);
+        sentinel =ISentinel(sentinel_);
     }
 
     function getCurrentSnapshotId()
     external view
-    returns (uint) {
+    returns (uint index) {
         return _getCurrentSnapshotId();
     }
 
     function mint(address account, uint amount)
     external
-    onlyOwner {
+    verify("mint(address,uint)") {
         _mint({account: account, amount: amount});
     }
 
     function snapshot()
     external
-    onlyOwner
-    returns (uint) {
+    verify("snapshot()")
+    returns (uint index) {
         _snapshot();
         return _getCurrentSnapshotId();
     }
@@ -1825,12 +2083,12 @@ contract EmberToken is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit {
     internal override {
         bytes32 balanceA =Encoder.account({account: to, property: "emberTokenBalance"});
         bytes32 balanceB =Encoder.account({account: from, property: "emberTokenBalance"});
-        uint balanceTo =db.getUint({key: balanceA});
-        uint balanceFrom =db.getUint({key: balanceB});
+        uint balanceTo =storage_.getUint({key: balanceA});
+        uint balanceFrom =storage_.getUint({key: balanceB});
         if (from !=address(0)) { balanceFrom -=amount; }
         if (to !=address(0)) { balanceTo +=amount; }
-        db.setUint({key: balanceA, value: balanceTo});
-        db.setUint({key: balanceB, value: balanceFrom});
+        storage_.setUint({key: balanceA, value: balanceTo});
+        storage_.setUint({key: balanceB, value: balanceFrom});
         super._afterTokenTransfer({from: from, to: to, amount: amount});
     }
 
@@ -1847,6 +2105,11 @@ contract EmberToken is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit {
     function _burn(address account, uint amount)
     internal override {
         super._burn({account: account, amount: amount});
+    }
+
+    function _verify(address account, address contract_, string memory signature)
+    internal {
+        sentinel.verify({account: account, contract_: contract_, signature: signature});
     }
 }
 
