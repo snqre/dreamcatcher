@@ -12,35 +12,6 @@ import "contracts/polygon/deps/openzeppelin/utils/structs/EnumerableSet.sol";
 
 
 
-/**
-
-    Storage Vars Usage: the bytes encoding used to store data on storage
-
-    **vars must never conflict
- */
-
-
-enum DataType {
-    NONE,
-    STRING,
-    BYTES,
-    UINT,
-    INT,
-    ADDRESS,
-    BOOL,
-    BYTES32,
-    STRING_ARRAY,
-    BYTES_ARRAY,
-    UINT_ARRAY,
-    INT_ARRAY,
-    ADDRESS_ARRAY,
-    BOOL_ARRAY,
-    BYTES32_ARRAY,
-    ADDRESS_SET,
-    UINT_SET,
-    BYTES32_SET
-}
-
 enum KeyType {
     STANDARD,
     TIMED,
@@ -54,17 +25,19 @@ enum RequestStage {
     EXECUTED
 }
 
+
+
 library Match {
-    function isMatchingBytes(bytes memory bytesA, bytes memory bytesB)
+    function isMatchingBytes(bytes memory _bytesA, bytes memory _bytesB)
     external pure
-    returns (bool isMatch) {
-        return keccak256(bytesA) ==keccak256(bytesB);
+    returns (bool _isMatch) {
+        return keccak256(_bytesA) ==keccak256(_bytesB);
     }
 
-    function isMatchingString(string memory stringA, string memory stringB)
+    function isMatchingString(string memory _stringA, string memory _stringB)
     external pure
-    returns (bool isMatch) {
-        return keccak256(abi.encodePacked(stringA)) ==keccak256(abi.encodePacked(stringB));
+    returns (bool _isMatch) {
+        return keccak256(abi.encodePacked(_stringA)) ==keccak256(abi.encodePacked(_stringB));
     }
 }
 
@@ -116,6 +89,8 @@ library Encoder {
         return abi.decode(request, (address[],string[],bytes[],uint,uint,RequestStage));
     }
 
+    // MERGED VARS
+
     function account(address account, string memory property)
     external pure
     returns (bytes32 variable) {
@@ -126,6 +101,14 @@ library Encoder {
     external pure
     returns (bytes32 variable) {
         return keccak256(abi.encode(role, property));
+    }
+
+    // SINGLE VARS
+
+    function governor()
+    external pure
+    returns (bytes32 variable) {
+        return keccak256(abi.encode("governor"));
     }
 }
 
@@ -256,9 +239,135 @@ interface IStorage {
     function removeBytes32Set(bytes32 key, bytes32 value) external;
 }
 
+interface IStorage {
+    event AddAdmin(address indexed admin);
+    event AddLogic(address indexed logic);
+    
+    event RemoveAdmin(address indexed admin);
+    event RemoveLogic(address indexed logic);
 
+    event SetString(bytes32 indexed variable, string indexed data);
+    event SetBytes(bytes32 indexed variable, bytes indexed data);
+    event SetUint(bytes32 indexed variable, uint indexed data);
+    event SetInt(bytes32 indexed variable, int indexed data);
+    event SetAddress(bytes32 indexed variable, address indexed data);
+    event SetBool(bytes32 indexed variable, bool indexed data);
+    event SetBytes32(bytes32 indexed variable, bytes32 indexed data);
 
-contract Storage is IStorage{
+    event SetIndexStringArray(bytes32 indexed variable, uint indexed index, string indexed data);
+    event SetIndexBytesArray(bytes32 indexed variable, uint indexed index, bytes indexed data);
+    event SetIndexUintArray(bytes32 indexed variable, uint indexed index, uint indexed data);
+    event SetIndexIntArray(bytes32 indexed variable, uint indexed index, int indexed data);
+    event SetIndexAddressArray(bytes32 indexed variable, uint indexed index, address indexed data);
+    event SetIndexBoolArray(bytes32 indexed variable, uint indexed index, bool indexed data);
+    event SetIndexBytes32Array(bytes32 indexed variable, uint indexed index, bytes32 indexed data);
+
+    event PushStringArray(bytes32 indexed variable, string indexed data);
+    event PushBytesArray(bytes32 indexed variable, bytes indexed data);
+    event PushUintArray(bytes32 indexed variable, uint indexed data);
+    event PushIntArray(bytes32 indexed variable, int indexed data);
+    event PushAddressArray(bytes32 indexed variable, address indexed data);
+    event PushBoolArray(bytes32 indexed variable, bool indexed data);
+    event PushBytes32Array(bytes32 indexed variable, bytes32 indexed data);
+
+    event DeleteStringArray(bytes32 indexed variable);
+    event DeleteBytesArray(bytes32 indexed variable);
+    event DeleteUintArray(bytes32 indexed variable);
+    event DeleteIntArray(bytes32 indexed variable);
+    event DeleteAddressArray(bytes32 indexed variable);
+    event DeleteBoolArray(bytes32 indexed variable);
+    event DeleteBytes32Array(bytes32 indexed variable);
+
+    event AddAddressSet(bytes32 indexed variable, address indexed data);
+    event AddUintSet(bytes32 indexed variable, uint indexed data);
+    event AddBytes32Set(bytes32 indexed variable, bytes32 indexed data);
+
+    event RemoveAddressSet(bytes32 indexed variable, address indexed data);
+    event RemoveUintSet(bytes32 indexed variable, uint indexed data);
+    event RemoveBytes32Set(bytes32 indexed variable, bytes32 indexed data);
+}
+
+contract Storage is IStorage {
+    using EnumerableSet for EnumerableSet.AddressSet;
+    using EnumerableSet for EnumerableSet.UintSet;
+    using EnumerableSet for EnumerableSet.Bytes32Set;
+
+    EnumerableSet.AddressSet internal _admins;
+    EnumerableSet.AddressSet internal _logics;
+
+    mapping(bytes32 => string) internal _string;
+    mapping(bytes32 => bytes) internal _bytes;
+    mapping(bytes32 => uint) internal _uint;
+    mapping(bytes32 => int) internal _int;
+    mapping(bytes32 => address) internal _address;
+    mapping(bytes32 => bool) internal _bool;
+    mapping(bytes32 => bytes32) internal _bytes32;
+
+    mapping(bytes32 => string[]) internal _stringArray;
+    mapping(bytes32 => bytes[]) internal _bytesArray;
+    mapping(bytes32 => uint[]) internal _uintArray;
+    mapping(bytes32 => int[]) internal _intArray;
+    mapping(bytes32 => address[]) internal _addressArray;
+    mapping(bytes32 => bool[]) internal _boolArray;
+    mapping(bytes32 => bytes32[]) internal _bytes32Array;
+
+    mapping(bytes32 => EnumerableSet.AddressSet) internal _addressSet;
+    mapping(bytes32 => EnumerableSet.UintSet) internal _uintSet;
+    mapping(bytes32 => EnumerableSet.Bytes32Set) internal _bytes32Set;
+
+    modifier onlyAdmin() {
+        _onlyAdmin();
+        _;
+    }
+
+    modifier onlyLogic() {
+        _onlyLogic();
+        _;
+    }
+
+    constructor() { _admins.add(msg.sender); }
+
+    function getAdmins() external view returns (address[] memory) { return _admins.values(); }
+    function getLogics() external view returns (address[] memory) { return _logics.values(); }
+    function getString(bytes32 variable) external view returns (string memory) { return _string[variable]; }
+    function getBytes(bytes32 variable) external view returns (bytes memory) { return _bytes[variable]; }
+    function getUint(bytes32 variable) external view returns (uint) { return _uint[variable]; }
+    function getInt(bytes32 variable) external view returns (int) { return _int[variable]; }
+    function getAddress(bytes32 variable) external view returns (address) { return _address[variable]; }
+    function getBool(bytes32 variable) external view returns (bool) { return _bool[variable]; }
+    function getBytes32(bytes32 variable) external view returns (bytes32) { return _bytes32[variable]; }
+
+    function getStringArray(bytes32 variable) external view returns (string[] memory) { return _stringArray[variable]; }
+    function getBytesArray(bytes32 variable) external view returns (bytes[] memory) { return _bytesArray[variable]; }
+    function getUintArray(bytes32 variable) external view returns (uint[] memory) { return _uintArray[variable]; }
+    function getIntArray(bytes32 variable) external view returns (int[] memory) { return _intArray[variable]; }
+    function getAddressArray(bytes32 variable) external view returns (address[] memory) { return _addressArray[variable]; }
+    function getBoolArray(bytes32 variable) external view returns (bool[] memory) { return _boolArray[variable]; }
+    function getBytes32Array(bytes32 variable) external view returns (bytes32[] memory) { return _bytes32Array[variable]; }
+
+    function indexStringArray(bytes32 variable, uint index) external view returns (string memory) { return _stringArray[variable][index]; }
+    function indexBytesArray(bytes32 variable, uint index) external view returns (bytes memory) { return _bytesArray[variable][index]; }
+    function indexUintArray(bytes32 variable, uint index) external view returns (uint) { return _uintArray[variable][index]; }
+    function indexIntArray(bytes32 variable, uint index) external view returns (int) { return _intArray[variable][index]; }
+    function indexAddressArray(bytes32 variable, uint index) external view returns (address) { return _addressArray[variable][index]; }
+    function indexBoolArray(bytes32 variable, uint index) external view returns (bool) { return _boolArray[variable][index]; }
+    function indexBytes32Array(bytes32 variable, uint index) external view returns (bytes32) { return _bytes32Array[variable][index]; }
+
+    function lengthStringArray(bytes32 variable) external view returns (uint) { return _stringArray[variable].length; }
+    
+
+    function _onlyAdmin()
+    private view {
+        require(_admins.contains(msg.sender), "Storage: msg.sender !=admin");
+    }
+
+    function _onlyLogic()
+    private view {
+        require(_logics.contains(msg.sender), "Storage: msg.sender !=logic");
+    }
+}
+
+contract Storage {
     using EnumerableSet for EnumerableSet.AddressSet;
     using EnumerableSet for EnumerableSet.UintSet;
     using EnumerableSet for EnumerableSet.Bytes32Set;
@@ -282,13 +391,13 @@ contract Storage is IStorage{
     mapping(bytes32 => int[]) internal _intArray;
     mapping(bytes32 => address[]) internal _addressArray;
     mapping(bytes32 => bool[]) internal _boolArray;
-    mapping(bytes32 => bytes32[]) private _bytes32Array;
+    mapping(bytes32 => bytes32[]) internal _bytes32Array;
 
     mapping(bytes32 => EnumerableSet.AddressSet) internal _addressSet;
     mapping(bytes32 => EnumerableSet.UintSet) internal _uintSet;
     mapping(bytes32 => EnumerableSet.Bytes32Set) internal _bytes32Set;
 
-    // ADMIN & LOGIC EVENTS
+    // admin & logic
 
     event AddAdmin(address indexed admin);
     event RemoveAdmin(address indexed admin);
@@ -296,7 +405,7 @@ contract Storage is IStorage{
     event AddLogic(address indexed logic);
     event RemoveLogic(address indexed logic);
 
-    // BASIC EVENTS
+    // Basic
 
     event SetString(bytes32 indexed key, string indexed value);
     event SetBytes(bytes32 indexed key, bytes indexed value);
@@ -363,6 +472,7 @@ contract Storage is IStorage{
         _;
     }
 
+    // deprecated because it was not distinguishing empty keys with actual keys for some reason
     modifier onlyNotEmptyKey(bytes32 key) {
         _onlyNotEmptyKey({key: key});
         _;
@@ -390,56 +500,56 @@ contract Storage is IStorage{
 
     function getString(bytes32 key)
     external view
-    onlyNotEmptyKey(key)
-    onlyDataTypeCheck(key, DataType.STRING)
+    // onlyNotEmptyKey(key)
+    // onlyDataTypeCheck(key, DataType.STRING)
     returns (string memory) {
         return _string[key];
     }
 
     function getBytes(bytes32 key)
     external view
-    onlyNotEmptyKey(key)
-    onlyDataTypeCheck(key, DataType.BYTES)
+    // onlyNotEmptyKey(key)
+    // onlyDataTypeCheck(key, DataType.BYTES)
     returns (bytes memory) {
         return _bytes[key];
     }
 
     function getUint(bytes32 key)
     external view
-    onlyNotEmptyKey(key)
-    onlyDataTypeCheck(key, DataType.UINT)
+    // onlyNotEmptyKey(key)
+    // onlyDataTypeCheck(key, DataType.UINT)
     returns (uint) {
         return _uint[key];
     }
 
     function getInt(bytes32 key)
     external view
-    onlyNotEmptyKey(key)
-    onlyDataTypeCheck(key, DataType.INT)
+    // onlyNotEmptyKey(key)
+    // onlyDataTypeCheck(key, DataType.INT)
     returns (int) {
         return _int[key];
     }
 
     function getAddress(bytes32 key)
     external view
-    onlyNotEmptyKey(key)
-    onlyDataTypeCheck(key, DataType.ADDRESS)
+    // onlyNotEmptyKey(key)
+    // onlyDataTypeCheck(key, DataType.ADDRESS)
     returns (address) {
         return _address[key];
     }
 
     function getBool(bytes32 key)
     external view
-    onlyNotEmptyKey(key)
-    onlyDataTypeCheck(key, DataType.BOOL)
+    // onlyNotEmptyKey(key)
+    // onlyDataTypeCheck(key, DataType.BOOL)
     returns (bool) {
         return _bool[key];
     }
 
     function getBytes32(bytes32 key)
     external view
-    onlyNotEmptyKey(key)
-    onlyDataTypeCheck(key, DataType.BYTES32)
+    // onlyNotEmptyKey(key)
+    // onlyDataTypeCheck(key, DataType.BYTES32)
     returns (bytes32) {
         return _bytes32[key];
     }
@@ -448,56 +558,56 @@ contract Storage is IStorage{
 
     function getStringArray(bytes32 key)
     external view
-    onlyNotEmptyKey(key)
-    onlyDataTypeCheck(key, DataType.STRING_ARRAY) 
+    // onlyNotEmptyKey(key)
+    // onlyDataTypeCheck(key, DataType.STRING_ARRAY) 
     returns (string[] memory) {
         return _stringArray[key];
     }
 
     function getBytesArray(bytes32 key)
     external view
-    onlyNotEmptyKey(key)
-    onlyDataTypeCheck(key, DataType.BYTES_ARRAY)
+    // onlyNotEmptyKey(key)
+    // onlyDataTypeCheck(key, DataType.BYTES_ARRAY)
     returns (bytes[] memory) {
         return _bytesArray[key];
     }
 
     function getUintArray(bytes32 key)
     external view
-    onlyNotEmptyKey(key)
-    onlyDataTypeCheck(key, DataType.UINT_ARRAY)
+    // onlyNotEmptyKey(key)
+    // onlyDataTypeCheck(key, DataType.UINT_ARRAY)
     returns (uint[] memory) {
         return _uintArray[key];
     }
 
     function getIntArray(bytes32 key)
     external view
-    onlyNotEmptyKey(key)
-    onlyDataTypeCheck(key, DataType.INT_ARRAY)
+    // onlyNotEmptyKey(key)
+    // onlyDataTypeCheck(key, DataType.INT_ARRAY)
     returns (int[] memory) {
         return _intArray[key];
     }
 
     function getAddressArray(bytes32 key)
     external view
-    onlyNotEmptyKey(key)
-    onlyDataTypeCheck(key, DataType.ADDRESS_ARRAY)
+    // onlyNotEmptyKey(key)
+    // onlyDataTypeCheck(key, DataType.ADDRESS_ARRAY)
     returns (address[] memory) {
         return _addressArray[key];
     }
 
     function getBoolArray(bytes32 key)
     external view
-    onlyNotEmptyKey(key)
-    onlyDataTypeCheck(key, DataType.BOOL_ARRAY)
+    // onlyNotEmptyKey(key)
+    // onlyDataTypeCheck(key, DataType.BOOL_ARRAY)
     returns (bool[] memory) {
         return _boolArray[key];
     }
 
     function getBytes32Array(bytes32 key)
     external view
-    onlyNotEmptyKey(key)
-    onlyDataTypeCheck(key, DataType.BYTES32_ARRAY)
+    // onlyNotEmptyKey(key)
+    // onlyDataTypeCheck(key, DataType.BYTES32_ARRAY)
     returns (bytes32[] memory) {
         return _bytes32Array[key];
     }
@@ -506,8 +616,8 @@ contract Storage is IStorage{
 
     function indexStringArray(bytes32 key, uint index)
     external view
-    onlyNotEmptyKey(key)
-    onlyDataTypeCheck(key, DataType.STRING_ARRAY)
+    // onlyNotEmptyKey(key)
+    // onlyDataTypeCheck(key, DataType.STRING_ARRAY)
     returns (string memory) {
         require(index <_stringArray[key].length, "Storage: index not found");
         return _stringArray[key][index];
@@ -515,8 +625,8 @@ contract Storage is IStorage{
 
     function indexBytesArray(bytes32 key, uint index)
     external view
-    onlyNotEmptyKey(key)
-    onlyDataTypeCheck(key, DataType.BYTES_ARRAY)
+    // onlyNotEmptyKey(key)
+    // onlyDataTypeCheck(key, DataType.BYTES_ARRAY)
     returns (bytes memory) {
         require(index <_bytesArray[key].length, "Storage: index not found");
         return _bytesArray[key][index];
@@ -524,8 +634,8 @@ contract Storage is IStorage{
 
     function indexUintArray(bytes32 key, uint index)
     external view
-    onlyNotEmptyKey(key)
-    onlyDataTypeCheck(key, DataType.UINT_ARRAY)
+    // onlyNotEmptyKey(key)
+    // onlyDataTypeCheck(key, DataType.UINT_ARRAY)
     returns (uint) {
         require(index <_uintArray[key].length, "Storage: index not found");
         return _uintArray[key][index];
@@ -533,8 +643,8 @@ contract Storage is IStorage{
 
     function indexIntArray(bytes32 key, uint index)
     external view
-    onlyNotEmptyKey(key)
-    onlyDataTypeCheck(key, DataType.INT_ARRAY)
+    // onlyNotEmptyKey(key)
+    // onlyDataTypeCheck(key, DataType.INT_ARRAY)
     returns (int) {
         require(index <_intArray[key].length, "Storage: index not found");
         return _intArray[key][index];
@@ -542,8 +652,8 @@ contract Storage is IStorage{
 
     function indexAddressArray(bytes32 key, uint index)
     external view
-    onlyNotEmptyKey(key)
-    onlyDataTypeCheck(key, DataType.ADDRESS_ARRAY)
+    // onlyNotEmptyKey(key)
+    // onlyDataTypeCheck(key, DataType.ADDRESS_ARRAY)
     returns (address) {
         require(index <_addressArray[key].length, "Storage: index not found");
         return _addressArray[key][index];
@@ -551,8 +661,8 @@ contract Storage is IStorage{
 
     function indexBoolArray(bytes32 key, uint index)
     external view
-    onlyNotEmptyKey(key)
-    onlyDataTypeCheck(key, DataType.BOOL_ARRAY)
+    // onlyNotEmptyKey(key)
+    // onlyDataTypeCheck(key, DataType.BOOL_ARRAY)
     returns (bool) {
         require(index <_boolArray[key].length, "Storage: index not found");
         return _boolArray[key][index];
@@ -560,8 +670,8 @@ contract Storage is IStorage{
 
     function indexBytes32Array(bytes32 key, uint index)
     external view
-    onlyNotEmptyKey(key)
-    onlyDataTypeCheck(key, DataType.BYTES32_ARRAY)
+    // onlyNotEmptyKey(key)
+    // onlyDataTypeCheck(key, DataType.BYTES32_ARRAY)
     returns (bytes32) {
         require(index <_bytes32Array[key].length, "Storage: index not found");
         return _bytes32Array[key][index];
@@ -571,24 +681,24 @@ contract Storage is IStorage{
 
     function getAddressSet(bytes32 key)
     external view
-    onlyNotEmptyKey(key)
-    onlyDataTypeCheck(key, DataType.ADDRESS_SET)
+    // onlyNotEmptyKey(key)
+    // onlyDataTypeCheck(key, DataType.ADDRESS_SET)
     returns (address[] memory) {
         return _addressSet[key].values();
     }
 
     function getUintSet(bytes32 key)
     external view
-    onlyNotEmptyKey(key)
-    onlyDataTypeCheck(key, DataType.UINT_SET)
+    // onlyNotEmptyKey(key)
+    // onlyDataTypeCheck(key, DataType.UINT_SET)
     returns (uint[] memory) {
         return _uintSet[key].values();
     }
 
     function getBytes32Set(bytes32 key)
     external view
-    onlyNotEmptyKey(key)
-    onlyDataTypeCheck(key, DataType.BYTES32_SET)
+    // onlyNotEmptyKey(key)
+    // onlyDataTypeCheck(key, DataType.BYTES32_SET)
     returns (bytes32[] memory) {
         return _bytes32Set[key].values();
     }
@@ -597,24 +707,24 @@ contract Storage is IStorage{
 
     function indexAddressSet(bytes32 key, uint index)
     external view
-    onlyNotEmptyKey(key)
-    onlyDataTypeCheck(key, DataType.ADDRESS_SET)
+    // onlyNotEmptyKey(key)
+    // onlyDataTypeCheck(key, DataType.ADDRESS_SET)
     returns (address) {
         return _addressSet[key].at(index);
     }
 
     function indexUintSet(bytes32 key, uint index)
     external view
-    onlyNotEmptyKey(key)
-    onlyDataTypeCheck(key, DataType.UINT_SET)
+    // onlyNotEmptyKey(key)
+    // onlyDataTypeCheck(key, DataType.UINT_SET)
     returns (uint) {
         return _uintSet[key].at(index);
     }
 
     function indexBytes32Set(bytes32 key, uint index)
     external view
-    onlyNotEmptyKey(key)
-    onlyDataTypeCheck(key, DataType.BYTES32_SET)
+    // onlyNotEmptyKey(key)
+    // onlyDataTypeCheck(key, DataType.BYTES32_SET)
     returns (bytes32) {
         return _bytes32Set[key].at(index);
     }
@@ -623,24 +733,24 @@ contract Storage is IStorage{
 
     function containsAddressSet(bytes32 key, address value)
     external view
-    onlyNotEmptyKey(key)
-    onlyDataTypeCheck(key, DataType.ADDRESS_SET)
+    // onlyNotEmptyKey(key)
+    // onlyDataTypeCheck(key, DataType.ADDRESS_SET)
     returns (bool) {
         return _addressSet[key].contains(value);
     }
 
     function containsUintSet(bytes32 key, uint value)
     external view
-    onlyNotEmptyKey(key)
-    onlyDataTypeCheck(key, DataType.UINT_SET)
+    // onlyNotEmptyKey(key)
+    // onlyDataTypeCheck(key, DataType.UINT_SET)
     returns (bool) {
         return _uintSet[key].contains(value);
     }
 
     function containsBytes32Set(bytes32 key, bytes32 value)
     external view
-    onlyNotEmptyKey(key)
-    onlyDataTypeCheck(key, DataType.BYTES32_SET)
+    // onlyNotEmptyKey(key)
+    // onlyDataTypeCheck(key, DataType.BYTES32_SET)
     returns (bool) {
         return _bytes32Set[key].contains(value);
     }
@@ -692,8 +802,8 @@ contract Storage is IStorage{
     function setString(bytes32 key, string memory value)
     external
     onlyLogic 
-    onlyNotEmptyKey(key) 
-    onlyDataType(key, DataType.STRING) {
+    // onlyNotEmptyKey(key) 
+    /** onlyDataType(key, DataType.STRING) */ {
         _string[key] =value;
         emit SetString({key: key, value: value});
     }
@@ -701,8 +811,8 @@ contract Storage is IStorage{
     function setBytes(bytes32 key, bytes memory value)
     external
     onlyLogic 
-    onlyNotEmptyKey(key) 
-    onlyDataType(key, DataType.BYTES) {
+    // onlyNotEmptyKey(key) 
+    // onlyDataType(key, DataType.BYTES) {
         _bytes[key] =value;
         emit SetBytes({key: key, value: value});
     }
@@ -710,8 +820,8 @@ contract Storage is IStorage{
     function setUint(bytes32 key, uint value)
     external
     onlyLogic 
-    onlyNotEmptyKey(key) 
-    onlyDataType(key, DataType.UINT) {
+    // onlyNotEmptyKey(key) 
+    // onlyDataType(key, DataType.UINT) {
         _uint[key] =value;
         emit SetUint({key: key, value: value});
     }
@@ -719,8 +829,8 @@ contract Storage is IStorage{
     function setInt(bytes32 key, int value)
     external
     onlyLogic
-    onlyNotEmptyKey(key) 
-    onlyDataType(key, DataType.INT) {
+    // onlyNotEmptyKey(key) 
+    // onlyDataType(key, DataType.INT) {
         _int[key] =value;
         emit SetInt({key: key, value: value});
     }
@@ -728,8 +838,8 @@ contract Storage is IStorage{
     function setAddress(bytes32 key, address value)
     external
     onlyLogic
-    onlyNotEmptyKey(key) 
-    onlyDataType(key, DataType.ADDRESS) {
+    // onlyNotEmptyKey(key) 
+    // onlyDataType(key, DataType.ADDRESS) {
         _address[key] =value;
         emit SetAddress({key: key, value: value});
     }
@@ -737,8 +847,8 @@ contract Storage is IStorage{
     function setBool(bytes32 key, bool value)
     external
     onlyLogic
-    onlyNotEmptyKey(key) 
-    onlyDataType(key, DataType.BOOL) {
+    // onlyNotEmptyKey(key) 
+    // onlyDataType(key, DataType.BOOL) {
         _bool[key] =value;
         emit SetBool({key: key, value: value});
     }
@@ -746,8 +856,8 @@ contract Storage is IStorage{
     function setBytes32(bytes32 key, bytes32 value)
     external
     onlyLogic 
-    onlyNotEmptyKey(key) 
-    onlyDataType(key, DataType.BYTES32) {
+    // onlyNotEmptyKey(key) 
+    // onlyDataType(key, DataType.BYTES32) {
         _bytes32[key] =value;
         emit SetBytes32({key: key, value: value});
     }
@@ -757,8 +867,8 @@ contract Storage is IStorage{
     function setIndexStringArray(bytes32 key, uint index, string memory value)
     external
     onlyLogic
-    onlyNotEmptyKey(key)
-    onlyDataType(key, DataType.STRING_ARRAY) {
+    // onlyNotEmptyKey(key)
+    // onlyDataType(key, DataType.STRING_ARRAY) {
         _stringArray[key][index] =value;
         emit SetIndexStringArray({key: key, index: index, value: value});
     }
@@ -766,8 +876,8 @@ contract Storage is IStorage{
     function setIndexBytesArray(bytes32 key, uint index, bytes memory value)
     external
     onlyLogic
-    onlyNotEmptyKey(key)
-    onlyDataType(key, DataType.BYTES_ARRAY) {
+    // onlyNotEmptyKey(key)
+    // onlyDataType(key, DataType.BYTES_ARRAY) {
         _bytesArray[key][index] =value;
         emit SetIndexBytesArray({key: key, index: index, value: value});
     }
@@ -775,8 +885,8 @@ contract Storage is IStorage{
     function setIndexUintArray(bytes32 key, uint index, uint value)
     external
     onlyLogic
-    onlyNotEmptyKey(key)
-    onlyDataType(key, DataType.UINT_ARRAY) {
+    // onlyNotEmptyKey(key)
+    // onlyDataType(key, DataType.UINT_ARRAY) {
         _uintArray[key][index] =value;
         emit SetIndexUintArray({key: key, index: index, value: value});
     }
@@ -784,8 +894,8 @@ contract Storage is IStorage{
     function setIndexIntArray(bytes32 key, uint index, int value)
     external
     onlyLogic
-    onlyNotEmptyKey(key)
-    onlyDataType(key, DataType.INT_ARRAY) {
+    // onlyNotEmptyKey(key)
+    // onlyDataType(key, DataType.INT_ARRAY) {
         _intArray[key][index] =value;
         emit SetIndexIntArray({key: key, index: index, value: value});
     }
@@ -793,8 +903,8 @@ contract Storage is IStorage{
     function setIndexAddressArray(bytes32 key, uint index, address value)
     external
     onlyLogic
-    onlyNotEmptyKey(key)
-    onlyDataType(key, DataType.ADDRESS_ARRAY) {
+    // onlyNotEmptyKey(key)
+    // onlyDataType(key, DataType.ADDRESS_ARRAY) {
         _addressArray[key][index] =value;
         emit SetIndexAddressArray({key: key, index: index, value: value});
     }
@@ -802,8 +912,8 @@ contract Storage is IStorage{
     function setIndexBoolArray(bytes32 key, uint index, bool value)
     external
     onlyLogic
-    onlyNotEmptyKey(key)
-    onlyDataType(key, DataType.BOOL_ARRAY) {
+    // onlyNotEmptyKey(key)
+    // onlyDataType(key, DataType.BOOL_ARRAY) {
         _boolArray[key][index] =value;
         emit SetIndexBoolArray({key: key, index: index, value: value});
     }
@@ -811,8 +921,8 @@ contract Storage is IStorage{
     function setIndexBytes32Array(bytes32 key, uint index, bytes32 value)
     external
     onlyLogic
-    onlyNotEmptyKey(key)
-    onlyDataType(key, DataType.BYTES32_ARRAY) {
+    // onlyNotEmptyKey(key)
+    // onlyDataType(key, DataType.BYTES32_ARRAY) {
         _bytes32Array[key][index] =value;
         emit SetIndexBytes32Array({key: key, index: index, value: value});
     }
@@ -822,8 +932,8 @@ contract Storage is IStorage{
     function pushStringArray(bytes32 key, string memory value)
     external
     onlyLogic
-    onlyNotEmptyKey(key)
-    onlyDataType(key, DataType.STRING_ARRAY) {
+    // onlyNotEmptyKey(key)
+    // onlyDataType(key, DataType.STRING_ARRAY) {
         _stringArray[key].push(value);
         emit PushStringArray({key: key, value: value});
     }
@@ -831,8 +941,8 @@ contract Storage is IStorage{
     function pushBytesArray(bytes32 key, bytes memory value)
     external
     onlyLogic
-    onlyNotEmptyKey(key)
-    onlyDataType(key, DataType.BYTES_ARRAY) {
+    // onlyNotEmptyKey(key)
+    // onlyDataType(key, DataType.BYTES_ARRAY) {
         _bytesArray[key].push(value);
         emit PushBytesArray({key: key, value: value});
     }
@@ -840,8 +950,8 @@ contract Storage is IStorage{
     function pushUintArray(bytes32 key, uint value)
     external
     onlyLogic
-    onlyNotEmptyKey(key)
-    onlyDataType(key, DataType.UINT_ARRAY) {
+    // onlyNotEmptyKey(key)
+    // onlyDataType(key, DataType.UINT_ARRAY) {
         _uintArray[key].push(value);
         emit PushUintArray({key: key, value: value});
     }
@@ -849,8 +959,8 @@ contract Storage is IStorage{
     function pushIntArray(bytes32 key, int value)
     external
     onlyLogic
-    onlyNotEmptyKey(key)
-    onlyDataType(key, DataType.INT_ARRAY) {
+    // onlyNotEmptyKey(key)
+    // onlyDataType(key, DataType.INT_ARRAY) {
         _intArray[key].push(value);
         emit PushIntArray({key: key, value: value});
     }
@@ -858,8 +968,8 @@ contract Storage is IStorage{
     function pushAddressArray(bytes32 key, address value)
     external
     onlyLogic
-    onlyNotEmptyKey(key)
-    onlyDataType(key, DataType.ADDRESS_ARRAY) {
+    // onlyNotEmptyKey(key)
+    // onlyDataType(key, DataType.ADDRESS_ARRAY) {
         _addressArray[key].push(value);
         emit PushAddressArray({key: key, value: value});
     }
@@ -867,8 +977,8 @@ contract Storage is IStorage{
     function pushBoolArray(bytes32 key, bool value)
     external
     onlyLogic
-    onlyNotEmptyKey(key)
-    onlyDataType(key, DataType.BOOL_ARRAY) {
+    // onlyNotEmptyKey(key)
+    // onlyDataType(key, DataType.BOOL_ARRAY) {
         _boolArray[key].push(value);
         emit PushBoolArray({key: key, value: value});
     }
@@ -876,8 +986,8 @@ contract Storage is IStorage{
     function pushBytes32Array(bytes32 key, bytes32 value)
     external
     onlyLogic
-    onlyNotEmptyKey(key)
-    onlyDataType(key, DataType.BYTES32_ARRAY) {
+    // onlyNotEmptyKey(key)
+    // onlyDataType(key, DataType.BYTES32_ARRAY) {
         _bytes32Array[key].push(value);
         emit PushBytes32Array({key: key, value: value});
     }
@@ -887,8 +997,8 @@ contract Storage is IStorage{
     function deleteStringArray(bytes32 key)
     external
     onlyLogic
-    onlyNotEmptyKey(key)
-    onlyDataType(key, DataType.STRING_ARRAY) {
+    // onlyNotEmptyKey(key)
+    // onlyDataType(key, DataType.STRING_ARRAY) {
         // require(_stringArray[key].length >0, "Storage: array is empty");
         delete _stringArray[key];
         emit DeleteStringArray({key: key});
@@ -897,8 +1007,8 @@ contract Storage is IStorage{
     function deleteBytesArray(bytes32 key)
     external
     onlyLogic
-    onlyNotEmptyKey(key)
-    onlyDataType(key, DataType.BYTES_ARRAY) {
+    // onlyNotEmptyKey(key)
+    // onlyDataType(key, DataType.BYTES_ARRAY) {
         // require(_bytesArray[key].length >0, "Storage: array is empty");
         delete _bytesArray[key];
         emit DeleteBytesArray({key: key});
@@ -907,8 +1017,8 @@ contract Storage is IStorage{
     function deleteUintArray(bytes32 key)
     external
     onlyLogic
-    onlyNotEmptyKey(key)
-    onlyDataType(key, DataType.UINT_ARRAY) {
+    // onlyNotEmptyKey(key)
+    // onlyDataType(key, DataType.UINT_ARRAY) {
         // require(_uintArray[key].length >0, "Storage: array is empty");
         delete _uintArray[key];
         emit DeleteUintArray({key: key});
@@ -917,8 +1027,8 @@ contract Storage is IStorage{
     function deleteIntArray(bytes32 key)
     external
     onlyLogic
-    onlyNotEmptyKey(key)
-    onlyDataType(key, DataType.INT_ARRAY) {
+    // onlyNotEmptyKey(key)
+    // onlyDataType(key, DataType.INT_ARRAY) {
         // require(_intArray[key].length >0, "Storage: array is empty");
         delete _intArray[key];
         emit DeleteIntArray({key: key});
@@ -927,8 +1037,8 @@ contract Storage is IStorage{
     function deleteAddressArray(bytes32 key)
     external
     onlyLogic
-    onlyNotEmptyKey(key)
-    onlyDataType(key, DataType.ADDRESS_ARRAY) {
+    // onlyNotEmptyKey(key)
+    // onlyDataType(key, DataType.ADDRESS_ARRAY) {
         // require(_addressArray[key].length >0, "Storage: array is empty");
         delete _addressArray[key];
         emit DeleteAddressArray({key: key});
@@ -937,8 +1047,8 @@ contract Storage is IStorage{
     function deleteBoolArray(bytes32 key)
     external
     onlyLogic
-    onlyNotEmptyKey(key)
-    onlyDataType(key, DataType.BOOL_ARRAY) {
+    // onlyNotEmptyKey(key)
+    // onlyDataType(key, DataType.BOOL_ARRAY) {
         // require(_boolArray[key].length >0, "Storage: array is empty");
         delete _boolArray[key];
         emit DeleteBoolArray({key: key});
@@ -947,8 +1057,8 @@ contract Storage is IStorage{
     function deleteBytes32Array(bytes32 key)
     external
     onlyLogic
-    onlyNotEmptyKey(key)
-    onlyDataType(key, DataType.BYTES32_ARRAY) {
+    // onlyNotEmptyKey(key)
+    // onlyDataType(key, DataType.BYTES32_ARRAY) {
         // require(_bytes32Array[key].length >0, "Storage: array is empty");
         delete _bytes32Array[key];
         emit DeleteBytes32Array({key: key});
@@ -959,8 +1069,8 @@ contract Storage is IStorage{
     function addAddressSet(bytes32 key, address value)
     external
     onlyLogic
-    onlyNotEmptyKey(key)
-    onlyDataType(key, DataType.ADDRESS_SET) {
+    // onlyNotEmptyKey(key)
+    // onlyDataType(key, DataType.ADDRESS_SET) {
         require(!_addressSet[key].contains(value), "Storage: set already contains value");
         _addressSet[key].add(value);
         emit AddAddressSet({key: key, value: value});
@@ -969,8 +1079,8 @@ contract Storage is IStorage{
     function addUintSet(bytes32 key, uint value)
     external
     onlyLogic
-    onlyNotEmptyKey(key)
-    onlyDataType(key, DataType.UINT_SET) {
+    // onlyNotEmptyKey(key)
+    // onlyDataType(key, DataType.UINT_SET) {
         require(!_uintSet[key].contains(value), "Storage: set already contains value");
         _uintSet[key].add(value);
         emit AddUintSet({key: key, value: value});
@@ -979,8 +1089,8 @@ contract Storage is IStorage{
     function addBytes32Set(bytes32 key, bytes32 value)
     external
     onlyLogic
-    onlyNotEmptyKey(key)
-    onlyDataType(key, DataType.BYTES32_SET) {
+    // onlyNotEmptyKey(key)
+    // onlyDataType(key, DataType.BYTES32_SET) {
         require(!_bytes32Set[key].contains(value), "Storage: set already contains value");
         _bytes32Set[key].add(value);
         emit AddBytes32Set({key: key, value: value});
@@ -991,8 +1101,8 @@ contract Storage is IStorage{
     function removeAddressSet(bytes32 key, address value)
     external
     onlyLogic
-    onlyNotEmptyKey(key)
-    onlyDataType(key, DataType.ADDRESS_SET) {
+    // onlyNotEmptyKey(key)
+    // onlyDataType(key, DataType.ADDRESS_SET) {
         require(_addressSet[key].contains(value), "Storage: value not found");
         _addressSet[key].remove(value);
         emit RemoveAddressSet({key: key, value: value});
@@ -1001,8 +1111,8 @@ contract Storage is IStorage{
     function removeUintSet(bytes32 key, uint value)
     external
     onlyLogic
-    onlyNotEmptyKey(key)
-    onlyDataType(key, DataType.UINT_SET) {
+    // onlyNotEmptyKey(key)
+    // onlyDataType(key, DataType.UINT_SET) {
         require(_uintSet[key].contains(value), "Storage: value not found");
         _uintSet[key].remove(value);
         emit RemoveUintSet({key: key, value: value});
@@ -1011,8 +1121,8 @@ contract Storage is IStorage{
     function removeBytes32Set(bytes32 key, bytes32 value)
     external
     onlyLogic
-    onlyNotEmptyKey(key)
-    onlyDataType(key, DataType.BYTES32_SET) {
+    // onlyNotEmptyKey(key)
+    // onlyDataType(key, DataType.BYTES32_SET) {
         require(_bytes32Set[key].contains(value), "Storage: value not found");
         _bytes32Set[key].remove(value);
         emit RemoveBytes32Set({key: key, value: value});
@@ -1156,10 +1266,14 @@ library ValidatorToolkit {
     <addr/account>  "keys"       _bytesArray
     <str/role>      "keys"       _bytesArray
     <str/role>      "members"    _addressSet
+    "governor"                   _address
 
+    **governor can bypass verification
+    **governor must not be address zero to bypass verification
     **note ie. dKey dContract stands for decoded key or decoded contract
  */
 library Validator {
+
     /**
     * @dev Retrieves the keys associated with a specific account from the provided storage.
     * @param storage_ The storage contract where the keys are stored.
@@ -1214,19 +1328,8 @@ library Validator {
         return addressArray.length;
     }
 
-    /**
-    * @dev Grants a key to an account with the specified parameters.
-    * @param storage_ The storage contract where the key will be stored.
-    * @param account The address of the account to which the key will be granted.
-    * @param contract_ The address of the contract associated with the key.
-    * @param signature The signature string for the key.
-    * @param keyType The type of the key (STANDARD, TIMED, CONSUMABLE).
-    * @param startTimestamp The start timestamp for the key.
-    * @param endTimestamp The end timestamp for the key.
-    * @param balance The balance associated with the key.
-    * @return success True if the key granting was successful, false otherwise.
-    * @return index The index of the granted key in the account's key list.
-    */
+    function grantKey(IStorage storage_, address account, )
+
     function grantKey(IStorage storage_, address account, address contract_, string memory signature, KeyType keyType, uint startTimestamp, uint endTimestamp, uint balance)
     external
     returns (bool success, uint index) {
@@ -1297,32 +1400,105 @@ library Validator {
     * @return success True if the key verification was successful, false otherwise.
     * @return index The index of the verified key in the account's key list.
     */
+    function verify(IStorage storage_, address account, KeyDataMini keyDataPrefix)
+    external {
+        require(account !=address(0), "Validator: account is address zero");
+        require(keyDataPrefix.contract_ !=address(0), "Validator: contract_ is address zero");
+
+
+    }
+
     function verify(IStorage storage_, address account, address contract_, string memory signature)
     external
     returns(bool success, uint index) {
         require(account !=address(0), "Validator: account is address zero");
         require(contract_ !=address(0), "Validator: contract_ is address zero");
-        bytes32 varAccountKeys =Encoder.account({account: account, property: "keys"});
-        bytes[] memory bytesArray =storage_.getBytesArray({key: varAccountKeys});
-        (success, index) =ValidatorToolkit.getKeyIndexByContractAndSignature({storage_: storage_, variable: varAccountKeys, contract_: contract_, signature: signature});
-        require(success, "Validator: unable to find key: contract and address");
-        bytes memory key =storage_.indexBytesArray({key: varAccountKeys, index: index});
-        (address dContract, string memory dSignature, KeyType dKeyType, uint dStartTimestamp, uint dEndTimestamp, uint dBalance) =Encoder.decodeKey({key: key});
-        if (dKeyType ==KeyType.STANDARD) { success =true; }
-        else if (dKeyType ==KeyType.TIMED) {
-            require(block.timestamp >=dStartTimestamp, "Validator: cannot use key before granted");
-            require(block.timestamp <=dEndTimestamp, "Validator: expired");
+
+        if (account !=storage_.getAddress({key: Encoder.governor()})) {
+
+            bytes[] memory bytesArray =storage_.getBytesArray({key: Encoder.account({account: account, property: "keys"})});
+
+            // does the account have this key?
+            (success, index) =ValidatorToolkit.getKeyIndexByContractAndSignature({
+                storage_: storage_, 
+                variable: Encoder.account({
+                    account: account,
+                    property: "keys"
+                }), 
+            contract_: contract_, 
+            signature: signature
+            });
+            
+            // the account must have this key
+            require(success, "Validator: unable to find key: contract and address");
+
+            // assuming it has this key get data from it
+            (
+                address dContract, 
+                string memory dSignature, 
+                KeyType dKeyType, 
+                uint dStartTimestamp, 
+                uint dEndTimestamp, 
+                uint dBalance
+            ) =Encoder.decodeKey({
+                key: storage_.indexBytesArray({
+                    key: Encoder.account({
+                        account: account, 
+                        property: "keys"
+                    }), 
+                index: index
+                })
+            });
+
+            // if the key is simply a standard key then account is verified because we have proven they have the key
+            if (dKeyType ==KeyType.STANDARD) { success =true; }
+
+            // if it is timed the make sure it is still valid
+            else if (dKeyType ==KeyType.TIMED) {
+                require(block.timestamp >=dStartTimestamp, "Validator: cannot use key before granted");
+                require(block.timestamp <=dEndTimestamp, "Validator: expired");
+                success =true;
+            }
+
+            // if consumable make sure it has a balance and then deduct 1 and encode a new key with new value
+            else if (dKeyType ==KeyType.CONSUMABLE) {
+                require(dBalance >=1, "Validator: insufficient balance");
+                dBalance--;
+
+                storage_.setIndexBytesArray({
+                    key: Encoder.account({
+                        account: account,
+                        property: "keys"
+                    }),
+                    index: index,
+                    value: Encoder.encodeKey({
+                        contract_: dContract,
+                        signature: dSignature,
+                        keyType: dKeyType,
+                        startTimestamp: dStartTimestamp,
+                        endTimestamp: dEndTimestamp,
+                        balance: dBalance
+                    })
+                });
+
+                success =true;
+            }
+
+            // require true and return success and index
+            Utils.requireSuccess({success: success});
+            return (success, index);
+
+        } else { // assuming the account is a governor address
+
+            // check that address is not address zero then bypass verification
+            require(
+                storage_.getAddress({key: Encoder.governor()}) !=address(0),
+                "Validator: governor is address zero"
+            );
+
             success =true;
+            return (success, index);
         }
-        else if (dKeyType ==KeyType.CONSUMABLE) {
-            require(dBalance >=1, "Validator: insufficient balance");
-            dBalance--;
-            bytes memory newKey =Encoder.encodeKey({contract_: dContract, signature: dSignature, keyType: dKeyType, startTimestamp: dStartTimestamp, endTimestamp: dEndTimestamp, balance: dBalance});
-            storage_.setIndexBytesArray({key: varAccountKeys, index: index, value: newKey});
-            success =true;
-        }
-        Utils.requireSuccess({success: success});
-        return (success, index);
     }
 
     /**
@@ -1423,6 +1599,11 @@ library Validator {
         return success;
     }
 
+    function swapGovernor(IStorage storage_, address account)
+    external {
+        storage_.setAddress({key: Encoder.encode({string_: "governor"}), value: account});
+    }
+
     /**
     * @dev Revokes a role from an account, removing associated keys from the account.
     * @param storage_ The storage contract where the keys and roles are stored.
@@ -1459,6 +1640,7 @@ interface ISentinel {
     function getRoleKeys(string memory role) external view returns (bytes[] memory);
     function getRoleMembers(string memory role) external view returns (address[] memory);
     function getRoleSize(string memory role) external view returns (uint);
+    function swapGovernor(address account) external;
     function verify(address account, address contract_, string memory signature) external;
     function grantKey(address account, address contract_, string memory signature, uint type_, uint startTimestamp, uint endTimestamp, uint balance) external;
     function revokeKey(address account, address contract_, string memory signature) external;
@@ -1472,12 +1654,7 @@ interface ISentinel {
 
 
 
-/** STORAGE VARS USAGE
-    "governor"      _address
-
-**governor can bypass verification
-**governor must not be address zero to bypass verification
-
+/**
  * @title Sentinel Contract
  * @dev The Sentinel contract serves as a secure key management system with role-based access control.
  * It allows users to manage keys, roles, and perform key verification securely. The contract implements
@@ -1578,6 +1755,11 @@ contract Sentinel is Pausable, ReentrancyGuard {
         return Validator.getRoleSize({storage_: storage_, role: role});
     }
 
+    function swapGovernor(address account)
+    external {
+        Validator.swapGovernor({storage_: storage_, account: account});
+    }
+
     /**
     * @dev Verifies a key for a specific account using a provided signature.
     * If the sender is the governor, additional checks are performed.
@@ -1589,14 +1771,7 @@ contract Sentinel is Pausable, ReentrancyGuard {
     function verify(address account, address contract_, string memory signature)
     external 
     nonReentrant {
-        bytes32 varGovernor =Encoder.encode({string_: "governor"});
-        address governor =storage_.getAddress({key: varGovernor});
-        if (msg.sender !=governor) {
-            _verify({account: account, contract_: contract_, signature: signature});
-        } else {
-            require(governor !=address(0), "Sentinel: governor is address zero");
-            // ... verified
-        }
+        _verify({account: account, contract_: contract_, signature: signature});
     }
 
     function grantKey(address account, address contract_, string memory signature, KeyType keyType, uint startTimestamp, uint endTimestamp, uint balance)
