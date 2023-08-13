@@ -12,7 +12,8 @@ import "contracts/polygon/deps/openzeppelin/utils/structs/EnumerableSet.sol";
 
 /** storage usage
     bytes32 -> address,"keys" -> _bytesArray
-    bytes32 -> string,"keys" -> _bytesArray
+    bytes32 -> string,"keys" -> _bytesArray **roles
+    bytes32 -> string,"members" -> _bytesArray **roles
     bytes32 -> "governor" -> _address
  */
 
