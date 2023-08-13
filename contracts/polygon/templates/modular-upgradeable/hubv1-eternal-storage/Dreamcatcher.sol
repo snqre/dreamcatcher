@@ -12,6 +12,7 @@ import "contracts/polygon/deps/openzeppelin/utils/structs/EnumerableSet.sol";
 
 /** storage usage
     bytes32 -> address,"keys" -> _bytesArray
+    bytes32 -> string,"keys" -> _bytesArray
     bytes32 -> "governor" -> _address
  */
 
@@ -40,6 +41,11 @@ struct Key {
     Settings settings;
     uint balance;
     bytes data;
+}
+
+struct RepositoryData {
+    string name;
+    string description;
 }
 
 interface IStorage {
@@ -960,8 +966,6 @@ contract Storage is IStorage {
 interface IRepository is IStorage {
     function name() external view returns (string memory);
     function description() external view returns (string memory);
-    function launched() external view returns (uint32);
-    function updateData(string memory name, string memory description) external;
 }
 
 /**
@@ -969,69 +973,26 @@ interface IRepository is IStorage {
  * @dev Manages essential information about a data entity.
  */
 contract Repository is Storage {
-    struct Data {
-        string name;
-        string description;
-        uint launched;
-    }
-    
-    /**
-    * @dev This private storage variable holds the core data structure for the contract.
-    * It stores essential information about the data entity being managed.
-    * @notice Access to this data is restricted to internal and derived contracts.
-    */
-    Data private _data;
 
-    /**
-    * @dev Constructs a new instance of the `Storage` contract, initializing the core data structure.
-    * @param name The name associated with the data being stored.
-    * @param description The description providing additional details about the stored data.
-    */
-    constructor(string memory name, string memory description) 
+    RepositoryData private _data;
+
+
+    constructor(string memory name_, string memory description_) 
     Storage() {
-        _data = Data({name: name, description: description, launched: block.timestamp});
+        _data = RepositoryData({name: name_, description: description_});
     }
 
-    /**
-    * @dev Retrieves the name associated with the stored data.
-    * @return The name of the stored data entity.
-    */
     function name() 
     external view 
     returns (string memory) { 
         return _data.name; 
     }
 
-    /**
-    * @dev Retrieves the description associated with the stored data.
-    * @return The description of the stored data entity.
-    */
+
     function description() 
     external view 
     returns (string memory) { 
         return _data.description; 
-    }
-
-    /**
-    * @dev Retrieves the timestamp when the stored data was launched or created.
-    * @return The timestamp representing the launch time of the stored data entity.
-    */
-    function launched() 
-    external view 
-    returns (uint) { 
-        return _data.launched; 
-    }
-
-    /**
-    * @dev Updates the name and description associated with the stored data.
-    * @param name The new name to be associated with the stored data entity.
-    * @param description The new description to provide additional details about the stored data.
-    * @notice This function allows the contract owner to update the name and description of the stored data.
-    */    
-    function updateData(string memory name, string memory description)
-    external {
-        _data.name = name;
-        _data.description = description;
     }
 }
 
@@ -1154,7 +1115,7 @@ library __Sentinel {
         repository.setIndexBytesArray(variable, index, emptyBytes);
     }
 
-    function require_(IRepository repository, address account, address logic, string memory signature)
+    function verify(IRepository repository, address account, address logic, string memory signature)
     external {
         if (account != repository.getAddress(keccak256(abi.encode("governor")))) {
             uint index;
@@ -1169,7 +1130,7 @@ library __Sentinel {
     }
 }
 
-contract Sentinel {
+contract Sentinel is ReentrancyGuard {
     IRepository repository;
 
     constructor(address repository_) {
@@ -1182,39 +1143,77 @@ contract Sentinel {
         return repository.getBytesArray(keccak256(abi.encode(account, "keys")));
     }
 
-    function require_(address account, address logic, string memory signature)
-    external {
-        __Sentinel.require_(repository, account, logic, signature);
+    // anyone can verify if an account has a specific key and that it is valid
+    function verify(address account, address logic, string memory signature)
+    external 
+    nonReentrant {
+        _verify(account, logic, signature);
+    }
+
+    // anyone can grant keys from their address using this
+    function grantKey(address to, address logic, string memory signature, uint32 granted, uint32 expiration, Class class, bool isTransferable, bool isFungible, bool isClonable, uint balance, bytes memory data)
+    external 
+    nonReentrant {
+        require(logic == msg.sender, "Sentinel: only logic must grant its own keys");
+        _grantKey(to, logic, signature, granted, expiration, class, isTransferable, isFungible, isClonable, balance, data);
+    }
+
+    function _verify(address account, address logic, string memory signature)
+    internal {
+        __Sentinel.verify(repository, account, logic, signature);
     }
 
     function _grantKey(address to, address logic, string memory signature, uint32 granted, uint32 expiration, Class class, bool isTransferable, bool isFungible, bool isClonable, uint balance, bytes memory data)
-    external {
+    internal {
         __Sentinel.encodeAndPushKeyToBytesArray(
             repository, 
-            keccak256(
-                abi.encode(to, "keys")), 
-                Key({
-                    logic: logic,
-                    signature: signature,
-                    timestamp: Timestamp({
-                        granted: granted,
-                        expiration: expiration
-                    }),
-                    class: class,
-                    settings: Settings({
-                        isTransferable: isTransferable,
-                        isFungible: isFungible,
-                        isClonable: isClonable
-                    }),
-                    balance: balance,
-                    data: data
-                })
-            );
+            keccak256(abi.encode(to, "keys")), 
+            Key({
+                logic: logic,
+                signature: signature,
+                timestamp: Timestamp({
+                    granted: granted,
+                    expiration: expiration
+                }),
+                class: class,
+                settings: Settings({
+                    isTransferable: isTransferable,
+                    isFungible: isFungible,
+                    isClonable: isClonable
+                }),
+                balance: balance,
+                data: data
+            })
+        );
     }
 
     function _revokeKey(address from, address logic, string memory signature)
-    external {
+    internal {
         __Sentinel.decodeAndPullKeyFromBytesArray(repository, keccak256(abi.encode(from, "keys")), logic, signature);
+    }
+
+    function _transfer(address from, address to, address logic, string memory signature)
+    internal {
+        uint index;
+        bool success;
+        Key memory key;
+        (success, index, key) = __SentinelToolkit.getKeyIndexByLogSigFromBytesArray(repository, keccak256(abi.encode(from, "keys")), logic, signature);
+        require(success, "Sentinel: key with given logic & signature was not found");
+        require(key.settings.isTransferable, "Sentinel: !key.settings.isTransferable");
+        _revokeKey(from, logic, signature);
+        _grantKey(
+            to, 
+            key.logic, 
+            key.signature, 
+            key.timestamp.granted, 
+            key.timestamp.expiration, 
+            key.class, 
+            key.settings.isTransferable, 
+            key.settings.isFungible, 
+            key.settings.isClonable, 
+            key.balance, 
+            key.data
+        );
     }
 
 
