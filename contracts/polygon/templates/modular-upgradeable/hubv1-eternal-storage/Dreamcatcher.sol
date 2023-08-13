@@ -288,13 +288,24 @@ interface IStorage {
 }
 
 contract Storage is IStorage {
+    /**
+    * @dev Importing the EnumerableSet library for AddressSet, UintSet, and Bytes32Set data structures.
+    * This allows efficient management and manipulation of sets of addresses, uints, and bytes32 values.
+    */
     using EnumerableSet for EnumerableSet.AddressSet;
     using EnumerableSet for EnumerableSet.UintSet;
     using EnumerableSet for EnumerableSet.Bytes32Set;
 
+    /**
+    * @dev EnumerableSet mappings to store sets of addresses representing administrators and logic contracts.
+    */
     EnumerableSet.AddressSet internal _admins;
     EnumerableSet.AddressSet internal _logics;
 
+    /**
+    * @dev Mappings to store data of different types associated with specific bytes32 variables.
+    * Each mapping corresponds to a different data type: strings, bytes, uints, integers, addresses, booleans, and bytes32 values.
+    */
     mapping(bytes32 => string) internal _string;
     mapping(bytes32 => bytes) internal _bytes;
     mapping(bytes32 => uint) internal _uint;
@@ -303,6 +314,10 @@ contract Storage is IStorage {
     mapping(bytes32 => bool) internal _bool;
     mapping(bytes32 => bytes32) internal _bytes32;
 
+    /**
+    * @dev Mappings to store arrays of different data types associated with specific bytes32 variables.
+    * Each mapping corresponds to a different data type: strings, bytes, uints, integers, addresses, booleans, and bytes32 values.
+    */
     mapping(bytes32 => string[]) internal _stringArray;
     mapping(bytes32 => bytes[]) internal _bytesArray;
     mapping(bytes32 => uint[]) internal _uintArray;
@@ -311,22 +326,43 @@ contract Storage is IStorage {
     mapping(bytes32 => bool[]) internal _boolArray;
     mapping(bytes32 => bytes32[]) internal _bytes32Array;
 
+    /**
+    * @dev Mappings to store sets of data associated with specific bytes32 variables.
+    * Each mapping corresponds to a different data type: addresses, uints, and bytes32 values.
+    */
     mapping(bytes32 => EnumerableSet.AddressSet) internal _addressSet;
     mapping(bytes32 => EnumerableSet.UintSet) internal _uintSet;
     mapping(bytes32 => EnumerableSet.Bytes32Set) internal _bytes32Set;
 
+    /**
+    * @dev Modifier to restrict access to only administrators.
+    * @notice Reverts if the sender is not an administrator.
+    */
     modifier onlyAdmin() {
         _onlyAdmin();
         _;
     }
 
+    /**
+    * @dev Modifier to restrict access to only logic contracts.
+    * @notice Reverts if the sender is not a logic contract.
+    */
     modifier onlyLogic() {
         _onlyLogic();
         _;
     }
 
+    /**
+    * @dev Contract constructor.
+    * @notice Initializes the contract by adding the deployer's address as an administrator.
+    */
     constructor() { _admins.add(msg.sender); }
 
+    /**
+    * @dev Getter function to retrieve stored data from the contract's storage.
+    * @param variable The identifier of the data variable to retrieve.
+    * @return The value of the data variable.
+    */
     function getAdmins() external view returns (address[] memory) { return _admins.values(); }
     function getLogics() external view returns (address[] memory) { return _logics.values(); }
     function getString(bytes32 variable) external view returns (string memory) { return _string[variable]; }
@@ -337,6 +373,11 @@ contract Storage is IStorage {
     function getBool(bytes32 variable) external view returns (bool) { return _bool[variable]; }
     function getBytes32(bytes32 variable) external view returns (bytes32) { return _bytes32[variable]; }
 
+    /**
+    * @dev Getter function to retrieve an array of stored data from the contract's storage.
+    * @param variable The identifier of the data array variable to retrieve.
+    * @return An array of the specified data type.
+    */
     function getStringArray(bytes32 variable) external view returns (string[] memory) { return _stringArray[variable]; }
     function getBytesArray(bytes32 variable) external view returns (bytes[] memory) { return _bytesArray[variable]; }
     function getUintArray(bytes32 variable) external view returns (uint[] memory) { return _uintArray[variable]; }
@@ -345,6 +386,12 @@ contract Storage is IStorage {
     function getBoolArray(bytes32 variable) external view returns (bool[] memory) { return _boolArray[variable]; }
     function getBytes32Array(bytes32 variable) external view returns (bytes32[] memory) { return _bytes32Array[variable]; }
 
+    /**
+    * @dev Getter function to retrieve an element from a stored array.
+    * @param variable The identifier of the array variable.
+    * @param index The index of the element to retrieve.
+    * @return The value of the element.
+    */
     function indexStringArray(bytes32 variable, uint index) external view returns (string memory) { return _stringArray[variable][index]; }
     function indexBytesArray(bytes32 variable, uint index) external view returns (bytes memory) { return _bytesArray[variable][index]; }
     function indexUintArray(bytes32 variable, uint index) external view returns (uint) { return _uintArray[variable][index]; }
@@ -353,814 +400,665 @@ contract Storage is IStorage {
     function indexBoolArray(bytes32 variable, uint index) external view returns (bool) { return _boolArray[variable][index]; }
     function indexBytes32Array(bytes32 variable, uint index) external view returns (bytes32) { return _bytes32Array[variable][index]; }
 
+    /**
+    * @dev Getter function to retrieve the length of a stored array.
+    * @param variable The identifier of the array variable.
+    * @return The length of the array.
+    */
     function lengthStringArray(bytes32 variable) external view returns (uint) { return _stringArray[variable].length; }
-    
+    function lengthBytesArray(bytes32 variable) external view returns (uint) { return _bytesArray[variable].length; }
+    function lengthUintArray(bytes32 variable) external view returns (uint) { return _uintArray[variable].length; }
+    function lengthIntArray(bytes32 variable) external view returns (uint) { return _intArray[variable].length; }
+    function lengthAddressArray(bytes32 variable) external view returns (uint) { return _addressArray[variable].length; }
+    function lengthBoolArray(bytes32 variable) external view returns (uint) { return _boolArray[variable].length; }
+    function lengthBytes32Array(bytes32 variable) external view returns (uint) { return _bytes32Array[variable].length; }
 
-    function _onlyAdmin()
+    /**
+    * @dev Getter function to retrieve the values of a stored set.
+    * @param variable The identifier of the set variable.
+    * @return An array of values representing the elements in the set.
+    */
+    function getAddressSet(bytes32 variable) external view returns (address[] memory) { return _addressSet[variable].values(); }
+    function getUintSet(bytes32 variable) external view returns (uint[] memory) { return _uintSet[variable].values(); }
+    function getBytes32Set(bytes32 variable) external view returns (bytes32[] memory) { return _bytes32Set[variable].values(); }
+    
+    /**
+    * @dev Getter function to retrieve an element from a stored set at a specific index.
+    * @param variable The identifier of the set variable.
+    * @param index The index of the element to retrieve.
+    * @return The value of the element at the specified index.
+    */
+    function indexAddressSet(bytes32 variable, uint index) external view returns (address) { return _addressSet[variable].at(index); }
+    function indexUintSet(bytes32 variable, uint index) external view returns (uint) { return _uintSet[variable].at(index); }
+    function indexBytes32Set(bytes32 variable, uint index) external view returns (uint) { return _bytes32Set[variable].at(index); }
+
+    /**
+    * @dev Getter function to retrieve the length of a stored set.
+    * @param variable The identifier of the set variable.
+    * @return The length of the set.
+    */
+    function lengthAddressSet(bytes32 variable) external view returns (uint) { return _addressSet[variable].length(); }
+    function lengthUintSet(bytes32 variable) external view returns (uint) { return _uintSet[variable].length(); }
+    function lengthBytes32Set(bytes32 variable) external view returns (uint) { return _bytes32Set[variable].length(); }
+
+    /**
+    * @dev Checks if a specific element exists in a stored set.
+    * @param variable The identifier of the set variable.
+    * @param data The element to check for existence in the set.
+    * @return True if the element exists in the set, false otherwise.
+    */
+    function containsAddressSet(bytes32 variable, address data) external view returns (bool) { return _addressSet[variable].contains(data); }
+    function containsUintSet(bytes32 variable, uint data) external view returns (bool) { return _uintSet[variable].contains(data); }
+    function containsBytes32Set(bytes32 variable, bytes32 data) external view returns (bool) { return _bytes32Set[variable].contains(data); }
+
+    /**
+    * @dev Adds an administrator to the list of authorized administrators.
+    * @param admin The address of the administrator to be added.
+    * Requirements:
+    * - The specified admin address must not be the zero address.
+    * - The admin address must not be an existing logic address.
+    * - The admin address must not be an existing admin address.
+    * Emits an {AddAdmin} event.
+    */
+    function addAdmin(address admin) 
+    external 
+    onlyAdmin {
+        require(admin !=address(0), "Storage: admin is address zero");
+        require(!_logics.contains(admin), "Storage: admin is logic");
+        require(!_admins.contains(admin), "Storage: already admin");
+        _admins.add(admin);
+        emit AddAdmin(admin);
+    }
+
+    /**
+    * @dev Adds a logic contract address to the list of authorized logic contracts.
+    * @param logic The address of the logic contract to be added.
+    * Requirements:
+    * - The specified logic address must not be the zero address.
+    * - The logic address must not be an existing admin address.
+    * - The logic address must not be an existing logic address.
+    * Emits an {AddLogic} event.
+    */
+    function addLogic(address logic) 
+    external 
+    onlyAdmin {
+        require(logic !=address(0), "Storage: logic is address zero");
+        require(!_admins.contains(logic), "Storage: logic is admin");
+        require(!_logics.contains(logic), "Storage: already logic");
+        _logics.add(logic);
+        emit AddLogic(logic);
+    }
+
+    /**
+    * @dev Removes an administrator from the list of authorized administrators.
+    * @param admin The address of the administrator to be removed.
+    * Requirements:
+    * - The specified admin address must not be the zero address.
+    * - The admin address must not be an existing logic address.
+    * - The admin address must be an existing admin address.
+    * Emits a {RemoveAdmin} event.
+    */
+    function removeAdmin(address admin) 
+    external 
+    onlyAdmin {
+        require(admin !=address(0), "Storage: admin is address zero");
+        require(!_logics.contains(admin), "Storage: admin is logic");
+        require(_admins.contains(admin), "Storage: not admin");
+        _admins.remove(admin);
+        emit RemoveAdmin(admin);
+    }
+
+    /**
+    * @dev Removes a logic contract address from the list of authorized logic contracts.
+    * @param logic The address of the logic contract to be removed.
+    * Requirements:
+    * - The specified logic address must not be the zero address.
+    * - The logic address must not be an existing admin address.
+    * - The logic address must be an existing logic address.
+    * Emits a {RemoveLogic} event.
+    */
+    function removeLogic(address logic) 
+    external 
+    onlyAdmin {
+        require(logic !=address(0), "Storage: logic is address zero");
+        require(!_admins.contains(logic), "Storage: logic is admin");
+        require(_logics.contains(logic), "Storage: not logic");
+        _logics.remove(logic);
+        emit RemoveLogic(logic);
+    }
+
+    /**
+    * @dev Sets a string value in the contract storage.
+    * @param variable The identifier of the string variable.
+    * @param data The string data to be stored.
+    * Requirements:
+    * - The function caller must be an authorized logic contract.
+    * Emits a {SetString} event.
+    */
+    function setString(bytes32 variable, string memory data) 
+    external 
+    onlyLogic {
+        _string[variable] =data;
+        emit SetString(variable, data);
+    }
+
+    /**
+    * @dev Sets a bytes value in the contract storage.
+    * @param variable The identifier of the bytes variable.
+    * @param data The bytes data to be stored.
+    * Requirements:
+    * - The function caller must be an authorized logic contract.
+    * Emits a {SetBytes} event.
+    */
+    function setBytes(bytes32 variable, bytes memory data) 
+    external 
+    onlyLogic {
+        _bytes[variable] =data;
+        emit SetBytes(variable, data);
+    }
+
+    /**
+    * @dev Sets a uint value in the contract storage.
+    * @param variable The identifier of the uint variable.
+    * @param data The uint data to be stored.
+    * Requirements:
+    * - The function caller must be an authorized logic contract.
+    * Emits a {SetUint} event.
+    */
+    function setUint(bytes32 variable, uint data) 
+    external 
+    onlyLogic {
+        _uint[variable] =data;
+        emit SetUint(variable, data);
+    }
+
+    /**
+    * @dev Sets an int value in the contract storage.
+    * @param variable The identifier of the int variable.
+    * @param data The int data to be stored.
+    * Requirements:
+    * - The function caller must be an authorized logic contract.
+    * Emits a {SetInt} event.
+    */
+    function setInt(bytes32 variable, int data) 
+    external 
+    onlyLogic {
+        _int[variable] =data;
+        emit SetInt(variable, data);
+    }
+
+    /**
+    * @dev Sets an address value in the contract storage.
+    * @param variable The identifier of the address variable.
+    * @param data The address data to be stored.
+    * Requirements:
+    * - The function caller must be an authorized logic contract.
+    * Emits a {SetAddress} event.
+    */
+    function setAddress(bytes32 variable, address data) 
+    external 
+    onlyLogic {
+        _address[variable] =data;
+        emit SetAddress(variable, data);
+    }
+
+    /**
+    * @dev Sets a boolean value in the contract storage.
+    * @param variable The identifier of the boolean variable.
+    * @param data The boolean data to be stored.
+    * Requirements:
+    * - The function caller must be an authorized logic contract.
+    * Emits a {SetBool} event.
+    */
+    function setBool(bytes32 variable, bool data) 
+    external 
+    onlyLogic {
+        _bool[variable] =data;
+        emit SetBool(variable, data);
+    }
+
+    /**
+    * @dev Sets a bytes32 value in the contract storage.
+    * @param variable The identifier of the bytes32 variable.
+    * @param data The bytes32 data to be stored.
+    * Requirements:
+    * - The function caller must be an authorized logic contract.
+    * Emits a {SetBytes32} event.
+    */
+    function setBytes32(bytes32 variable, bytes32 data) 
+    external 
+    onlyLogic {
+        _bytes32[variable] =data;
+        emit SetBytes32({variable: variable, data: data});
+    }
+
+    /**
+    * @dev Sets the value at a specific index in a string array stored in the contract storage.
+    * @param variable The identifier of the string array variable.
+    * @param index The index where the value should be set.
+    * @param data The string data to be stored.
+    * Requirements:
+    * - The function caller must be an authorized logic contract.
+    * Emits a {SetIndexStringArray} event.
+    */
+    function setIndexStringArray(bytes32 variable, uint index, string memory data) 
+    external 
+    onlyLogic {
+        _stringArray[variable][index] =data;
+        emit SetIndexStringArray(variable, index, data);
+    }
+
+    /**
+    * @dev Sets the value at a specific index in a bytes array stored in the contract storage.
+    * @param variable The identifier of the bytes array variable.
+    * @param index The index where the value should be set.
+    * @param data The bytes data to be stored.
+    * Requirements:
+    * - The function caller must be an authorized logic contract.
+    * Emits a {SetIndexBytesArray} event.
+    */
+    function setIndexBytesArray(bytes32 variable, uint index, bytes memory data) 
+    external 
+    onlyLogic {
+        _bytesArray[variable][index] =data;
+        emit SetIndexBytesArray(variable, index, data);
+    }
+
+    /**
+    * @dev Sets the value at a specific index in a uint array stored in the contract storage.
+    * @param variable The identifier of the uint array variable.
+    * @param index The index where the value should be set.
+    * @param data The uint data to be stored.
+    * Requirements:
+    * - The function caller must be an authorized logic contract.
+    * Emits a {SetIndexUintArray} event.
+    */
+    function setIndexUintArray(bytes32 variable, uint index, uint data) 
+    external 
+    onlyLogic {
+        _uintArray[variable][index] =data;
+        emit SetIndexUintArray(variable, index, data);
+    }
+
+    /**
+    * @dev Sets the value at a specific index in an int array stored in the contract storage.
+    * @param variable The identifier of the int array variable.
+    * @param index The index where the value should be set.
+    * @param data The int data to be stored.
+    * Requirements:
+    * - The function caller must be an authorized logic contract.
+    * Emits a {SetIndexIntArray} event.
+    */
+    function setIndexIntArray(bytes32 variable, uint index, int data) 
+    external 
+    onlyLogic {
+        _intArray[variable][index] =data;
+        emit SetIndexIntArray(variable, index, data);
+    }
+
+    /**
+    * @dev Sets the value at a specific index in an address array stored in the contract storage.
+    * @param variable The identifier of the address array variable.
+    * @param index The index where the value should be set.
+    * @param data The address data to be stored.
+    * Requirements:
+    * - The function caller must be an authorized logic contract.
+    * Emits a {SetIndexAddressArray} event.
+    */
+    function setIndexAddressArray(bytes32 variable, uint index, address data) 
+    external 
+    onlyLogic {
+        _addressArray[variable][index] =data;
+        emit SetIndexAddressArray(variable, index, data);
+    }
+
+    /**
+    * @dev Sets the value at a specific index in a bool array stored in the contract storage.
+    * @param variable The identifier of the bool array variable.
+    * @param index The index where the value should be set.
+    * @param data The bool data to be stored.
+    * Requirements:
+    * - The function caller must be an authorized logic contract.
+    * Emits a {SetIndexBoolArray} event.
+    */
+    function setIndexBoolArray(bytes32 variable, uint index, bool data) 
+    external 
+    onlyLogic {
+        _boolArray[variable][index] =data;
+        emit SetIndexBoolArray(variable, index, data);
+    }
+
+    /**
+    * @dev Sets the value at a specific index in a bytes32 array stored in the contract storage.
+    * @param variable The identifier of the bytes32 array variable.
+    * @param index The index where the value should be set.
+    * @param data The bytes32 data to be stored.
+    * Requirements:
+    * - The function caller must be an authorized logic contract.
+    * Emits a {SetIndexBytes32Array} event.
+    */
+    function setIndexBytes32Array(bytes32 variable, uint index, bytes32 data) 
+    external 
+    onlyLogic {
+        _bytes32Array[variable][index] =data;
+        emit SetIndexBytes32Array(variable, index, data);
+    }
+
+    /**
+    * @dev Appends a new value to the end of a string array stored in the contract storage.
+    * @param variable The identifier of the string array variable.
+    * @param data The string data to be added.
+    * Requirements:
+    * - The function caller must be an authorized logic contract.
+    * Emits a {PushStringArray} event.
+    */
+    function pushStringArray(bytes32 variable, string memory data) 
+    external 
+    onlyLogic {
+        _stringArray[variable].push(data);
+        emit PushStringArray(variable, data);
+    }
+
+    /**
+    * @dev Appends a new bytes element to the end of a bytes array stored in the contract storage.
+    * @param variable The identifier of the bytes array variable.
+    * @param data The bytes data to be added.
+    * Requirements:
+    * - The function caller must be an authorized logic contract.
+    * Emits a {PushBytesArray} event.
+    */
+    function pushBytesArray(bytes32 variable, bytes memory data) 
+    external 
+    onlyLogic {
+        _bytesArray[variable].push(data);
+        emit PushBytesArray(variable, data);
+    }
+
+    /**
+    * @dev Appends a new uint element to the end of a uint array stored in the contract storage.
+    * @param variable The identifier of the uint array variable.
+    * @param data The uint data to be added.
+    * Requirements:
+    * - The function caller must be an authorized logic contract.
+    * Emits a {PushUintArray} event.
+    */
+    function pushUintArray(bytes32 variable, uint data) 
+    external 
+    onlyLogic {
+        _uintArray[variable].push(data);
+        emit PushUintArray(variable, data);
+    }
+
+    /**
+    * @dev Appends a new int element to the end of an int array stored in the contract storage.
+    * @param variable The identifier of the int array variable.
+    * @param data The int data to be added.
+    * Requirements:
+    * - The function caller must be an authorized logic contract.
+    * Emits a {PushIntArray} event.
+    */
+    function pushIntArray(bytes32 variable, int data) 
+    external 
+    onlyLogic {
+        _intArray[variable].push(data);
+        emit PushIntArray(variable, data);
+    }
+
+    /**
+    * @dev Appends a new address element to the end of an address array stored in the contract storage.
+    * @param variable The identifier of the address array variable.
+    * @param data The address data to be added.
+    * Requirements:
+    * - The function caller must be an authorized logic contract.
+    * Emits a {PushAddressArray} event.
+    */
+    function pushAddressArray(bytes32 variable, address data) 
+    external 
+    onlyLogic {
+        _addressArray[variable].push(data);
+        emit PushAddressArray(variable, data);
+    }
+
+    /**
+    * @dev Appends a new bool element to the end of a bool array stored in the contract storage.
+    * @param variable The identifier of the bool array variable.
+    * @param data The bool data to be added.
+    * Requirements:
+    * - The function caller must be an authorized logic contract.
+    * Emits a {PushBoolArray} event.
+    */
+    function pushBoolArray(bytes32 variable, bool data) 
+    external 
+    onlyLogic {
+        _boolArray[variable].push(data);
+        emit PushBoolArray(variable, data);
+    }
+
+    /**
+    * @dev Appends a new bytes32 element to the end of a bytes32 array stored in the contract storage.
+    * @param variable The identifier of the bytes32 array variable.
+    * @param data The bytes32 data to be added.
+    * Requirements:
+    * - The function caller must be an authorized logic contract.
+    * Emits a {PushBytes32Array} event.
+    */
+    function pushBytes32Array(bytes32 variable, bytes32 data) 
+    external 
+    onlyLogic {
+        _bytes32Array[variable].push(data);
+        emit PushBytes32Array(variable, data);
+    }
+
+    /**
+    * @dev Deletes an entire string array stored in the contract storage.
+    * @param variable The identifier of the string array variable to be deleted.
+    * Requirements:
+    * - The function caller must be an authorized logic contract.
+    * Emits a {DeleteStringArray} event.
+    */
+    function deleteStringArray(bytes32 variable)
+    external
+    onlyLogic {
+        delete _stringArray[variable];
+        emit DeleteStringArray(variable);
+    }
+
+    /**
+    * @dev Deletes an entire bytes array stored in the contract storage.
+    * @param variable The identifier of the bytes array variable to be deleted.
+    * Requirements:
+    * - The function caller must be an authorized logic contract.
+    * Emits a {DeleteBytesArray} event.
+    */
+    function deleteBytesArray(bytes32 variable)
+    external
+    onlyLogic {
+        delete _bytesArray[variable];
+        emit DeleteBytesArray(variable);
+    }
+
+    /**
+    * @dev Deletes an entire uint array stored in the contract storage.
+    * @param variable The identifier of the uint array variable to be deleted.
+    * Requirements:
+    * - The function caller must be an authorized logic contract.
+    * Emits a {DeleteUintArray} event.
+    */
+    function deleteUintArray(bytes32 variable)
+    external
+    onlyLogic {
+        delete _uintArray[variable];
+        emit DeleteUintArray(variable);
+    }
+
+    /**
+    * @dev Deletes an entire int array stored in the contract storage.
+    * @param variable The identifier of the int array variable to be deleted.
+    * Requirements:
+    * - The function caller must be an authorized logic contract.
+    * Emits a {DeleteIntArray} event.
+    */
+    function deleteIntArray(bytes32 variable)
+    external
+    onlyLogic {
+        delete _intArray[variable];
+        emit DeleteIntArray(variable);
+    }
+
+    /**
+    * @dev Deletes an entire address array stored in the contract storage.
+    * @param variable The identifier of the address array variable to be deleted.
+    * Requirements:
+    * - The function caller must be an authorized logic contract.
+    * Emits a {DeleteAddressArray} event.
+    */
+    function deleteAddressArray(bytes32 variable)
+    external
+    onlyLogic {
+        delete _addressArray[variable];
+        emit DeleteAddressArray(variable);
+    }
+
+    /**
+    * @dev Deletes an entire bool array stored in the contract storage.
+    * @param variable The identifier of the bool array variable to be deleted.
+    * Requirements:
+    * - The function caller must be an authorized logic contract.
+    * Emits a {DeleteBoolArray} event.
+    */
+    function deleteBoolArray(bytes32 variable)
+    external
+    onlyLogic {
+        delete _boolArray[variable];
+        emit DeleteBoolArray(variable);
+    }
+
+    /**
+    * @dev Deletes an entire bytes32 array stored in the contract storage.
+    * @param variable The identifier of the bytes32 array variable to be deleted.
+    * Requirements:
+    * - The function caller must be an authorized logic contract.
+    * Emits a {DeleteBytes32Array} event.
+    */
+    function deleteBytes32Array(bytes32 variable)
+    external
+    onlylogic {
+        delete _bytes32Array[variable];
+        emit DeleteBytes32Array(variable);
+    }
+
+    /**
+    * @dev Adds an address to a set stored in the contract storage.
+    * @param variable The identifier of the address set variable.
+    * @param data The address to be added to the set.
+    * Requirements:
+    * - The function caller must be an authorized logic contract.
+    * Emits an {AddAddressSet} event.
+    */
+    function addAddressSet(bytes32 variable, address data)
+    external
+    onlylogic {
+        _addressSet[variable].add(data);
+        emit AddAddressSet(variable, data);
+    }
+
+    /**
+    * @dev Adds a uint value to a set stored in the contract storage.
+    * @param variable The identifier of the uint set variable.
+    * @param data The uint value to be added to the set.
+    * Requirements:
+    * - The function caller must be an authorized logic contract.
+    * Emits an {AddUintSet} event.
+    */
+    function addUintSet(bytes32 variable, uint data)
+    external
+    onlyLogic {
+        _uintSet[variable].add(value);
+        emit AddUintSet(variable, data);
+    }
+
+    /**
+    * @dev Adds a bytes32 value to a set stored in the contract storage.
+    * @param variable The identifier of the bytes32 set variable.
+    * @param data The bytes32 value to be added to the set.
+    * Requirements:
+    * - The function caller must be an authorized logic contract.
+    * Emits an {AddBytes32Set} event.
+    */
+    function addBytes32Set(bytes32 variable, bytes32 data)
+    external
+    onlyLogic {
+        _bytes32Set[variable].add(data);
+        emit AddBytes32Set(variable, data);
+    }
+
+    /**
+    * @dev Removes an address value from a set stored in the contract storage.
+    * @param variable The identifier of the address set variable.
+    * @param data The address value to be removed from the set.
+    * Requirements:
+    * - The function caller must be an authorized logic contract.
+    * Emits a {RemoveAddressSet} event.
+    */
+    function removeAddressSet(bytes32 variable, address data)
+    external
+    onlyLogic {
+        _addressSet[variable].remove(data);
+        emit RemoveAddressSet(variable, data);
+    }
+
+    /**
+    * @dev Removes a uint value from a set stored in the contract storage.
+    * @param variable The identifier of the uint set variable.
+    * @param data The uint value to be removed from the set.
+    * Requirements:
+    * - The function caller must be an authorized logic contract.
+    * Emits a {RemoveUintSet} event.
+    */
+    function removeUintSet(bytes32 variable, uint data)
+    external
+    onlyLogic {
+        _uintSet[variable].remove(data);
+        emit RemoveUintSet(variable, data);
+    }
+
+    /**
+    * @dev Removes a bytes32 value from a set stored in the contract storage.
+    * @param variable The identifier of the bytes32 set variable.
+    * @param data The bytes32 value to be removed from the set.
+    * Requirements:
+    * - The function caller must be an authorized logic contract.
+    * Emits a {RemoveBytes32Set} event.
+    */
+    function removeBytes32Set(bytes32 variable, bytes32 data)
+    external
+    onlyLogic {
+        _bytes32Set[variable].remove(data);
+        emit RemoveBytes32Set(variable, data);
+    }
+
+    /**
+    * @dev Internal function to check if the message sender is an admin.
+    * @notice Reverts if the message sender is not an admin.
+    * Requirements:
+    * - The message sender must be an admin.
+    */
+    function _onlyAdmin() 
     private view {
         require(_admins.contains(msg.sender), "Storage: msg.sender !=admin");
     }
 
-    function _onlyLogic()
+    /**
+    * @dev Internal function to check if the message sender is a logic contract.
+    * @notice Reverts if the message sender is not a logic contract.
+    * Requirements:
+    * - The message sender must be a logic contract.
+    */
+    function _onlyLogic() 
     private view {
         require(_logics.contains(msg.sender), "Storage: msg.sender !=logic");
     }
 }
-
-contract Storage {
-    using EnumerableSet for EnumerableSet.AddressSet;
-    using EnumerableSet for EnumerableSet.UintSet;
-    using EnumerableSet for EnumerableSet.Bytes32Set;
-
-    EnumerableSet.AddressSet internal _admins;
-    EnumerableSet.AddressSet internal _implementations;
-
-    mapping(bytes32 => DataType) internal _usedKeys;
-
-    mapping(bytes32 => string) internal _string;
-    mapping(bytes32 => bytes) internal _bytes;
-    mapping(bytes32 => uint) internal _uint;
-    mapping(bytes32 => int) internal _int;
-    mapping(bytes32 => address) internal _address;
-    mapping(bytes32 => bool) internal _bool;
-    mapping(bytes32 => bytes32) internal _bytes32;
-
-    mapping(bytes32 => string[]) internal _stringArray;
-    mapping(bytes32 => bytes[]) internal _bytesArray;
-    mapping(bytes32 => uint[]) internal _uintArray;
-    mapping(bytes32 => int[]) internal _intArray;
-    mapping(bytes32 => address[]) internal _addressArray;
-    mapping(bytes32 => bool[]) internal _boolArray;
-    mapping(bytes32 => bytes32[]) internal _bytes32Array;
-
-    mapping(bytes32 => EnumerableSet.AddressSet) internal _addressSet;
-    mapping(bytes32 => EnumerableSet.UintSet) internal _uintSet;
-    mapping(bytes32 => EnumerableSet.Bytes32Set) internal _bytes32Set;
-
-    // admin & logic
-
-    event AddAdmin(address indexed admin);
-    event RemoveAdmin(address indexed admin);
-
-    event AddLogic(address indexed logic);
-    event RemoveLogic(address indexed logic);
-
-    // Basic
-
-    event SetString(bytes32 indexed key, string indexed value);
-    event SetBytes(bytes32 indexed key, bytes indexed value);
-    event SetUint(bytes32 indexed key, uint indexed value);
-    event SetInt(bytes32 indexed key, int indexed value);
-    event SetAddress(bytes32 indexed key, address indexed value);
-    event SetBool(bytes32 indexed key, bool indexed value);
-    event SetBytes32(bytes32 indexed key, bytes32 indexed value);
-
-    // ARRAY EVENTS
-
-    event SetIndexStringArray(bytes32 indexed key, uint indexed index, string indexed value);
-    event SetIndexBytesArray(bytes32 indexed key, uint indexed index, bytes indexed value);
-    event SetIndexUintArray(bytes32 indexed key, uint indexed index, uint indexed value);
-    event SetIndexIntArray(bytes32 indexed key, uint indexed index, int indexed value);
-    event SetIndexAddressArray(bytes32 indexed key, uint indexed index, address indexed value);
-    event SetIndexBoolArray(bytes32 indexed key, uint indexed index, bool indexed value);
-    event SetIndexBytes32Array(bytes32 indexed key, uint indexed index, bytes32 indexed value);
-
-    event PushStringArray(bytes32 indexed key, string indexed value);
-    event PushBytesArray(bytes32 indexed key, bytes indexed value);
-    event PushUintArray(bytes32 indexed key, uint indexed value);
-    event PushIntArray(bytes32 indexed key, int indexed value);
-    event PushAddressArray(bytes32 indexed key, address indexed value);
-    event PushBoolArray(bytes32 indexed key, bool indexed value);
-    event PushBytes32Array(bytes32 indexed key, bytes32 indexed value);
-    
-    event DeleteStringArray(bytes32 indexed key);
-    event DeleteBytesArray(bytes32 indexed key);
-    event DeleteUintArray(bytes32 indexed key);
-    event DeleteIntArray(bytes32 indexed key);
-    event DeleteAddressArray(bytes32 indexed key);
-    event DeleteBoolArray(bytes32 indexed key);
-    event DeleteBytes32Array(bytes32 indexed key);
-
-    // SET EVENTS
-
-    event AddAddressSet(bytes32 indexed key, address indexed value);
-    event AddUintSet(bytes32 indexed key, uint indexed value);
-    event AddBytes32Set(bytes32 indexed key, bytes32 indexed value);
-
-    event RemoveAddressSet(bytes32 indexed key, address indexed value);
-    event RemoveUintSet(bytes32 indexed key, uint indexed value);
-    event RemoveBytes32Set(bytes32 indexed key, bytes32 indexed value);
-
-    modifier onlyAdmin() {
-        _onlyAdmin();
-        _;
-    }
-
-    modifier onlyLogic() {
-        _onlyLogic();
-        _;
-    }
-
-    modifier onlyDataType(bytes32 key, DataType dataType) {
-        _onlyDataTypeCheck({key: key, dataType: dataType});
-        _;
-        _afterCheckDataTypeSet({key: key, dataType: dataType});
-    }
-
-    modifier onlyDataTypeCheck(bytes32 key, DataType dataType) {
-        _onlyDataTypeCheck({key: key, dataType: dataType});
-        _;
-    }
-
-    // deprecated because it was not distinguishing empty keys with actual keys for some reason
-    modifier onlyNotEmptyKey(bytes32 key) {
-        _onlyNotEmptyKey({key: key});
-        _;
-    }
-
-    constructor() {
-        _admins.add(msg.sender);
-    }
-
-    // GET ADMIN & LOGIC
-
-    function getAdmins()
-    external view
-    returns (address[] memory) {
-        return _admins.values();
-    }
-
-    function getLogics()
-    external view
-    returns (address[] memory) {
-        return _implementations.values();
-    }
-
-    // GET BASIC
-
-    function getString(bytes32 key)
-    external view
-    // onlyNotEmptyKey(key)
-    // onlyDataTypeCheck(key, DataType.STRING)
-    returns (string memory) {
-        return _string[key];
-    }
-
-    function getBytes(bytes32 key)
-    external view
-    // onlyNotEmptyKey(key)
-    // onlyDataTypeCheck(key, DataType.BYTES)
-    returns (bytes memory) {
-        return _bytes[key];
-    }
-
-    function getUint(bytes32 key)
-    external view
-    // onlyNotEmptyKey(key)
-    // onlyDataTypeCheck(key, DataType.UINT)
-    returns (uint) {
-        return _uint[key];
-    }
-
-    function getInt(bytes32 key)
-    external view
-    // onlyNotEmptyKey(key)
-    // onlyDataTypeCheck(key, DataType.INT)
-    returns (int) {
-        return _int[key];
-    }
-
-    function getAddress(bytes32 key)
-    external view
-    // onlyNotEmptyKey(key)
-    // onlyDataTypeCheck(key, DataType.ADDRESS)
-    returns (address) {
-        return _address[key];
-    }
-
-    function getBool(bytes32 key)
-    external view
-    // onlyNotEmptyKey(key)
-    // onlyDataTypeCheck(key, DataType.BOOL)
-    returns (bool) {
-        return _bool[key];
-    }
-
-    function getBytes32(bytes32 key)
-    external view
-    // onlyNotEmptyKey(key)
-    // onlyDataTypeCheck(key, DataType.BYTES32)
-    returns (bytes32) {
-        return _bytes32[key];
-    }
-
-    // GET ARRAYS
-
-    function getStringArray(bytes32 key)
-    external view
-    // onlyNotEmptyKey(key)
-    // onlyDataTypeCheck(key, DataType.STRING_ARRAY) 
-    returns (string[] memory) {
-        return _stringArray[key];
-    }
-
-    function getBytesArray(bytes32 key)
-    external view
-    // onlyNotEmptyKey(key)
-    // onlyDataTypeCheck(key, DataType.BYTES_ARRAY)
-    returns (bytes[] memory) {
-        return _bytesArray[key];
-    }
-
-    function getUintArray(bytes32 key)
-    external view
-    // onlyNotEmptyKey(key)
-    // onlyDataTypeCheck(key, DataType.UINT_ARRAY)
-    returns (uint[] memory) {
-        return _uintArray[key];
-    }
-
-    function getIntArray(bytes32 key)
-    external view
-    // onlyNotEmptyKey(key)
-    // onlyDataTypeCheck(key, DataType.INT_ARRAY)
-    returns (int[] memory) {
-        return _intArray[key];
-    }
-
-    function getAddressArray(bytes32 key)
-    external view
-    // onlyNotEmptyKey(key)
-    // onlyDataTypeCheck(key, DataType.ADDRESS_ARRAY)
-    returns (address[] memory) {
-        return _addressArray[key];
-    }
-
-    function getBoolArray(bytes32 key)
-    external view
-    // onlyNotEmptyKey(key)
-    // onlyDataTypeCheck(key, DataType.BOOL_ARRAY)
-    returns (bool[] memory) {
-        return _boolArray[key];
-    }
-
-    function getBytes32Array(bytes32 key)
-    external view
-    // onlyNotEmptyKey(key)
-    // onlyDataTypeCheck(key, DataType.BYTES32_ARRAY)
-    returns (bytes32[] memory) {
-        return _bytes32Array[key];
-    }
-
-    // GET INDEXED ARRAYS
-
-    function indexStringArray(bytes32 key, uint index)
-    external view
-    // onlyNotEmptyKey(key)
-    // onlyDataTypeCheck(key, DataType.STRING_ARRAY)
-    returns (string memory) {
-        require(index <_stringArray[key].length, "Storage: index not found");
-        return _stringArray[key][index];
-    }
-
-    function indexBytesArray(bytes32 key, uint index)
-    external view
-    // onlyNotEmptyKey(key)
-    // onlyDataTypeCheck(key, DataType.BYTES_ARRAY)
-    returns (bytes memory) {
-        require(index <_bytesArray[key].length, "Storage: index not found");
-        return _bytesArray[key][index];
-    }
-
-    function indexUintArray(bytes32 key, uint index)
-    external view
-    // onlyNotEmptyKey(key)
-    // onlyDataTypeCheck(key, DataType.UINT_ARRAY)
-    returns (uint) {
-        require(index <_uintArray[key].length, "Storage: index not found");
-        return _uintArray[key][index];
-    }
-
-    function indexIntArray(bytes32 key, uint index)
-    external view
-    // onlyNotEmptyKey(key)
-    // onlyDataTypeCheck(key, DataType.INT_ARRAY)
-    returns (int) {
-        require(index <_intArray[key].length, "Storage: index not found");
-        return _intArray[key][index];
-    }
-
-    function indexAddressArray(bytes32 key, uint index)
-    external view
-    // onlyNotEmptyKey(key)
-    // onlyDataTypeCheck(key, DataType.ADDRESS_ARRAY)
-    returns (address) {
-        require(index <_addressArray[key].length, "Storage: index not found");
-        return _addressArray[key][index];
-    }
-
-    function indexBoolArray(bytes32 key, uint index)
-    external view
-    // onlyNotEmptyKey(key)
-    // onlyDataTypeCheck(key, DataType.BOOL_ARRAY)
-    returns (bool) {
-        require(index <_boolArray[key].length, "Storage: index not found");
-        return _boolArray[key][index];
-    }
-
-    function indexBytes32Array(bytes32 key, uint index)
-    external view
-    // onlyNotEmptyKey(key)
-    // onlyDataTypeCheck(key, DataType.BYTES32_ARRAY)
-    returns (bytes32) {
-        require(index <_bytes32Array[key].length, "Storage: index not found");
-        return _bytes32Array[key][index];
-    }
-
-    // GET SETS
-
-    function getAddressSet(bytes32 key)
-    external view
-    // onlyNotEmptyKey(key)
-    // onlyDataTypeCheck(key, DataType.ADDRESS_SET)
-    returns (address[] memory) {
-        return _addressSet[key].values();
-    }
-
-    function getUintSet(bytes32 key)
-    external view
-    // onlyNotEmptyKey(key)
-    // onlyDataTypeCheck(key, DataType.UINT_SET)
-    returns (uint[] memory) {
-        return _uintSet[key].values();
-    }
-
-    function getBytes32Set(bytes32 key)
-    external view
-    // onlyNotEmptyKey(key)
-    // onlyDataTypeCheck(key, DataType.BYTES32_SET)
-    returns (bytes32[] memory) {
-        return _bytes32Set[key].values();
-    }
-
-    // GET INDEXED SETS
-
-    function indexAddressSet(bytes32 key, uint index)
-    external view
-    // onlyNotEmptyKey(key)
-    // onlyDataTypeCheck(key, DataType.ADDRESS_SET)
-    returns (address) {
-        return _addressSet[key].at(index);
-    }
-
-    function indexUintSet(bytes32 key, uint index)
-    external view
-    // onlyNotEmptyKey(key)
-    // onlyDataTypeCheck(key, DataType.UINT_SET)
-    returns (uint) {
-        return _uintSet[key].at(index);
-    }
-
-    function indexBytes32Set(bytes32 key, uint index)
-    external view
-    // onlyNotEmptyKey(key)
-    // onlyDataTypeCheck(key, DataType.BYTES32_SET)
-    returns (bytes32) {
-        return _bytes32Set[key].at(index);
-    }
-
-    // CONTAINS SETS
-
-    function containsAddressSet(bytes32 key, address value)
-    external view
-    // onlyNotEmptyKey(key)
-    // onlyDataTypeCheck(key, DataType.ADDRESS_SET)
-    returns (bool) {
-        return _addressSet[key].contains(value);
-    }
-
-    function containsUintSet(bytes32 key, uint value)
-    external view
-    // onlyNotEmptyKey(key)
-    // onlyDataTypeCheck(key, DataType.UINT_SET)
-    returns (bool) {
-        return _uintSet[key].contains(value);
-    }
-
-    function containsBytes32Set(bytes32 key, bytes32 value)
-    external view
-    // onlyNotEmptyKey(key)
-    // onlyDataTypeCheck(key, DataType.BYTES32_SET)
-    returns (bool) {
-        return _bytes32Set[key].contains(value);
-    }
-
-    // SET ADMIN & LOGIC
-
-    function addAdmin(address admin)
-    external
-    onlyAdmin {
-        require(admin !=address(0), "Storage: admin is address zero");
-        require(!_implementations.contains(admin), "Storage: admin is logic");
-        require(!_admins.contains(admin), "Storage: duplicate assignment");
-        _admins.add(admin);
-        emit AddAdmin({admin: admin});
-    }
-
-    function removeAdmin(address admin)
-    external
-    onlyAdmin {
-        require(admin !=address(0), "Storage: admin is address zero");
-        require(!_implementations.contains(admin), "Storage: admin is logic");
-        require(_admins.contains(admin), "Storage: admin not found");
-        _admins.remove(admin);
-        emit RemoveAdmin({admin: admin});
-    }
-
-    function addLogic(address logic)
-    external
-    onlyAdmin {
-        require(logic !=address(0), "Storage: logic is address zero");
-        require(!_admins.contains(logic), "Storage: logic is admin");
-        require(!_implementations.contains(logic), "Storage: duplicate assignment");
-        _implementations.add(logic);
-        emit AddLogic({logic: logic});
-    }
-
-    function removeLogic(address logic)
-    external
-    onlyAdmin {
-        require(logic !=address(0), "Storage: logic is address zero");
-        require(!_admins.contains(logic), "Storage: logic is admin");
-        require(_implementations.contains(logic), "Storage: logic not found");
-        _implementations.remove(logic);
-        emit RemoveLogic({logic: logic});
-    }
-
-    // SET BASIC
-
-    function setString(bytes32 key, string memory value)
-    external
-    onlyLogic 
-    // onlyNotEmptyKey(key) 
-    /** onlyDataType(key, DataType.STRING) */ {
-        _string[key] =value;
-        emit SetString({key: key, value: value});
-    }
-    
-    function setBytes(bytes32 key, bytes memory value)
-    external
-    onlyLogic 
-    // onlyNotEmptyKey(key) 
-    // onlyDataType(key, DataType.BYTES) {
-        _bytes[key] =value;
-        emit SetBytes({key: key, value: value});
-    }
-
-    function setUint(bytes32 key, uint value)
-    external
-    onlyLogic 
-    // onlyNotEmptyKey(key) 
-    // onlyDataType(key, DataType.UINT) {
-        _uint[key] =value;
-        emit SetUint({key: key, value: value});
-    }
-
-    function setInt(bytes32 key, int value)
-    external
-    onlyLogic
-    // onlyNotEmptyKey(key) 
-    // onlyDataType(key, DataType.INT) {
-        _int[key] =value;
-        emit SetInt({key: key, value: value});
-    }
-
-    function setAddress(bytes32 key, address value)
-    external
-    onlyLogic
-    // onlyNotEmptyKey(key) 
-    // onlyDataType(key, DataType.ADDRESS) {
-        _address[key] =value;
-        emit SetAddress({key: key, value: value});
-    }
-
-    function setBool(bytes32 key, bool value)
-    external
-    onlyLogic
-    // onlyNotEmptyKey(key) 
-    // onlyDataType(key, DataType.BOOL) {
-        _bool[key] =value;
-        emit SetBool({key: key, value: value});
-    }
-
-    function setBytes32(bytes32 key, bytes32 value)
-    external
-    onlyLogic 
-    // onlyNotEmptyKey(key) 
-    // onlyDataType(key, DataType.BYTES32) {
-        _bytes32[key] =value;
-        emit SetBytes32({key: key, value: value});
-    }
-
-    // SET ARRAYS
-
-    function setIndexStringArray(bytes32 key, uint index, string memory value)
-    external
-    onlyLogic
-    // onlyNotEmptyKey(key)
-    // onlyDataType(key, DataType.STRING_ARRAY) {
-        _stringArray[key][index] =value;
-        emit SetIndexStringArray({key: key, index: index, value: value});
-    }
-
-    function setIndexBytesArray(bytes32 key, uint index, bytes memory value)
-    external
-    onlyLogic
-    // onlyNotEmptyKey(key)
-    // onlyDataType(key, DataType.BYTES_ARRAY) {
-        _bytesArray[key][index] =value;
-        emit SetIndexBytesArray({key: key, index: index, value: value});
-    }
-
-    function setIndexUintArray(bytes32 key, uint index, uint value)
-    external
-    onlyLogic
-    // onlyNotEmptyKey(key)
-    // onlyDataType(key, DataType.UINT_ARRAY) {
-        _uintArray[key][index] =value;
-        emit SetIndexUintArray({key: key, index: index, value: value});
-    }
-
-    function setIndexIntArray(bytes32 key, uint index, int value)
-    external
-    onlyLogic
-    // onlyNotEmptyKey(key)
-    // onlyDataType(key, DataType.INT_ARRAY) {
-        _intArray[key][index] =value;
-        emit SetIndexIntArray({key: key, index: index, value: value});
-    }
-
-    function setIndexAddressArray(bytes32 key, uint index, address value)
-    external
-    onlyLogic
-    // onlyNotEmptyKey(key)
-    // onlyDataType(key, DataType.ADDRESS_ARRAY) {
-        _addressArray[key][index] =value;
-        emit SetIndexAddressArray({key: key, index: index, value: value});
-    }
-
-    function setIndexBoolArray(bytes32 key, uint index, bool value)
-    external
-    onlyLogic
-    // onlyNotEmptyKey(key)
-    // onlyDataType(key, DataType.BOOL_ARRAY) {
-        _boolArray[key][index] =value;
-        emit SetIndexBoolArray({key: key, index: index, value: value});
-    }
-
-    function setIndexBytes32Array(bytes32 key, uint index, bytes32 value)
-    external
-    onlyLogic
-    // onlyNotEmptyKey(key)
-    // onlyDataType(key, DataType.BYTES32_ARRAY) {
-        _bytes32Array[key][index] =value;
-        emit SetIndexBytes32Array({key: key, index: index, value: value});
-    }
-
-    // PUSH ARRAYS
-
-    function pushStringArray(bytes32 key, string memory value)
-    external
-    onlyLogic
-    // onlyNotEmptyKey(key)
-    // onlyDataType(key, DataType.STRING_ARRAY) {
-        _stringArray[key].push(value);
-        emit PushStringArray({key: key, value: value});
-    }
-
-    function pushBytesArray(bytes32 key, bytes memory value)
-    external
-    onlyLogic
-    // onlyNotEmptyKey(key)
-    // onlyDataType(key, DataType.BYTES_ARRAY) {
-        _bytesArray[key].push(value);
-        emit PushBytesArray({key: key, value: value});
-    }
-
-    function pushUintArray(bytes32 key, uint value)
-    external
-    onlyLogic
-    // onlyNotEmptyKey(key)
-    // onlyDataType(key, DataType.UINT_ARRAY) {
-        _uintArray[key].push(value);
-        emit PushUintArray({key: key, value: value});
-    }
-
-    function pushIntArray(bytes32 key, int value)
-    external
-    onlyLogic
-    // onlyNotEmptyKey(key)
-    // onlyDataType(key, DataType.INT_ARRAY) {
-        _intArray[key].push(value);
-        emit PushIntArray({key: key, value: value});
-    }
-
-    function pushAddressArray(bytes32 key, address value)
-    external
-    onlyLogic
-    // onlyNotEmptyKey(key)
-    // onlyDataType(key, DataType.ADDRESS_ARRAY) {
-        _addressArray[key].push(value);
-        emit PushAddressArray({key: key, value: value});
-    }
-
-    function pushBoolArray(bytes32 key, bool value)
-    external
-    onlyLogic
-    // onlyNotEmptyKey(key)
-    // onlyDataType(key, DataType.BOOL_ARRAY) {
-        _boolArray[key].push(value);
-        emit PushBoolArray({key: key, value: value});
-    }
-
-    function pushBytes32Array(bytes32 key, bytes32 value)
-    external
-    onlyLogic
-    // onlyNotEmptyKey(key)
-    // onlyDataType(key, DataType.BYTES32_ARRAY) {
-        _bytes32Array[key].push(value);
-        emit PushBytes32Array({key: key, value: value});
-    }
-
-    // DELETE ARRAYS
-
-    function deleteStringArray(bytes32 key)
-    external
-    onlyLogic
-    // onlyNotEmptyKey(key)
-    // onlyDataType(key, DataType.STRING_ARRAY) {
-        // require(_stringArray[key].length >0, "Storage: array is empty");
-        delete _stringArray[key];
-        emit DeleteStringArray({key: key});
-    }
-
-    function deleteBytesArray(bytes32 key)
-    external
-    onlyLogic
-    // onlyNotEmptyKey(key)
-    // onlyDataType(key, DataType.BYTES_ARRAY) {
-        // require(_bytesArray[key].length >0, "Storage: array is empty");
-        delete _bytesArray[key];
-        emit DeleteBytesArray({key: key});
-    }
-
-    function deleteUintArray(bytes32 key)
-    external
-    onlyLogic
-    // onlyNotEmptyKey(key)
-    // onlyDataType(key, DataType.UINT_ARRAY) {
-        // require(_uintArray[key].length >0, "Storage: array is empty");
-        delete _uintArray[key];
-        emit DeleteUintArray({key: key});
-    }
-
-    function deleteIntArray(bytes32 key)
-    external
-    onlyLogic
-    // onlyNotEmptyKey(key)
-    // onlyDataType(key, DataType.INT_ARRAY) {
-        // require(_intArray[key].length >0, "Storage: array is empty");
-        delete _intArray[key];
-        emit DeleteIntArray({key: key});
-    }
-
-    function deleteAddressArray(bytes32 key)
-    external
-    onlyLogic
-    // onlyNotEmptyKey(key)
-    // onlyDataType(key, DataType.ADDRESS_ARRAY) {
-        // require(_addressArray[key].length >0, "Storage: array is empty");
-        delete _addressArray[key];
-        emit DeleteAddressArray({key: key});
-    }
-
-    function deleteBoolArray(bytes32 key)
-    external
-    onlyLogic
-    // onlyNotEmptyKey(key)
-    // onlyDataType(key, DataType.BOOL_ARRAY) {
-        // require(_boolArray[key].length >0, "Storage: array is empty");
-        delete _boolArray[key];
-        emit DeleteBoolArray({key: key});
-    }
-
-    function deleteBytes32Array(bytes32 key)
-    external
-    onlyLogic
-    // onlyNotEmptyKey(key)
-    // onlyDataType(key, DataType.BYTES32_ARRAY) {
-        // require(_bytes32Array[key].length >0, "Storage: array is empty");
-        delete _bytes32Array[key];
-        emit DeleteBytes32Array({key: key});
-    }
-
-    // ADD SETS
-
-    function addAddressSet(bytes32 key, address value)
-    external
-    onlyLogic
-    // onlyNotEmptyKey(key)
-    // onlyDataType(key, DataType.ADDRESS_SET) {
-        require(!_addressSet[key].contains(value), "Storage: set already contains value");
-        _addressSet[key].add(value);
-        emit AddAddressSet({key: key, value: value});
-    }
-
-    function addUintSet(bytes32 key, uint value)
-    external
-    onlyLogic
-    // onlyNotEmptyKey(key)
-    // onlyDataType(key, DataType.UINT_SET) {
-        require(!_uintSet[key].contains(value), "Storage: set already contains value");
-        _uintSet[key].add(value);
-        emit AddUintSet({key: key, value: value});
-    }
-
-    function addBytes32Set(bytes32 key, bytes32 value)
-    external
-    onlyLogic
-    // onlyNotEmptyKey(key)
-    // onlyDataType(key, DataType.BYTES32_SET) {
-        require(!_bytes32Set[key].contains(value), "Storage: set already contains value");
-        _bytes32Set[key].add(value);
-        emit AddBytes32Set({key: key, value: value});
-    }
-
-    // REMOVE SETS
-
-    function removeAddressSet(bytes32 key, address value)
-    external
-    onlyLogic
-    // onlyNotEmptyKey(key)
-    // onlyDataType(key, DataType.ADDRESS_SET) {
-        require(_addressSet[key].contains(value), "Storage: value not found");
-        _addressSet[key].remove(value);
-        emit RemoveAddressSet({key: key, value: value});
-    }
-
-    function removeUintSet(bytes32 key, uint value)
-    external
-    onlyLogic
-    // onlyNotEmptyKey(key)
-    // onlyDataType(key, DataType.UINT_SET) {
-        require(_uintSet[key].contains(value), "Storage: value not found");
-        _uintSet[key].remove(value);
-        emit RemoveUintSet({key: key, value: value});
-    }
-
-    function removeBytes32Set(bytes32 key, bytes32 value)
-    external
-    onlyLogic
-    // onlyNotEmptyKey(key)
-    // onlyDataType(key, DataType.BYTES32_SET) {
-        require(_bytes32Set[key].contains(value), "Storage: value not found");
-        _bytes32Set[key].remove(value);
-        emit RemoveBytes32Set({key: key, value: value});
-    }
-
-    // MODIFIERS
-    
-    function _onlyAdmin()
-    internal view {
-        require(_admins.contains(msg.sender), "Storage: !admin");
-    }
-
-    function _onlyLogic()
-    internal view {
-        require(_implementations.contains(msg.sender), "Storage: !logic");
-    }
-
-    function _onlyNotEmptyKey(bytes32 key)
-    internal view {
-        bytes32 emptyBytes32;
-        require(key !=emptyBytes32, "Storage: empty key was given");
-    }
-
-    function _onlyDataTypeCheck(bytes32 key, DataType dataType)
-    internal view {
-        require(
-            _usedKeys[key] ==DataType.NONE || _usedKeys[key] ==dataType,
-            "Storage: key is already being assigned to a different datatype"
-        );
-    }
-
-    function _afterCheckDataTypeSet(bytes32 key, DataType dataType)
-    internal {
-        if (_usedKeys[key] ==DataType.NONE) { _usedKeys[key] =dataType; }
-    }
-}
-
-
 
 library ValidatorMatch {
     /// @dev Checks if an access key meta data has the same address and if two string signatures match
@@ -1579,9 +1477,7 @@ library Validator {
     * @param role The name of the role to be granted.
     * @return success True if the role granting was successful, false otherwise.
     */
-    function grantRole(IStorage storage_, address account, string memory role)
-    external
-    returns (bool success) {
+    function grantRole(IStorage storage_, address account, string memory role) external returns (bool success) {
         require(account !=address(0), "Validator: account is address zero");
         bytes32 varRoleKeys =Encoder.role({role: role, property: "keys"});
         bytes32 varAccountKeys =Encoder.account({account: account, property: "keys"});
