@@ -10,236 +10,134 @@ import "contracts/polygon/deps/openzeppelin/access/Ownable.sol";
 import "contracts/polygon/deps/openzeppelin/token/ERC721/ERC721.sol";
 import "contracts/polygon/deps/openzeppelin/utils/structs/EnumerableSet.sol";
 
+/** storage usage
+    bytes32 -> address,"keys" -> _bytesArray
+    bytes32 -> "governor" -> _address
+ */
 
-
-enum KeyType {
+enum Class {
     STANDARD,
-    TIMED,
-    CONSUMABLE
+    CONSUMABLE,
+    TIMED
 }
 
-enum RequestStage {
-    PENDING,
-    REJECTED,
-    APPROVED,
-    EXECUTED
+struct Timestamp {
+    uint32 granted;
+    uint32 expiration;
 }
 
-
-
-library Match {
-    function isMatchingBytes(bytes memory _bytesA, bytes memory _bytesB)
-    external pure
-    returns (bool _isMatch) {
-        return keccak256(_bytesA) ==keccak256(_bytesB);
-    }
-
-    function isMatchingString(string memory _stringA, string memory _stringB)
-    external pure
-    returns (bool _isMatch) {
-        return keccak256(abi.encodePacked(_stringA)) ==keccak256(abi.encodePacked(_stringB));
-    }
+struct Settings {
+    bool isTransferable;
+    bool isFungible;
+    bool isClonable;
 }
 
-
-
-library Utils {
-    function convertToWei(uint value)
-    external pure
-    returns (uint) {
-        return value * (10**18);
-    }
-
-    function requireSuccess(bool success)
-    external pure {
-        require(success, "Utils: !success");
-    }
+struct Key {
+    address logic;
+    string signature;
+    Timestamp timestamp;
+    Class class;
+    Settings settings;
+    uint balance;
+    bytes data;
 }
-
-
-
-library Encoder {
-    function encode(string memory string_)
-    external pure
-    returns (bytes32 variable) {
-        keccak256(abi.encode(string_));
-    }
-
-    function encodeKey(address contract_, string memory signature, KeyType keyType, uint startTimestamp, uint endTimestamp, uint balance)
-    external pure
-    returns (bytes memory key) {
-        return abi.encode(contract_, signature, keyType, startTimestamp, endTimestamp, balance);
-    }
-
-    function decodeKey(bytes memory key)
-    external pure
-    returns (address contract_, string memory signature, KeyType keyType, uint startTimestamp, uint endTimestamp, uint balance) {
-        return abi.decode(key, (address,string,KeyType,uint,uint,uint));
-    }
-
-    function encodeRequest(address[] memory targets, string[] memory signatures, bytes[] memory args, uint endTimelockTimestamp, uint endTimeoutTimestamp, RequestStage requestStage)
-    external pure
-    returns (bytes memory request) {
-        return abi.encode(targets, signatures, args, endTimelockTimestamp, endTimeoutTimestamp, requestStage);
-    }
-
-    function decodeRequest(bytes memory request)
-    external pure
-    returns (address[] memory targets, string[] memory signatures, bytes[] memory args, uint endTimelockTimestamp, uint endTimeoutTimestamp, RequestStage requestStage) {
-        return abi.decode(request, (address[],string[],bytes[],uint,uint,RequestStage));
-    }
-
-    // MERGED VARS
-
-    function account(address account, string memory property)
-    external pure
-    returns (bytes32 variable) {
-        return keccak256(abi.encode(account, property));
-    }
-
-    function role(string memory role, string memory property)
-    external pure
-    returns (bytes32 variable) {
-        return keccak256(abi.encode(role, property));
-    }
-
-    // SINGLE VARS
-
-    function governor()
-    external pure
-    returns (bytes32 variable) {
-        return keccak256(abi.encode("governor"));
-    }
-}
-
-
-
-library Calls {
-    function call(address target, string memory signature, bytes memory args)
-    external
-    returns (bool success, bytes memory response) {
-        (success, response) =target.call(abi.encodeWithSignature(signature, args));
-        return (success, response);
-    }
-}
-
-
 
 interface IStorage {
-    // GET ADMIN & LOGIC
-
     function getAdmins() external view returns (address[] memory);
     function getLogics() external view returns (address[] memory);
+    function getString(bytes32 variable) external view returns (string memory);
+    function getBytes(bytes32 variable) external view returns (bytes memory);
+    function getUint(bytes32 variable) external view returns (uint);
+    function getInt(bytes32 variable) external view returns (int);
+    function getAddress(bytes32 variable) external view returns (address);
+    function getBool(bytes32 variable) external view returns (bool);
+    function getBytes32(bytes32 variable) external view returns (bytes32);
 
-    // GET BASIC
+    function getStringArray(bytes32 variable) external view returns (string[] memory);
+    function getBytesArray(bytes32 variable) external view returns (bytes[] memory);
+    function getUintArray(bytes32 variable) external view returns (uint[] memory);
+    function getIntArray(bytes32 variable) external view returns (int[] memory);
+    function getAddressArray(bytes32 variable) external view returns (address[] memory);
+    function getBoolArray(bytes32 variable) external view returns (bool[] memory);
+    function getBytes32Array(bytes32 variable) external view returns (bytes32[] memory);
 
-    function getString(bytes32 key) external view returns (string memory);
-    function getBytes(bytes32 key) external view returns (bytes memory);
-    function getUint(bytes32 key) external view returns (uint);
-    function getInt(bytes32 key) external view returns (int);
-    function getAddress(bytes32 key) external view returns (address);
-    function getBool(bytes32 key) external view returns (bool);
-    function getBytes32(bytes32 key) external view returns (bytes32);
+    function indexStringArray(bytes32 variable, uint index) external view returns (string memory);
+    function indexBytesArray(bytes32 variable, uint index) external view returns (bytes memory);
+    function indexUintArray(bytes32 variable, uint index) external view returns (uint);
+    function indexIntArray(bytes32 variable, uint index) external view returns (int);
+    function indexAddressArray(bytes32 variable, uint index) external view returns (address);
+    function indexBoolArray(bytes32 variable, uint index) external view returns (bool);
+    function indexBytes32Array(bytes32 variable, uint index) external view returns (bytes32);
 
-    // GET ARRAYS
+    function lengthStringArray(bytes32 variable) external view returns (uint);
+    function lengthBytesArray(bytes32 variable) external view returns (uint);
+    function lengthUintArray(bytes32 variable) external view returns (uint);
+    function lengthIntArray(bytes32 variable) external view returns (uint);
+    function lengthAddressArray(bytes32 variable) external view returns (uint);
+    function lengthBoolArray(bytes32 variable) external view returns (uint);
+    function lengthBytes32Array(bytes32 variable) external view returns (uint);
 
-    function getStringArray(bytes32 key) external view returns (string[] memory);
-    function getBytesArray(bytes32 key) external view returns (bytes[] memory);
-    function getUintArray(bytes32 key) external view returns (uint[] memory);
-    function getIntArray(bytes32 key) external view returns (int[] memory);
-    function getAddressArray(bytes32 key) external view returns (address[] memory);
-    function getBoolArray(bytes32 key) external view returns (bool[] memory);
-    function getBytes32Array(bytes32 key) external view returns (bytes32[] memory);
+    function getAddressSet(bytes32 variable) external view returns (address[] memory);
+    function getUintSet(bytes32 variable) external view returns (uint[] memory);
+    function getBytes32Set(bytes32 variable) external view returns (bytes32[] memory);
 
-    // GET INDEXED ARRAYS
+    function indexAddressSet(bytes32 variable, uint index) external view returns (address);
+    function indexUintSet(bytes32 variable, uint index) external view returns (uint);
+    function indexBytes32Set(bytes32 variable, uint index) external view returns (bytes32);
 
-    function indexStringArray(bytes32 key, uint index) external view returns (string memory);
-    function indexBytesArray(bytes32 key, uint index) external view returns (bytes memory);
-    function indexUintArray(bytes32 key, uint index) external view returns (uint);
-    function indexIntArray(bytes32 key, uint index) external view returns (int);
-    function indexAddressArray(bytes32 key, uint index) external view returns (address);
-    function indexBoolArray(bytes32 key, uint index) external view returns (bool);
-    function indexBytes32Array(bytes32 key, uint index) external view returns (bytes32);
+    function lengthAddressSet(bytes32 variable) external view returns (uint);
+    function lengthUintSet(bytes32 variable) external view returns (uint);
+    function lengthBytes32Set(bytes32 variable) external view returns (uint);
 
-    // GET SETS
-
-    function getAddressSet(bytes32 key) external view returns (address[] memory);
-    function getUintSet(bytes32 key) external view returns (uint[] memory);
-    function getBytes32Set(bytes32 key) external view returns (bytes32[] memory);
-
-    // GET INDEXED SETS
-
-    function indexAddressSet(bytes32 key, uint index) external view returns (address);
-    function indexUintSet(bytes32 key, uint index) external view returns (uint);
-    function indexBytes32Set(bytes32 key, uint index) external view returns (bytes32);
-
-    // CONTAINS SETS
-
-    function containsAddressSet(bytes32 key, address value) external view returns (bool);
-    function containsUintSet(bytes32 key, uint value) external view returns (bool);
-    function containsBytes32Set(bytes32 key, bytes32 value) external view returns (bool);
-
-    // SET ADMIN & LOGIC
+    function containsAddressSet(bytes32 variable, address data) external view returns (bool);
+    function containsUintSet(bytes32 variable, uint data) external view returns (bool);
+    function containsBytes32Set(bytes32 variable, bytes32 data) external view returns (bool);
 
     function addAdmin(address admin) external;
-    function removeAdmin(address admin) external;
     function addLogic(address logic) external;
+    function removeAdmin(address admin) external;
     function removeLogic(address logic) external;
 
-    // SET BASIC
+    function setString(bytes32 variable, string memory data) external;
+    function setBytes(bytes32 variable, bytes memory data) external;
+    function setUint(bytes32 variable, uint data) external;
+    function setInt(bytes32 variable, int data) external;
+    function setAddress(bytes32 variable, address data) external;
+    function setBool(bytes32 variable, bool data) external;
+    function setBytes32(bytes32 variable, bytes32 data) external;
 
-    function setString(bytes32 key, string memory value) external;
-    function setBytes(bytes32 key, bytes memory value) external;
-    function setUint(bytes32 key, uint value) external;
-    function setInt(bytes32 key, int value) external;
-    function setAddress(bytes32 key, address value) external;
-    function setBool(bytes32 key, bool value) external;
-    function setBytes32(bytes32 key, bytes32 value) external;
+    function setIndexStringArray(bytes32 variable, uint index, string memory data) external;
+    function setIndexBytesArray(bytes32 variable, uint index, bytes memory data) external;
+    function setIndexUintArray(bytes32 variable, uint index, uint data) external;
+    function setIndexIntArray(bytes32 variable, uint index, int data) external;
+    function setIndexAddressArray(bytes32 variable, uint index, address data) external;
+    function setIndexBoolArray(bytes32 variable, uint index, bool data) external;
+    function setIndexBytes32Array(bytes32 variable, uint index, bytes32 data) external;
 
-    // SET ARRAYS
+    function pushStringArray(bytes32 variable, string memory data) external;
+    function pushBytesArray(bytes32 variable, bytes memory data) external;
+    function pushUintArray(bytes32 variable, uint data) external;
+    function pushIntArray(bytes32 variable, int data) external;
+    function pushAddressArray(bytes32 variable, address data) external;
+    function pushBoolArray(bytes32 variable, bool data) external;
+    function pushBytes32Array(bytes32 variable, bytes32 data) external;
 
-    function setIndexStringArray(bytes32 key, uint index, string memory value) external;
-    function setIndexBytesArray(bytes32 key, uint index, bytes memory value) external;
-    function setIndexUintArray(bytes32 key, uint index, uint value) external;
-    function setIndexIntArray(bytes32 key, uint index, int value) external;
-    function setIndexAddressArray(bytes32 key, uint index, address value) external;
-    function setIndexBoolArray(bytes32 key, uint index, bool value) external;
-    function setIndexBytes32Array(bytes32 key, uint index, bytes32 value) external;
+    function deleteStringArray(bytes32 variable) external;
+    function deleteBytesArray(bytes32 variable) external;
+    function deleteUintArray(bytes32 variable) external;
+    function deleteIntArray(bytes32 variable) external;
+    function deleteAddressArray(bytes32 variable) external;
+    function deleteBoolArray(bytes32 variable) external;
+    function deleteBytes32Array(bytes32 variable) external;
 
-    // PUSH ARRAYS
+    function addAddressSet(bytes32 variable, address data) external;
+    function addUintSet(bytes32 variable, uint data) external;
+    function addBytes32Set(bytes32 variable, bytes32 data) external;
+    
+    function removeAddressSet(bytes32 variable, address data) external;
+    function removeUintSet(bytes32 variable, uint data) external;
+    function removeBytes32Set(bytes32 variable, bytes32 data) external;
 
-    function pushStringArray(bytes32 key, string memory value) external;
-    function pushBytesArray(bytes32 key, bytes memory value) external;
-    function pushUintArray(bytes32 key, uint value) external;
-    function pushIntArray(bytes32 key, int value) external;
-    function pushAddressArray(bytes32 key, address value) external;
-    function pushBoolArray(bytes32 key, bool value) external;
-    function pushBytes32Array(bytes32 key, bytes32 value) external;
-
-    // DELETE ARRAYS
-
-    function deleteStringArray(bytes32 key) external;
-    function deleteBytesArray(bytes32 key) external;
-    function deleteUintArray(bytes32 key) external;
-    function deleteIntArray(bytes32 key) external;
-    function deleteAddressArray(bytes32 key) external;
-    function deleteBoolArray(bytes32 key) external;
-    function deleteBytes32Array(bytes32 key) external;
-
-    // ADD SETS
-
-    function addAddressSet(bytes32 key, address value) external;
-    function addUintSet(bytes32 key, uint value) external;
-    function addBytes32Set(bytes32 key, bytes32 value) external;
-
-    // REMOVE SETS
-
-    function removeAddressSet(bytes32 key, address value) external;
-    function removeUintSet(bytes32 key, uint value) external;
-    function removeBytes32Set(bytes32 key, bytes32 value) external;
-}
-
-interface IStorage {
     event AddAdmin(address indexed admin);
     event AddLogic(address indexed logic);
     
@@ -287,6 +185,10 @@ interface IStorage {
     event RemoveBytes32Set(bytes32 indexed variable, bytes32 indexed data);
 }
 
+/**
+ * @title Storage
+ * @dev This contract provides storage and management of various data types, arrays, and sets.
+ */
 contract Storage is IStorage {
     /**
     * @dev Importing the EnumerableSet library for AddressSet, UintSet, and Bytes32Set data structures.
@@ -299,40 +201,40 @@ contract Storage is IStorage {
     /**
     * @dev EnumerableSet mappings to store sets of addresses representing administrators and logic contracts.
     */
-    EnumerableSet.AddressSet internal _admins;
-    EnumerableSet.AddressSet internal _logics;
+    EnumerableSet.AddressSet private _admins;
+    EnumerableSet.AddressSet private _logics;
 
     /**
     * @dev Mappings to store data of different types associated with specific bytes32 variables.
     * Each mapping corresponds to a different data type: strings, bytes, uints, integers, addresses, booleans, and bytes32 values.
     */
-    mapping(bytes32 => string) internal _string;
-    mapping(bytes32 => bytes) internal _bytes;
-    mapping(bytes32 => uint) internal _uint;
-    mapping(bytes32 => int) internal _int;
-    mapping(bytes32 => address) internal _address;
-    mapping(bytes32 => bool) internal _bool;
-    mapping(bytes32 => bytes32) internal _bytes32;
+    mapping(bytes32 => string) private _string;
+    mapping(bytes32 => bytes) private _bytes;
+    mapping(bytes32 => uint) private _uint;
+    mapping(bytes32 => int) private _int;
+    mapping(bytes32 => address) private _address;
+    mapping(bytes32 => bool) private _bool;
+    mapping(bytes32 => bytes32) private _bytes32;
 
     /**
     * @dev Mappings to store arrays of different data types associated with specific bytes32 variables.
     * Each mapping corresponds to a different data type: strings, bytes, uints, integers, addresses, booleans, and bytes32 values.
     */
-    mapping(bytes32 => string[]) internal _stringArray;
-    mapping(bytes32 => bytes[]) internal _bytesArray;
-    mapping(bytes32 => uint[]) internal _uintArray;
-    mapping(bytes32 => int[]) internal _intArray;
-    mapping(bytes32 => address[]) internal _addressArray;
-    mapping(bytes32 => bool[]) internal _boolArray;
-    mapping(bytes32 => bytes32[]) internal _bytes32Array;
+    mapping(bytes32 => string[]) private _stringArray;
+    mapping(bytes32 => bytes[]) private _bytesArray;
+    mapping(bytes32 => uint[]) private _uintArray;
+    mapping(bytes32 => int[]) private _intArray;
+    mapping(bytes32 => address[]) private _addressArray;
+    mapping(bytes32 => bool[]) private _boolArray;
+    mapping(bytes32 => bytes32[]) private _bytes32Array;
 
     /**
     * @dev Mappings to store sets of data associated with specific bytes32 variables.
     * Each mapping corresponds to a different data type: addresses, uints, and bytes32 values.
     */
-    mapping(bytes32 => EnumerableSet.AddressSet) internal _addressSet;
-    mapping(bytes32 => EnumerableSet.UintSet) internal _uintSet;
-    mapping(bytes32 => EnumerableSet.Bytes32Set) internal _bytes32Set;
+    mapping(bytes32 => EnumerableSet.AddressSet) private _addressSet;
+    mapping(bytes32 => EnumerableSet.UintSet) private _uintSet;
+    mapping(bytes32 => EnumerableSet.Bytes32Set) private _bytes32Set;
 
     /**
     * @dev Modifier to restrict access to only administrators.
@@ -358,11 +260,6 @@ contract Storage is IStorage {
     */
     constructor() { _admins.add(msg.sender); }
 
-    /**
-    * @dev Getter function to retrieve stored data from the contract's storage.
-    * @param variable The identifier of the data variable to retrieve.
-    * @return The value of the data variable.
-    */
     function getAdmins() external view returns (address[] memory) { return _admins.values(); }
     function getLogics() external view returns (address[] memory) { return _logics.values(); }
     function getString(bytes32 variable) external view returns (string memory) { return _string[variable]; }
@@ -430,7 +327,7 @@ contract Storage is IStorage {
     */
     function indexAddressSet(bytes32 variable, uint index) external view returns (address) { return _addressSet[variable].at(index); }
     function indexUintSet(bytes32 variable, uint index) external view returns (uint) { return _uintSet[variable].at(index); }
-    function indexBytes32Set(bytes32 variable, uint index) external view returns (uint) { return _bytes32Set[variable].at(index); }
+    function indexBytes32Set(bytes32 variable, uint index) external view returns (bytes32) { return _bytes32Set[variable].at(index); }
 
     /**
     * @dev Getter function to retrieve the length of a stored set.
@@ -463,7 +360,7 @@ contract Storage is IStorage {
     function addAdmin(address admin) 
     external 
     onlyAdmin {
-        require(admin !=address(0), "Storage: admin is address zero");
+        require(admin != address(0), "Storage: admin is address zero");
         require(!_logics.contains(admin), "Storage: admin is logic");
         require(!_admins.contains(admin), "Storage: already admin");
         _admins.add(admin);
@@ -482,7 +379,7 @@ contract Storage is IStorage {
     function addLogic(address logic) 
     external 
     onlyAdmin {
-        require(logic !=address(0), "Storage: logic is address zero");
+        require(logic != address(0), "Storage: logic is address zero");
         require(!_admins.contains(logic), "Storage: logic is admin");
         require(!_logics.contains(logic), "Storage: already logic");
         _logics.add(logic);
@@ -501,7 +398,7 @@ contract Storage is IStorage {
     function removeAdmin(address admin) 
     external 
     onlyAdmin {
-        require(admin !=address(0), "Storage: admin is address zero");
+        require(admin != address(0), "Storage: admin is address zero");
         require(!_logics.contains(admin), "Storage: admin is logic");
         require(_admins.contains(admin), "Storage: not admin");
         _admins.remove(admin);
@@ -520,7 +417,7 @@ contract Storage is IStorage {
     function removeLogic(address logic) 
     external 
     onlyAdmin {
-        require(logic !=address(0), "Storage: logic is address zero");
+        require(logic != address(0), "Storage: logic is address zero");
         require(!_admins.contains(logic), "Storage: logic is admin");
         require(_logics.contains(logic), "Storage: not logic");
         _logics.remove(logic);
@@ -538,7 +435,7 @@ contract Storage is IStorage {
     function setString(bytes32 variable, string memory data) 
     external 
     onlyLogic {
-        _string[variable] =data;
+        _string[variable] = data;
         emit SetString(variable, data);
     }
 
@@ -553,7 +450,7 @@ contract Storage is IStorage {
     function setBytes(bytes32 variable, bytes memory data) 
     external 
     onlyLogic {
-        _bytes[variable] =data;
+        _bytes[variable] = data;
         emit SetBytes(variable, data);
     }
 
@@ -568,7 +465,7 @@ contract Storage is IStorage {
     function setUint(bytes32 variable, uint data) 
     external 
     onlyLogic {
-        _uint[variable] =data;
+        _uint[variable] = data;
         emit SetUint(variable, data);
     }
 
@@ -583,7 +480,7 @@ contract Storage is IStorage {
     function setInt(bytes32 variable, int data) 
     external 
     onlyLogic {
-        _int[variable] =data;
+        _int[variable] = data;
         emit SetInt(variable, data);
     }
 
@@ -598,7 +495,7 @@ contract Storage is IStorage {
     function setAddress(bytes32 variable, address data) 
     external 
     onlyLogic {
-        _address[variable] =data;
+        _address[variable] = data;
         emit SetAddress(variable, data);
     }
 
@@ -613,7 +510,7 @@ contract Storage is IStorage {
     function setBool(bytes32 variable, bool data) 
     external 
     onlyLogic {
-        _bool[variable] =data;
+        _bool[variable] = data;
         emit SetBool(variable, data);
     }
 
@@ -628,8 +525,8 @@ contract Storage is IStorage {
     function setBytes32(bytes32 variable, bytes32 data) 
     external 
     onlyLogic {
-        _bytes32[variable] =data;
-        emit SetBytes32({variable: variable, data: data});
+        _bytes32[variable] = data;
+        emit SetBytes32(variable, data);
     }
 
     /**
@@ -644,7 +541,7 @@ contract Storage is IStorage {
     function setIndexStringArray(bytes32 variable, uint index, string memory data) 
     external 
     onlyLogic {
-        _stringArray[variable][index] =data;
+        _stringArray[variable][index] = data;
         emit SetIndexStringArray(variable, index, data);
     }
 
@@ -660,7 +557,7 @@ contract Storage is IStorage {
     function setIndexBytesArray(bytes32 variable, uint index, bytes memory data) 
     external 
     onlyLogic {
-        _bytesArray[variable][index] =data;
+        _bytesArray[variable][index] = data;
         emit SetIndexBytesArray(variable, index, data);
     }
 
@@ -676,7 +573,7 @@ contract Storage is IStorage {
     function setIndexUintArray(bytes32 variable, uint index, uint data) 
     external 
     onlyLogic {
-        _uintArray[variable][index] =data;
+        _uintArray[variable][index] = data;
         emit SetIndexUintArray(variable, index, data);
     }
 
@@ -692,7 +589,7 @@ contract Storage is IStorage {
     function setIndexIntArray(bytes32 variable, uint index, int data) 
     external 
     onlyLogic {
-        _intArray[variable][index] =data;
+        _intArray[variable][index] = data;
         emit SetIndexIntArray(variable, index, data);
     }
 
@@ -708,7 +605,7 @@ contract Storage is IStorage {
     function setIndexAddressArray(bytes32 variable, uint index, address data) 
     external 
     onlyLogic {
-        _addressArray[variable][index] =data;
+        _addressArray[variable][index] = data;
         emit SetIndexAddressArray(variable, index, data);
     }
 
@@ -724,7 +621,7 @@ contract Storage is IStorage {
     function setIndexBoolArray(bytes32 variable, uint index, bool data) 
     external 
     onlyLogic {
-        _boolArray[variable][index] =data;
+        _boolArray[variable][index] = data;
         emit SetIndexBoolArray(variable, index, data);
     }
 
@@ -740,7 +637,7 @@ contract Storage is IStorage {
     function setIndexBytes32Array(bytes32 variable, uint index, bytes32 data) 
     external 
     onlyLogic {
-        _bytes32Array[variable][index] =data;
+        _bytes32Array[variable][index] = data;
         emit SetIndexBytes32Array(variable, index, data);
     }
 
@@ -942,7 +839,7 @@ contract Storage is IStorage {
     */
     function deleteBytes32Array(bytes32 variable)
     external
-    onlylogic {
+    onlyLogic {
         delete _bytes32Array[variable];
         emit DeleteBytes32Array(variable);
     }
@@ -957,7 +854,7 @@ contract Storage is IStorage {
     */
     function addAddressSet(bytes32 variable, address data)
     external
-    onlylogic {
+    onlyLogic {
         _addressSet[variable].add(data);
         emit AddAddressSet(variable, data);
     }
@@ -973,7 +870,7 @@ contract Storage is IStorage {
     function addUintSet(bytes32 variable, uint data)
     external
     onlyLogic {
-        _uintSet[variable].add(value);
+        _uintSet[variable].add(data);
         emit AddUintSet(variable, data);
     }
 
@@ -1060,736 +957,270 @@ contract Storage is IStorage {
     }
 }
 
-library ValidatorMatch {
-    /// @dev Checks if an access key meta data has the same address and if two string signatures match
-    /// @param contractA The address of the first contract
-    /// @param contractB The address of the second contract
-    /// @param signatureA The first string signature
-    /// @param signatureB The second string signature
-    /// @return isMatch True if both contracts are the same and signatures match, false otherwise
-    function isMatchingKeyContractAndSignature(address contractA, address contractB, string memory signatureA, string memory signatureB)
-    external pure
-    returns (bool isMatch) {
-        bool sameContract =contractA ==contractB;
-        bool sameString =Match.isMatchingString({stringA: signatureA, stringB: signatureB});
-        return sameContract && sameString;
+interface IRepository is IStorage {
+    function name() external view returns (string memory);
+    function description() external view returns (string memory);
+    function launched() external view returns (uint32);
+    function updateData(string memory name, string memory description) external;
+}
+
+/**
+ * @title Repository Contract
+ * @dev Manages essential information about a data entity.
+ */
+contract Repository is Storage {
+    struct Data {
+        string name;
+        string description;
+        uint launched;
+    }
+    
+    /**
+    * @dev This private storage variable holds the core data structure for the contract.
+    * It stores essential information about the data entity being managed.
+    * @notice Access to this data is restricted to internal and derived contracts.
+    */
+    Data private _data;
+
+    /**
+    * @dev Constructs a new instance of the `Storage` contract, initializing the core data structure.
+    * @param name The name associated with the data being stored.
+    * @param description The description providing additional details about the stored data.
+    */
+    constructor(string memory name, string memory description) 
+    Storage() {
+        _data = Data({name: name, description: description, launched: block.timestamp});
+    }
+
+    /**
+    * @dev Retrieves the name associated with the stored data.
+    * @return The name of the stored data entity.
+    */
+    function name() 
+    external view 
+    returns (string memory) { 
+        return _data.name; 
+    }
+
+    /**
+    * @dev Retrieves the description associated with the stored data.
+    * @return The description of the stored data entity.
+    */
+    function description() 
+    external view 
+    returns (string memory) { 
+        return _data.description; 
+    }
+
+    /**
+    * @dev Retrieves the timestamp when the stored data was launched or created.
+    * @return The timestamp representing the launch time of the stored data entity.
+    */
+    function launched() 
+    external view 
+    returns (uint) { 
+        return _data.launched; 
+    }
+
+    /**
+    * @dev Updates the name and description associated with the stored data.
+    * @param name The new name to be associated with the stored data entity.
+    * @param description The new description to provide additional details about the stored data.
+    * @notice This function allows the contract owner to update the name and description of the stored data.
+    */    
+    function updateData(string memory name, string memory description)
+    external {
+        _data.name = name;
+        _data.description = description;
     }
 }
 
-
-
-library ValidatorToolkit {
-    /**
-    * @dev Retrieves the index of the first matching key in the given bytes array based on contract and signature.
-    * @param storage_ The storage contract where the bytes array is stored.
-    * @param variable The key identifying the bytes array in storage.
-    * @param contract_ The address of the contract associated with the key.
-    * @param signature The function signature associated with the key.
-    * @return success True if a matching key is found, false otherwise.
-    * @return index The index of the first matching key, or the length of the array if not found.
-    */
-    function getKeyIndexByContractAndSignature(IStorage storage_, bytes32 variable, address contract_, string memory signature)
-    external view
-    returns (bool success, uint index) {
-        bytes memory emptyBytes;
-        bytes[] memory bytesArray =storage_.getBytesArray({key: variable});
-        for (uint i =0; i <bytesArray.length; i++) {
-            bytes memory key =bytesArray[i];
-            if (!Match.isMatchingBytes({bytesA: key, bytesB: emptyBytes})) {
-                (address dContract, string memory dSignature, , , ,) =Encoder.decodeKey({key: key});
-                if (ValidatorMatch.isMatchingKeyContractAndSignature({contractA: contract_, contractB: dContract, signatureA: signature, signatureB: dSignature})) {
-                    index =i;
-                    success =true;
-                    break;
-                }
-            }
-        }
-        return (success, index);
+library __Match {
+    function isMatchingBytes(bytes memory bytesA, bytes memory bytesB)
+    external pure
+    returns (bool) {
+        return keccak256(bytesA) == keccak256(bytesB);
     }
 
-    /**
-    * @dev Retrieves the index of the first empty bytes entry in the given bytes array.
-    * @param storage_ The storage contract where the bytes array is stored.
-    * @param variable The key identifying the bytes array in storage.
-    * @return success True if an empty bytes entry is found, false otherwise.
-    * @return index The index of the first empty bytes entry, or the length of the array if not found.
-    */
-    function getKeyIndexByEmptyBytes(IStorage storage_, bytes32 variable)
+    function isMatchingString(string memory stringA, string memory stringB)
+    external pure
+    returns (bool) {
+        return keccak256(abi.encodePacked(stringA)) == keccak256(abi.encodePacked(stringB));
+    }
+}
+
+library __SentinelToolkit {
+    function verifyKeyInput(Key memory key)
+    external view {
+        require(key.logic != address(0), "__SentinelToolkit: key.logic == address(0)");
+        if (key.class == Class.STANDARD) {
+            require(key.timestamp.granted == 0, "__SentinelToolkit: key.timestamp.granted != 0");
+            require(key.timestamp.expiration == 0, "__SentinelToolkit: key.timestamp.expiration != 0");
+            require(key.balance == 0, "__SentinelToolkit: key.balance != 0");
+        } else if (key.class == Class.TIMED) {
+            require(block.timestamp <= key.timestamp.granted, "__SentinelToolkit: key.timestamp.granted > block.timestamp");
+            require(key.timestamp.expiration > key.timestamp.granted, "__SentinelToolkit: key.timestamp.expiration <= key.timestamp.granted");
+            require(key.balance == 0, "__SentinelToolkit: key.balance != 0");
+        } else if (key.class == Class.CONSUMABLE) {
+            require(key.timestamp.granted == 0, "__SentinelToolkit: key.timestamp.granted != 0");
+            require(key.timestamp.expiration == 0, "__SentinelToolkit: key.timestamp.expiration != 0");
+            require(key.balance >= 1, "__SentinelToolkit: key.balance < 1");
+        } else {
+            revert("__SentinelToolkit: unrecognized class");
+        }
+    }
+
+    function getKeyIndexByLogSigFromBytesArray(IRepository repository, bytes32 variable, address logic, string memory signature)
     external view
-    returns (bool success, uint index) {
+    returns (bool, uint, Key memory) {
+        uint index;
+        bool success;
+        Key memory key;
         bytes memory emptyBytes;
-        bytes[] memory bytesArray =storage_.getBytesArray({key: variable});
-        for (uint i =0; i <bytesArray.length; i++) {
-            bytes memory key =bytesArray[i];
-            if (Match.isMatchingBytes({bytesA: key, bytesB: emptyBytes})) {
-                success =true;
-                index =i;
+        bytes[] memory keys = repository.getBytesArray(variable);
+        for (uint i = 0; i < keys.length; i++) {
+            if (!__Match.isMatchingBytes(keys[i], emptyBytes)) {
+                key = abi.decode(keys[i], (Key));
+                if (logic == key.logic && __Match.isMatchingString(signature, key.signature)) {
+                    index = i;
+                    success = true;
+                    break;
+                }
+                
+            }
+        }
+        return (success, index, key);
+    }
+
+    function getKeyIndexByEmptyBytesFromBytesArray(IRepository repository, bytes32 variable)
+    external view
+    returns (bool, uint) {
+        uint index;
+        bool success;
+        bytes memory emptyBytes;
+        bytes[] memory keys = repository.getBytesArray(variable);
+        for (uint i = 0; i < keys.length; i++) {
+            if (__Match.isMatchingBytes(keys[i], emptyBytes)) {
+                success = true;
+                index = i;
                 break;
             }
         }
         return (success, index);
     }
 
-    /**
-    * @dev Checks the correctness of input parameters based on the key type.
-    * @param keyType The type of the key (STANDARD, TIMED, CONSUMABLE).
-    * @param startTimestamp The start timestamp for the key.
-    * @param endTimestamp The end timestamp for the key.
-    * @param balance The balance associated with the key.
-    */
-    function requireCorrectInput(KeyType keyType, uint startTimestamp, uint endTimestamp, uint balance)
-    external view {
-        if (keyType ==KeyType.STANDARD) {
-            require(startTimestamp ==0, "ValidatorToolkit: startTimestamp must be zero");
-            require(endTimestamp ==0, "ValidatorToolkit: endTimestamp must be zero");
-            require(balance ==0, "ValidatorToolkit: balance must be zero");
-        } else if (keyType ==KeyType.TIMED) {
-            require(block.timestamp <=startTimestamp, "ValidatorToolkit: cannot grant in the past");
-            require(endTimestamp >=startTimestamp, "ValidatorToolkit: cannot expire before granted");
-            require(balance ==0, "Validator: balance must be zero");
-        } else if (keyType ==KeyType.CONSUMABLE) {
-            require(startTimestamp ==0, "ValidatorToolkit: startTimestamp must be zero");
-            require(endTimestamp ==0, "ValidatorToolkit: endTimestamp must be zero");
-            require(balance >= 1, "ValidatorToolkit: balance is less than one");
+    function verifyKey(IRepository repository, address account, uint index, Key memory key)
+    external {
+        bool success;
+        if (key.class == Class.STANDARD) { success = true; }
+        else if (key.class == Class.TIMED) {
+            require(block.timestamp >= key.timestamp.granted, "__SentinelToolkit: block.timestamp < key.timestamp.granted");
+            require(block.timestamp < key.timestamp.expiration, "__SentinelToolkit: block.timestamp >= key.timestamp.expiration");
+            success = true;
+        } else if (key.class == Class.CONSUMABLE) {
+            require(key.balance >= 1, "__SentinelToolkit: insufficient balance");
+            key.balance -= 1;
+            repository.setIndexBytesArray(keccak256(abi.encode(account, "keys")), index, abi.encode(key));
+            success =true;
+        } else {
+            revert("__SentinelToolkit: unrecognized key.class");
         }
-        else {
-            revert("ValidatorToolkit: invalid keyType");
+        require(success, "__SentinelToolkit: verification failed");
+    }
+}
+
+library __Sentinel {
+    function encodeAndPushKeyToBytesArray(IRepository repository, bytes32 variable, Key memory key)
+    external {
+        __SentinelToolkit.verifyKeyInput(key);
+        uint index;
+        bool success;
+        bytes[] memory keys = repository.getBytesArray(variable);
+        (success, ,) = __SentinelToolkit.getKeyIndexByLogSigFromBytesArray(repository, variable, key.logic, key.signature);
+        require(!success, "__Sentinel: key with given logic & signature was found");
+        (success, index) = __SentinelToolkit.getKeyIndexByEmptyBytesFromBytesArray(repository, variable);
+        if (success) { repository.setIndexBytesArray(variable, index, abi.encode(key)); }
+        else { repository.pushBytesArray(variable, abi.encode(key)); }
+    }
+
+    function decodeAndPullKeyFromBytesArray(IRepository repository, bytes32 variable, address logic, string memory signature)
+    external {
+        uint index;
+        bool success;
+        bytes[] memory keys = repository.getBytesArray(variable);
+        (success, index,) = __SentinelToolkit.getKeyIndexByLogSigFromBytesArray(repository, variable, logic, signature);
+        require(success, "__Sentinel: key with given logic & signature was not found");
+        bytes memory emptyBytes;
+        repository.setIndexBytesArray(variable, index, emptyBytes);
+    }
+
+    function require_(IRepository repository, address account, address logic, string memory signature)
+    external {
+        if (account != repository.getAddress(keccak256(abi.encode("governor")))) {
+            uint index;
+            bool success;
+            Key memory key;
+            (success, index, key) = __SentinelToolkit.getKeyIndexByLogSigFromBytesArray(repository, keccak256(abi.encode(account, "keys")), logic, signature);
+            require(success, "__Sentinel: key with given logic & signature was not found");
+            __SentinelToolkit.verifyKey(repository, account, index, key);
+        } else {
+            require(repository.getAddress(keccak256(abi.encode("governor"))) != address(0), "__Sentinel: governor is address zero");
         }
     }
 }
 
+contract Sentinel {
+    IRepository repository;
 
-
-/** STORAGE VARS USAGE
-    <addr/account>  "keys"       _bytesArray
-    <str/role>      "keys"       _bytesArray
-    <str/role>      "members"    _addressSet
-    "governor"                   _address
-
-    **governor can bypass verification
-    **governor must not be address zero to bypass verification
-    **note ie. dKey dContract stands for decoded key or decoded contract
- */
-library Validator {
-
-    /**
-    * @dev Retrieves the keys associated with a specific account from the provided storage.
-    * @param storage_ The storage contract where the keys are stored.
-    * @param account The address of the account to retrieve keys for.
-    * @return keys An array containing the keys associated with the specified account.
-    */
-    function getKeys(IStorage storage_, address account)
-    external view
-    returns (bytes[] memory keys) {
-        require(account !=address(0), "Validator: account is address zero");
-        bytes32 varAccountKeys =Encoder.account({account: account, property: "keys"});
-        return storage_.getBytesArray({key: varAccountKeys});
+    constructor(address repository_) {
+        repository = IRepository(repository_);
     }
 
-    /**
-    * @dev Retrieves the keys associated with a specific role from the provided storage.
-    * @param storage_ The storage contract where the keys are stored.
-    * @param role The name of the role to retrieve keys for.
-    * @return keys An array containing the keys associated with the specified role.
-    */
-    function getRoleKeys(IStorage storage_, string memory role)
-    external view
-    returns (bytes[] memory keys) {
-        bytes32 varRoleKeys =Encoder.role({role: role, property: "keys"});
-        return storage_.getBytesArray({key: varRoleKeys});
-    }
-
-    /**
-    * @dev Retrieves the members associated with a specific role from the provided storage.
-    * @param storage_ The storage contract where the members are stored.
-    * @param role The name of the role to retrieve members for.
-    * @return members An array containing the addresses of members associated with the specified role.
-    */
-    function getRoleMembers(IStorage storage_, string memory role)
-    external view
-    returns (address[] memory members) {
-        bytes32 varRoleMembers =Encoder.role({role: role, property: "members"});
-        return storage_.getAddressSet({key: varRoleMembers});
-    }
-
-    /**
-    * @dev Retrieves the number of members associated with a specific role from the provided storage.
-    * @param storage_ The storage contract where the members are stored.
-    * @param role The name of the role to retrieve the size for.
-    * @return size The number of members associated with the specified role.
-    */
-    function getRoleSize(IStorage storage_, string memory role)
-    external view
-    returns (uint size) {
-        bytes32 varRoleMembers =Encoder.role({role: role, property: "members"});
-        address[] memory addressArray =storage_.getAddressSet({key: varRoleMembers});
-        return addressArray.length;
-    }
-
-    function grantKey(IStorage storage_, address account, )
-
-    function grantKey(IStorage storage_, address account, address contract_, string memory signature, KeyType keyType, uint startTimestamp, uint endTimestamp, uint balance)
-    external
-    returns (bool success, uint index) {
-        ValidatorToolkit.requireCorrectInput({keyType: keyType, startTimestamp: startTimestamp, endTimestamp: endTimestamp, balance: balance});
-        require(account !=address(0), "Validator: account is address zero");
-        require(contract_ !=address(0), "Validator: contract is address zero");
-        bytes memory key =Encoder.encodeKey({contract_: contract_, signature: signature, keyType: keyType, startTimestamp: startTimestamp, endTimestamp: endTimestamp, balance: balance});
-        bytes32 varAccountKeys =Encoder.account({account: account, property: "keys"});
-        (success, index) =ValidatorToolkit.getKeyIndexByContractAndSignature({storage_: storage_, variable: varAccountKeys, contract_: contract_, signature: signature});
-        require(!success, "Validator: matching existing key: contract and address");
-        (success, index) =ValidatorToolkit.getKeyIndexByEmptyBytes({storage_: storage_, variable: varAccountKeys});
-        if (success) { storage_.setIndexBytesArray({key: varAccountKeys, index: index, value: key}); }
-        else {
-            storage_.pushBytesArray({key: varAccountKeys, value: key});
-            bytes[] memory bytesArray =storage_.getBytesArray({key: varAccountKeys});
-            index =bytesArray.length -1;
-            success =true;
-        }
-        Utils.requireSuccess({success: success});
-        return (success, index);
-    }
-
-    /**
-    * @dev Revokes a key associated with an account and contract address.
-    * @param storage_ The storage contract where the key is stored.
-    * @param account The address of the account for which the key will be revoked.
-    * @param contract_ The address of the contract associated with the key.
-    * @param signature The signature string of the key to be revoked.
-    * @return success True if the key revocation was successful, false otherwise.
-    * @return index The index of the revoked key in the account's key list.
-    */
-    function revokeKey(IStorage storage_, address account, address contract_, string memory signature)
-    external
-    returns (bool success, uint index) {
-        require(account !=address(0), "Validator: account is address zero");
-        require(contract_ !=address(0), "Validator: contract is address zero");
-        bytes32 varAccountKeys =Encoder.account({account: account, property: "keys"});
-        (success, index) =ValidatorToolkit.getKeyIndexByContractAndSignature({storage_: storage_, variable: varAccountKeys, contract_: contract_, signature: signature});
-        require(success, "Validator: unable to find key: contract and address");
-        bytes memory emptyBytes;
-        storage_.setIndexBytesArray({key: varAccountKeys, index: index, value: emptyBytes});
-        success =true;
-        return (success, index);
-    }
-
-    /**
-    * @dev Resets (deletes) all keys associated with a specific account.
-    * @param storage_ The storage contract where the keys are stored.
-    * @param account The address of the account for which keys will be reset.
-    * @return success True if the key reset was successful, false otherwise.
-    */
-    function resetKeys(IStorage storage_, address account)
-    external
-    returns (bool success) {
-        require(account !=address(0), "Validator: account is address zero");
-        bytes32 varAccountKeys =Encoder.account({account: account, property: "keys"});
-        storage_.deleteBytesArray({key: varAccountKeys});
-        success =true;
-        return success;
-    }
-
-    /**
-    * @dev Verifies a key associated with an account and contract address, and performs actions based on key type.
-    * @param storage_ The storage contract where the keys are stored.
-    * @param account The address of the account for which the key will be verified.
-    * @param contract_ The address of the contract associated with the key.
-    * @param signature The signature string of the key to be verified.
-    * @return success True if the key verification was successful, false otherwise.
-    * @return index The index of the verified key in the account's key list.
-    */
-    function verify(IStorage storage_, address account, KeyDataMini keyDataPrefix)
-    external {
-        require(account !=address(0), "Validator: account is address zero");
-        require(keyDataPrefix.contract_ !=address(0), "Validator: contract_ is address zero");
-
-
-    }
-
-    function verify(IStorage storage_, address account, address contract_, string memory signature)
-    external
-    returns(bool success, uint index) {
-        require(account !=address(0), "Validator: account is address zero");
-        require(contract_ !=address(0), "Validator: contract_ is address zero");
-
-        if (account !=storage_.getAddress({key: Encoder.governor()})) {
-
-            bytes[] memory bytesArray =storage_.getBytesArray({key: Encoder.account({account: account, property: "keys"})});
-
-            // does the account have this key?
-            (success, index) =ValidatorToolkit.getKeyIndexByContractAndSignature({
-                storage_: storage_, 
-                variable: Encoder.account({
-                    account: account,
-                    property: "keys"
-                }), 
-            contract_: contract_, 
-            signature: signature
-            });
-            
-            // the account must have this key
-            require(success, "Validator: unable to find key: contract and address");
-
-            // assuming it has this key get data from it
-            (
-                address dContract, 
-                string memory dSignature, 
-                KeyType dKeyType, 
-                uint dStartTimestamp, 
-                uint dEndTimestamp, 
-                uint dBalance
-            ) =Encoder.decodeKey({
-                key: storage_.indexBytesArray({
-                    key: Encoder.account({
-                        account: account, 
-                        property: "keys"
-                    }), 
-                index: index
-                })
-            });
-
-            // if the key is simply a standard key then account is verified because we have proven they have the key
-            if (dKeyType ==KeyType.STANDARD) { success =true; }
-
-            // if it is timed the make sure it is still valid
-            else if (dKeyType ==KeyType.TIMED) {
-                require(block.timestamp >=dStartTimestamp, "Validator: cannot use key before granted");
-                require(block.timestamp <=dEndTimestamp, "Validator: expired");
-                success =true;
-            }
-
-            // if consumable make sure it has a balance and then deduct 1 and encode a new key with new value
-            else if (dKeyType ==KeyType.CONSUMABLE) {
-                require(dBalance >=1, "Validator: insufficient balance");
-                dBalance--;
-
-                storage_.setIndexBytesArray({
-                    key: Encoder.account({
-                        account: account,
-                        property: "keys"
-                    }),
-                    index: index,
-                    value: Encoder.encodeKey({
-                        contract_: dContract,
-                        signature: dSignature,
-                        keyType: dKeyType,
-                        startTimestamp: dStartTimestamp,
-                        endTimestamp: dEndTimestamp,
-                        balance: dBalance
-                    })
-                });
-
-                success =true;
-            }
-
-            // require true and return success and index
-            Utils.requireSuccess({success: success});
-            return (success, index);
-
-        } else { // assuming the account is a governor address
-
-            // check that address is not address zero then bypass verification
-            require(
-                storage_.getAddress({key: Encoder.governor()}) !=address(0),
-                "Validator: governor is address zero"
-            );
-
-            success =true;
-            return (success, index);
-        }
-    }
-
-    /**
-    * @dev Grants a key to a role with the specified parameters.
-    * @param storage_ The storage contract where the key will be stored.
-    * @param role The name of the role to which the key will be granted.
-    * @param contract_ The address of the contract associated with the key.
-    * @param signature The signature string for the key.
-    * @param keyType The type of the key (STANDARD, TIMED, CONSUMABLE).
-    * @param startTimestamp The start timestamp for the key.
-    * @param endTimestamp The end timestamp for the key.
-    * @param balance The balance associated with the key.
-    * @return success True if the key granting to the role was successful, false otherwise.
-    * @return index The index of the granted key in the role's key list.
-    */
-    function grantKeyToRole(IStorage storage_, string memory role, address contract_, string memory signature, KeyType keyType, uint startTimestamp, uint endTimestamp, uint balance)
-    external
-    returns (bool success, uint index) {
-        ValidatorToolkit.requireCorrectInput({keyType: keyType, startTimestamp: startTimestamp, endTimestamp: endTimestamp, balance: balance});
-        require(contract_ !=address(0), "Validator: contract_ is address zero");
-        bytes memory key =Encoder.encodeKey({contract_: contract_, signature: signature, keyType: keyType, startTimestamp: startTimestamp, endTimestamp: endTimestamp, balance: balance});
-        bytes32 varRoleKeys =Encoder.role({role: role, property: "keys"});
-        (success, index) =ValidatorToolkit.getKeyIndexByContractAndSignature({storage_: storage_, variable: varRoleKeys, contract_: contract_, signature: signature});
-        require(!success, "Validator: matching existing key: contract and address");
-        (success, index) =ValidatorToolkit.getKeyIndexByEmptyBytes({storage_: storage_, variable: varRoleKeys});
-        if (success) { storage_.setIndexBytesArray({key: varRoleKeys, index: index, value: key}); }
-        else {
-            storage_.pushBytesArray({key: varRoleKeys, value: key});
-            bytes[] memory bytesArray =storage_.getBytesArray({key: varRoleKeys});
-            index =bytesArray.length -1;
-            success =true;
-        }
-        Utils.requireSuccess({success: success});
-        return (success, index);
-    }
-
-    /**
-    * @dev Revokes a key associated with a role.
-    * @param storage_ The storage contract where the keys are stored.
-    * @param role The name of the role from which the key will be revoked.
-    * @param contract_ The address of the contract associated with the key.
-    * @param signature The signature string of the key to be revoked.
-    * @return success True if the key revocation from the role was successful, false otherwise.
-    * @return index The index of the revoked key in the role's key list.
-    */
-    function revokeKeyFromRole(IStorage storage_, string memory role, address contract_, string memory signature)
-    external
-    returns (bool success, uint index) {
-        require(contract_ !=address(0), "Validator: contract_ is address zero");
-        bytes32 varRoleKeys =Encoder.role({role: role, property: "keys"});
-        (success, index) =ValidatorToolkit.getKeyIndexByContractAndSignature({storage_: storage_, variable: varRoleKeys, contract_: contract_, signature: signature});
-        require(success, "Validator: unable to find key: contract and address");
-        bytes memory emptyBytes;
-        storage_.setIndexBytesArray({key: varRoleKeys, index: index, value: emptyBytes});
-        success =true;
-        return (success, index);
-    }
-
-    /**
-    * @dev Resets (deletes) all keys associated with a specific role.
-    * @param storage_ The storage contract where the keys are stored.
-    * @param role The name of the role for which keys will be reset.
-    * @return success True if the role's keys reset was successful, false otherwise.
-    */
-    function resetRoleKeys(IStorage storage_, string memory role)
-    external
-    returns (bool success) {
-        bytes32 varRoleKeys =Encoder.role({role: role, property: "keys"});
-        storage_.deleteBytesArray({key: varRoleKeys});
-        success =true;
-        return success;
-    }
-
-    /**
-    * @dev Grants a role to an account, copying keys associated with the role to the account.
-    * @param storage_ The storage contract where the keys and roles are stored.
-    * @param account The address of the account to which the role will be granted.
-    * @param role The name of the role to be granted.
-    * @return success True if the role granting was successful, false otherwise.
-    */
-    function grantRole(IStorage storage_, address account, string memory role) external returns (bool success) {
-        require(account !=address(0), "Validator: account is address zero");
-        bytes32 varRoleKeys =Encoder.role({role: role, property: "keys"});
-        bytes32 varAccountKeys =Encoder.account({account: account, property: "keys"});
-        storage_.deleteBytesArray({key: varAccountKeys});
-        bytes[] memory roleKeys =storage_.getBytesArray({key: varRoleKeys});
-        for (uint i =0; i <roleKeys.length; i++) {
-            success =false;
-            (address contract_, string memory signature, KeyType keyType, uint startTimestamp, uint endTimestamp, uint balance) =Encoder.decodeKey({key: roleKeys[i]});
-            ValidatorToolkit.requireCorrectInput({keyType: keyType, startTimestamp: startTimestamp, endTimestamp: endTimestamp, balance: balance});
-            storage_.pushBytesArray({key: varAccountKeys, value: roleKeys[i]});
-        }
-        bytes32 varRoleMembers =Encoder.role({role: role, property: "members"});
-        storage_.addAddressSet({key: varRoleMembers, value: account});
-        success =true;
-        return success;
-    }
-
-    function swapGovernor(IStorage storage_, address account)
-    external {
-        storage_.setAddress({key: Encoder.encode({string_: "governor"}), value: account});
-    }
-
-    /**
-    * @dev Revokes a role from an account, removing associated keys from the account.
-    * @param storage_ The storage contract where the keys and roles are stored.
-    * @param account The address of the account from which the role will be revoked.
-    * @param role The name of the role to be revoked.
-    * @return success True if the role revocation was successful, false otherwise.
-    * @return index The index of the last revoked key in the role's key list.
-    */
-    function revokeRole(IStorage storage_, address account, string memory role)
-    external
-    returns (bool success, uint index) {
-        require(account !=address(0), "Validator: account is address zero");
-        bytes32 varRoleKeys =Encoder.role({role: role, property: "keys"});
-        bytes32 varAccountKeys =Encoder.account({account: account, property: "keys"});
-        bytes[] memory roleKeys =storage_.getBytesArray({key: varRoleKeys});
-        bytes memory emptyBytes;
-        for (uint i =0; i <roleKeys.length; i++) {
-            (address contract_, string memory signature, , , ,) =Encoder.decodeKey({key: roleKeys[i]});
-            success =false;
-            index =0;
-            (success, index) =ValidatorToolkit.getKeyIndexByContractAndSignature({storage_: storage_, variable: varRoleKeys, contract_: contract_, signature: signature});
-            if (success) { storage_.setIndexBytesArray({key: varAccountKeys, index: index, value: emptyBytes}); }
-        }
-        success =true;
-        return (success, index);
-    }
-}
-
-
-
-interface ISentinel {
-    function init() external;
-    function getKeys(address account) external view returns (bytes[] memory);
-    function getRoleKeys(string memory role) external view returns (bytes[] memory);
-    function getRoleMembers(string memory role) external view returns (address[] memory);
-    function getRoleSize(string memory role) external view returns (uint);
-    function swapGovernor(address account) external;
-    function verify(address account, address contract_, string memory signature) external;
-    function grantKey(address account, address contract_, string memory signature, uint type_, uint startTimestamp, uint endTimestamp, uint balance) external;
-    function revokeKey(address account, address contract_, string memory signature) external;
-    function resetKeys(address account) external;
-    function grantKeyToRole(string memory role, address contract_, string memory signature, uint type_, uint startTimestamp, uint endTimestamp, uint balance) external;
-    function revokeKeyFromRole(string memory role, address contract_, string memory signature) external;
-    function resetRoleKeys(string memory role) external;
-    function grantRole(address account, string memory role) external;
-    function revokeRole(address account, string memory role) external;
-}
-
-
-
-/**
- * @title Sentinel Contract
- * @dev The Sentinel contract serves as a secure key management system with role-based access control.
- * It allows users to manage keys, roles, and perform key verification securely. The contract implements
- * the ISentinel interface and inherits from the Pausable and ReentrancyGuard contracts to ensure
- * proper functioning and protection against reentrancy attacks.
- *
- * This contract enables the verification of keys, retrieval of keys associated with accounts and roles,
- * management of roles, and initialization of permissions. It provides a secure environment for managing
- * access to various functions and operations within a decentralized application.
- */
-contract Sentinel is Pausable, ReentrancyGuard {
-    bool internal _init;
-    address internal _deployer;
-    IStorage storage_;
-
-    /**
-    * @dev Verifies a key for the sender (msg.sender) using a specified signature.
-    * @param signature The signature of the key to be verified.
-    * @notice This modifier verifies a key for the sender and can be used to secure functions.
-    */
-    modifier verify_(string memory signature) {
-        _verify({account: msg.sender, contract_: address(this), signature: signature});
-        _;
-    }
-
-    constructor(address storage__) {
-        _deployer =msg.sender;
-        storage_ =IStorage(storage__);
-    }
-
-    /**
-    * @dev Initializes the contract and grants necessary permissions to the deployer.
-    * This function should be called only once after the contract is deployed by the designated deployer.
-    */
-    function init()
-    external {
-        require(msg.sender ==_deployer, "Sentinel: only _deployer can call");
-        require(!_init, "Sentienl: _init");
-        bool isLogic;
-        address[] memory logics =storage_.getLogics();
-        for (uint i =0; i <logics.length; i++) {
-            if (address(this) ==logics[i]) { isLogic =true; }
-        }
-        require(isLogic, "Sentinel: cannot init without setting as logic first");
-        Validator.grantKeyToRole({storage_: storage_, role: "validator", contract_: address(this), signature: "grantKey(address,address,string,uint256,uint256,uint256,uint256)", keyType: KeyType.STANDARD, startTimestamp: 0, endTimestamp: 0, balance: 0});
-        Validator.grantKeyToRole({storage_: storage_, role: "validator", contract_: address(this), signature: "revokeKey(address,address,string)", keyType: KeyType.STANDARD, startTimestamp: 0, endTimestamp: 0, balance: 0});
-        Validator.grantKeyToRole({storage_: storage_, role: "validator", contract_: address(this), signature: "resetKeys(address)", keyType: KeyType.STANDARD, startTimestamp: 0, endTimestamp: 0, balance: 0});
-        Validator.grantKeyToRole({storage_: storage_, role: "validator", contract_: address(this), signature: "grantKeyToRole(string,address,string,uint256,uint256,uint256,uint256)", keyType: KeyType.STANDARD, startTimestamp: 0, endTimestamp: 0, balance: 0});
-        Validator.grantKeyToRole({storage_: storage_, role: "validator", contract_: address(this), signature: "revokeKeyFromRole(string,address,string)", keyType: KeyType.STANDARD, startTimestamp: 0, endTimestamp: 0, balance: 0});
-        Validator.grantKeyToRole({storage_: storage_, role: "validator", contract_: address(this), signature: "resetRoleKeys(string)", keyType: KeyType.STANDARD, startTimestamp: 0, endTimestamp: 0, balance: 0});
-        Validator.grantKeyToRole({storage_: storage_, role: "validator", contract_: address(this), signature: "grantRole(address,string)", keyType: KeyType.STANDARD, startTimestamp: 0, endTimestamp: 0, balance: 0});
-        Validator.grantKeyToRole({storage_: storage_, role: "validator", contract_: address(this), signature: "revokeRole(address,string)", keyType: KeyType.STANDARD, startTimestamp: 0, endTimestamp: 0, balance: 0});
-        Validator.grantRole({storage_: storage_, account: msg.sender, role: "validator"});
-        _init =true;
-    }
-
-    /**
-    * @dev Retrieves the keys associated with a specific account.
-    * @param account The address of the account to retrieve keys for.
-    * @return keys An array containing the keys associated with the specified account.
-    */
     function getKeys(address account)
     external view
     returns (bytes[] memory) {
-        return Validator.getKeys({storage_: storage_, account: account});
+        return repository.getBytesArray(keccak256(abi.encode(account, "keys")));
     }
 
-    /**
-    * @dev Retrieves the keys associated with a specific role.
-    * @param role The role for which to retrieve keys.
-    * @return keys An array containing the keys associated with the specified role.
-    */
-    function getRoleKeys(string memory role)
-    external view
-    returns (bytes[] memory) {
-        return Validator.getRoleKeys({storage_: storage_, role: role});
-    }
-
-    /**
-    * @dev Retrieves the members associated with a specific role.
-    * @param role The role for which to retrieve members.
-    * @return members An array containing the members associated with the specified role.
-    */
-    function getRoleMembers(string memory role)
-    external view
-    returns (address[] memory) {
-        return Validator.getRoleMembers({storage_: storage_, role: role});
-    }
-
-    /**
-    * @dev Retrieves the number of members in a specific role.
-    * @param role The role for which to retrieve the member count.
-    * @return size The number of members associated with the specified role.
-    */
-    function getRoleSize(string memory role)
-    external view
-    returns (uint) {
-        return Validator.getRoleSize({storage_: storage_, role: role});
-    }
-
-    function swapGovernor(address account)
+    function require_(address account, address logic, string memory signature)
     external {
-        Validator.swapGovernor({storage_: storage_, account: account});
+        __Sentinel.require_(repository, account, logic, signature);
     }
 
-    /**
-    * @dev Verifies a key for a specific account using a provided signature.
-    * If the sender is the governor, additional checks are performed.
-    * @param account The address of the account to verify the key for.
-    * @param contract_ The address of the contract associated with the key.
-    * @param signature The signature of the key to be verified.
-    * @notice This function is non-reentrant to prevent reentrancy attacks.
-    */
-    function verify(address account, address contract_, string memory signature)
-    external 
-    nonReentrant {
-        _verify({account: account, contract_: contract_, signature: signature});
+    function _grantKey(address to, address logic, string memory signature, uint32 granted, uint32 expiration, Class class, bool isTransferable, bool isFungible, bool isClonable, uint balance, bytes memory data)
+    external {
+        __Sentinel.encodeAndPushKeyToBytesArray(
+            repository, 
+            keccak256(
+                abi.encode(to, "keys")), 
+                Key({
+                    logic: logic,
+                    signature: signature,
+                    timestamp: Timestamp({
+                        granted: granted,
+                        expiration: expiration
+                    }),
+                    class: class,
+                    settings: Settings({
+                        isTransferable: isTransferable,
+                        isFungible: isFungible,
+                        isClonable: isClonable
+                    }),
+                    balance: balance,
+                    data: data
+                })
+            );
     }
 
-    function grantKey(address account, address contract_, string memory signature, KeyType keyType, uint startTimestamp, uint endTimestamp, uint balance)
-    external 
-    nonReentrant 
-    whenNotPaused 
-    verify_("grantKey(address,address,string,uint256,uint256,uint256,uint256)") {
-        Validator.grantKey({storage_: storage_, account: account, contract_: contract_, signature: signature, keyType: keyType, startTimestamp: startTimestamp, endTimestamp: endTimestamp, balance: balance});
+    function _revokeKey(address from, address logic, string memory signature)
+    external {
+        __Sentinel.decodeAndPullKeyFromBytesArray(repository, keccak256(abi.encode(from, "keys")), logic, signature);
     }
 
-    /**
-    * @dev Revokes a previously granted key associated with a specified account.
-    * @param account The address of the account from which to revoke the key.
-    * @param contract_ The address of the contract associated with the key.
-    * @param signature The signature of the key.
-    * @notice This function is non-reentrant and can only be called when the contract is not paused.
-    *         It verifies the provided key and revokes access accordingly.
-    */
-    function revokeKey(address account, address contract_, string memory signature)
-    external
-    nonReentrant
-    whenNotPaused 
-    verify_("revokeKey(address,address,string)") {
-        Validator.revokeKey({storage_: storage_, account: account, contract_: contract_, signature: signature});
-    }
 
-    /**
-    * @dev Resets all keys associated with a specific account.
-    * @param account The address of the account for which to reset keys.
-    * @notice This function is non-reentrant and can only be called when the contract is not paused.
-    *         It verifies the provided signature and resets all keys associated with the given account.
-    */
-    function resetKeys(address account)
-    external 
-    nonReentrant 
-    whenNotPaused 
-    verify_("resetKeys(address)") {
-        Validator.resetKeys({storage_: storage_, account: account});
-    }
 
-    function grantKeyToRole(string memory role, address contract_, string memory signature, KeyType keyType, uint startTimestamp, uint endTimestamp, uint balance)
-    external 
-    nonReentrant
-    whenNotPaused
-    verify_("grantKeyToRole(string,address,string,uint256,uint256,uint256,uint256)") {
-        Validator.grantKeyToRole({storage_: storage_, role: role, contract_: contract_, signature: signature, keyType: keyType, startTimestamp: startTimestamp, endTimestamp: endTimestamp, balance: balance});
-    }
 
-    /**
-    * @dev Revokes a key from a specified role.
-    * @param role The role from which the key will be revoked.
-    * @param contract_ The address of the contract associated with the key.
-    * @param signature The signature of the key.
-    * @notice This function is non-reentrant and can only be called when the contract is not paused.
-    *         It verifies the provided signature and revokes a key from the specified role.
-    */
-    function revokeKeyFromRole(string memory role, address contract_, string memory signature)
-    external 
-    nonReentrant 
-    whenNotPaused 
-    verify_("revokeKeyFromRole(string,address,string)") {
-        Validator.revokeKeyFromRole({storage_: storage_, role: role, contract_: contract_, signature: signature});
-    }
-
-    /**
-    * @dev Resets the keys associated with a specified role.
-    * @param role The role for which keys will be reset.
-    * @notice This function is non-reentrant and can only be called when the contract is not paused.
-    *         It verifies the provided signature and resets the keys associated with the specified role.
-    */
-    function resetRoleKeys(string memory role)
-    external 
-    nonReentrant
-    whenNotPaused
-    verify_("resetRoleKeys(string)") {
-        Validator.resetRoleKeys({storage_: storage_, role: role});
-    }
-
-    /**
-    * @dev Grants a role to a specified account.
-    * @param account The address of the account to be granted the role.
-    * @param role The role to be granted to the account.
-    * @notice This function is non-reentrant and can only be called when the contract is not paused.
-    *         It verifies the provided signature and grants the specified role to the given account.
-    */
-    function grantRole(address account, string memory role)
-    external 
-    nonReentrant 
-    whenNotPaused 
-    verify_("grantRole(address,string)") {
-        Validator.grantRole({storage_: storage_, account: account, role: role});
-    }
-
-    /**
-    * @dev Revokes a role from a specified account.
-    * @param account The address of the account from which the role will be revoked.
-    * @param role The role to be revoked from the account.
-    * @notice This function is non-reentrant and can only be called when the contract is not paused.
-    *         It verifies the provided signature and revokes the specified role from the given account.
-    */
-    function revokeRole(address account, string memory role)
-    external 
-    nonReentrant
-    whenNotPaused
-    verify_("revokeRole(address,string)") {
-        Validator.revokeRole({storage_: storage_, account: account, role: role});
-    }
-
-    /**
-    * @dev Verifies a key for a specific account using a provided signature.
-    * @param account The address of the account to verify the key for.
-    * @param contract_ The address of the contract associated with the key.
-    * @param signature The signature of the key to be verified.
-    * @notice This function is used internally to verify a key for a specific account.
-    */
-    function _verify(address account, address contract_, string memory signature)
-    internal {
-        Validator.verify({storage_: storage_, account: account, contract_: contract_, signature: signature});
-    }
 }
-
-
 
 /** STORAGE VARS USAGE
     "durationTimelock"           _uint
@@ -1819,143 +1250,6 @@ contract Sentinel is Pausable, ReentrancyGuard {
     **request can only be approved or rejected during timelock
     **if self approve is true then all requests are automatically approved
  */
-library Timelock {
-    /**
-    * @dev Queues a new request by encoding and storing it in the contract.
-    * @param storage_ The storage contract where the request and its details will be stored.
-    * @param targets An array of target addresses for the function calls within the request.
-    * @param signatures An array of function signatures for the function calls within the request.
-    * @param args An array of encoded arguments for the function calls within the request.
-    */
-    function queueRequest(IStorage storage_, address[] memory targets, string[] memory signatures, bytes[] memory args)
-    external 
-    returns (uint index) {
-        uint now_ =block.timestamp;
-        bytes32 varDurationTimelock =Encoder.encode({string_: "durationTimelock"});
-        bytes32 varDurationTimeout =Encoder.encode({string_: "durationTimeout"});
-        bytes32 varSelfApprove =Encoder.encode({string_: "selfApprove"});
-        uint durationTimelock =storage_.getUint({key: varDurationTimelock});
-        uint durationTimeout =storage_.getUint({key: varDurationTimeout});
-        bool selfApprove =storage_.getBool({key: varSelfApprove});
-        RequestStage requestStage;
-        if (selfApprove) { requestStage =RequestStage.APPROVED; }
-        else { requestStage =RequestStage.PENDING; }
-        bytes memory request =Encoder.encodeRequest({targets: targets, signatures: signatures, args: args, endTimelockTimestamp: now_ +durationTimelock, endTimeoutTimestamp: now_ +durationTimeout, requestStage: requestStage});
-        bytes32 varRequests =Encoder.encode({string_: "requests"});
-        storage_.pushBytesArray({key: varRequests, value: request});
-        bytes[] memory bytesArray =storage_.getBytesArray({key: varRequests});
-        return bytesArray.length -1;
-    }
-
-    /**
-    * @dev Approves a request at the specified index by updating its request stage to APPROVED.
-    * @param storage_ The storage contract where the request and its array are stored.
-    * @param index The index of the request to be approved.
-    */
-    function approveRequest(IStorage storage_, uint index)
-    external {
-        bytes32 varRequests =Encoder.encode({string_: "requests"});
-        bytes memory request =storage_.indexBytesArray({key: varRequests, index: index});
-        (address[] memory dTargets, string[] memory dSignatures, bytes[] memory dArgs, uint dEndTimelockTimestamp, uint dEndTimeoutTimestamp, RequestStage dRequestStage) =Encoder.decodeRequest({request: request});
-        require(dRequestStage ==RequestStage.PENDING, "Timelock: must be pending");
-        require(block.timestamp <=dEndTimelockTimestamp, "Timelock: cannot approve after timelock");
-        dRequestStage =RequestStage.APPROVED;
-        bytes memory newRequest =Encoder.encodeRequest({targets: dTargets, signatures: dSignatures, args: dArgs, endTimelockTimestamp: dEndTimelockTimestamp, endTimeoutTimestamp: dEndTimeoutTimestamp, requestStage: dRequestStage});
-        storage_.setIndexBytesArray({key: varRequests, index: index, value: newRequest});
-    }
-
-    /**
-    * @dev Rejects a request at the specified index by updating its request stage to REJECTED.
-    * @param storage_ The storage contract where the request and its array are stored.
-    * @param index The index of the request to be rejected.
-    */
-    function rejectRequest(IStorage storage_, uint index)
-    external {
-        bytes32 varRequests =Encoder.encode({string_: "requests"});
-        bytes memory request =storage_.indexBytesArray({key: varRequests, index: index});
-        (address[] memory dTargets, string[] memory dSignature, bytes[] memory dArgs, uint dEndTimelockTimestamp, uint dEndTimeoutTimestamp, RequestStage dRequestStage) =Encoder.decodeRequest({request: request});
-        require(dRequestStage ==RequestStage.PENDING, "Timelock: must be pending");
-        require(block.timestamp <=dEndTimelockTimestamp, "Timelock: cannot approve after timelock");
-        dRequestStage =RequestStage.REJECTED;
-        bytes memory newRequest =Encoder.encodeRequest({targets: dTargets, signatures: dSignature, args: dArgs, endTimelockTimestamp: dEndTimelockTimestamp, endTimeoutTimestamp: dEndTimeoutTimestamp, requestStage: dRequestStage});
-        storage_.setIndexBytesArray({key: varRequests, index: index, value: newRequest});
-    }
-
-    /**
-    * @dev Executes a previously approved request at the specified index.
-    * @param storage_ The storage contract where the request and its array are stored.
-    * @param index The index of the request to be executed.
-    * @return successes An array of boolean values indicating the success of each external call.
-    * @return responses An array of response data from each external call.
-    */
-    function executeRequest(IStorage storage_, uint index)
-    external 
-    returns (bool[] memory successes, bytes[] memory responses) {
-        bytes32 varRequests =Encoder.encode({string_: "requests"});
-        bytes memory request =storage_.indexBytesArray({key: varRequests, index: index});
-        (address[] memory dTargets, string[] memory dSignature, bytes[] memory dArgs, uint dEndTimelockTimestamp, uint dEndTimeoutTimestamp, RequestStage dRequestStage) =Encoder.decodeRequest({request: request});
-        require(dRequestStage ==RequestStage.APPROVED, "Timelock: must be approved");
-        require(block.timestamp >dEndTimelockTimestamp, "Timelock: cannot execute before timelock");
-        require(block.timestamp <=dEndTimeoutTimestamp, "Timelock: cannot execute after timeout");
-        dRequestStage =RequestStage.EXECUTED;
-        bytes memory newRequest =Encoder.encodeRequest({targets: dTargets, signatures: dSignature, args: dArgs, endTimelockTimestamp: dEndTimelockTimestamp, endTimeoutTimestamp: dEndTimeoutTimestamp, requestStage: dRequestStage});
-        storage_.setIndexBytesArray({key: varRequests, index: index, value: newRequest});
-        for (uint i =0; i <dTargets.length; i++) {
-            (successes[i], responses[i]) =Calls.call({target: dTargets[i], signature: dSignature[i], args: dArgs[i]});
-        }
-        return (successes, responses);
-    }
-}
-
-
-
-contract Key is Pausable, ReentrancyGuard {
-    bool internal _init;
-    address internal _deployer;
-    IStorage storage_;
-    ISentinel sentinel;
-
-    modifier verify(string memory signature) {
-        _verify({account: msg.sender, contract_: address(this), signature: signature});
-        _;
-    }
-
-    constructor(address storage__, address sentinel_) {
-        _deployer =msg.sender;
-        storage_ =IStorage(storage__);
-        sentinel =ISentinel(sentinel_);
-    }
-
-    function init()
-    external {
-        require(msg.sender ==_deployer, "Key: only _deployer can call");
-        require(!_init, "Key: _init");
-        bool isLogic;
-        address[] memory logics =storage_.getLogics();
-        for (uint i =0; i <logics.length; i++) {
-            if (address(this) ==logics[i]) { isLogic =true; }
-        }
-        require(isLogic, "Key: cannot init without setting as logic first");
-        bytes32 varSelfApprove =Encoder.encode({string_: "selfApprove"});
-        storage_.setBool({key: varSelfApprove, value: true});
-        _init =true;
-    }
-
-    function queueRequest(address[] memory targets, string[] memory signatures, bytes[] memory args)
-    external
-    nonReentrant
-    whenNotPaused
-    verify("queueRequest(address[],string[],bytes[])")
-    returns (uint index) {
-        return Timelock.queueRequest({storage_: storage_, targets: targets, signatures: signatures, args: args});
-    }
-
-    function _verify(address account, address contract_, string memory signature)
-    internal {
-        sentinel.verify({account: account, contract_: contract_, signature: signature});
-    }
-}
-
 
 
 /** STORAGE VARS USAGE
@@ -1967,6 +1261,8 @@ contract Key is Pausable, ReentrancyGuard {
     **some anima have byte code which when checked by contract can "do certain things"
     **community can create new anima conditions for any achievement with costum code
  */
+
+/**
 contract Achievements is ERC721 {
     IStorage storage_;
     ISentinel sentinel;
@@ -1989,7 +1285,7 @@ contract Achievements is ERC721 {
         return newItemId;
     }
 }
-
+*/
 
 
 interface IDreamToken {
@@ -2011,6 +1307,7 @@ interface IDreamToken {
     <ddr/account>   "dreamTokenBalance"     _uint
 
  */
+/*
 contract DreamToken is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit {
     uint public cap;
     IStorage storage_;
@@ -2092,7 +1389,8 @@ contract DreamToken is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit {
 }
 
 
-
+*/
+/*
 interface IEmberToken {
     function totalSupply() external view returns (uint);
     function balanceOf(address account) external view returns (uint);
@@ -2184,7 +1482,7 @@ contract EmberToken is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit {
     }
 }
 
-
+*/
 
 contract Bridge {
     
