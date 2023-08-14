@@ -977,19 +977,30 @@ contract Repository is Storage {
 
     RepositoryData private _data;
 
-
+    /**
+     * @dev Constructor to initialize the Repository contract.
+     * @param name_ The name of the repository.
+     * @param description_ The description of the repository.
+     */
     constructor(string memory name_, string memory description_) 
     Storage() {
         _data = RepositoryData({name: name_, description: description_});
     }
 
+    /**
+     * @dev Get the name of the repository.
+     * @return The name of the repository.
+     */
     function name() 
     external view 
     returns (string memory) { 
         return _data.name; 
     }
 
-
+    /**
+     * @dev Get the description of the repository.
+     * @return The description of the repository.
+     */
     function description() 
     external view 
     returns (string memory) { 
@@ -997,13 +1008,29 @@ contract Repository is Storage {
     }
 }
 
+/**
+ * @title Match Library
+ * @dev A library for comparing bytes and strings for equality.
+ */
 library __Match {
+    /**
+     * @dev Checks if two byte arrays are equal.
+     * @param bytesA First bytes array to compare.
+     * @param bytesB Second bytes array to compare.
+     * @return Whether the two byte arrays are equal.
+     */
     function isMatchingBytes(bytes memory bytesA, bytes memory bytesB)
     external pure
     returns (bool) {
         return keccak256(bytesA) == keccak256(bytesB);
     }
 
+    /**
+     * @dev Checks if two strings are equal.
+     * @param stringA First string to compare.
+     * @param stringB Second string to compare.
+     * @return Whether the two strings are equal.
+     */
     function isMatchingString(string memory stringA, string memory stringB)
     external pure
     returns (bool) {
@@ -1011,7 +1038,15 @@ library __Match {
     }
 }
 
+/**
+ * @title SentinelToolkit Library
+ * @dev A library containing utility functions for verifying and manipulating keys.
+ */
 library __SentinelToolkit {
+    /**
+     * @dev Verifies the validity of key input parameters.
+     * @param key The Key structure to be verified.
+     */
     function verifyKeyInput(Key memory key)
     external view {
         require(key.logic != address(0), "__SentinelToolkit: key.logic == address(0)");
@@ -1032,6 +1067,14 @@ library __SentinelToolkit {
         }
     }
 
+    /**
+     * @dev Retrieves the index of a key with a specific logic and signature from a bytes array in the repository.
+     * @param repository The repository contract containing key data.
+     * @param variable The keccak256 hash of the variable (e.g., keys or roles) to search.
+     * @param logic The logic address of the key.
+     * @param signature The signature of the key.
+     * @return success Whether the key was found, index The index of the key, key The retrieved Key structure.
+     */
     function getKeyIndexByLogSigFromBytesArray(IRepository repository, bytes32 variable, address logic, string memory signature)
     external view
     returns (bool, uint, Key memory) {
@@ -1054,6 +1097,12 @@ library __SentinelToolkit {
         return (success, index, key);
     }
 
+    /**
+     * @dev Retrieves the index of a key with empty bytes from a bytes array in the repository.
+     * @param repository The repository contract containing key data.
+     * @param variable The keccak256 hash of the variable (e.g., keys or roles) to search.
+     * @return success Whether an empty key was found, index The index of the empty key.
+     */
     function getKeyIndexByEmptyBytesFromBytesArray(IRepository repository, bytes32 variable)
     external view
     returns (bool, uint) {
@@ -1071,6 +1120,13 @@ library __SentinelToolkit {
         return (success, index);
     }
 
+    /**
+     * @dev Verifies a key's validity and performs necessary updates.
+     * @param repository The repository contract containing key data.
+     * @param account The account for which the key is being verified.
+     * @param index The index of the key in the repository.
+     * @param key The Key structure to be verified and updated.
+     */
     function verifyKey(IRepository repository, address account, uint index, Key memory key)
     external {
         bool success;
@@ -1091,7 +1147,17 @@ library __SentinelToolkit {
     }
 }
 
+/**
+ * @title Sentinel Library
+ * @dev A library for encoding, pushing, decoding, and verifying keys in the repository.
+ */
 library __Sentinel {
+    /**
+     * @dev Encodes a key and pushes it to a bytes array in the repository.
+     * @param repository The repository contract to store key data.
+     * @param variable The keccak256 hash of the variable (e.g., keys or roles) to store the key in.
+     * @param key The Key structure to be encoded and pushed.
+     */
     function encodeAndPushKeyToBytesArray(IRepository repository, bytes32 variable, Key memory key)
     external {
         __SentinelToolkit.verifyKeyInput(key);
@@ -1105,6 +1171,13 @@ library __Sentinel {
         else { repository.pushBytesArray(variable, abi.encode(key)); }
     }
 
+    /**
+     * @dev Decodes and removes a key from a bytes array in the repository.
+     * @param repository The repository contract to remove key data from.
+     * @param variable The keccak256 hash of the variable (e.g., keys or roles) to remove the key from.
+     * @param logic The logic address of the key.
+     * @param signature The signature of the key.
+     */
     function decodeAndPullKeyFromBytesArray(IRepository repository, bytes32 variable, address logic, string memory signature)
     external {
         uint index;
@@ -1116,6 +1189,13 @@ library __Sentinel {
         repository.setIndexBytesArray(variable, index, emptyBytes);
     }
 
+    /**
+     * @dev Verifies a key's validity and performs necessary updates.
+     * @param repository The repository contract containing key data.
+     * @param account The account for which the key is being verified.
+     * @param logic The logic address of the key.
+     * @param signature The signature of the key.
+     */
     function verify(IRepository repository, address account, address logic, string memory signature)
     external {
         if (account != repository.getAddress(keccak256(abi.encode("governor")))) {
@@ -1131,40 +1211,142 @@ library __Sentinel {
     }
 }
 
+/**
+ * @title Sentinel Contract
+ * @dev A contract for managing access control and permissions using keys and roles.
+ */
 contract Sentinel is ReentrancyGuard {
     IRepository repository;
+    address private _deployer;
+    bool private _init;
 
     constructor(address repository_) {
         repository = IRepository(repository_);
+        _deployer = msg.sender;
     }
 
+    /**
+     * @dev Retrieves the keys associated with an account.
+     * @param account The account for which to retrieve keys.
+     * @return The array of keys associated with the account.
+     */
     function getKeys(address account)
     external view
     returns (bytes[] memory) {
         return repository.getBytesArray(keccak256(abi.encode(account, "keys")));
     }
 
+    /**
+     * @dev Retrieves the keys associated with a specific role.
+     * @param role The role for which to retrieve keys.
+     * @return The array of keys associated with the role.
+     */
     function getRoleKeys(string memory role)
     external view
     returns (bytes[] memory) {
         return repository.getBytesArray(keccak256(abi.encode(role, "keys")));
     }
 
-    // anyone can verify if an account has a specific key and that it is valid
+    /**
+     * @dev Retrieves the members of a specific role.
+     * @param role The role for which to retrieve members.
+     * @return The array of members associated with the role.
+     */
+    function getRoleMembers(string memory role)
+    external view
+    returns (address[] memory) {
+        return repository.getAddressSet(keccak256(abi.encode(role, "members")));
+    }
+
+    /**
+     * @dev Retrieves the size of a specific role.
+     * @param role The role for which to retrieve the size.
+     * @return The number of members associated with the role.
+     */
+    function getRoleSize(string memory role)
+    external view
+    returns (uint) {
+        return repository.lengthAddressSet(keccak256(abi.encode(role, "members")));
+    }
+
+    /**
+     * @dev Initializes the Sentinel contract with predefined permissions and roles.
+     */
+    function init()
+    external {
+        require(msg.sender == _deployer, "Sentinel: only deployer can init");
+        require(!_init, "Sentinel: _init");
+        bytes memory emptyBytes;
+        _grantKeyToRole("sentinel", address(this), "grantKey(address,address,string,uint32,uint32,Class,bool,bool,bool,bytes)", 0, 0, Class.STANDARD, false, false, false, 0, emptyBytes);
+        _grantKeyToRole("sentinel", address(this), "grantKeyToRole(string,address,string,uint32,uint32,Class,bool,bool,bool.uint,bytes)", 0, 0, Class.STANDARD, false, false, false, 0, emptyBytes);
+        _grantKeyToRole("sentinel", address(this), "revokeKey(address,address,string)", 0, 0, Class.STANDARD, false, false, false, 0, emptyBytes);
+        _grantKeyToRole("sentinel", address(this), "revokeKeyFromRole(string,address,string)", 0, 0, Class.STANDARD, false, false, false, 0, emptyBytes);
+        _grantKeyToRole("sentinel", address(this), "grantRole(string,address)", 0, 0, Class.STANDARD, false, false, false, 0, emptyBytes);
+        _grantKeyToRole("sentinel", address(this), "revokeRole(string,address)", 0, 0, Class.STANDARD, false, false, false, 0, emptyBytes);
+        _grantRole("sentinel", _deployer);
+        _init = true;
+    }
+
+    /**
+     * @dev Verifies access using an account's key.
+     * @param account The account for which access is being verified.
+     * @param logic The logic address associated with the key.
+     * @param signature The signature associated with the key.
+     */
     function verify(address account, address logic, string memory signature)
     external 
     nonReentrant {
         _verify(account, logic, signature);
     }
 
-    // anyone can grant keys from their address using this
+    /**
+     * @dev Transfers access from one account to another using a key.
+     * @param from The account transferring access.
+     * @param to The account receiving access.
+     * @param logic The logic address associated with the key.
+     * @param signature The signature associated with the key.
+     */
+    function transfer(address from, address to, address logic, string memory signature)
+    external
+    nonReentrant {
+        _transfer(from, to, logic, signature);
+    }
+
+    /**
+     * @dev Grants a key to an account.
+     * @param to The account to which the key is being granted.
+     * @param logic The logic address associated with the key.
+     * @param signature The signature associated with the key.
+     * @param granted The timestamp when the key is granted.
+     * @param expiration The timestamp when the key expires.
+     * @param class The class of the key.
+     * @param isTransferable Whether the key is transferable.
+     * @param isFungible Whether the key is fungible.
+     * @param isClonable Whether the key is clonable.
+     * @param balance The balance associated with the key.
+     * @param data Additional data associated with the key.
+     */
     function grantKey(address to, address logic, string memory signature, uint32 granted, uint32 expiration, Class class, bool isTransferable, bool isFungible, bool isClonable, uint balance, bytes memory data)
     external 
     nonReentrant {
-        require(logic == msg.sender, "Sentinel: only logic must grant its own keys");
+        _verify(msg.sender, address(this), "grantKey(address,address,string,uint32,uint32,Class,bool,bool,bool,bytes)");
         _grantKey(to, logic, signature, granted, expiration, class, isTransferable, isFungible, isClonable, balance, data);
     }
 
+    /**
+     * @dev Grants a key to a specific role.
+     * @param role The role to which the key is being granted.
+     * @param logic The logic address associated with the key.
+     * @param signature The signature associated with the key.
+     * @param granted The timestamp when the key is granted.
+     * @param expiration The timestamp when the key expires.
+     * @param class The class of the key.
+     * @param isTransferable Whether the key is transferable.
+     * @param isFungible Whether the key is fungible.
+     * @param isClonable Whether the key is clonable.
+     * @param balance The balance associated with the key.
+     * @param data Additional data associated with the key.
+     */
     function grantKeyToRole(string memory role, address logic, string memory signature, uint32 granted, uint32 expiration, Class class, bool isTransferable, bool isFungible, bool isClonable, uint balance, bytes memory data)
     external
     nonReentrant {
@@ -1172,13 +1354,25 @@ contract Sentinel is ReentrancyGuard {
         _grantKeyToRole(role, logic, signature, granted, expiration, class, isTransferable, isFungible, isClonable, balance, data);
     }
 
+    /**
+     * @dev Revokes a key from an account.
+     * @param from The account from which the key is being revoked.
+     * @param logic The logic address associated with the key.
+     * @param signature The signature associated with the key.
+     */
     function revokeKey(address from, address logic, string memory signature)
     external
     nonReentrant {
-        require(logic == msg.sender, "Sentinel: only logic must grant its own keys");
+        _verify(msg.sender, address(this), "revokeKey(address,address,string)");
         _revokeKey(from, logic, signature);
     }
 
+    /**
+     * @dev Revokes a key from a specific role.
+     * @param role The role from which the key is being revoked.
+     * @param logic The logic address associated with the key.
+     * @param signature The signature associated with the key.
+     */
     function revokeKeyFromRole(string memory role, address logic, string memory signature)
     external 
     nonReentrant {
@@ -1186,11 +1380,55 @@ contract Sentinel is ReentrancyGuard {
         _revokeKeyFromRole(role, logic, signature);
     }
 
+    /**
+     * @dev Grants a role to an account.
+     * @param role The role to be granted.
+     * @param to The account to which the role is being granted.
+     */
+    function grantRole(string memory role, address to)
+    external
+    nonReentrant {
+        _verify(msg.sender, address(this), "grantRole(string,address)");
+        _grantRole(role, to);
+    }
+
+    /**
+     * @dev Revokes a role from an account.
+     * @param role The role to be revoked.
+     * @param from The account from which the role is being revoked.
+     */
+    function revokeRole(string memory role, address from)
+    external
+    nonReentrant {
+        _verify(msg.sender, address(this), "revokeRole(string,address)");
+        _revokeRole(role, from);
+    }
+
+    /**
+     * @dev Verifies access using an account's key.
+     * @param account The account for which access is being verified.
+     * @param logic The logic address associated with the key.
+     * @param signature The signature associated with the key.
+     */
     function _verify(address account, address logic, string memory signature)
     internal {
         __Sentinel.verify(repository, account, logic, signature);
     }
 
+    /**
+     * @dev Grants a key to an account.
+     * @param to The account to which the key is being granted.
+     * @param logic The logic address associated with the key.
+     * @param signature The signature associated with the key.
+     * @param granted The timestamp when the key is granted.
+     * @param expiration The timestamp when the key expires.
+     * @param class The class of the key.
+     * @param isTransferable Whether the key is transferable.
+     * @param isFungible Whether the key is fungible.
+     * @param isClonable Whether the key is clonable.
+     * @param balance The balance associated with the key.
+     * @param data Additional data associated with the key.
+     */
     function _grantKey(address to, address logic, string memory signature, uint32 granted, uint32 expiration, Class class, bool isTransferable, bool isFungible, bool isClonable, uint balance, bytes memory data)
     internal {
         __Sentinel.encodeAndPushKeyToBytesArray(
@@ -1215,6 +1453,20 @@ contract Sentinel is ReentrancyGuard {
         );
     }
 
+    /**
+     * @dev Grants a key to a specific role.
+     * @param role The role to which the key is being granted.
+     * @param logic The logic address associated with the key.
+     * @param signature The signature associated with the key.
+     * @param granted The timestamp when the key is granted.
+     * @param expiration The timestamp when the key expires.
+     * @param class The class of the key.
+     * @param isTransferable Whether the key is transferable.
+     * @param isFungible Whether the key is fungible.
+     * @param isClonable Whether the key is clonable.
+     * @param balance The balance associated with the key.
+     * @param data Additional data associated with the key.
+     */
     function _grantKeyToRole(string memory role, address logic, string memory signature, uint32 granted, uint32 expiration, Class class, bool isTransferable, bool isFungible, bool isClonable, uint balance, bytes memory data)
     internal {
         __Sentinel.encodeAndPushKeyToBytesArray(
@@ -1239,16 +1491,35 @@ contract Sentinel is ReentrancyGuard {
         );
     }
 
+    /**
+     * @dev Revokes a key from an account.
+     * @param from The account from which the key is being revoked.
+     * @param logic The logic address associated with the key.
+     * @param signature The signature associated with the key.
+     */
     function _revokeKey(address from, address logic, string memory signature)
     internal {
         __Sentinel.decodeAndPullKeyFromBytesArray(repository, keccak256(abi.encode(from, "keys")), logic, signature);
     }
 
+    /**
+     * @dev Revokes a key from a specific role.
+     * @param role The role from which the key is being revoked.
+     * @param logic The logic address associated with the key.
+     * @param signature The signature associated with the key.
+     */
     function _revokeKeyFromRole(string memory role, address logic, string memory signature)
     internal {
         __Sentinel.decodeAndPullKeyFromBytesArray(repository, keccak256(abi.encode(role, "keys")), logic, signature);
     }
 
+    /**
+     * @dev Transfers a key from one account to another.
+     * @param from The account from which the key is being transferred.
+     * @param to The account to which the key is being transferred.
+     * @param logic The logic address associated with the key.
+     * @param signature The signature associated with the key.
+     */
     function _transfer(address from, address to, address logic, string memory signature)
     internal {
         uint index;
@@ -1273,9 +1544,37 @@ contract Sentinel is ReentrancyGuard {
         );
     }
 
+    /**
+     * @dev Grants a role to an account.
+     * @param role The role to be granted.
+     * @param to The account to which the role is being granted.
+     */
+    function _grantRole(string memory role, address to)
+    internal {
+        bytes[] memory keys = repository.getBytesArray(keccak256(abi.encode(role, "keys")));
+        for (uint i = 0; i < keys.length; i++) {
+            Key memory key;
+            key = abi.decode(keys[i], (Key));
+            _grantKey(to, key.logic, key.signature, key.timestamp.granted, key.timestamp.expiration, key.class, key.settings.isTransferable, key.settings.isFungible, key.settings.isClonable, key.balance, key.data);
+        }
+        repository.addAddressSet(keccak256(abi.encode(role, "members")), to);
+    }
 
-
-
+    /**
+     * @dev Revokes a role from an account.
+     * @param role The role to be revoked.
+     * @param from The account from which the role is being revoked.
+     */
+    function _revokeRole(string memory role, address from)
+    internal {
+        bytes[] memory keys = repository.getBytesArray(keccak256(abi.encode(role, "keys")));
+        for (uint i = 0; i < keys.length; i++) {
+            Key memory key;
+            key = abi.decode(keys[i], (Key));
+            _revokeKey(from, key.logic, key.signature);
+        }
+        repository.removeAddressSet(keccak256(abi.encode(role, "members")), from);
+    }
 }
 
 /** STORAGE VARS USAGE
