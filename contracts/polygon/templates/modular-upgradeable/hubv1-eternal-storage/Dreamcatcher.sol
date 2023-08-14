@@ -1144,6 +1144,12 @@ contract Sentinel is ReentrancyGuard {
         return repository.getBytesArray(keccak256(abi.encode(account, "keys")));
     }
 
+    function getRoleKeys(string memory role)
+    external view
+    returns (bytes[] memory) {
+        return repository.getBytesArray(keccak256(abi.encode(role, "keys")));
+    }
+
     // anyone can verify if an account has a specific key and that it is valid
     function verify(address account, address logic, string memory signature)
     external 
@@ -1157,6 +1163,27 @@ contract Sentinel is ReentrancyGuard {
     nonReentrant {
         require(logic == msg.sender, "Sentinel: only logic must grant its own keys");
         _grantKey(to, logic, signature, granted, expiration, class, isTransferable, isFungible, isClonable, balance, data);
+    }
+
+    function grantKeyToRole(string memory role, address logic, string memory signature, uint32 granted, uint32 expiration, Class class, bool isTransferable, bool isFungible, bool isClonable, uint balance, bytes memory data)
+    external
+    nonReentrant {
+        _verify(msg.sender, address(this), "grantKeyToRole(string,address,string,uint32,uint32,Class,bool,bool,bool,uint,bytes))");
+        _grantKeyToRole(role, logic, signature, granted, expiration, class, isTransferable, isFungible, isClonable, balance, data);
+    }
+
+    function revokeKey(address from, address logic, string memory signature)
+    external
+    nonReentrant {
+        require(logic == msg.sender, "Sentinel: only logic must grant its own keys");
+        _revokeKey(from, logic, signature);
+    }
+
+    function revokeKeyFromRole(string memory role, address logic, string memory signature)
+    external 
+    nonReentrant {
+        _verify(msg.sender, address(this), "revokeKeyFromRole(string,address,string)");
+        _revokeKeyFromRole(role, logic, signature);
     }
 
     function _verify(address account, address logic, string memory signature)
@@ -1188,9 +1215,38 @@ contract Sentinel is ReentrancyGuard {
         );
     }
 
+    function _grantKeyToRole(string memory role, address logic, string memory signature, uint32 granted, uint32 expiration, Class class, bool isTransferable, bool isFungible, bool isClonable, uint balance, bytes memory data)
+    internal {
+        __Sentinel.encodeAndPushKeyToBytesArray(
+            repository,
+            keccak256(abi.encode(role, "keys")),
+            Key({
+                logic: logic,
+                signature: signature,
+                timestamp: Timestamp({
+                    granted: granted,
+                    expiration: expiration
+                }),
+                class: class,
+                settings: Settings({
+                    isTransferable: isTransferable,
+                    isFungible: isFungible,
+                    isClonable: isClonable
+                }),
+                balance: balance,
+                data: data
+            })
+        );
+    }
+
     function _revokeKey(address from, address logic, string memory signature)
     internal {
         __Sentinel.decodeAndPullKeyFromBytesArray(repository, keccak256(abi.encode(from, "keys")), logic, signature);
+    }
+
+    function _revokeKeyFromRole(string memory role, address logic, string memory signature)
+    internal {
+        __Sentinel.decodeAndPullKeyFromBytesArray(repository, keccak256(abi.encode(role, "keys")), logic, signature);
     }
 
     function _transfer(address from, address to, address logic, string memory signature)
