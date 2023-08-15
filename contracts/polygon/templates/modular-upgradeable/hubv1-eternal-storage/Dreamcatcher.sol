@@ -11,16 +11,27 @@ import "contracts/polygon/deps/openzeppelin/token/ERC721/ERC721.sol";
 import "contracts/polygon/deps/openzeppelin/utils/structs/EnumerableSet.sol";
 
 /** storage usage
-    bytes32 -> address,"keys" -> _bytesArray
-    bytes32 -> string,"keys" -> _bytesArray **roles
-    bytes32 -> string,"members" -> _bytesArray **roles
-    bytes32 -> "governor" -> _address
+    bytes32 > address,"keys"       > _bytesArray
+    bytes32 > string,"keys"        > _bytesArray **roles
+    bytes32 > string,"members"     > _bytesArray **roles
+    bytes32 > "governor"           > _address
+    bytes32 > "durationTimelock"   > _uint
+    bytes32 > "durationTimeout"    > _uint
+    bytes32 > "requests"           > _bytesArray
+    bytes32 > "approveAll"         > _bool
  */
 
 enum Class {
     STANDARD,
     CONSUMABLE,
     TIMED
+}
+
+enum RequestStage {
+    PENDING,
+    APPROVED,
+    REJECTED,
+    EXECUTED
 }
 
 struct Timestamp {
@@ -41,6 +52,19 @@ struct Key {
     Class class;
     Settings settings;
     uint balance;
+    bytes data;
+}
+
+struct Request {
+    string message;
+    address[] targets;
+    string[] signatures;
+    bytes[] args;
+    uint created;
+    uint endTimelock;
+    uint endTimeout;
+    address creator;
+    RequestStage stage;
     bytes data;
 }
 
@@ -1090,8 +1114,7 @@ library __SentinelToolkit {
                     index = i;
                     success = true;
                     break;
-                }
-                
+                } 
             }
         }
         return (success, index, key);
@@ -1209,6 +1232,22 @@ library __Sentinel {
             require(repository.getAddress(keccak256(abi.encode("governor"))) != address(0), "__Sentinel: governor is address zero");
         }
     }
+}
+
+interface ISentinel {
+    function getKeys(address account) external view returns (bytes[] memory);
+    function getRoleKeys(string memory role) external view returns (bytes[] memory);
+    function getRoleMembers(string memory role) external view returns (address[] memory);
+    function getRoleSize(string memory role) external view returns (uint);
+    function init() external;
+    function verify(address account, address logic, string memory signature) external;
+    function transfer(address from, address to, address logic, string memory signature) external;
+    function grantKey(address to, address logic, string memory signature, uint32 granted, uint32 expiration, Class class, bool isTransferable, bool isFungible, bool isClonable, uint balance, bytes memory data) external;
+    function grantKeyToRole(string memory role, address logic, string memory signature, uint32 granted, uint32 expiration, Class class, bool isTransferable, bool isFungible, bool isClonable, uint balance, bytes memory data) external;
+    function revokeKey(address from, address logic, string memory signature) external;
+    function revokeKeyFromRole(string memory role, address logic, string memory signature) external;
+    function grantRole(string memory role, address to) external;
+    function revokeRole(string memory role, address from) external;
 }
 
 /**
@@ -1528,7 +1567,7 @@ contract Sentinel is ReentrancyGuard {
         (success, index, key) = __SentinelToolkit.getKeyIndexByLogSigFromBytesArray(repository, keccak256(abi.encode(from, "keys")), logic, signature);
         require(success, "Sentinel: key with given logic & signature was not found");
         require(key.settings.isTransferable, "Sentinel: !key.settings.isTransferable");
-        _revokeKey(from, logic, signature);
+        if (!key.settings.isClonable) { _revokeKey(from, logic, signature); }
         _grantKey(
             to, 
             key.logic, 
@@ -1577,23 +1616,18 @@ contract Sentinel is ReentrancyGuard {
     }
 }
 
-/** STORAGE VARS USAGE
-    "durationTimelock"           _uint
-    "durationTimeout"            _uint
-    "requests"                   _bytesArray
-    "selfApprove"                _bool
+/**
 
     | o ---------- lock
     | o ------------------------ out
     | o           -------------- window of execution
     
-    **request is pending during lock period
-    **request can be executed after lock but before timeout
-    **request cannot be executed after timeout
-    **request can only be executed once
-    **timelock can never be less than 3600 seconds
-    **timeout can never be less than timelock + 3600 seconds
-    **d stands for decoded ie. dArgs is decoded args
+    1) request is pending during lock period
+    2) request can be executed after lock but before timeout
+    3) request cannot be executed after timeout
+    4) request can only be executed once
+    5) timelock can never be less than 3600 seconds
+    6) timeout can never be less than timelock + 3600 seconds
 
     pending -> approved -> executed
     pending -> rejected
@@ -1605,6 +1639,72 @@ contract Sentinel is ReentrancyGuard {
     **request can only be approved or rejected during timelock
     **if self approve is true then all requests are automatically approved
  */
+contract Timelock {
+    IRepository repository;
+    ISentinel sentinel;
+    address private _deployer;
+    bool private _init;
+
+    constructor(address repository_, address sentinel_) {
+        repository = IRepository(repository_);
+        sentinel = ISentinel(sentinel_);
+        _deployer = msg.sender;
+    }
+
+    function getRequests()
+    external view
+    returns (bytes[] memory) {
+        return repository.getBytesArray(keccak256(abi.encode("requests")));
+    }
+
+    function init(uint durationTimelock, uint durationTimeout, bool approveAll)
+    external {
+        require(msg.sender == _deployer, "Sentinel: only deployer can init");
+        require(!_init, "Sentinel: _init");
+        repository.setAddress(keccak256(abi.encode("governor")), address(this));
+        repository.setUint(keccak256(abi.encode("durationTimelock")), durationTimelock);
+        repository.setUint(keccak256(abi.encode("durationTimeout")), durationTimeout);
+        repository.setBool(keccak256(abi.encode("approveAll")), approveAll);
+        _init = true;
+    }
+
+    function queue(string memory message, address[] memory targets, string[] memory signatures, bytes[] memory args, bytes memory data)
+    external {
+        sentinel.verify(msg.sender, address(this), "queue(address[],string[],bytes[],bytes)");
+        _queue(message, targets, signatures, args, data);
+    }
+
+    function _queue(string memory message, address[] memory targets, string[] memory signatures, bytes[] memory args, bytes memory data)
+    internal {
+        uint now_ = block.timestamp;
+        RequestStage stage;
+        if (repository.getBool(keccak256(abi.encode("approveAll")))) { stage = RequestStage.APPROVED; }
+        else { stage = RequestStage.PENDING; }
+        repository.pushBytesArray(
+            keccak256(abi.encode("requests")),
+            abi.encode(
+                Request({
+                    message: message,
+                    targets: targets,
+                    signatures: signatures,
+                    args: args,
+                    created: now_,
+                    endTimelock: now_ + repository.getUint(keccak256(abi.encode("durationTimelock"))),
+                    endTimeout: now_ + repository.getUint(keccak256(abi.encode("durationTimeout"))),
+                    creator: msg.sender,
+                    stage: stage,
+                    data: data
+                })
+            )
+        );
+    }
+
+    function _approve(uint index)
+    internal {
+        
+    }
+
+}
 
 
 /** STORAGE VARS USAGE
