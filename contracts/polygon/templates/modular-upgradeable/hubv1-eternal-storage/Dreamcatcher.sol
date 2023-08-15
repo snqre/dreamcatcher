@@ -1311,8 +1311,7 @@ contract Sentinel is ReentrancyGuard {
     /**
      * @dev Initializes the Sentinel contract with predefined permissions and roles.
      */
-    function init()
-    external {
+    function init() external {
         require(msg.sender == _deployer, "Sentinel: only deployer can init");
         require(!_init, "Sentinel: _init");
         bytes memory emptyBytes;
@@ -1616,6 +1615,141 @@ contract Sentinel is ReentrancyGuard {
     }
 }
 
+contract Sentinelv2 is ReentrancyGuard, Pausable {
+    IRepository repository;
+    address private _deployer;
+    bool private _initialized;
+
+    modifier onlyWhenInitialized() {
+        _mustBeInitialized();
+        _;
+    }
+
+    constructor(address repository_) {
+        repository = IRepository(repository_);
+        _deployer = msg.sender;
+        _initialized = false;
+    }
+
+    function getKeys(address account) external view onlyWhenInitialized returns (bytes[] memory) {
+        return repository.getBytesArray(_account(account, "keys"));
+    }
+
+    function getKeysRole(string memory role) external view onlyWhenInitialized returns (bytes[] memory) {
+        return repository.getBytesArray(_role(role, "keys"));
+    }
+
+    function getRoleMembers(string memory role) external view onlyWhenInitialized returns (address[] memory) {
+        return repository.getAddressSet(_role(role, "members"));
+    }
+
+    function getRoleCount(string memory role) external view onlyWhenInitialized returns (uint) {
+        return repository.lengthAddressSet(_role(role, "members"));
+    }
+
+    /// anyone can call this during their contract deployment
+    function forge(Key[] memory keys) external {
+        _forge(keys);
+    }
+
+    
+
+    function _account(address account, string memory property) internal pure returns (bytes32) {
+        return keccak256(abi.encode(account, property));
+    }
+
+    function _role(string memory role, string memory property) internal pure returns (bytes32) {
+        return keccak256(abi.encode(role, property));
+    }
+
+    function _mustBeInitialized() internal view {
+        require(_initialized, "Sentinelv2: Sentinelv2 has not been initialized");
+    }
+
+    function _mustNotBeInitialized() internal view {
+        require(!_initialized, "Sentinelv2: Sentinelv2 has been initialized");
+    }
+
+    /// must be initialized only when sentinel has been set as logic within repository
+    function _initialize() internal {
+        _mustNotBeInitialized();
+        Key[10] memory keys;
+        keys[0].signature = "mintKeys";
+    }
+
+    /**
+        use _forge to grant a deployed contract ownership of its own keys on during deployment
+        use to grant copies of its keys to relevant parties or contracts
+     */
+    function _forge(Key[] memory keys) internal {
+        // override
+        for (uint i = 0; i < keys.length; i++) {
+            keys[i].logic = msg.sender;
+            keys[i].timestamp.granted = 0;
+            keys[i].timestamp.expiration = 0;
+            keys[i].class = Class.STANDARD;
+            keys[i].settings.isTransferable = true;
+            keys[i].settings.isFungible = false;
+            keys[i].settings.isClonable = true;
+            keys[i].balance = 0;
+            delete keys[i].data;
+            
+            _grantKey(
+                msg.sender,
+                keys[i].logic,
+                keys[i].signature,
+                keys[i].timestamp.granted,
+                keys[i].timestamp.expiration,
+                keys[i].class,
+                keys[i].settings.isTransferable,
+                keys[i].settings.isFungible,
+                keys[i].settings.isClonable,
+                keys[i].balance,
+                keys[i].data
+            );
+        }
+    }
+
+
+    function _grantKey(address to, address logic, string memory signature, uint32 granted, uint32 expiration, Class class, bool isTransferable, bool isFungible, bool isClonable, uint balance, bytes memory data) internal {
+        __Sentinel.encodeAndPushKeyToBytesArray(
+            repository,
+            _account(to, "keys"),
+            Key({
+                logic: logic,
+                signature: signature,
+                timestamp: Timestamp({
+                    granted: granted,
+                    expiration: expiration
+                }),
+                class: class,
+                settings: Settings({
+                    isTransferable: isTransferable,
+                    isFungible: isFungible,
+                    isClonable: isClonable
+                }),
+                balance: balance,
+                data: data
+            })
+        );
+    }
+
+    function _revokeKey(address from, address logic, string memory signature) internal {
+        __Sentinel.decodeAndPullKeyFromBytesArray(repository, _account(from, "keys"), logic, signature);
+    }
+
+
+}
+
+interface ITimelock {
+    function getRequests() external view returns (bytes[] memory);
+    function init(uint durationTimelock, uint durationTimeout, bool approveAll) external;
+    function queue(string memory message, address[] memory targets, string[] memory signatures, bytes[] memory args, bytes memory data) external;
+    function approve(uint index) external;
+    function reject(uint index) external;
+    function execute(uint index) external returns (bool[] memory, bytes[] memory);
+}
+
 /**
 
     | o ---------- lock
@@ -1674,6 +1808,25 @@ contract Timelock {
         _queue(message, targets, signatures, args, data);
     }
 
+    function approve(uint index)
+    external {
+        sentinel.verify(msg.sender, address(this), "approve(uint)");
+        _approve(index);
+    }
+
+    function reject(uint index)
+    external {
+        sentinel.verify(msg.sender, address(this), "reject(uint)");
+        _reject(index);
+    }
+
+    function execute(uint index)
+    external 
+    returns (bool[] memory, bytes[] memory) {
+        sentinel.verify(msg.sender, address(this), "execute(uint)");
+        return _execute(index);
+    }
+
     function _queue(string memory message, address[] memory targets, string[] memory signatures, bytes[] memory args, bytes memory data)
     internal {
         uint now_ = block.timestamp;
@@ -1701,11 +1854,62 @@ contract Timelock {
 
     function _approve(uint index)
     internal {
-        
+        Request memory request;
+        bytes memory encodedRequest = repository.indexBytesArray(keccak256(abi.encode("requests")), index);
+        request = abi.decode(encodedRequest, (Request));
+        uint now_ = block.timestamp;
+        require(now_ <= request.endTimelock, "Timelock: request cannot be approved after timelock is over");
+        require(now_ >= request.created, "Timelock: request cannot be approved before it is created");
+        require(request.stage == RequestStage.PENDING, "Timelock: request must be pending");
+        request.stage = RequestStage.APPROVED;
+        repository.setIndexBytesArray(
+            keccak256(abi.encode("requests")),
+            index,
+            abi.encode(request)
+        );
     }
 
-}
+    function _reject(uint index)
+    internal {
+        Request memory request;
+        bytes memory encodedRequest = repository.indexBytesArray(keccak256(abi.encode("requests")), index);
+        request = abi.decode(encodedRequest, (Request));
+        uint now_ = block.timestamp;
+        require(now_ <= request.endTimelock, "Timelock: request cannot be rejected after timelock is over");
+        require(now_ >= request.created, "Timelock: request cannot be rejected before it is created");
+        require(request.stage == RequestStage.PENDING, "Timelock: request must be pending");
+        request.stage = RequestStage.REJECTED;
+        repository.setIndexBytesArray(
+            keccak256(abi.encode("requests")),
+            index,
+            abi.encode(request)
+        );
+    }
 
+    function _execute(uint index)
+    internal 
+    returns (bool[] memory, bytes[] memory) {
+        Request memory request;
+        bytes memory encodedRequest = repository.indexBytesArray(keccak256(abi.encode("requests")), index);
+        request = abi.decode(encodedRequest, (Request));
+        uint now_ = block.timestamp;
+        require(now_ > request.endTimelock, "Timelock: request cannot be executed before timelock is over");
+        require(now_ < request.endTimeout, "Timelock: request cannot be executed after timedout");
+        require(request.stage == RequestStage.APPROVED, "Timelock: request must be approved");
+        request.stage = RequestStage.EXECUTED;
+        repository.setIndexBytesArray(
+            keccak256(abi.encode("requests")),
+            index,
+            abi.encode(request)
+        );
+        bool[] memory successes;
+        bytes[] memory responses;
+        for (uint i = 0; i < request.targets.length; i++) {
+            (successes[i], responses[i]) = request.targets[i].call(abi.encodeWithSignature(request.signatures[i], request.args[i]));
+        }
+        return (successes, responses);
+    }
+}
 
 /** STORAGE VARS USAGE
 
