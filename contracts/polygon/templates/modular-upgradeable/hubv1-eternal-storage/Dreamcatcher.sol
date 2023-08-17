@@ -22,6 +22,7 @@ import "contracts/polygon/deps/openzeppelin/utils/structs/EnumerableSet.sol";
  */
 
 enum Class {
+    SOURCE,
     STANDARD,
     CONSUMABLE,
     TIMED
@@ -388,9 +389,7 @@ contract Storage is IStorage {
     * - The admin address must not be an existing admin address.
     * Emits an {AddAdmin} event.
     */
-    function addAdmin(address admin) 
-    external 
-    onlyAdmin {
+    function addAdmin(address admin) external onlyAdmin {
         require(admin != address(0), "Storage: admin is address zero");
         require(!_logics.contains(admin), "Storage: admin is logic");
         require(!_admins.contains(admin), "Storage: already admin");
@@ -791,13 +790,6 @@ contract Storage is IStorage {
         emit DeleteStringArray(variable);
     }
 
-    /**
-    * @dev Deletes an entire bytes array stored in the contract storage.
-    * @param variable The identifier of the bytes array variable to be deleted.
-    * Requirements:
-    * - The function caller must be an authorized logic contract.
-    * Emits a {DeleteBytesArray} event.
-    */
     function deleteBytesArray(bytes32 variable)
     external
     onlyLogic {
@@ -805,13 +797,6 @@ contract Storage is IStorage {
         emit DeleteBytesArray(variable);
     }
 
-    /**
-    * @dev Deletes an entire uint array stored in the contract storage.
-    * @param variable The identifier of the uint array variable to be deleted.
-    * Requirements:
-    * - The function caller must be an authorized logic contract.
-    * Emits a {DeleteUintArray} event.
-    */
     function deleteUintArray(bytes32 variable)
     external
     onlyLogic {
@@ -819,13 +804,6 @@ contract Storage is IStorage {
         emit DeleteUintArray(variable);
     }
 
-    /**
-    * @dev Deletes an entire int array stored in the contract storage.
-    * @param variable The identifier of the int array variable to be deleted.
-    * Requirements:
-    * - The function caller must be an authorized logic contract.
-    * Emits a {DeleteIntArray} event.
-    */
     function deleteIntArray(bytes32 variable)
     external
     onlyLogic {
@@ -833,13 +811,6 @@ contract Storage is IStorage {
         emit DeleteIntArray(variable);
     }
 
-    /**
-    * @dev Deletes an entire address array stored in the contract storage.
-    * @param variable The identifier of the address array variable to be deleted.
-    * Requirements:
-    * - The function caller must be an authorized logic contract.
-    * Emits a {DeleteAddressArray} event.
-    */
     function deleteAddressArray(bytes32 variable)
     external
     onlyLogic {
@@ -847,13 +818,6 @@ contract Storage is IStorage {
         emit DeleteAddressArray(variable);
     }
 
-    /**
-    * @dev Deletes an entire bool array stored in the contract storage.
-    * @param variable The identifier of the bool array variable to be deleted.
-    * Requirements:
-    * - The function caller must be an authorized logic contract.
-    * Emits a {DeleteBoolArray} event.
-    */
     function deleteBoolArray(bytes32 variable)
     external
     onlyLogic {
@@ -861,13 +825,6 @@ contract Storage is IStorage {
         emit DeleteBoolArray(variable);
     }
 
-    /**
-    * @dev Deletes an entire bytes32 array stored in the contract storage.
-    * @param variable The identifier of the bytes32 array variable to be deleted.
-    * Requirements:
-    * - The function caller must be an authorized logic contract.
-    * Emits a {DeleteBytes32Array} event.
-    */
     function deleteBytes32Array(bytes32 variable)
     external
     onlyLogic {
@@ -890,14 +847,6 @@ contract Storage is IStorage {
         emit AddAddressSet(variable, data);
     }
 
-    /**
-    * @dev Adds a uint value to a set stored in the contract storage.
-    * @param variable The identifier of the uint set variable.
-    * @param data The uint value to be added to the set.
-    * Requirements:
-    * - The function caller must be an authorized logic contract.
-    * Emits an {AddUintSet} event.
-    */
     function addUintSet(bytes32 variable, uint data)
     external
     onlyLogic {
@@ -905,14 +854,6 @@ contract Storage is IStorage {
         emit AddUintSet(variable, data);
     }
 
-    /**
-    * @dev Adds a bytes32 value to a set stored in the contract storage.
-    * @param variable The identifier of the bytes32 set variable.
-    * @param data The bytes32 value to be added to the set.
-    * Requirements:
-    * - The function caller must be an authorized logic contract.
-    * Emits an {AddBytes32Set} event.
-    */
     function addBytes32Set(bytes32 variable, bytes32 data)
     external
     onlyLogic {
@@ -920,14 +861,6 @@ contract Storage is IStorage {
         emit AddBytes32Set(variable, data);
     }
 
-    /**
-    * @dev Removes an address value from a set stored in the contract storage.
-    * @param variable The identifier of the address set variable.
-    * @param data The address value to be removed from the set.
-    * Requirements:
-    * - The function caller must be an authorized logic contract.
-    * Emits a {RemoveAddressSet} event.
-    */
     function removeAddressSet(bytes32 variable, address data)
     external
     onlyLogic {
@@ -935,14 +868,6 @@ contract Storage is IStorage {
         emit RemoveAddressSet(variable, data);
     }
 
-    /**
-    * @dev Removes a uint value from a set stored in the contract storage.
-    * @param variable The identifier of the uint set variable.
-    * @param data The uint value to be removed from the set.
-    * Requirements:
-    * - The function caller must be an authorized logic contract.
-    * Emits a {RemoveUintSet} event.
-    */
     function removeUintSet(bytes32 variable, uint data)
     external
     onlyLogic {
@@ -950,14 +875,6 @@ contract Storage is IStorage {
         emit RemoveUintSet(variable, data);
     }
 
-    /**
-    * @dev Removes a bytes32 value from a set stored in the contract storage.
-    * @param variable The identifier of the bytes32 set variable.
-    * @param data The bytes32 value to be removed from the set.
-    * Requirements:
-    * - The function caller must be an authorized logic contract.
-    * Emits a {RemoveBytes32Set} event.
-    */
     function removeBytes32Set(bytes32 variable, bytes32 data)
     external
     onlyLogic {
@@ -1062,6 +979,8 @@ library __Match {
     }
 }
 
+
+
 /**
  * @title SentinelToolkit Library
  * @dev A library containing utility functions for verifying and manipulating keys.
@@ -1152,17 +1071,21 @@ library __SentinelToolkit {
      */
     function verifyKey(IRepository repository, address account, uint index, Key memory key)
     external {
+        
         bool success;
         if (key.class == Class.STANDARD) { success = true; }
+
         else if (key.class == Class.TIMED) {
             require(block.timestamp >= key.timestamp.granted, "__SentinelToolkit: block.timestamp < key.timestamp.granted");
             require(block.timestamp < key.timestamp.expiration, "__SentinelToolkit: block.timestamp >= key.timestamp.expiration");
             success = true;
+
         } else if (key.class == Class.CONSUMABLE) {
             require(key.balance >= 1, "__SentinelToolkit: insufficient balance");
             key.balance -= 1;
             repository.setIndexBytesArray(keccak256(abi.encode(account, "keys")), index, abi.encode(key));
             success =true;
+
         } else {
             revert("__SentinelToolkit: unrecognized key.class");
         }
