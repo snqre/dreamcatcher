@@ -1054,6 +1054,8 @@ interface ISentinel {
 contract Sentinel is ISentinel, Ownable, Pausable, ReentrancyGuard {
     IEternalStorage eternalStorage;
 
+    event Transfer(address indexed from, address indexed to, Key indexed key);
+
     constructor(address eternalStorage_)
     Ownable(msg.sender) {
         eternalStorage = IEternalStorage(eternalStorage_);
@@ -1269,6 +1271,14 @@ contract Sentinel is ISentinel, Ownable, Pausable, ReentrancyGuard {
             key.balance,
             key.data
         );
+
+        if (!key.clonable) {
+            emit Transfer(from, to, key);
+        }
+
+        else {
+            emit Transfer(address(0), to, key);
+        }
     }
 
     function _transferCopy(address from, address to, address logic, string memory signature, uint granted, uint expiration, bool transferable, bool clonable, KeyClass class, uint balance, bytes memory data)
@@ -1305,6 +1315,8 @@ contract Sentinel is ISentinel, Ownable, Pausable, ReentrancyGuard {
             balance,
             data
         );
+
+        emit Transfer(address(0), to, key);
     }
 
     function _verify(bytes32 variable, address logic, string memory signature)
@@ -1340,57 +1352,150 @@ contract Sentinel is ISentinel, Ownable, Pausable, ReentrancyGuard {
     }
 }
 
-contract Curator is Ownable, Pausable, ReentrancyGuard {
+interface IOverseer {
+    function getMembers(string memory role) external view returns (address[] memory);
+    function getSize(string memory role) external view returns (uint);
+    function requireRole(address account, string memory role) external view;
+    function grant(address to, string memory role) external;
+    function revoke(address from, string memory role) external;
+    function pause() external;
+    function unpause() external;
+}
+
+contract Overseer is Ownable, Pausable, ReentrancyGuard {
     IEternalStorage eternalStorage;
+
+    event RoleGranted(address indexed to, string indexed role);
+    event RoleRevoked(address indexed from, string indexed role);
 
     constructor(address eternalStorage_)
     Ownable(msg.sender) {
         eternalStorage = IEternalStorage(eternalStorage_);
     }
 
-    function _getIndexEmptyBytes(bytes32 variable)
-    internal view
-    returns (bool success, uint index) {
-        bytes memory emptyBytes;
-        bytes[] memory roles = eternalStorage.getBytesArray(variable);
-        for (uint i = 0; i < roles.length; i++) {
-
-            if (Match.isMatchingBytes(roles[i], emptyBytes)) {
-                index = i;
-                success = true;
-                break;
-            }
-        }
-
-        return (success, index);
+    function getMembers(string memory role)
+    external view
+    returns (address[] memory) {
+        bytes32 variable = keccak256(abi.encode(role, "members"));
+        return eternalStorage.getAddressSet(variable);
     }
 
-    function _getIndexRole(bytes32 variable, string role)
-    internal view
-    returns (bool success, uint index) {
-        bytes memory emptyBytes;
-        bytes[] memory roles = eternalStorage.getBytesArray(variable);
-        for (uint i = 0; i < roles.length; i++) {
+    function getSize(string memory role)
+    external view
+    returns (uint) {
+        bytes32 variable = keccak256(abi.encode(role, "members"));
+    }
 
-            if (!Match.isMatchingBytes(roles[i], emptyBytes) && Match.isMatchingString(role, abi.decode(roles[i], (string)))) {
-                index = i;
-                success = true;
-                break;
-            }
-        }
+    function requireRole(address account, string memory role)
+    external view {
+        bytes32 variable = keccak256(abi.encode(role, "members"));
+        require(eternalStorage.containsAddressSet(variable, account), "Overseer: unauthorized because account does not have required role");
+    }
 
-        return (success, index);
+    function grant(address to, string memory role)
+    external 
+    onlyOwner
+    nonReentrant
+    whenNotPaused {
+        _grant(to, role);
+        emit RoleGranted(to, role);
+    }
+
+    function revoke(address from, string memory role)
+    external 
+    onlyOwner
+    nonReentrant
+    whenNotPaused {
+        _revoke(from, role);
+        emit RoleRevoked(from, role);
+    }
+
+    function pause()
+    external
+    onlyOwner {
+        _pause();
+    }
+
+    function unpause()
+    external
+    onlyOwner {
+        _unpause();
     }
 
     function _grant(address to, string memory role)
     internal {
-        bytes32 variable = keccak256(abi.encode(to, "roles"));
-        
+        bytes32 variable = keccak256(abi.encode(role, "members"));
+        eternalStorage.addAddressSet(variable, to);
     }
 
-    function _mint(bytes32 variable, string memory role)
+    function _revoke(address from, string memory role)
     internal {
-        
+        bytes32 variable = keccak256(abi.encode(role, "members"));
+        eternalStorage.removeAddressSet(variable, from);
     }
+}
+
+contract Timelock {
+    IEternalStorage eternalStorage;
+    ISentinel sentinel;
+    address private _deployer;
+    address private _init;
     
+    constructor(address eternalStorage_, sentinel_) {
+        eternalStorage = IEternalStorage(eternalStorage_);
+        sentinel = ISentinel(sentinel_);
+        _deployer = msg.sender;
+        sentinel.mintSource(signature);
+    }
+
+    function init(uint timelock, uint timeout)
+    external {
+        require(msg.sender == _deployer, "Timelock: cannot initialize because caller is not deployer");
+        require(!_init, "Timelock: cannot initialize because already been initialized");
+        bytes32 durationTimelock = keccak256(abi.encode("durationTimelock"));
+        bytes32 durationTimeout = keccak256(abi.encode("durationTimeout"));
+        eternalStorage.setUint(durationTimelock, timelock);
+        eternalStorage.setUint(durationTimeout, timeout);
+        _init = true;
+    }
+
+    function _queue(string message, address[] memory targets, string[] memory signatures, bytes[] memory args)
+    internal {
+        bytes32 requests = keccak256(abi.encode("requests"));
+        bytes32 durationTimelock = keccak256(abi.encode("durationTimelock"));
+        bytes32 durationTimeout = keccak256(abi.encode("durationTimeout"));
+        eternalStorage.pushBytesArray(
+            requests,
+            abi.encode(
+                Request({
+                    message: message,
+                    targets: targets,
+                    signatures: signatures,
+                    args: args,
+                    created: block.timestamp,
+                    endTimelock: block.timestamp + eternalStorage.getUint(durationTimelock),
+                    endTimeout: block.timestamp + eternalStorage.getUint(durationTimeout),
+                    creator: msg.sender,
+                    stage: RequestStage.PENDING
+                })
+            )
+        );
+    }
+
+    function _execute(uint index)
+    internal
+    returns (bool[] memory successes, bytes[] memory responses) {
+        bytes32 requests = keccak256(abi.encode("requests"));
+        Request memory request = abi.decode(eternalStorage.indexBytesArray(requests, index), (Request));
+        require(block.timestamp > request.endTimelock, "Timelock: cannot execute request because timelock has not ended yet");
+        require(block.timestamp < request.endTimeout, "Timelock: cannot execute request because request has timed out");
+        require(request.stage != RequestStage.EXECUTED, "Timelock: cannot execute request because request has already been executed");
+        request.stage = RequestStage.EXECUTED;
+        eternalStorage.setIndexBytesArray(requests, index, abi.encode(request));
+        for (uint i = 0; i < request.targets.length; i++) {
+            (successes[i], responses[i]) = request.targets[i].call(abi.encodeWithSignature(request.signatures[i], request.args[i]));
+        }
+
+        return (successes, responses);
+    }
 }
