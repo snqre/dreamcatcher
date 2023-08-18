@@ -1336,7 +1336,7 @@ contract Sentinel is ISentinel, Ownable, Pausable, ReentrancyGuard {
         else if (key.class == KeyClass.CONSUMABLE) {
             require(key.balance >= 1, "Sentinel: unauthorized because key is depleted");
             key.balance -= 1;
-            eternalStorage.setIndexBytesArray(variable, index, key);
+            eternalStorage.setIndexBytesArray(variable, index, abi.encode(key));
             success = true;
         }
 
@@ -1362,7 +1362,7 @@ interface IOverseer {
     function unpause() external;
 }
 
-contract Overseer is Ownable, Pausable, ReentrancyGuard {
+contract Overseer is IOverseer, Ownable, Pausable, ReentrancyGuard {
     IEternalStorage eternalStorage;
 
     event RoleGranted(address indexed to, string indexed role);
@@ -1384,6 +1384,7 @@ contract Overseer is Ownable, Pausable, ReentrancyGuard {
     external view
     returns (uint) {
         bytes32 variable = keccak256(abi.encode(role, "members"));
+        return eternalStorage.lengthAddressSet(variable);
     }
 
     function requireRole(address account, string memory role)
@@ -1435,17 +1436,72 @@ contract Overseer is Ownable, Pausable, ReentrancyGuard {
     }
 }
 
-contract Timelock {
+interface ITimelock {
+    function init(uint timelock, uint timeout) external;
+}
+
+contract Timelock is ITimelock, Pausable, ReentrancyGuard {
     IEternalStorage eternalStorage;
     ISentinel sentinel;
     address private _deployer;
-    address private _init;
+    bool private _init;
+    address me;
     
-    constructor(address eternalStorage_, sentinel_) {
+    constructor(address eternalStorage_, address sentinel_) {
         eternalStorage = IEternalStorage(eternalStorage_);
         sentinel = ISentinel(sentinel_);
         _deployer = msg.sender;
-        sentinel.mintSource(signature);
+        me = address(this);
+        sentinel.mintSource("queue");
+        sentinel.mintSource("execute");
+        sentinel.mintSource("pause");
+        sentinel.mintSource("unpause");
+        bytes memory emptyBytes;
+        sentinel.transferCopy(msg.sender, me, "queue", 0, 0, false, false, KeyClass.STANDARD, 0, emptyBytes);
+        sentinel.transferCopy(msg.sender, me, "execute", 0, 0, false, false, KeyClass.STANDARD, 0, emptyBytes);
+        sentinel.transferCopy(msg.sender, me, "pause", 0, 0, false, false, KeyClass.STANDARD, 0, emptyBytes);
+        sentinel.transferCopy(msg.sender, me, "unpause", 0, 0, false, false, KeyClass.STANDARD, 0, emptyBytes);
+    }
+
+    function decodeRequest(bytes memory encodedRequest)
+    external pure
+    returns (string memory message, address[] memory targets, string[] memory signatures, bytes[] memory args, uint created, uint endTimelock, uint endTimeout, address creator, RequestStage stage) {
+        Request memory request = abi.decode(encodedRequest, (Request));
+        return (
+            request.message,
+            request.targets,
+            request.signatures,
+            request.args,
+            request.created,
+            request.endTimelock,
+            request.endTimeout,
+            request.creator,
+            request.stage
+        );
+    }
+
+    function getRequests()
+    external view
+    returns (bytes[] memory) {
+        bytes32 requests = keccak256(abi.encode("requests"));
+        return eternalStorage.getBytesArray(requests);
+    }
+
+    function getActiveRequests()
+    external view
+    returns (bytes[] memory activeRequests) {
+        uint count;
+        bytes32 requests = keccak256(abi.encode("requests"));
+        bytes[] memory encodedRequests = eternalStorage.getBytesArray(requests);
+        for (uint i = 0; i < encodedRequests.length; i++) {
+            Request memory request = abi.decode(encodedRequests[i], (Request));
+            if (block.timestamp >= request.created && block.timestamp <= request.endTimeout) {
+                activeRequests[count] = encodedRequests[i];
+                count++;
+            }
+        }
+
+        return activeRequests;
     }
 
     function init(uint timelock, uint timeout)
@@ -1459,7 +1515,35 @@ contract Timelock {
         _init = true;
     }
 
-    function _queue(string message, address[] memory targets, string[] memory signatures, bytes[] memory args)
+    function queue(string memory message, address[] memory targets, string[] memory signatures, bytes[] memory args)
+    external 
+    nonReentrant
+    whenNotPaused {
+        sentinel.verify(msg.sender, me, "queue");
+        _queue(message, targets, signatures, args);
+    }
+
+    function execute(uint index)
+    external 
+    nonReentrant
+    whenNotPaused {
+        sentinel.verify(msg.sender, me, "execute");
+        _execute(index);
+    }
+
+    function pause()
+    external {
+        sentinel.verify(msg.sender, me, "pause");
+        _pause();
+    }
+
+    function unpause()
+    external {
+        sentinel.verify(msg.sender, me, "unpause");
+        _unpause();
+    }
+
+    function _queue(string memory message, address[] memory targets, string[] memory signatures, bytes[] memory args)
     internal {
         bytes32 requests = keccak256(abi.encode("requests"));
         bytes32 durationTimelock = keccak256(abi.encode("durationTimelock"));
@@ -1499,3 +1583,4 @@ contract Timelock {
         return (successes, responses);
     }
 }
+
