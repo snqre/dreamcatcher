@@ -969,6 +969,8 @@ interface IRouter {
 contract Router is IRouter, Ownable, Pausable, ReentrancyGuard {
     IEternalStorage eternalStorage;
 
+    event LogicUpgraded(string indexed module, address indexed logic);
+
     constructor(address eternalStorage_) 
     Ownable(msg.sender) {
         eternalStorage = IEternalStorage(eternalStorage_);
@@ -1017,6 +1019,7 @@ contract Router is IRouter, Ownable, Pausable, ReentrancyGuard {
     onlyOwner {
         bytes32 variable = keccak256(abi.encode("router", module));
         eternalStorage.addAddressSet(variable, logic);
+        emit LogicUpgraded(module, logic);
     }
 
     function downgrade(string memory module, uint version)
@@ -1026,6 +1029,7 @@ contract Router is IRouter, Ownable, Pausable, ReentrancyGuard {
         address logic = eternalStorage.indexAddressSet(variable, version);
         eternalStorage.removeAddressSet(variable, logic);
         eternalStorage.addAddressSet(variable, logic);
+        emit LogicUpgraded(module, logic);
     }
 
     function pause()
@@ -1041,20 +1045,10 @@ contract Router is IRouter, Ownable, Pausable, ReentrancyGuard {
     }
 }
 
-interface ISentinel {
-    function decodeKey(bytes memory encodedKey) external pure returns (address logic, string memory signature, uint granted, uint expiration, bool transferable, bool clonable, KeyClass class, uint balance, bytes memory data);
-    function getKeys(address account) external view returns (bytes[] memory);
-    function mintSource(string memory signature) external;
-    function burn(address logic, string memory signature) external;
-    function transfer(address to, address logic, string memory signature) external;
-    function transferCopy(address to, address logic, string memory signature, uint granted, uint expiration, bool transferable, bool clonable, KeyClass class, uint balance, bytes memory data) external;
-    function verify(address account, address logic, string memory signature) external;
-}
-
 contract Sentinel is ISentinel, Ownable, Pausable, ReentrancyGuard {
     IEternalStorage eternalStorage;
-
-    event Transfer(address indexed from, address indexed to, Key indexed key);
+    
+    event Transfer(address indexed from, address indexed to, address logic, string signature, uint granted, uint expiration, bool transferable, bool clonable, uint class, uint balance, bytes data);
 
     constructor(address eternalStorage_)
     Ownable(msg.sender) {
@@ -1063,125 +1057,116 @@ contract Sentinel is ISentinel, Ownable, Pausable, ReentrancyGuard {
 
     function decodeKey(bytes memory encodedKey)
     external pure
-    returns (address logic, string memory signature, uint granted, uint expiration, bool transferable, bool clonable, KeyClass class, uint balance, bytes memory data) {
+    returns (address, string memory, uint, uint, bool, bool, KeyClass, uint, bytes memory) {
         Key memory key = abi.decode(encodedKey, (Key));
-        
-        return (
-            key.logic, 
-            key.signature, 
-            key.granted, 
-            key.expiration, 
-            key.transferable, 
-            key.clonable, 
-            key.class, 
-            key.balance, 
-            key.data
-        );
+        return (key.logic, key.signature, key.granted, key.expiration, key.transferable, key.clonable, key.class, key.balance, key.data);
+    }
+
+    function getKey(address account, uint index)
+    external view
+    returns (address, string memory, uint, uint, bool, bool, KeyClass, uint, bytes memory) {
+        Key memory key = abi.decode(eternalStorage.indexBytesArray(keccak256(abi.encode(account, "keys")), index), (Key));
+        return (key.logic, key.signature, key.granted, key.expiration, key.transferable, key.clonable, key.class, key.balance, key.data);
     }
 
     function getKeys(address account)
-    external view 
+    external view
     returns (bytes[] memory) {
-        bytes32 variable = keccak256(abi.encode(account, "keys"));
-        return eternalStorage.getBytesArray(variable);
+        return eternalStorage.getBytesArray(keccak256(abi.encode(account, "keys")));
     }
 
-    function mintSource(string memory signature)
-    external
+    function mint(string memory signature)
+    external 
     nonReentrant 
     whenNotPaused {
-        bytes32 variable = keccak256(abi.encode(msg.sender, "keys"));
-        _mintSource(variable, signature);
+        require(msg.sender != address(0), "Sentinel: cannot mint because caller is address zero");
+        _mint(msg.sender, msg.sender, signature, 0, 0, true, true, KeyClass.SOURCE, 0, new bytes(0));
     }
 
-    /// @dev source keys can also be deleted by contracts
     function burn(address logic, string memory signature)
     external
     nonReentrant 
     whenNotPaused {
-        bytes32 variable = keccak256(abi.encode(msg.sender, "keys"));
-        _burn(variable, logic, signature);
+        require(msg.sender != address(0), "Sentinel: cannot burn because caller is address zero");
+        _burn(msg.sender, logic, signature);
     }
 
-    function transfer(address to, address logic, string memory signature)
+    function transfer(address to, address logic, string memory signature) 
     external
     nonReentrant 
     whenNotPaused {
         _transfer(msg.sender, to, logic, signature);
     }
 
-    function transferCopy(address to, address logic, string memory signature, uint granted, uint expiration, bool transferable, bool clonable, KeyClass class, uint balance, bytes memory data)
-    external
+    function grant(address to, address logic,
+        string memory signature,
+        uint granted,
+        uint expiration,
+        bool transferable,
+        bool clonable,
+        KeyClass class,
+        uint balance,
+        bytes memory data
+    ) external
     nonReentrant 
     whenNotPaused {
-        _transferCopy(msg.sender, to, logic, signature, granted, expiration, transferable, clonable, class, balance, data);
+        _grant(
+            msg.sender, 
+            to, 
+            logic, 
+            signature, 
+            granted, 
+            expiration, 
+            transferable, 
+            clonable, 
+            class, 
+            balance, 
+            data
+        );
     }
 
-    function verify(address account, address logic, string memory signature)
-    external
+    function verify(
+        address account,
+        address logic,
+        string memory signature
+    ) external
     nonReentrant 
     whenNotPaused {
-        bytes32 variable = keccak256(abi.encode(account, "keys"));
-        _verify(variable, logic, signature);
+        _verify(account, logic, signature);
     }
 
     function pause()
-    external
+    external 
     onlyOwner {
         _pause();
     }
 
     function unpause()
-    external
+    external 
     onlyOwner {
         _unpause();
     }
 
-    function _verifyKeyArgs(Key memory key)
-    internal view {
-        require(key.logic != address(0), "Sentinel: logic must not be address zero");
-
-        if (key.class == KeyClass.SOURCE) {
-            require(key.granted == 0, "Sentinel: class is source but granted is not zero");
-            require(key.expiration == 0, "Sentinel: class is source but expiration is not zero");
-            require(key.balance == 0, "Sentinel: class is source but balance is not zero");
-            require(key.transferable, "Sentinel: class is source but key is not transferable");
-            require(key.clonable, "Sentinel: class is source but key is not clonable");
-        }
-
-        else if (key.class == KeyClass.STANDARD) {
-            require(key.granted == 0, "Sentinel: class is standard but granted is not zero");
-            require(key.expiration == 0, "Sentinel: class is standard but expiration is not zero");
-            require(key.balance == 0, "Sentinel: class is standard but balance is not zero");
-        }
-
-        else if (key.class == KeyClass.TIMED) {
-            require(block.timestamp >= key.granted, "Sentinel: class is timed but granted in the past");
-            require(key.granted < key.expiration, "Sentinel: class is timed but expires before granted");
-            require(key.balance == 0, "Sentinel: class is timed but balance is not zero");
-        }
-
-        else if (key.class == KeyClass.CONSUMABLE) {
-            require(key.granted == 0, "Sentinel: class is consumable but granted is not zero");
-            require(key.expiration == 0, "Sentinel: class is consumable but expiration is not zero");
-            require(key.balance >= 1, "Sentinel: class is consumable but balance is zero");
-        }
-
-        else {
-            revert("Sentinel: unrecognized class");
-        }
-    }
-
-    function _getIndexEmptyBytes(bytes32 variable)
+    function _getIndexEmptyBytes(address account)
     internal view
-    returns (bool success, uint index) {
-        bytes memory emptyBytes;
-        bytes[] memory keys = eternalStorage.getBytesArray(variable);
+    returns (
+        bool success,
+        uint index
+    ) {
+        bytes[] memory keys = eternalStorage.getBytesArray(
+            keccak256(
+                abi.encode(
+                    account, 
+                    "keys"
+                )
+            )
+        );
+
         for (uint i = 0; i < keys.length; i++) {
 
-            if (Match.isMatchingBytes(keys[i], emptyBytes)) {
-                index = i;
+            if (Match.isMatchingBytes(keys[i], new bytes(0))) {
                 success = true;
+                index = i;
                 break;
             }
         }
@@ -1189,16 +1174,17 @@ contract Sentinel is ISentinel, Ownable, Pausable, ReentrancyGuard {
         return (success, index);
     }
 
-    function _getIndexLogSig(bytes32 variable, address logic, string memory signature)
+    function _getIndexLogSig(address account, address logic, string memory signature)
     internal view
     returns (bool success, uint index, Key memory key) {
-        bytes memory emptyBytes;
-        bytes[] memory keys = eternalStorage.getBytesArray(variable);
+        bytes[] memory keys = eternalStorage.getBytesArray(keccak256(abi.encode(account, "keys")));
+        
         for (uint i = 0; i < keys.length; i++) {
             key = abi.decode(keys[i], (Key));
-            if (!Match.isMatchingBytes(keys[i], emptyBytes) && key.logic == logic && Match.isMatchingString(key.signature, signature)) {
-                index = i;
+
+            if (!Match.isMatchingBytes(keys[i], new bytes(0)) && Match.isMatchingString(signature, key.signature) && logic == key.logic) {
                 success = true;
+                index = i;
                 break;
             }
         }
@@ -1206,149 +1192,328 @@ contract Sentinel is ISentinel, Ownable, Pausable, ReentrancyGuard {
         return (success, index, key);
     }
 
-    function _mint(bytes32 variable, address logic, string memory signature, uint granted, uint expiration, bool transferable, bool clonable, KeyClass class, uint balance, bytes memory data)
-    internal {
-        (bool success, uint index,) = _getIndexLogSig(variable, logic, signature);
-        require(!success, "Sentinel: cannot mint key because the bytes array already has a key with the given logic and signature");
-        (success, index) = _getIndexEmptyBytes(variable);
-        Key memory key = Key({
-            logic: logic,
-            signature: signature,
-            granted: granted,
-            expiration: expiration,
-            transferable: transferable,
-            clonable: clonable,
-            class: class,
-            balance: balance,
-            data: data
-        });
+    function _pushKey(address account, Key memory key) 
+    internal 
+    returns (Key memory) {
+        (
+            bool success,
+            uint index,
+        ) = _getIndexLogSig(
+            account, 
+            key.logic, 
+            key.signature
+        );
 
+        require(!success, "Sentinel: cannot push because account already has a key with the given logic and signature");
+        (success, index) = _getIndexEmptyBytes(account);
         if (success) {
-            eternalStorage.setIndexBytesArray(variable, index, abi.encode(key));
+            eternalStorage.setIndexBytesArray(
+                keccak256(
+                    abi.encode(
+                        account,
+                        "keys"
+                    )
+                ),
+                index,
+                abi.encode(key)
+            );
         }
 
         else {
-            eternalStorage.pushBytesArray(variable, abi.encode(key));
+            eternalStorage.pushBytesArray(
+                keccak256(
+                    abi.encode(
+                        account,
+                        "keys"
+                    )
+                ), 
+                abi.encode(key)
+            );
         }
+
+        return key;
     }
 
-    function _mintSource(bytes32 variable, string memory signature)
-    internal {
-        bytes memory emptyBytes;
-        _mint(variable, msg.sender, signature, 0, 0, true, true, KeyClass.SOURCE, 0, emptyBytes);
+    function _pullKey(
+        address account,
+        address logic,
+        string memory signature
+    ) internal 
+    returns (Key memory key) {
+        (
+            bool success,
+            uint index,
+        ) = _getIndexLogSig(
+            account, 
+            logic, 
+            signature
+        );
+
+        require(success, "Sentinel: cannot pull because account does not have a key with the given logic and signature");
+        key = abi.decode(
+            eternalStorage.indexBytesArray(
+                keccak256(
+                    abi.encode(
+                        account,
+                        "keys"
+                    )
+                ),
+                index
+            ),
+            (Key)
+        );
+
+        eternalStorage.setIndexBytesArray(
+            keccak256(
+                abi.encode(
+                    account,
+                    "keys"
+                )
+            ),
+            index,
+            new bytes(0)
+        );
+
+        return key;
     }
 
-    function _burn(bytes32 variable, address logic, string memory signature)
-    internal {
-        (bool success, uint index,) = _getIndexLogSig(variable, logic, signature);
-        require(success, "Sentinel: cannot burn key because the bytes array does not contain any key with the given logic and signature");
-        bytes memory emptyBytes;
-        eternalStorage.setIndexBytesArray(variable, index, emptyBytes);
+    function _mint(
+        address account,
+        address logic,
+        string memory signature,
+        uint granted,
+        uint expiration,
+        bool transferable,
+        bool clonable,
+        KeyClass class,
+        uint balance,
+        bytes memory data
+    ) internal {
+        _pushKey(
+            account, 
+            Key({
+                logic: logic,
+                signature: signature,
+                granted: granted,
+                expiration: expiration,
+                transferable: transferable,
+                clonable: clonable,
+                class: class,
+                balance: balance,
+                data: data
+            })
+        );
+
+        emit Transfer(
+            address(0), 
+            account, 
+            logic, 
+            signature, 
+            granted, 
+            expiration, 
+            transferable, 
+            clonable, 
+            uint(class), 
+            balance, 
+            data
+        );
+    }
+
+    function _burn(
+        address account,
+        address logic,
+        string memory signature
+    ) internal {
+        Key memory key = _pullKey(account, logic, signature);
+        emit Transfer(
+            account, 
+            address(0), 
+            key.logic, 
+            key.signature, 
+            key.granted, 
+            key.expiration, 
+            key.transferable, 
+            key.clonable, 
+            uint(key.class), 
+            key.balance, 
+            key.data
+        );
     }
 
     function _transfer(address from, address to, address logic, string memory signature)
     internal {
-        // burn key of sender, and mint key to recipient unlike tokens recipient cannot have multiple of the same key so transfer will fail if they already have a copy regardless of class or difference
-        bytes32 variableFrom = keccak256(abi.encode(from, "keys"));
-        bytes32 variableTo = keccak256(abi.encode(to, "keys"));
-        (bool success, uint index,) = _getIndexLogSig(variableFrom, logic, signature);
-        require(success, "Sentinel: cannot transfer because sender does not have a key with the given logic and signature");
-        Key memory key = abi.decode(eternalStorage.indexBytesArray(variableFrom, index), (Key));
+        Key memory key = _pullKey(from, logic, signature);
         require(key.transferable, "Sentinel: cannot transfer because key is not transferable");
-        if (!key.clonable) {
-            _burn(variableFrom, logic, signature); 
+        _pushKey(to, key);
+        
+        if (key.clonable) {
+            _pushKey(from, key);
         }
 
-        _mint(
-            variableTo,
-            key.logic,
-            key.signature,
-            key.granted,
-            key.expiration,
-            key.transferable,
-            key.clonable,
-            key.class,
-            key.balance,
-            key.data
-        );
-
-        if (!key.clonable) {
-            emit Transfer(from, to, key);
-        }
-
-        else {
-            emit Transfer(address(0), to, key);
-        }
+        emit Transfer(from, to, key.logic, key.signature, key.granted, key.expiration, key.transferable, key.clonable, uint(key.class), key.balance, key.data);
     }
 
-    function _transferCopy(address from, address to, address logic, string memory signature, uint granted, uint expiration, bool transferable, bool clonable, KeyClass class, uint balance, bytes memory data)
+    function _grant(address from, address to, address logic, string memory signature, uint granted, uint expiration, bool transferable, bool clonable, KeyClass class, uint balance, bytes memory data) 
     internal {
-        require(class != KeyClass.SOURCE, "Sentinel: cannot transfer copy because transfered version is a source");
-        bytes32 variableFrom = keccak256(abi.encode(from, "keys"));
-        bytes32 variableTo = keccak256(abi.encode(to, "keys"));
-        (bool success, uint index,) = _getIndexLogSig(variableFrom, logic, signature);
-        require(success, "Sentinel: cannot transfer copy because sender does not have a key with the given logic and signature");
-        Key memory key = abi.decode(eternalStorage.indexBytesArray(variableFrom, index), (Key));
-        require(key.class == KeyClass.SOURCE, "Sentinel: cannot transfer copy because the transfered key is not a source");
-
-        _verifyKeyArgs(Key({
-            logic: key.logic,
-            signature: key.signature,
-            granted: granted,
-            expiration: expiration,
-            transferable: transferable,
-            clonable: clonable,
-            class: class,
-            balance: balance,
-            data: data
-        }));
+        require(class != KeyClass.SOURCE, "Sentinel: cannot grant because granted version is a source **use transfer for source class");
+        Key memory key = _pullKey(from, logic, signature);
+        require(key.class == KeyClass.SOURCE, "Sentinel: cannot grant because grantor does not have source");
 
         _mint(
-            variableTo,
-            key.logic,
-            key.signature,
-            granted,
-            expiration,
-            transferable,
-            clonable,
-            class,
-            balance,
+            to, 
+            key.logic, 
+            key.signature, 
+            granted, 
+            expiration, 
+            transferable, 
+            clonable, 
+            class, 
+            balance, 
             data
         );
 
-        emit Transfer(address(0), to, key);
+        _pushKey(from, key);
     }
 
-    function _verify(bytes32 variable, address logic, string memory signature)
+    function _verify(address account, address logic, string memory signature)
     internal {
-        (bool success, uint index,) = _getIndexLogSig(variable, logic, signature);
-        require(success, "Sentinel: unauthorized because bytes array does not contain any key with the given logic and signature");
-        Key memory key = abi.decode(eternalStorage.indexBytesArray(variable, index), (Key));
-        success = false;
-        if (key.class == KeyClass.SOURCE) {
-            success = true;
-        }
+        (bool success, uint index,) = _getIndexLogSig(account, logic, signature);
+        require(success, "Sentinel: unauthorized because account does not have a key with the given logic and signature");
+        Key memory key = abi.decode(eternalStorage.indexBytesArray(keccak256(abi.encode(account, "keys")), index), (Key));
 
-        else if (key.class == KeyClass.STANDARD) {
-            success = true;
-        }
+        if (key.class == KeyClass.SOURCE) {}
+
+        else if (key.class == KeyClass.STANDARD) {}
 
         else if (key.class == KeyClass.CONSUMABLE) {
-            require(key.balance >= 1, "Sentinel: unauthorized because key is depleted");
-            key.balance -= 1;
-            eternalStorage.setIndexBytesArray(variable, index, abi.encode(key));
-            success = true;
+            require(key.balance >= 1, "Sentinel: unauthorized because consumable is depleted");
+            key.balance--;
+            eternalStorage.setIndexBytesArray(keccak256(abi.encode(account, "keys")), index, abi.encode(key));
         }
 
         else if (key.class == KeyClass.TIMED) {
-            require(block.timestamp >= key.granted, "Sentinel: unauthorized because key has not been granted yet");
+            require(block.timestamp >= key.granted, "Sentinel: unauthorized because timed has not been granted yet");
             require(block.timestamp < key.expiration, "Sentinel: unauthorized because key has expired");
-            success = true;
         }
 
         else {
             revert("Sentinel: cannot verify because class is unrecognized");
         }
+        
+    }
+}
+
+contract Sentinel is Ownable, Pausable {
+    IEternalStorage eternalStorage;
+
+    event Transfer(address indexed from, address indexed to, address logic, string signature, uint granted, uint expiration, bool transferable, bool clonable, uint class, uint balance, bytes data);
+
+    constructor(address eternalStorage_)
+    Ownable(msg.sender) {
+        eternalStorage = IEternalStorage(eternalStorage_);
+    }
+
+    function decodeKey(bytes memory encodedKey)
+    external pure
+    returns (address, string memory, uint, uint, bool, bool, KeyClass, uint, bytes memory) {
+        Key memory key = abi.decode(encodedKey, (Key));
+        return (key.logic, key.signature, key.granted, key.expiration, key.transferable, key.clonable, key.class, key.balance, key.data);
+    }
+
+    function getKey(address account, uint index)
+    external view
+    returns (address, string memory, uint, uint, bool, bool, KeyClass, uint, bytes memory) {
+        bytes32 varAccountKeys = keccak256(abi.encode(account, "keys"));
+        bytes memory encodedKey = eternalStorage.indexBytesArray(varAccountKeys, index);
+        Key memory key = abi.decode(encodedKey, (Key));
+        return (key.logic, key.signature, key.granted, key.expiration, key.transferable, key.clonable, key.class, key.balance, key.data);
+    }
+
+    function getKeys(address account)
+    external view
+    returns (bytes[] memory) {
+        bytes32 varAccountKeys = keccak256(abi.encode(account, "keys"));
+        return eternalStorage.getBytesArray(varAccountKeys);
+    }
+
+    function _getIndexEmptyBytes(address account)
+    internal view
+    returns (bool success, uint index) {
+        bytes memory emptyBytes;
+        bytes32 varAccountKeys = keccak256(abi.encode(account, "keys"));
+        bytes[] memory encodedKeys = eternalStorage.getBytesArray(varAccountKeys);
+        for (uint i = 0; i < encodedKeys.length; i++) {
+            if (Match.isMatchingBytes(encodedKeys[i], emptyBytes)) {
+                success = true;
+                index = i;
+                break;
+            }
+        }
+        return (success, index);
+    }
+
+    function _getIndexLogSig(address account, address logic, string memory signature)
+    internal view
+    returns (bool success, uint index, Key memory key) {
+        bytes memory emptyBytes;
+        bytes32 varAccountKeys = keccak256(abi.encode(account, "keys"));
+        bytes[] memory encodedKeys = eternalStorage.getBytesArray(varAccountKeys);
+        for (uint i = 0; i < encodedKeys.length; i++) {
+            key = abi.decode(encodedKeys[i], (Key));
+            if (!Match.isMatchingBytes(encodedKeys[i], emptyBytes) && Match.isMatchingString(signature, key.signature) && logic == key.logic) {
+                success = true;
+                index = i;
+                break;
+            }
+        }
+        return (success, index, key);
+    }
+
+    function _pushKey(address account, Key memory key)
+    internal {
+        (bool success, uint index,) = _getIndexLogSig(account, key.logic, key.signature);
+        require(!success, "Sentinel: cannot push because account already has a key with the given logic and signature");
+        (success, index) = _getIndexEmptyBytes(account);
+        bytes32 varAccountKeys = keccak256(abi.encode(account, "keys"));
+        if (success) {
+            eternalStorage.setIndexBytesArray(varAccountKeys, index, abi.encode(key));
+        } else {
+            eternalStorage.pushBytesArray(varAccountKeys, abi.encode(key));
+        }
+    }
+
+    function _pullKey(address account, address logic, string memory signature)
+    internal {
+        (bool success, uint index,) = _getIndexLogSig(account, logic, signature);
+        require(success, "Sentinel: cannot pull because account does not have a key with the given logic and signature");
+        bytes32 varAccountKeys = keccak256(abi.encode(account, "keys"));
+        bytes memory emptyBytes;
+        eternalStorage.setIndexBytesArray(varAccountKeys, index, emptyBytes);
+    }
+
+    function _mint(address account, address logic, string memory signature, uint granted, uint expiration, bool transferable, bool clonable, KeyClass class, uint balance, bytes memory data)
+    internal {
+
+    }
+
+    function _burn(address account, address logic, string memory signature)
+    internal {
+
+    }
+
+    function _transfer(address from, address to, address logic, string memory signature)
+    internal {
+
+    }
+    
+    function _grant(address from, address to, address logic, string memory signature, uint granted, uint expiration, bool transferable, bool clonable, KeyClass class, uint balance, bytes memory data)
+    internal {
+
+    }
+
+    function _verify(address account, address logic, string memory signature)
+    internal {
+        
     }
 }
 
@@ -1452,15 +1617,15 @@ contract Timelock is ITimelock, Pausable, ReentrancyGuard {
         sentinel = ISentinel(sentinel_);
         _deployer = msg.sender;
         me = address(this);
-        sentinel.mintSource("queue");
-        sentinel.mintSource("execute");
-        sentinel.mintSource("pause");
-        sentinel.mintSource("unpause");
+        sentinel.mint("queue");
+        sentinel.mint("execute");
+        sentinel.mint("pause");
+        sentinel.mint("unpause");
         bytes memory emptyBytes;
-        sentinel.transferCopy(msg.sender, me, "queue", 0, 0, false, false, KeyClass.STANDARD, 0, emptyBytes);
-        sentinel.transferCopy(msg.sender, me, "execute", 0, 0, false, false, KeyClass.STANDARD, 0, emptyBytes);
-        sentinel.transferCopy(msg.sender, me, "pause", 0, 0, false, false, KeyClass.STANDARD, 0, emptyBytes);
-        sentinel.transferCopy(msg.sender, me, "unpause", 0, 0, false, false, KeyClass.STANDARD, 0, emptyBytes);
+        sentinel.grant(msg.sender, me, "queue", 0, 0, false, false, KeyClass.STANDARD, 0, emptyBytes);
+        sentinel.grant(msg.sender, me, "execute", 0, 0, false, false, KeyClass.STANDARD, 0, emptyBytes);
+        sentinel.grant(msg.sender, me, "pause", 0, 0, false, false, KeyClass.STANDARD, 0, emptyBytes);
+        sentinel.grant(msg.sender, me, "unpause", 0, 0, false, false, KeyClass.STANDARD, 0, emptyBytes);
     }
 
     function decodeRequest(bytes memory encodedRequest)
@@ -1566,6 +1731,7 @@ contract Timelock is ITimelock, Pausable, ReentrancyGuard {
         );
     }
 
+    /// TODO solve issue where not executing when it should be
     function _execute(uint index)
     internal
     returns (bool[] memory successes, bytes[] memory responses) {
