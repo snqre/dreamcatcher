@@ -1482,3 +1482,11 @@ contract Timelock is ITimelock, Pausable, ReentrancyGuard {
     }
 }
 
+contract MSigProposals {
+    IEternalStorage eternalStorage;
+
+    constructor() {
+        
+    }
+}
+
