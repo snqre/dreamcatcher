@@ -93,14 +93,14 @@ struct MSigProposal {
     string message;
     address creator;
     address[] targets;
-    string[] signatures_;
+    string[] signatures;
     bytes[] args;
     uint endTimeout;
     uint quorum;
     uint requiredQuorum;
     ProposalStage stage;
     EnumerableSet.AddressSet signers;
-    EnumerableSet.AddressSet signatures;
+    EnumerableSet.AddressSet signatures_;
 }
 
 library Match {
@@ -1209,7 +1209,7 @@ contract Sentinel is Ownable, Pausable, ReentrancyGuard {
         (, , Key memory key) = _getIndexLogSig(from, logic, signature);
         require(key.transferable, "Sentinel: cannot transfer because key is not transferable");
         _pullKey(from, key.logic, key.signature);
-        _pushKey(account, key);
+        _pushKey(to, key);
         if (key.clonable) {
             _pushKey(from, key);
         }
@@ -1237,8 +1237,8 @@ contract Sentinel is Ownable, Pausable, ReentrancyGuard {
         if (key.class == KeyClass.CONSUMABLE) {
             require(key.balance >= 1, "Sentinel: unauthorized because consumable is depleted");
             key.balance--;
-            bytes32 varAccountkeys = keccak256(abi.encode(account, "keys"));
-            etertanlStorage.setIndexBytesArray(varAccountKeys, index, abi.encode(key));
+            bytes32 varAccountKeys = keccak256(abi.encode(account, "keys"));
+            eternalStorage.setIndexBytesArray(varAccountKeys, index, abi.encode(key));
         } else if (key.class == KeyClass.TIMED) {
             require(block.timestamp >= key.granted, "Sentinel: unauthorized because timed has not been granted yet");
             require(block.timestamp < key.expiration, "Sentinel: unauthorized because key has expired");
@@ -1483,10 +1483,160 @@ contract Timelock is ITimelock, Pausable, ReentrancyGuard {
 }
 
 contract MSigProposals {
-    IEternalStorage eternalStorage;
+    using EnumerableSet for EnumerableSet.AddressSet;
 
-    constructor() {
-        
+    IEternalStorage eternalStorage;
+    ISentinel sentinel;
+    IOverseer overseer;
+    ITimelock timelock;
+    bytes32 varMSigProposals;
+    uint durationTimeout;
+    uint requiredQuorum;
+
+    modifier onlySigner() {
+        _onlySigner();
+        _;
+    }
+
+    modifier onlySigned(uint index) {
+        _onlySigned(index);
+        _;
+    }
+
+    modifier onlyNotSigned(uint index) {
+        _onlyNotSigned(index);
+        _;
+    }
+
+    modifier onlyPending(uint index) {
+        _onlyPending(index);
+        _;
+    }
+
+    modifier onlyApproved(uint index) {
+        _onlyApproved(index);
+        _;
+    }
+
+    modifier onlyRejected(uint index) {
+        _onlyRejected(index);
+        _;
+    }
+
+    modifier onlyExecuted(uint index) {
+        _onlyExecuted(index);
+        _;
+    }
+
+    modifier onlyNotExecuted(uint index) {
+        _onlyNotExecuted(index);
+        _;
+    }
+
+    constructor(address eternalStorage_, address sentinel_, address overseer_, address timelock_) {
+        eternalStorage = IEternalStorage(eternalStorage_);
+        sentinel = ISentinel(sentinel_);
+        overseer = IOverseer(overseer_);
+        timelock = ITimelock(timelock_);
+        varMSigProposals = keccak256(abi.encode("mSigProposals"));
+    }
+
+    function _onlySigner()
+    internal view {
+        overseer.requireRole(msg.sender, "council");
+    }
+
+    function _onlySigned(uint index)
+    internal view {
+        MSigProposal memory proposal = _getProposal(index);
+        require(proposal.signatures_.contains(msg.sender));
+    }
+
+    function _onlyNotSigned(uint index) 
+    internal view {
+        MSigProposal memory proposal = _getProposal(index);
+        require(!proposal.signatures_.contains(msg.sender));
+    }
+
+    function _onlyPending(uint index)
+    internal view {
+        MSigProposal memory proposal = _getProposal(index);
+        require(proposal.stage == ProposalStage.PENDING, "MSigProposals: multi sig proposal is not pending");
+    }
+
+    function _onlyApproved(uint index)
+    internal view {
+        MSigProposal memory proposal = _getProposal(index);
+        require(proposal.stage == ProposalStage.APPROVED, "MSigProposals: multi sig proposal is not approved");
+    }
+
+    function _onlyRejected(uint index)
+    internal view {
+        MSigProposal memory proposal = _getProposal(index);
+        require(proposal.stage == ProposalStage.REJECTED, "MSigProposals: multi sig proposal is not rejected");
+    }
+
+    function _onlyExecuted(uint index)
+    internal view {
+        MSigProposal memory proposal = _getProposal(index);
+        require(proposal.stage == ProposalStage.EXECUTED, "MSigProposals: multi sig proposal is not executed");
+    }
+
+    function _onlyNotExecuted(uint index)
+    internal view {
+        MSigProposal memory proposa = _getProposal(index);
+        require(proposal.stage != ProposalStage.EXECUTED, "MSigProposals: multi sig proposal is executed");
+    }
+
+    function _getProposal(uint index)
+    internal view
+    returns (MSigProposal memory) {
+        bytes memory encodedProposal = eternalStorage.indexBytesArray(varMSigProposals, index);
+        return abi.decode(encodedProposal, (MSigProposal));
+    }
+
+    function _queue(string memory message, address[] memory targets, string[] memory signatures, bytes[] memory args, uint endTimeout, uint quorum, uint requiredQuorum, ProposalStage stage)
+    internal 
+    onlySigner
+    returns (uint) {
+        MSigProposal memory newProposal = MSigProposal({message: message, creator: msg.sender, targets: targets, signatures: signatures, args: args, endTimeout: endTimeout, quorum: quorum, requiredQuorum: requiredQuorum, stage: stage, signers: overseer.getMembers("council"), signatures_: []});
+        eternalStorage.pushBytesArray(varMSigProposals, abi.encode(newProposal));
+        return eternalStorage.lengthBytesArray(varMSigProposals) - 1;
+    }
+
+    function _sign(uint index)
+    internal 
+    onlySigner 
+    onlyNotSigned(index) 
+    onlyPending(index) {
+        MSigProposal memory proposal = _getProposal(index);
+        proposal.signatures_.add(msg.sender);
+        _update(index);
+    }
+
+    function _unsign(uint index)
+    internal
+    onlySigner
+    onlySigned(index)
+    onlyPending(index) {
+        MSigProposal memory proposal = _getProposal(index);
+        proposa.signatures_.remove(msg.sender);
+        _update(index);
+    }
+
+    function _escalate(uint index)
+    internal
+    onlySigner
+    onlyNotExecuted(index) {
+        // TODO escalte call public proposal
+    }
+
+    function _update(uint index)
+    internal {
+        MSigProposal memory proposal = _getProposal(index);
+        if (proposal.quorum >= requiredQuorum) {
+            proposal.stage = ProposalStage.APPROVED;
+        }
     }
 }
 
