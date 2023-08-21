@@ -14,6 +14,18 @@ import "contracts/polygon/deps/openzeppelin/access/Ownable.sol";
 /** storage usage
     <how the bytes32 variable is encoded> <storage access used>
     address > _bytes
+
+
+    _string:     "pools", <uint index>, "name"
+    _string:     "pools", <uint index>, "description"  
+    _addressSet: "pools", <uint index>, "managers"  
+    _addressSet: "pools", <uint index>, "admins"   
+    _addressSet: "pools", <uint index>, "contributors"
+    _addressSet: "pools", <uint index>, "whitelist"
+    _bool:       "pools", <uint index>, "isWhitelisted"
+    _uint:       "pools", <uint index>, <address account>, "contribution"
+    _uint:       "poolsCount"
+
  */
 
 // KEYS
@@ -101,6 +113,28 @@ struct MSigProposal {
     ProposalStage stage;
     EnumerableSet.AddressSet signers;
     EnumerableSet.AddressSet signatures_;
+}
+
+// MANAGED POOL
+enum PoolState {
+    PENDING,
+    TRADING,
+    PAUSED
+}
+
+struct Pool {
+    string name;
+    string description;
+    address[] managers;
+    address[] admins;
+    address[] contributors;
+    uint[] contributions;
+    uint start;
+    PoolState state;
+    address[] tokens;
+    uint[] amounts;
+    uint balance;
+    bytes data;
 }
 
 library Match {
@@ -1482,6 +1516,10 @@ contract Timelock is ITimelock, Pausable, ReentrancyGuard {
     }
 }
 
+contract Proposals {
+
+}
+
 contract MSigProposals {
     using EnumerableSet for EnumerableSet.AddressSet;
 
@@ -1640,3 +1678,256 @@ contract MSigProposals {
     }
 }
 
+contract DreamToken is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit {
+    uint cap;
+    IEternalStorage eternalStorage;
+    ISentinel sentinel;
+    
+    constructor(address eternalStorage_, address sentinel_)
+    ERC20("DreamToken", "DREAM")
+    ERC20Permit("DreamToken") {
+        cap = Utils.convertToWei(200000000);
+        _mint(msg.sender, cap);
+        eternalStorage = IEternalStorage(eternalStorage);
+        sentinel = ISentinel(sentinel_);
+    }
+
+    function _setAccountDreamTokenBalance(address account, uint amount)
+    internal override {
+        bytes32 varAccountDreamTokenBalance = keccak256(abi.encode(account, "dreamTokenBalance"));
+        eternalStorage.setUint(varAccountDreamTokenBalance, amount);
+    }
+}
+
+contract EmberToken is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit {
+
+}
+
+interface IPoolToken is IERC20 {
+    function getCurrentSnapshotId() external view returns (uint);
+    function allowance(address owner, address spender) external view returns (uint);
+    function snapshot() external returns (uint index);
+    function mint(address account, uint amount) external;
+}
+
+contract PoolToken is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit {
+    IEternalStorage eternalStorage;
+    
+    constructor(address eternalStorage_, uint index, string memory name, string memory symbol)
+    ERC20(name, symbol)
+    ERC20Permit(name) {
+        eternalStorage = IEternalStorage(eternalStorage_);
+        
+    }
+
+    function getCurrentSnapshotId()
+    external view
+    returns (uint) {
+        return _getCurrentSnapshotId();
+    }
+
+    function allowance(address owner, address spender)
+    external view override
+    returns (uint) {
+        return super.allowance(owner, spender);
+    }
+
+    function snapshot()
+    external
+    returns (uint index) {
+        _snapshot();
+        return _getCurrentSnapshotId();
+    }
+
+    function mint(address account, uint amount)
+    external {
+        _mint(account, amount);
+    }
+
+    function _beforeTokenTransfer(address from, address to, uint amount)
+    internal override(ERC20, ERC20Snapshot) {
+        super._beforeTokenTransfer(from, to, amount);
+    }
+
+    function _afterTokenTransfer(address from, address to, uint amount)
+    internal override {
+        super._afterTokenTransfer(from, to, amount);
+    }
+
+    function _mint(address account, uint amount)
+    internal override {
+        super._mint(account, amount);
+    }
+
+    function _burn(address account, uint amount)
+    internal override {
+        super._burn(account, amount);
+    }
+}
+
+library ResonanceToolkit {
+    function isManager(IEternalStorage eternalStorage, uint index, address account)
+    external view
+    returns (bool) {
+        bytes32 managers = keccak256(abi.encode("pools", index, "managers"));
+        return eternalStorage.containsAddressSet(managers, account);
+    }
+
+    function isAdmin(IEternalStorage eternalStorage, uint index, address account)
+    external view
+    returns (bool) {
+        bytes32 admins = keccak256(abi.encode("pools", index, "admins"));
+        return eternalStorage.containsAddressSet(admins, account);
+    }
+
+    function isContributor(IEternalStorage eternalStorage, uint index, address account)
+    external view
+    returns (bool) {
+        bytes32 contributors = keccak256(abi.encode("pools", index, "contributors"));
+        return eternalStorage.containsAddressSet(contributors, account);
+    }
+
+    function getManagers(IEternalStorage eternalStorage, uint index)
+    external view
+    returns (address[] memory) {
+        bytes32 managers = keccak256(abi.encode("pools", index, "managers"));
+        return eternalStorage.getAddressSet(managers);
+    }
+
+    function getAdmins(IEternalStorage eternalStorage, uint index)
+    external view
+    returns (address[] memory) {
+        bytes32 admins = keccak256(abi.encode("pools", index, "admins"));
+        return eternalStorage.getAddressSet(admins);
+    }
+
+    function getContributors(IEternalStorage eternalStorage, uint index)
+    external view
+    returns (address[] memory) {
+        bytes32 contributors = keccak256(abi.encode("pools", index, "contributors"));
+        return eternalStorage.getAddressSet(contributors);
+    }
+
+    function getName(IEternalStorage eternalStorage, uint index)
+    external view
+    returns (string memory) {
+        bytes32 name = keccak256(abi.encode("pools", index, "name"));
+        return eternalStorage.getString(name);
+    }
+
+    function getDescription(IEternalStorage eternalStorage, uint index)
+    external view
+    returns (string memory) {
+        bytes32 description = keccak256(abi.encode("pools", index, "description"));
+        return eternalStorage.getString(description);
+    }
+
+    function getContribution(IEternalStorage eternalStorage, uint index, address account)
+    external view
+    returns (uint) {
+        bytes32 contribution = keccak256(abi.encode("pools", index, account, "contribution"));
+        return eternalStorage.getUint(contribution);
+    }
+
+    function isWhitelisted(IEternalStorage eternalStorage, uint index)
+    external view
+    returns (bool) {
+        bytes isWhitelisted = keccak256(abi.encode("pools", index, "isWhitelisted"));
+        return eternalStorage.getBool(isWhitelisted);
+    }
+
+    function addManager(IEternalStorage eternalStorage, uint index, address account)
+    external {
+        bytes32 managers = keccak256(abi.encode("pools", index, "managers"));
+        eternalStorage.addAddressSet(managers, account);
+    }
+
+    function addAdmin(IEternalStorage eternalStorage, uint index, address account)
+    external {
+        bytes32 admins = keccak256(abi.encode("pools", index, "admins"));
+        eternalStorage.addAddressSet(admins, account);
+    }
+
+    function removeManager(IEternalStorage eternalStorage, uint index, address account)
+    external {
+        bytes32 managers = keccak256(abi.encode("pools", index, "managers"));
+        eternalStorage.removeAddressSet(managers, account);
+    }
+
+    function removeAdmin(IEternalStorage eternalStorage, uint index, address account)
+    external {
+        bytes32 admins = keccak256(abi.encode("pools", index, "admins"));
+        eternalStorage.removeAddressSet(admins, account);
+    }
+
+    function setName(IEternalStorage eternalStorage, uint index, string memory newName)
+    external {
+        bytes32 name = keccak256(abi.encode("pools", index, "name"));
+        eternalStorage.setString(name, newName);
+    }
+
+    function setDescription(IEternalStorage eternalStorage, uint index, string memory newDescription)
+    external {
+        bytes32 description = keccak256(abi.encode("pools", index, "description"));
+        eternalStorage.setString(description, newDescription);
+    }
+
+    function setContributor(IEternalStorage eternalStorage, uint index, address account, uint newContribution)
+    external {
+        bytes32 contributors = keccak256(abi.encode("pools", index, "contributors"));
+        bytes32 contributions = keccak256(abi.encode("pools", index, account, "contribution"));
+        if (newContribution >= 1) {
+            eternalStorage.addAddressSet(contributors, account);
+        } else {
+            eternalStorage.removeAddressSet(contributors, account);
+        }
+        eternalStorage.setUint(contributions, newContribution);
+    }
+
+    function setIsWhitelisted(IEternalStorage eternalStorage, uint index, bool value)
+    external {
+        bytes32 isWhitelisted = keccak256(abi.encode("pools", index, "isWhitelisted"));
+        eternalStorage.setBool(isWhitelisted, value);
+    }
+
+    function incrementCount(IEternalStorage eternalStorage)
+    external
+    returns (uint count) {
+        bytes32 poolsCount = keccak256(abi.encode("poolsCount"));
+        count = eternalStorage.getUint(poolsCount) + 1;
+        eternalStorage.setUint(poolsCount, count);
+        return count;
+    }
+}
+
+contract Resonance is Pausable, ReentrancyGuard {
+    IEternalStorage eternalStorage;
+    IOverseer overseer;
+    ISentinel sentinel;
+
+    modifier gas(uint amount) {
+        _;
+    }
+
+    constructor(address eternalStorage_, address overseer_, address sentinel_) {
+        eternalStorage = IEternalStorage(eternalStorage_);
+        overseer = IOverseer(overseer_);
+        sentinel = ISentinel(sentinel_);
+    }
+
+    function _create(string memory name, string memory description, address[] memory managers, address[] memory admins)
+    internal payable 
+    returns (uint index) {
+        require(msg.value >= poolCreateMinPayable, "Resonance: cannot create pool because not enough value was sent");
+        index = ResonanceToolkit.incrementCount(eternalStorage);
+        ResonanceToolkit.setName(eternalStorage, index, name);
+        ResonanceToolkit.setDescription(eternalStorage, index, description);
+        for (uint i = 0; i < managers.length; i++) { ResonanceToolkit.addManager(eternalStorage, index, managers[i]); } 
+        for (uint i = 0; i < admins.length; i++) { ResonanceToolkit.addAdmin(eternalStorage, index, admins[i]); }
+    }
+
+    function _gas(uint amount)
+    internal {
+        // TODO monetize
+    }
+}
