@@ -15,16 +15,45 @@ import "contracts/polygon/deps/openzeppelin/access/Ownable.sol";
     <how the bytes32 variable is encoded> <storage access used>
     address > _bytes
 
+    base 1 wei or 2 wei
+    extend 5000 equal 1 wei + 200%, 3 or 6 wei
 
-    _string:     "pools", <uint index>, "name"
-    _string:     "pools", <uint index>, "description"  
-    _addressSet: "pools", <uint index>, "managers"  
-    _addressSet: "pools", <uint index>, "admins"   
-    _addressSet: "pools", <uint index>, "contributors"
-    _addressSet: "pools", <uint index>, "whitelist"
-    _bool:       "pools", <uint index>, "isWhitelisted"
-    _uint:       "pools", <uint index>, <address account>, "contribution"
-    _uint:       "poolsCount"
+    _uint:          "gas", "base"
+    _uint:          "gas", "extendCreateSolsticePool"
+    _uint:          "gas", "extendCreateEnigmaPool"
+
+    _addressSet:    "router", <string module>, "implementations"
+
+    _addressSet:    "overseer", <string role>, "members"
+
+    _string:        "requests", <uint index>, "message"
+    _addressArray:  "requests", <uint index>, "targets"
+    _stringArray:   "requests", <uint index>, "signatures"
+    _bytesArray:    "requests", <uint index>, "args"
+    _uint:          "requests", <uint index>, "createdTimestamp"
+    _uint:          "requests", <uint index>, "endTimelockTimestamp"
+    _uint:          "requests", <uint index>, "endTimeoutTimestamp"
+    _address:       "requests", <uint index>, "creator"
+    _bool:          "requests", <uint index>, "isExecuted"
+
+    _uint:          "dreamToken", <address account, "balance"
+    _uint:          "emberToken", <address account, "balance"
+
+
+    _uint:          "mSigProposalsCount"
+
+    _string:        "pools", <uint index>, "name"
+    _string:        "pools", <uint index>, "description"  
+    _addressSet:    "pools", <uint index>, "managers"  
+    _addressSet:    "pools", <uint index>, "admins"   
+    _addressSet:    "pools", <uint index>, "contributors"
+    _addressSet:    "pools", <uint index>, "whitelist"
+    _bool:          "pools", <uint index>, "isWhitelisted"
+    _uint:          "pools", <uint index>, <address account>, "contribution"
+    _address:       "pools", <uint index>, "token"
+    _string:        "pools", <uint index>, "tokenName"
+    _string:        "pools", <uint index>, "tokenSymbol"
+    _uint:          "poolsCount"
 
  */
 
@@ -989,157 +1018,55 @@ contract EternalStorage is IEternalStorage, Pausable, ReentrancyGuard {
 }
 
 interface IRouter {
-    function getLatestLogic(string memory module) external view returns (address);
-    function getLogic(string memory module, uint version) external view returns (address);
-    function getLogics(string memory module) external view returns (address[] memory);
+    function getLatestImplementation(string memory module, uint index) external view returns (address);
     function getLatestVersion(string memory module) external view returns (uint);
-    function requireLatestLogic(string memory module, address logic) external view;
-    function upgrade(string memory module, address logic) external;
-    function downgrade(string memory module, uint version) external;
+    function getImplementation(string memory module, uint index) external view returns (address);
+    function requireLatestImplementation(string memory module, address implementation) external view;
+    function upgrade(string memory module, address implementation) external;
     function pause() external;
     function unpause() external;
 }
 
-contract Router is IRouter, Ownable, Pausable, ReentrancyGuard {
+contract Router is IRouter, Ownable, Pausable {
     IEternalStorage eternalStorage;
-
-    event LogicUpgraded(string indexed module, address indexed logic);
-
-    constructor(address eternalStorage_) 
-    Ownable(msg.sender) {
-        eternalStorage = IEternalStorage(eternalStorage_);
-    }
-
-    function getLatestLogic(string memory module)
-    external view
-    returns (address) {
-        bytes32 variable = keccak256(abi.encode("router", module));
-        uint index = eternalStorage.lengthAddressSet(variable) - 1;
-        return eternalStorage.indexAddressSet(variable, index);
-    }
-
-    function getLogic(string memory module, uint version)
-    external view
-    returns (address) {
-        bytes32 variable = keccak256(abi.encode("router", module));
-        return eternalStorage.indexAddressSet(variable, version);
-    }
-
-    function getLogics(string memory module)
-    external view
-    returns (address[] memory) {
-        bytes32 variable = keccak256(abi.encode("router", module));
-        return eternalStorage.getAddressSet(variable);
-    }
-
-    function getLatestVersion(string memory module)
-    external view
-    returns (uint) {
-        bytes32 variable = keccak256(abi.encode("router", module));
-        return eternalStorage.lengthAddressSet(variable);
-    }
-
-    /// useful for contracts to pause or unpause if they are the latest implementation or not
-    function requireLatestLogic(string memory module, address logic)
-    external view {
-        bytes32 variable = keccak256(abi.encode("router", module));
-        uint index = eternalStorage.lengthAddressSet(variable) - 1;
-        address latestLogic = eternalStorage.indexAddressSet(variable, index);
-        require(logic == latestLogic, "Router: logic is not latest logic");
-    }
-
-    function upgrade(string memory module, address logic)
-    external 
-    onlyOwner {
-        bytes32 variable = keccak256(abi.encode("router", module));
-        eternalStorage.addAddressSet(variable, logic);
-        emit LogicUpgraded(module, logic);
-    }
-
-    function downgrade(string memory module, uint version)
-    external 
-    onlyOwner {
-        bytes32 variable = keccak256(abi.encode("router", module));
-        address logic = eternalStorage.indexAddressSet(variable, version);
-        eternalStorage.removeAddressSet(variable, logic);
-        eternalStorage.addAddressSet(variable, logic);
-        emit LogicUpgraded(module, logic);
-    }
-
-    function pause()
-    external
-    onlyOwner {
-        _pause();
-    }
-
-    function unpause()
-    external
-    onlyOwner {
-        _unpause();
-    }
-}
-
-// TODO test contract
-contract Sentinel is Ownable, Pausable, ReentrancyGuard {
-    IEternalStorage eternalStorage;
-
-    event Transfer(address indexed from, address indexed to, address logic, string signature, uint granted, uint expiration, bool transferable, bool clonable, uint class, uint balance, bytes data);
 
     constructor(address eternalStorage_)
     Ownable(msg.sender) {
         eternalStorage = IEternalStorage(eternalStorage_);
     }
 
-    function decodeKey(bytes memory encodedKey)
-    external pure
-    returns (address, string memory, uint, uint, bool, bool, KeyClass, uint, bytes memory) {
-        Key memory key = abi.decode(encodedKey, (Key));
-        return (key.logic, key.signature, key.granted, key.expiration, key.transferable, key.clonable, key.class, key.balance, key.data);
-    }
-
-    function getKey(address account, uint index)
+    function getLatestImplementation(string memory module, uint index)
     external view
-    returns (address, string memory, uint, uint, bool, bool, KeyClass, uint, bytes memory) {
-        bytes32 varAccountKeys = keccak256(abi.encode(account, "keys"));
-        bytes memory encodedKey = eternalStorage.indexBytesArray(varAccountKeys, index);
-        Key memory key = abi.decode(encodedKey, (Key));
-        return (key.logic, key.signature, key.granted, key.expiration, key.transferable, key.clonable, key.class, key.balance, key.data);
+    whenNotPaused
+    returns (address) {
+        return _getLatestImplementation(module);
     }
 
-    function getKeys(address account)
+    function getLatestVersion(string memory module)
     external view
-    returns (bytes[] memory) {
-        bytes32 varAccountKeys = keccak256(abi.encode(account, "keys"));
-        return eternalStorage.getBytesArray(varAccountKeys);
+    whenNotPaused
+    returns (uint) {
+        return _getLatestVersion(module);
     }
 
-    function mint(string memory signature)
-    external 
-    nonReentrant
+    function getImplementation(string memory module, uint index)
+    external view
+    whenNotPaused
+    returns (address) {
+        return _getImplementation(module, index);
+    }
+
+    function requireLatestImplementation(string memory module, address implementation)
+    external view 
     whenNotPaused {
-        bytes memory emptyBytes;
-        _mint(msg.sender, msg.sender, signature, 0, 0, true, true, KeyClass.SOURCE, 0, emptyBytes);
+        return _requireLatestImplementation(module, implementation);
     }
 
-    function burn(address logic, string memory signature)
-    external 
-    nonReentrant 
-    whenNotPaused {
-        _burn(msg.sender, logic, signature);
-    }
-
-    function transfer(address to, address logic, string memory signature)
+    function upgrade(string memory module, address implementation)
     external
-    nonReentrant
+    onlyOwner 
     whenNotPaused {
-        _transfer(msg.sender, to, logic, signature);
-    }
-
-    function grant(address to, address logic, string memory signature, uint granted, uint expiration, bool transferable, bool clonable, KeyClass class, uint balance, bytes memory data)
-    external 
-    nonReentrant
-    whenNotPaused {
-        _grant(msg.sender, to, logic, signature, granted, expiration, transferable, clonable, class, balance, data);
+        _upgrade(module, implementation);
     }
 
     function pause()
@@ -1154,131 +1081,40 @@ contract Sentinel is Ownable, Pausable, ReentrancyGuard {
         _unpause();
     }
 
-    function verify(address account, address logic, string memory signature)
-    external {
-        _verify(account, logic, signature);
-    }
-
-    function _getIndexEmptyBytes(address account)
+    function _implementations(string memory module)
     internal view
-    returns (bool success, uint index) {
-        bytes memory emptyBytes;
-        bytes32 varAccountKeys = keccak256(abi.encode(account, "keys"));
-        bytes[] memory encodedKeys = eternalStorage.getBytesArray(varAccountKeys);
-        for (uint i = 0; i < encodedKeys.length; i++) {
-            if (Match.isMatchingBytes(encodedKeys[i], emptyBytes)) {
-                success = true;
-                index = i;
-                break;
-            }
-        }
-        return (success, index);
+    returns (bytes32) {
+        return keccak256(abi.encode("router", module, "logics"));
     }
 
-    function _getIndexLogSig(address account, address logic, string memory signature)
+    function _getLatestImplementation(string memory module)
     internal view
-    returns (bool success, uint index, Key memory key) {
-        bytes memory emptyBytes;
-        bytes32 varAccountKeys = keccak256(abi.encode(account, "keys"));
-        bytes[] memory encodedKeys = eternalStorage.getBytesArray(varAccountKeys);
-        for (uint i = 0; i < encodedKeys.length; i++) {
-            key = abi.decode(encodedKeys[i], (Key));
-            if (!Match.isMatchingBytes(encodedKeys[i], emptyBytes) && Match.isMatchingString(signature, key.signature) && logic == key.logic) {
-                success = true;
-                index = i;
-                break;
-            }
-        }
-        return (success, index, key);
+    returns (address) {
+        return eternalStorage.indexAddressSet(_implementations(module), _getLatestVersion(module));
     }
 
-    function _pushKey(address account, Key memory key)
-    internal {
-        (bool success, uint index,) = _getIndexLogSig(account, key.logic, key.signature);
-        require(!success, "Sentinel: cannot push because account already has a key with the given logic and signature");
-        (success, index) = _getIndexEmptyBytes(account);
-        bytes32 varAccountKeys = keccak256(abi.encode(account, "keys"));
-        if (success) {
-            eternalStorage.setIndexBytesArray(varAccountKeys, index, abi.encode(key));
-        } else {
-            eternalStorage.pushBytesArray(varAccountKeys, abi.encode(key));
-        }
+    function _getLatestVersion(string memory module)
+    internal view
+    returns (uint) {
+        return eternalStorage.lengthAddressSet(_implementations(module)) - 1;
     }
 
-    function _pullKey(address account, address logic, string memory signature)
-    internal {
-        (bool success, uint index,) = _getIndexLogSig(account, logic, signature);
-        require(success, "Sentinel: cannot pull because account does not have a key with the given logic and signature");
-        bytes32 varAccountKeys = keccak256(abi.encode(account, "keys"));
-        bytes memory emptyBytes;
-        eternalStorage.setIndexBytesArray(varAccountKeys, index, emptyBytes);
+    function _getImplementation(string memory module, uint index)
+    internal view 
+    returns (address) {
+        return eternalStorage.indexAddressSet(_implementations(module), index);
     }
 
-    function _mint(address account, address logic, string memory signature, uint granted, uint expiration, bool transferable, bool clonable, KeyClass class, uint balance, bytes memory data)
-    internal {
-        require(msg.sender != address(0), "Sentinel: cannot mint because caller is address zero");
-        require(account != address(0), "Sentinel: cannot mint because account is address zero");
-        require(logic != address(0), "Sentinel: cannot mint because logic is address zero");
-        Key memory key = Key({logic: logic, signature: signature, granted: granted, expiration: expiration, transferable: transferable, clonable: clonable, class: class, balance: balance, data: data});
-        _pushKey(account, key);
-        emit Transfer(address(0), account, logic, signature, granted, expiration, transferable, clonable, uint(class), balance, data);
+    function _requireLatestImplementation(string memory module, address implementation)
+    internal view {
+        address latestImplementation = eternalStorage.indexAddressSet(_implementations(module), _getLatestVersion(module));
+        require(implementation == latestImplementation, "Router: implementation is not latest implementation");
     }
 
-    function _burn(address account, address logic, string memory signature)
+    function _upgrade(string memory module, address implementation)
     internal {
-        require(msg.sender != address(0), "Sentinel: cannot mint because caller is address zero");
-        require(account != address(0), "Sentinel: cannot mint because account is address zero");
-        require(logic != address(0), "Sentinel: cannot mint because logic is address zero");
-        _pullKey(account, logic, signature);
-        (, , Key memory key) = _getIndexLogSig(account, logic, signature);
-        emit Transfer(account, address(0), key.logic, key.signature, key.granted, key.expiration, key.transferable, key.clonable, uint(key.class), key.balance, key.data);
-    }
-
-    function _transfer(address from, address to, address logic, string memory signature)
-    internal {
-        require(from != address(0), "Sentinel: cannot transfer because sender is address zero");
-        require(to != address(0), "Sentinel: cannot transfer because recipient is address zero");
-        require(logic != address(0), "Sentinel: cannot transfer because logic is address zero");
-        require(from != to, "Sentinel: cannot transfer because sender and recipient address is recursive");
-        (, , Key memory key) = _getIndexLogSig(from, logic, signature);
-        require(key.transferable, "Sentinel: cannot transfer because key is not transferable");
-        _pullKey(from, key.logic, key.signature);
-        _pushKey(to, key);
-        if (key.clonable) {
-            _pushKey(from, key);
-        }
-        emit Transfer(from, to, key.logic, key.signature, key.granted, key.expiration, key.transferable, key.clonable, uint(key.class), key.balance, key.data);
-    }
-    
-    function _grant(address from, address to, address logic, string memory signature, uint granted, uint expiration, bool transferable, bool clonable, KeyClass class, uint balance, bytes memory data)
-    internal {
-        require(from != address(0), "Sentinel: cannot grant because sender is address zero");
-        require(to != address(0), "Sentinel: cannot grant because recipient is address zero");
-        require(logic != address(0), "Sentinel: cannot grant because logic is address zero");
-        require(from != to, "Sentinel: cannot grant because sender and recipient address is recursive");
-        (, , Key memory sourceKey) = _getIndexLogSig(from, logic, signature);
-        require(sourceKey.class == KeyClass.SOURCE, "Sentinel: cannot grant because grantor does not have source");
-        require(class != KeyClass.SOURCE, "Sentinel: cannot grant because granted version is a source **use transfer for source class");
-        Key memory key = Key({logic: logic, signature: signature, granted: granted, expiration: expiration, transferable: transferable, clonable: clonable, class: class, balance: balance, data: data});
-        _pushKey(to, key);
-        emit Transfer(from, to, key.logic, key.signature, key.granted, key.expiration, key.transferable, key.clonable, uint(key.class), key.balance, key.data);
-    }
-
-    function _verify(address account, address logic, string memory signature)
-    internal {
-        (bool success, uint index, Key memory key) = _getIndexLogSig(account, logic, signature);
-        require(success, "Sentinel: unauthorized because account does not have a key with the given logic and signature");
-        if (key.class == KeyClass.CONSUMABLE) {
-            require(key.balance >= 1, "Sentinel: unauthorized because consumable is depleted");
-            key.balance--;
-            bytes32 varAccountKeys = keccak256(abi.encode(account, "keys"));
-            eternalStorage.setIndexBytesArray(varAccountKeys, index, abi.encode(key));
-        } else if (key.class == KeyClass.TIMED) {
-            require(block.timestamp >= key.granted, "Sentinel: unauthorized because timed has not been granted yet");
-            require(block.timestamp < key.expiration, "Sentinel: unauthorized because key has expired");
-        } else if (key.class != KeyClass.SOURCE && key.class != KeyClass.STANDARD && key.class != KeyClass.CONSUMABLE && key.class != Key.TIMED) {
-            revert("Sentinel: cannot verify because class is unrecognized");
-        }
+        eternalStorage.removeAddressSet(_implementations(module), implementation);
+        eternalStorage.addAddressSet(_implementations(module), implementation);
     }
 }
 
@@ -1286,17 +1122,14 @@ interface IOverseer {
     function getMembers(string memory role) external view returns (address[] memory);
     function getSize(string memory role) external view returns (uint);
     function requireRole(address account, string memory role) external view;
-    function grant(address to, string memory role) external;
-    function revoke(address from, string memory role) external;
+    function grant(address account, string memory role) external;
+    function revoke(address account, string memory role) external;
     function pause() external;
     function unpause() external;
 }
 
-contract Overseer is IOverseer, Ownable, Pausable, ReentrancyGuard {
+contract Overseer is IOverseer, Ownable, Pausable {
     IEternalStorage eternalStorage;
-
-    event RoleGranted(address indexed to, string indexed role);
-    event RoleRevoked(address indexed from, string indexed role);
 
     constructor(address eternalStorage_)
     Ownable(msg.sender) {
@@ -1305,65 +1138,135 @@ contract Overseer is IOverseer, Ownable, Pausable, ReentrancyGuard {
 
     function getMembers(string memory role)
     external view
+    whenNotPaused
     returns (address[] memory) {
-        bytes32 variable = keccak256(abi.encode(role, "members"));
-        return eternalStorage.getAddressSet(variable);
+        return _getMembers(role);
     }
 
     function getSize(string memory role)
     external view
+    whenNotPaused
     returns (uint) {
-        bytes32 variable = keccak256(abi.encode(role, "members"));
-        return eternalStorage.lengthAddressSet(variable);
+        return _getSize(role);
     }
 
     function requireRole(address account, string memory role)
-    external view {
-        bytes32 variable = keccak256(abi.encode(role, "members"));
-        require(eternalStorage.containsAddressSet(variable, account), "Overseer: unauthorized because account does not have required role");
+    external view 
+    whenNotPaused {
+        _requireRole(account, role);
     }
 
-    function grant(address to, string memory role)
-    external 
-    onlyOwner
-    nonReentrant
+    function grant(address account, string memory role)
+    external
+    onlyOwner 
     whenNotPaused {
-        _grant(to, role);
-        emit RoleGranted(to, role);
+        _grant(account, role);
     }
 
-    function revoke(address from, string memory role)
+    function revoke(address account, string memory role)
     external 
     onlyOwner
-    nonReentrant
     whenNotPaused {
-        _revoke(from, role);
-        emit RoleRevoked(from, role);
+        _revoke(account, role);
     }
 
     function pause()
-    external
+    external 
     onlyOwner {
         _pause();
     }
 
     function unpause()
-    external
+    external 
     onlyOwner {
         _unpause();
     }
 
-    function _grant(address to, string memory role)
-    internal {
-        bytes32 variable = keccak256(abi.encode(role, "members"));
-        eternalStorage.addAddressSet(variable, to);
+    function _role(string memory role)
+    internal view 
+    returns (bytes32) {
+        return keccak256(abi.encode("overseer", role, "members"));
     }
 
-    function _revoke(address from, string memory role)
-    internal {
-        bytes32 variable = keccak256(abi.encode(role, "members"));
-        eternalStorage.removeAddressSet(variable, from);
+    function _getMembers(string memory role)
+    internal view
+    returns (address[] memory) {
+        return eternalStorage.getAddressSet(_role(role));
     }
+
+    function _getSize(string memory role)
+    internal view
+    returns (uint) {
+        return eternalStorage.lengthAddressSet(_role(role));
+    }
+
+    function _requireRole(address account, string memory role)
+    internal view {
+        require(eternalStorage.containsAddressSet(_role(role), account), "Overseer: unauthorized because account does not have required role");
+    }
+
+    function _grant(address account, string memory role)
+    internal {
+        eternalStorage.addAddressSet(_role(role), account);
+    }
+
+    function _revoke(address account, string memory role)
+    internal {
+        eternalStorage.removeAddressSet(_role(role), account);
+    }
+}
+
+library TimelockToolkit {
+    function getMessage(IEternalStorage eternalStorage, uint index)
+    external view
+    returns (string memory) {
+        bytes32 message = keccak256(abi.encode("requests", index, "message"));
+        return eternalStorage.getString(message);
+    }
+
+    function getTargets(IEternalStorage eternalStorage, uint index)
+    external view
+    returns (address[] memory) {
+        bytes32 targets = keccak256(abi.encode("requests", index, "targets"));
+        return eternalStorage.getAddressArray(targets);
+    }
+
+    function getSignatures(IEternalStorage eternalStorage, uint index)
+    external view
+    returns (string[] memory) {
+        bytes32 signatures = keccak256(abi.encode("requests", index, "signatures"));
+        return eternalStorage.getStringArray(signatures);
+    }
+
+    function getArgs(IEternalStorage eternalStorage, uint index)
+    external view
+    returns (bytes[] memory) {
+        bytes32 args = keccak256(abi.encode("requests", index, "args"));
+        return eternalStorage.getBytesArray(args);
+    }
+
+    function setMessage(IEternalStorage eternalStorage, uint index, string memory newMessage)
+    external {
+        bytes32 message = keccak256(abi.encode("requests", index, "message"));
+        eternalStorage.setString(message, newMessage);
+    }
+}
+
+contract Timelock is Ownable, Pausable {
+    IEternalStorage eternalStorage;
+    address internal _deployer;
+    bool internal _init;
+    
+    constructor(address eternalStorage_) {
+        eternalStorage = IEternalStorage(eternalStorage_);
+    }
+
+    function _setMessage(uint index, string memory newMessage)
+    internal {
+        
+        eternalStorage.setString(message, newMessage);
+    }
+
 }
 
 // TODO finish up timelock interface
@@ -1924,6 +1827,14 @@ contract Resonance is Pausable, ReentrancyGuard {
         ResonanceToolkit.setDescription(eternalStorage, index, description);
         for (uint i = 0; i < managers.length; i++) { ResonanceToolkit.addManager(eternalStorage, index, managers[i]); } 
         for (uint i = 0; i < admins.length; i++) { ResonanceToolkit.addAdmin(eternalStorage, index, admins[i]); }
+        new PoolToken(address(eternalStorage), index, name, symbol);
+        // TODO create new erc20 for new pool and mint initial to caller
+    }
+
+    function _contribute(uint index)
+    internal payable {
+        
+        CustomMatch.amountToMint(value, supply, balance);
     }
 
     function _gas(uint amount)
