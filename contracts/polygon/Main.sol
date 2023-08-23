@@ -30,11 +30,11 @@ import "contracts/polygon/deps/openzeppelin/access/Ownable.sol";
     _addressArray:  "requests", <uint index>, "targets"
     _stringArray:   "requests", <uint index>, "signatures"
     _bytesArray:    "requests", <uint index>, "args"
-    _uint:          "requests", <uint index>, "createdTimestamp"
-    _uint:          "requests", <uint index>, "endTimelockTimestamp"
-    _uint:          "requests", <uint index>, "endTimeoutTimestamp"
+    _uint:          "requests", <uint index>, "start"
+    _uint:          "requests", <uint index>, "endTimelock"
+    _uint:          "requests", <uint index>, "endTimeout"
     _address:       "requests", <uint index>, "creator"
-    _bool:          "requests", <uint index>, "isExecuted"
+    _bool:          "requests", <uint index>, "executed"
 
     _uint:          "dreamToken", <address account, "balance"
     _uint:          "emberToken", <address account, "balance"
@@ -1245,10 +1245,51 @@ library TimelockToolkit {
         return eternalStorage.getBytesArray(args);
     }
 
+    function getStart(IEternalStorage eternalStorage, uint index)
+    external view
+    returns (uint) {
+        bytes32 start = keccak256(abi.encode("requests", index, "start"));
+        return eternalStorage.getUint(start);
+    }
+
+    function getEndTimelock(IEternalStorage eternalStorage, uint index)
+    external view
+    returns (uint) {
+        bytes32 endTimelock = keccak256(abi.encode("requests", index, "endTimelock"));
+        return eternalStorage.getUint(endTimelock);
+    }
+
+    function getEndTimeout(IEternalStorage eternalStorage, uint index)
+    external view
+    returns (uint) {
+        bytes32 endTimeout = keccak256(abi.encode("requests", index, "endTimeout"));
+        return eternalStorage.getUint(endTimeout);
+    }
+
+    function getCreator(IEternalStorage eternalStorage, uint index)
+    external view
+    returns (address) {
+        bytes32 creator = keccak256(abi.encode("requests", index, "creator"));
+        return eternalStorage.getAddress(creator);
+    }
+
+    function isExecuted(IEternalStorage eternalStorage, uint index)
+    external view
+    returns (bool) {
+        bytes executed = keccak256(abi.encode("requests", index, "executed"));
+        return eternalStorage.getBool(executed);
+    }
+
     function setMessage(IEternalStorage eternalStorage, uint index, string memory newMessage)
     external {
         bytes32 message = keccak256(abi.encode("requests", index, "message"));
         eternalStorage.setString(message, newMessage);
+    }
+
+    function pushTarget(IEternalStorage eternalStorage, uint index, address target)
+    external {
+        bytes32 targets = keccak256(abi.encode("requests", index, "targets"));
+        eternalStorage.pushAddressArray(targets, target);
     }
 }
 
