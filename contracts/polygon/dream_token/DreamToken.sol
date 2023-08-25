@@ -34,12 +34,11 @@ contract DreamToken is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit {
         bytes32 name_ = keccak256(abi.encode("dreamToken", "name"));
         bytes32 symbol_ = keccak256(abi.encode("dreamToken", "symbol"));
         bytes32 decimals_ = keccak256(abi.encode("dreamToken", "decimals"));
-        bytes32 totalSupply_ = keccak256(abi.encode("dreamToken", "totalSupply"));
         repository.setString(name_, name());
         repository.setString(symbol_, symbol());
         repository.setUint(decimals_, decimals());
         uint amount = _convertToWei(200000000);
-        repository.setUint(cap_, amount);
+        repository.setUint(cap, amount);
         _mint(msg.sender, amount);
         _init = true;
     }
