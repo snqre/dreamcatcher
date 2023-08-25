@@ -31,10 +31,11 @@ import "contracts/polygon/deps/openzeppelin/access/Ownable.sol";
     _stringArray:   "requests", <uint index>, "signatures"
     _bytesArray:    "requests", <uint index>, "args"
     _uint:          "requests", <uint index>, "start"
-    _uint:          "requests", <uint index>, "endTimelock"
-    _uint:          "requests", <uint index>, "endTimeout"
+    _uint:          "requests", <uint index>, "timelock"
+    _uint:          "requests", <uint index>, "timeout"
     _address:       "requests", <uint index>, "creator"
     _bool:          "requests", <uint index>, "executed"
+    _uint:          "requests", "count"
 
     _uint:          "dreamToken", <address account, "balance"
     _uint:          "emberToken", <address account, "balance"
@@ -1252,18 +1253,18 @@ library TimelockToolkit {
         return eternalStorage.getUint(start);
     }
 
-    function getEndTimelock(IEternalStorage eternalStorage, uint index)
+    function getTimelock(IEternalStorage eternalStorage, uint index)
     external view
     returns (uint) {
-        bytes32 endTimelock = keccak256(abi.encode("requests", index, "endTimelock"));
-        return eternalStorage.getUint(endTimelock);
+        bytes32 timelock = keccak256(abi.encode("requests", index, "timelock"));
+        return eternalStorage.getUint(timelock);
     }
 
-    function getEndTimeout(IEternalStorage eternalStorage, uint index)
+    function getTimeout(IEternalStorage eternalStorage, uint index)
     external view
     returns (uint) {
-        bytes32 endTimeout = keccak256(abi.encode("requests", index, "endTimeout"));
-        return eternalStorage.getUint(endTimeout);
+        bytes32 timeout = keccak256(abi.encode("requests", index, "timeout"));
+        return eternalStorage.getUint(timeout);
     }
 
     function getCreator(IEternalStorage eternalStorage, uint index)
@@ -1291,6 +1292,57 @@ library TimelockToolkit {
         bytes32 targets = keccak256(abi.encode("requests", index, "targets"));
         eternalStorage.pushAddressArray(targets, target);
     }
+
+    function pushSignature(IEternalStorage eternalStorage, uint index, string memory signature)
+    external {
+        bytes32 signatures = keccak256(abi.encode("requests", index, "signatures"));
+        eternalStorage.pushStringArray(signatures, signature);
+    }
+
+    function pushArg(IEternalStorage eternalStorage, uint index, bytes memory arg)
+    external {
+        bytes32 args = keccak256(abi.encode("requests", index, "args"));
+        eternalStorage.pushBytesArray(args, arg);
+    }
+
+    function setStart(IEternalStorage eternalStorage, uint index, uint timestamp)
+    external {
+        bytes32 start = keccak256(abi.encode("requests", index, "start"));
+        eternalStorage.setUint(start, timestamp);
+    }
+
+    function setTimelock(IEternalStorage eternalStorage, uint index, uint timestamp)
+    external {
+        bytes32 timelock = keccak256(abi.encode("requests", index, "timelock"));
+        eternalStorage.setUint(timelock, timestamp);
+    }
+
+    function setTimeout(IEternalStorage eternalStorage, uint index, uint timestamp)
+    external {
+        bytes32 timeout = keccak256(abi.encode("requests", index, "timeout"));
+        eternalStorage.setUint(timeout, timestamp);
+    }
+
+    function setCreator(IEternalStorage eternalStorage, uint index, address newCreator)
+    external {
+        bytes32 creator = keccak256(abi.encode("requests", index, "creator"));
+        eternalStorage.setAddress(creator, newCreator);
+    }
+
+    function setExecuted(IEternalStorage eternalStorage, uint index, bool value)
+    external {
+        bytes32 executed = keccak256(abi.encode("requests", index, "executed"));
+        eternalStorage.setBool(executed, value);
+    }
+
+    function incrementCount(IEternalStorage eternalStorage)
+    external 
+    returns (uint) {
+        bytes32 requestsCount = keccak256(abi.encode("requests", "count"));
+        uint count = eternalStorage.getUint(requestsCount) + 1;
+        eternalStorage.setUint(requestsCount, count);
+        return count;
+    }
 }
 
 contract Timelock is Ownable, Pausable {
@@ -1298,14 +1350,25 @@ contract Timelock is Ownable, Pausable {
     address internal _deployer;
     bool internal _init;
     
-    constructor(address eternalStorage_) {
+    constructor(address eternalStorage_) 
+    Ownable(msg.sender) {
         eternalStorage = IEternalStorage(eternalStorage_);
     }
 
-    function _setMessage(uint index, string memory newMessage)
+    function _init()
     internal {
         
-        eternalStorage.setString(message, newMessage);
+    }
+
+    function _queue(string memory message, address[] memory targets)
+    internal {
+        uint index = TimelockToolkit.incrementCount(eternalStorage);
+        TimelockToolkit.setMessage(eternalStorage, index, newMessage);
+        for (uint i = 0; i < targets.length; i++) {
+            TimelockToolkit.pushTarget(eternalStorage, index, targets[i]);
+        }
+
+        
     }
 
 }
@@ -1709,6 +1772,10 @@ contract PoolToken is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit {
     }
 }
 
+contract Vault {
+    
+}
+
 library ResonanceToolkit {
     function isManager(IEternalStorage eternalStorage, uint index, address account)
     external view
@@ -1883,3 +1950,4 @@ contract Resonance is Pausable, ReentrancyGuard {
         // TODO monetize
     }
 }
+
