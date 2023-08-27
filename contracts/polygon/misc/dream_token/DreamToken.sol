@@ -80,6 +80,9 @@ contract DreamToken is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit {
             bal = repository.getUint(totalSupply_);
             bal -= amount;
             repository.setUint(totalSupply_, bal);
+            bal = repository.getUint(cap);
+            bal -= amount;
+            repository.setUint(cap, bal);
         } else { // transfer
             bal = repository.getUint(from_);
             bal -= amount;
