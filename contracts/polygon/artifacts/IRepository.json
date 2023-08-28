@@ -1,0 +1,1651 @@
+{
+	"deploy": {
+		"VM:-": {
+			"linkReferences": {},
+			"autoDeployLib": true
+		},
+		"main:1": {
+			"linkReferences": {},
+			"autoDeployLib": true
+		},
+		"ropsten:3": {
+			"linkReferences": {},
+			"autoDeployLib": true
+		},
+		"rinkeby:4": {
+			"linkReferences": {},
+			"autoDeployLib": true
+		},
+		"kovan:42": {
+			"linkReferences": {},
+			"autoDeployLib": true
+		},
+		"goerli:5": {
+			"linkReferences": {},
+			"autoDeployLib": true
+		},
+		"Custom": {
+			"linkReferences": {},
+			"autoDeployLib": true
+		}
+	},
+	"data": {
+		"bytecode": {
+			"functionDebugData": {},
+			"generatedSources": [],
+			"linkReferences": {},
+			"object": "",
+			"opcodes": "",
+			"sourceMap": ""
+		},
+		"deployedBytecode": {
+			"functionDebugData": {},
+			"generatedSources": [],
+			"immutableReferences": {},
+			"linkReferences": {},
+			"object": "",
+			"opcodes": "",
+			"sourceMap": ""
+		},
+		"gasEstimates": null,
+		"methodIdentifiers": {
+			"addAddressSet(bytes32,address)": "4371ee56",
+			"addAdmin(address)": "70480275",
+			"addBytes32Set(bytes32,bytes32)": "345257e3",
+			"addLogic(address)": "79ef704e",
+			"addUintSet(bytes32,uint256)": "6290ef30",
+			"addressSetContains(bytes32,address)": "bac32013",
+			"bytes32SetContains(bytes32,bytes32)": "0a030ced",
+			"deleteAddressArray(bytes32)": "5beff993",
+			"deleteBoolArray(bytes32)": "27f2bc11",
+			"deleteBytes32Array(bytes32)": "52164cc1",
+			"deleteBytesArray(bytes32)": "d6401653",
+			"deleteIntArray(bytes32)": "ea192006",
+			"deleteStringArray(bytes32)": "396d044c",
+			"deleteUintArray(bytes32)": "76608f40",
+			"getAddress(bytes32)": "21f8a721",
+			"getAddressArray(bytes32)": "5948f733",
+			"getAddressSet(bytes32)": "2c58facc",
+			"getAdmins()": "31ae450b",
+			"getBool(bytes32)": "7ae1cfca",
+			"getBoolArray(bytes32)": "116bb929",
+			"getBytes(bytes32)": "c031a180",
+			"getBytes32(bytes32)": "a6ed563e",
+			"getBytes32Array(bytes32)": "dd031997",
+			"getBytes32Set(bytes32)": "d900ffb2",
+			"getBytesArray(bytes32)": "8db0e83b",
+			"getIndexedAddressArray(bytes32,uint256)": "a0d8bc5e",
+			"getIndexedAddressSet(bytes32,uint256)": "6ab3b2ff",
+			"getIndexedBoolArray(bytes32,uint256)": "03d14efc",
+			"getIndexedBytes32Array(bytes32,uint256)": "71d92a01",
+			"getIndexedBytes32Set(bytes32,uint256)": "3a7979c9",
+			"getIndexedBytesArray(bytes32,uint256)": "ed010d41",
+			"getIndexedIntArray(bytes32,uint256)": "a1a7fa44",
+			"getIndexedStringArray(bytes32,uint256)": "2ad9450d",
+			"getIndexedUintArray(bytes32,uint256)": "c50359e5",
+			"getIndexedUintSet(bytes32,uint256)": "eac954c7",
+			"getInt(bytes32)": "dc97d962",
+			"getIntArray(bytes32)": "2d2899b6",
+			"getLengthAddressArray(bytes32)": "fc0e8107",
+			"getLengthAddressSet(bytes32)": "cc2a29e2",
+			"getLengthBoolArray(bytes32)": "033d069a",
+			"getLengthBytes32Array(bytes32)": "bb6eecad",
+			"getLengthBytes32Set(bytes32)": "4077e72d",
+			"getLengthBytesArray(bytes32)": "b784f208",
+			"getLengthIntArray(bytes32)": "04375949",
+			"getLengthStringArray(bytes32)": "357ed225",
+			"getLengthUintArray(bytes32)": "9e29a54b",
+			"getLengthUintSet(bytes32)": "a4fc57b9",
+			"getLogics()": "26fab5e0",
+			"getString(bytes32)": "986e791a",
+			"getStringArray(bytes32)": "01677da2",
+			"getUint(bytes32)": "bd02d0f5",
+			"getUintArray(bytes32)": "86ac6bdf",
+			"getUintSet(bytes32)": "28a03356",
+			"pushAddressArray(bytes32,address)": "dd151d1e",
+			"pushBoolArray(bytes32,bool)": "2c545cca",
+			"pushBytes32Array(bytes32,bytes32)": "b27e4328",
+			"pushBytesArray(bytes32,bytes)": "24831c48",
+			"pushIntArray(bytes32,int256)": "1b929940",
+			"pushStringArray(bytes32,string)": "a235b5ca",
+			"pushUintArray(bytes32,uint256)": "72a9b6c5",
+			"removeAddressSet(bytes32,address)": "8e4a48c5",
+			"removeAdmin(address)": "1785f53c",
+			"removeBytes32Set(bytes32,bytes32)": "ccc9fc77",
+			"removeLogic(address)": "4ac79795",
+			"removeUintSet(bytes32,uint256)": "1cdffca9",
+			"setAddress(bytes32,address)": "ca446dd9",
+			"setAddressArray(bytes32,uint256,address)": "00d10c16",
+			"setBool(bytes32,bool)": "abfdcced",
+			"setBoolArray(bytes32,uint256,bool)": "262faddf",
+			"setBytes(bytes32,bytes)": "2e28d084",
+			"setBytes32(bytes32,bytes32)": "4e91db08",
+			"setBytes32Array(bytes32,uint256,bytes32)": "a6537100",
+			"setBytesArray(bytes32,uint256,bytes)": "32bde6dc",
+			"setInt(bytes32,int256)": "3e49bed0",
+			"setIntArray(bytes32,uint256,int256)": "2e25156f",
+			"setString(bytes32,string)": "6e899550",
+			"setStringArray(bytes32,uint256,string)": "443dc70c",
+			"setUint(bytes32,uint256)": "e2a4853a",
+			"setUintArray(bytes32,uint256,uint256)": "ac6dad0a",
+			"uintSetContains(bytes32,uint256)": "b60f5638"
+		}
+	},
+	"abi": [
+		{
+			"inputs": [
+				{
+					"internalType": "bytes32",
+					"name": "key",
+					"type": "bytes32"
+				},
+				{
+					"internalType": "address",
+					"name": "value",
+					"type": "address"
+				}
+			],
+			"name": "addAddressSet",
+			"outputs": [],
+			"stateMutability": "nonpayable",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "address",
+					"name": "account",
+					"type": "address"
+				}
+			],
+			"name": "addAdmin",
+			"outputs": [],
+			"stateMutability": "nonpayable",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "bytes32",
+					"name": "key",
+					"type": "bytes32"
+				},
+				{
+					"internalType": "bytes32",
+					"name": "value",
+					"type": "bytes32"
+				}
+			],
+			"name": "addBytes32Set",
+			"outputs": [],
+			"stateMutability": "nonpayable",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "address",
+					"name": "account",
+					"type": "address"
+				}
+			],
+			"name": "addLogic",
+			"outputs": [],
+			"stateMutability": "nonpayable",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "bytes32",
+					"name": "key",
+					"type": "bytes32"
+				},
+				{
+					"internalType": "uint256",
+					"name": "value",
+					"type": "uint256"
+				}
+			],
+			"name": "addUintSet",
+			"outputs": [],
+			"stateMutability": "nonpayable",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "bytes32",
+					"name": "key",
+					"type": "bytes32"
+				},
+				{
+					"internalType": "address",
+					"name": "value",
+					"type": "address"
+				}
+			],
+			"name": "addressSetContains",
+			"outputs": [
+				{
+					"internalType": "bool",
+					"name": "",
+					"type": "bool"
+				}
+			],
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "bytes32",
+					"name": "key",
+					"type": "bytes32"
+				},
+				{
+					"internalType": "bytes32",
+					"name": "value",
+					"type": "bytes32"
+				}
+			],
+			"name": "bytes32SetContains",
+			"outputs": [
+				{
+					"internalType": "bool",
+					"name": "",
+					"type": "bool"
+				}
+			],
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "bytes32",
+					"name": "key",
+					"type": "bytes32"
+				}
+			],
+			"name": "deleteAddressArray",
+			"outputs": [],
+			"stateMutability": "nonpayable",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "bytes32",
+					"name": "key",
+					"type": "bytes32"
+				}
+			],
+			"name": "deleteBoolArray",
+			"outputs": [],
+			"stateMutability": "nonpayable",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "bytes32",
+					"name": "key",
+					"type": "bytes32"
+				}
+			],
+			"name": "deleteBytes32Array",
+			"outputs": [],
+			"stateMutability": "nonpayable",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "bytes32",
+					"name": "key",
+					"type": "bytes32"
+				}
+			],
+			"name": "deleteBytesArray",
+			"outputs": [],
+			"stateMutability": "nonpayable",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "bytes32",
+					"name": "key",
+					"type": "bytes32"
+				}
+			],
+			"name": "deleteIntArray",
+			"outputs": [],
+			"stateMutability": "nonpayable",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "bytes32",
+					"name": "key",
+					"type": "bytes32"
+				}
+			],
+			"name": "deleteStringArray",
+			"outputs": [],
+			"stateMutability": "nonpayable",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "bytes32",
+					"name": "key",
+					"type": "bytes32"
+				}
+			],
+			"name": "deleteUintArray",
+			"outputs": [],
+			"stateMutability": "nonpayable",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "bytes32",
+					"name": "key",
+					"type": "bytes32"
+				}
+			],
+			"name": "getAddress",
+			"outputs": [
+				{
+					"internalType": "address",
+					"name": "",
+					"type": "address"
+				}
+			],
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "bytes32",
+					"name": "key",
+					"type": "bytes32"
+				}
+			],
+			"name": "getAddressArray",
+			"outputs": [
+				{
+					"internalType": "address[]",
+					"name": "",
+					"type": "address[]"
+				}
+			],
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "bytes32",
+					"name": "key",
+					"type": "bytes32"
+				}
+			],
+			"name": "getAddressSet",
+			"outputs": [
+				{
+					"internalType": "address[]",
+					"name": "",
+					"type": "address[]"
+				}
+			],
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"inputs": [],
+			"name": "getAdmins",
+			"outputs": [
+				{
+					"internalType": "address[]",
+					"name": "",
+					"type": "address[]"
+				}
+			],
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "bytes32",
+					"name": "key",
+					"type": "bytes32"
+				}
+			],
+			"name": "getBool",
+			"outputs": [
+				{
+					"internalType": "bool",
+					"name": "",
+					"type": "bool"
+				}
+			],
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "bytes32",
+					"name": "key",
+					"type": "bytes32"
+				}
+			],
+			"name": "getBoolArray",
+			"outputs": [
+				{
+					"internalType": "bool[]",
+					"name": "",
+					"type": "bool[]"
+				}
+			],
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "bytes32",
+					"name": "key",
+					"type": "bytes32"
+				}
+			],
+			"name": "getBytes",
+			"outputs": [
+				{
+					"internalType": "bytes",
+					"name": "",
+					"type": "bytes"
+				}
+			],
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "bytes32",
+					"name": "key",
+					"type": "bytes32"
+				}
+			],
+			"name": "getBytes32",
+			"outputs": [
+				{
+					"internalType": "bytes32",
+					"name": "",
+					"type": "bytes32"
+				}
+			],
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "bytes32",
+					"name": "key",
+					"type": "bytes32"
+				}
+			],
+			"name": "getBytes32Array",
+			"outputs": [
+				{
+					"internalType": "bytes32[]",
+					"name": "",
+					"type": "bytes32[]"
+				}
+			],
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "bytes32",
+					"name": "key",
+					"type": "bytes32"
+				}
+			],
+			"name": "getBytes32Set",
+			"outputs": [
+				{
+					"internalType": "bytes32[]",
+					"name": "",
+					"type": "bytes32[]"
+				}
+			],
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "bytes32",
+					"name": "key",
+					"type": "bytes32"
+				}
+			],
+			"name": "getBytesArray",
+			"outputs": [
+				{
+					"internalType": "bytes[]",
+					"name": "",
+					"type": "bytes[]"
+				}
+			],
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "bytes32",
+					"name": "key",
+					"type": "bytes32"
+				},
+				{
+					"internalType": "uint256",
+					"name": "index",
+					"type": "uint256"
+				}
+			],
+			"name": "getIndexedAddressArray",
+			"outputs": [
+				{
+					"internalType": "address",
+					"name": "",
+					"type": "address"
+				}
+			],
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "bytes32",
+					"name": "key",
+					"type": "bytes32"
+				},
+				{
+					"internalType": "uint256",
+					"name": "index",
+					"type": "uint256"
+				}
+			],
+			"name": "getIndexedAddressSet",
+			"outputs": [
+				{
+					"internalType": "address",
+					"name": "",
+					"type": "address"
+				}
+			],
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "bytes32",
+					"name": "key",
+					"type": "bytes32"
+				},
+				{
+					"internalType": "uint256",
+					"name": "index",
+					"type": "uint256"
+				}
+			],
+			"name": "getIndexedBoolArray",
+			"outputs": [
+				{
+					"internalType": "bool",
+					"name": "",
+					"type": "bool"
+				}
+			],
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "bytes32",
+					"name": "key",
+					"type": "bytes32"
+				},
+				{
+					"internalType": "uint256",
+					"name": "index",
+					"type": "uint256"
+				}
+			],
+			"name": "getIndexedBytes32Array",
+			"outputs": [
+				{
+					"internalType": "bytes32",
+					"name": "",
+					"type": "bytes32"
+				}
+			],
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "bytes32",
+					"name": "key",
+					"type": "bytes32"
+				},
+				{
+					"internalType": "uint256",
+					"name": "index",
+					"type": "uint256"
+				}
+			],
+			"name": "getIndexedBytes32Set",
+			"outputs": [
+				{
+					"internalType": "bytes32",
+					"name": "",
+					"type": "bytes32"
+				}
+			],
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "bytes32",
+					"name": "key",
+					"type": "bytes32"
+				},
+				{
+					"internalType": "uint256",
+					"name": "index",
+					"type": "uint256"
+				}
+			],
+			"name": "getIndexedBytesArray",
+			"outputs": [
+				{
+					"internalType": "bytes",
+					"name": "",
+					"type": "bytes"
+				}
+			],
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "bytes32",
+					"name": "key",
+					"type": "bytes32"
+				},
+				{
+					"internalType": "uint256",
+					"name": "index",
+					"type": "uint256"
+				}
+			],
+			"name": "getIndexedIntArray",
+			"outputs": [
+				{
+					"internalType": "int256",
+					"name": "",
+					"type": "int256"
+				}
+			],
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "bytes32",
+					"name": "key",
+					"type": "bytes32"
+				},
+				{
+					"internalType": "uint256",
+					"name": "index",
+					"type": "uint256"
+				}
+			],
+			"name": "getIndexedStringArray",
+			"outputs": [
+				{
+					"internalType": "string",
+					"name": "",
+					"type": "string"
+				}
+			],
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "bytes32",
+					"name": "key",
+					"type": "bytes32"
+				},
+				{
+					"internalType": "uint256",
+					"name": "index",
+					"type": "uint256"
+				}
+			],
+			"name": "getIndexedUintArray",
+			"outputs": [
+				{
+					"internalType": "uint256",
+					"name": "",
+					"type": "uint256"
+				}
+			],
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "bytes32",
+					"name": "key",
+					"type": "bytes32"
+				},
+				{
+					"internalType": "uint256",
+					"name": "index",
+					"type": "uint256"
+				}
+			],
+			"name": "getIndexedUintSet",
+			"outputs": [
+				{
+					"internalType": "uint256",
+					"name": "",
+					"type": "uint256"
+				}
+			],
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "bytes32",
+					"name": "key",
+					"type": "bytes32"
+				}
+			],
+			"name": "getInt",
+			"outputs": [
+				{
+					"internalType": "int256",
+					"name": "",
+					"type": "int256"
+				}
+			],
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "bytes32",
+					"name": "key",
+					"type": "bytes32"
+				}
+			],
+			"name": "getIntArray",
+			"outputs": [
+				{
+					"internalType": "int256[]",
+					"name": "",
+					"type": "int256[]"
+				}
+			],
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "bytes32",
+					"name": "key",
+					"type": "bytes32"
+				}
+			],
+			"name": "getLengthAddressArray",
+			"outputs": [
+				{
+					"internalType": "uint256",
+					"name": "",
+					"type": "uint256"
+				}
+			],
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "bytes32",
+					"name": "key",
+					"type": "bytes32"
+				}
+			],
+			"name": "getLengthAddressSet",
+			"outputs": [
+				{
+					"internalType": "uint256",
+					"name": "",
+					"type": "uint256"
+				}
+			],
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "bytes32",
+					"name": "key",
+					"type": "bytes32"
+				}
+			],
+			"name": "getLengthBoolArray",
+			"outputs": [
+				{
+					"internalType": "uint256",
+					"name": "",
+					"type": "uint256"
+				}
+			],
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "bytes32",
+					"name": "key",
+					"type": "bytes32"
+				}
+			],
+			"name": "getLengthBytes32Array",
+			"outputs": [
+				{
+					"internalType": "uint256",
+					"name": "",
+					"type": "uint256"
+				}
+			],
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "bytes32",
+					"name": "key",
+					"type": "bytes32"
+				}
+			],
+			"name": "getLengthBytes32Set",
+			"outputs": [
+				{
+					"internalType": "uint256",
+					"name": "",
+					"type": "uint256"
+				}
+			],
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "bytes32",
+					"name": "key",
+					"type": "bytes32"
+				}
+			],
+			"name": "getLengthBytesArray",
+			"outputs": [
+				{
+					"internalType": "uint256",
+					"name": "",
+					"type": "uint256"
+				}
+			],
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "bytes32",
+					"name": "key",
+					"type": "bytes32"
+				}
+			],
+			"name": "getLengthIntArray",
+			"outputs": [
+				{
+					"internalType": "uint256",
+					"name": "",
+					"type": "uint256"
+				}
+			],
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "bytes32",
+					"name": "key",
+					"type": "bytes32"
+				}
+			],
+			"name": "getLengthStringArray",
+			"outputs": [
+				{
+					"internalType": "uint256",
+					"name": "",
+					"type": "uint256"
+				}
+			],
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "bytes32",
+					"name": "key",
+					"type": "bytes32"
+				}
+			],
+			"name": "getLengthUintArray",
+			"outputs": [
+				{
+					"internalType": "uint256",
+					"name": "",
+					"type": "uint256"
+				}
+			],
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "bytes32",
+					"name": "key",
+					"type": "bytes32"
+				}
+			],
+			"name": "getLengthUintSet",
+			"outputs": [
+				{
+					"internalType": "uint256",
+					"name": "",
+					"type": "uint256"
+				}
+			],
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"inputs": [],
+			"name": "getLogics",
+			"outputs": [
+				{
+					"internalType": "address[]",
+					"name": "",
+					"type": "address[]"
+				}
+			],
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "bytes32",
+					"name": "key",
+					"type": "bytes32"
+				}
+			],
+			"name": "getString",
+			"outputs": [
+				{
+					"internalType": "string",
+					"name": "",
+					"type": "string"
+				}
+			],
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "bytes32",
+					"name": "key",
+					"type": "bytes32"
+				}
+			],
+			"name": "getStringArray",
+			"outputs": [
+				{
+					"internalType": "string[]",
+					"name": "",
+					"type": "string[]"
+				}
+			],
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "bytes32",
+					"name": "key",
+					"type": "bytes32"
+				}
+			],
+			"name": "getUint",
+			"outputs": [
+				{
+					"internalType": "uint256",
+					"name": "",
+					"type": "uint256"
+				}
+			],
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "bytes32",
+					"name": "key",
+					"type": "bytes32"
+				}
+			],
+			"name": "getUintArray",
+			"outputs": [
+				{
+					"internalType": "uint256[]",
+					"name": "",
+					"type": "uint256[]"
+				}
+			],
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "bytes32",
+					"name": "key",
+					"type": "bytes32"
+				}
+			],
+			"name": "getUintSet",
+			"outputs": [
+				{
+					"internalType": "uint256[]",
+					"name": "",
+					"type": "uint256[]"
+				}
+			],
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "bytes32",
+					"name": "key",
+					"type": "bytes32"
+				},
+				{
+					"internalType": "address",
+					"name": "value",
+					"type": "address"
+				}
+			],
+			"name": "pushAddressArray",
+			"outputs": [],
+			"stateMutability": "nonpayable",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "bytes32",
+					"name": "key",
+					"type": "bytes32"
+				},
+				{
+					"internalType": "bool",
+					"name": "value",
+					"type": "bool"
+				}
+			],
+			"name": "pushBoolArray",
+			"outputs": [],
+			"stateMutability": "nonpayable",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "bytes32",
+					"name": "key",
+					"type": "bytes32"
+				},
+				{
+					"internalType": "bytes32",
+					"name": "value",
+					"type": "bytes32"
+				}
+			],
+			"name": "pushBytes32Array",
+			"outputs": [],
+			"stateMutability": "nonpayable",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "bytes32",
+					"name": "key",
+					"type": "bytes32"
+				},
+				{
+					"internalType": "bytes",
+					"name": "value",
+					"type": "bytes"
+				}
+			],
+			"name": "pushBytesArray",
+			"outputs": [],
+			"stateMutability": "nonpayable",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "bytes32",
+					"name": "key",
+					"type": "bytes32"
+				},
+				{
+					"internalType": "int256",
+					"name": "value",
+					"type": "int256"
+				}
+			],
+			"name": "pushIntArray",
+			"outputs": [],
+			"stateMutability": "nonpayable",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "bytes32",
+					"name": "key",
+					"type": "bytes32"
+				},
+				{
+					"internalType": "string",
+					"name": "value",
+					"type": "string"
+				}
+			],
+			"name": "pushStringArray",
+			"outputs": [],
+			"stateMutability": "nonpayable",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "bytes32",
+					"name": "key",
+					"type": "bytes32"
+				},
+				{
+					"internalType": "uint256",
+					"name": "value",
+					"type": "uint256"
+				}
+			],
+			"name": "pushUintArray",
+			"outputs": [],
+			"stateMutability": "nonpayable",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "bytes32",
+					"name": "key",
+					"type": "bytes32"
+				},
+				{
+					"internalType": "address",
+					"name": "value",
+					"type": "address"
+				}
+			],
+			"name": "removeAddressSet",
+			"outputs": [],
+			"stateMutability": "nonpayable",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "address",
+					"name": "account",
+					"type": "address"
+				}
+			],
+			"name": "removeAdmin",
+			"outputs": [],
+			"stateMutability": "nonpayable",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "bytes32",
+					"name": "key",
+					"type": "bytes32"
+				},
+				{
+					"internalType": "bytes32",
+					"name": "value",
+					"type": "bytes32"
+				}
+			],
+			"name": "removeBytes32Set",
+			"outputs": [],
+			"stateMutability": "nonpayable",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "address",
+					"name": "account",
+					"type": "address"
+				}
+			],
+			"name": "removeLogic",
+			"outputs": [],
+			"stateMutability": "nonpayable",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "bytes32",
+					"name": "key",
+					"type": "bytes32"
+				},
+				{
+					"internalType": "uint256",
+					"name": "value",
+					"type": "uint256"
+				}
+			],
+			"name": "removeUintSet",
+			"outputs": [],
+			"stateMutability": "nonpayable",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "bytes32",
+					"name": "key",
+					"type": "bytes32"
+				},
+				{
+					"internalType": "address",
+					"name": "value",
+					"type": "address"
+				}
+			],
+			"name": "setAddress",
+			"outputs": [],
+			"stateMutability": "nonpayable",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "bytes32",
+					"name": "key",
+					"type": "bytes32"
+				},
+				{
+					"internalType": "uint256",
+					"name": "index",
+					"type": "uint256"
+				},
+				{
+					"internalType": "address",
+					"name": "value",
+					"type": "address"
+				}
+			],
+			"name": "setAddressArray",
+			"outputs": [],
+			"stateMutability": "nonpayable",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "bytes32",
+					"name": "key",
+					"type": "bytes32"
+				},
+				{
+					"internalType": "bool",
+					"name": "value",
+					"type": "bool"
+				}
+			],
+			"name": "setBool",
+			"outputs": [],
+			"stateMutability": "nonpayable",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "bytes32",
+					"name": "key",
+					"type": "bytes32"
+				},
+				{
+					"internalType": "uint256",
+					"name": "index",
+					"type": "uint256"
+				},
+				{
+					"internalType": "bool",
+					"name": "value",
+					"type": "bool"
+				}
+			],
+			"name": "setBoolArray",
+			"outputs": [],
+			"stateMutability": "nonpayable",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "bytes32",
+					"name": "key",
+					"type": "bytes32"
+				},
+				{
+					"internalType": "bytes",
+					"name": "value",
+					"type": "bytes"
+				}
+			],
+			"name": "setBytes",
+			"outputs": [],
+			"stateMutability": "nonpayable",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "bytes32",
+					"name": "key",
+					"type": "bytes32"
+				},
+				{
+					"internalType": "bytes32",
+					"name": "value",
+					"type": "bytes32"
+				}
+			],
+			"name": "setBytes32",
+			"outputs": [],
+			"stateMutability": "nonpayable",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "bytes32",
+					"name": "key",
+					"type": "bytes32"
+				},
+				{
+					"internalType": "uint256",
+					"name": "index",
+					"type": "uint256"
+				},
+				{
+					"internalType": "bytes32",
+					"name": "value",
+					"type": "bytes32"
+				}
+			],
+			"name": "setBytes32Array",
+			"outputs": [],
+			"stateMutability": "nonpayable",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "bytes32",
+					"name": "key",
+					"type": "bytes32"
+				},
+				{
+					"internalType": "uint256",
+					"name": "index",
+					"type": "uint256"
+				},
+				{
+					"internalType": "bytes",
+					"name": "value",
+					"type": "bytes"
+				}
+			],
+			"name": "setBytesArray",
+			"outputs": [],
+			"stateMutability": "nonpayable",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "bytes32",
+					"name": "key",
+					"type": "bytes32"
+				},
+				{
+					"internalType": "int256",
+					"name": "value",
+					"type": "int256"
+				}
+			],
+			"name": "setInt",
+			"outputs": [],
+			"stateMutability": "nonpayable",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "bytes32",
+					"name": "key",
+					"type": "bytes32"
+				},
+				{
+					"internalType": "uint256",
+					"name": "index",
+					"type": "uint256"
+				},
+				{
+					"internalType": "int256",
+					"name": "value",
+					"type": "int256"
+				}
+			],
+			"name": "setIntArray",
+			"outputs": [],
+			"stateMutability": "nonpayable",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "bytes32",
+					"name": "key",
+					"type": "bytes32"
+				},
+				{
+					"internalType": "string",
+					"name": "value",
+					"type": "string"
+				}
+			],
+			"name": "setString",
+			"outputs": [],
+			"stateMutability": "nonpayable",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "bytes32",
+					"name": "key",
+					"type": "bytes32"
+				},
+				{
+					"internalType": "uint256",
+					"name": "index",
+					"type": "uint256"
+				},
+				{
+					"internalType": "string",
+					"name": "value",
+					"type": "string"
+				}
+			],
+			"name": "setStringArray",
+			"outputs": [],
+			"stateMutability": "nonpayable",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "bytes32",
+					"name": "key",
+					"type": "bytes32"
+				},
+				{
+					"internalType": "uint256",
+					"name": "value",
+					"type": "uint256"
+				}
+			],
+			"name": "setUint",
+			"outputs": [],
+			"stateMutability": "nonpayable",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "bytes32",
+					"name": "key",
+					"type": "bytes32"
+				},
+				{
+					"internalType": "uint256",
+					"name": "index",
+					"type": "uint256"
+				},
+				{
+					"internalType": "uint256",
+					"name": "value",
+					"type": "uint256"
+				}
+			],
+			"name": "setUintArray",
+			"outputs": [],
+			"stateMutability": "nonpayable",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "bytes32",
+					"name": "key",
+					"type": "bytes32"
+				},
+				{
+					"internalType": "uint256",
+					"name": "value",
+					"type": "uint256"
+				}
+			],
+			"name": "uintSetContains",
+			"outputs": [
+				{
+					"internalType": "bool",
+					"name": "",
+					"type": "bool"
+				}
+			],
+			"stateMutability": "view",
+			"type": "function"
+		}
+	]
+}

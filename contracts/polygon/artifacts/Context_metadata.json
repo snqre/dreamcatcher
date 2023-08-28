@@ -1,0 +1,46 @@
+{
+	"compiler": {
+		"version": "0.8.19+commit.7dd6d404"
+	},
+	"language": "Solidity",
+	"output": {
+		"abi": [],
+		"devdoc": {
+			"details": "Provides information about the current execution context, including the sender of the transaction and its data. While these are generally available via msg.sender and msg.data, they should not be accessed in such a direct manner, since when dealing with meta-transactions the account sending and paying for execution may not be the actual sender (as far as an application is concerned). This contract is only required for intermediate, library-like contracts.",
+			"kind": "dev",
+			"methods": {},
+			"version": 1
+		},
+		"userdoc": {
+			"kind": "user",
+			"methods": {},
+			"version": 1
+		}
+	},
+	"settings": {
+		"compilationTarget": {
+			"contracts/polygon/DreamToken.sol": "Context"
+		},
+		"evmVersion": "paris",
+		"libraries": {},
+		"metadata": {
+			"bytecodeHash": "ipfs"
+		},
+		"optimizer": {
+			"enabled": false,
+			"runs": 200
+		},
+		"remappings": []
+	},
+	"sources": {
+		"contracts/polygon/DreamToken.sol": {
+			"keccak256": "0x0e865301520031b435215839b0b71d6cf5904b7fa1733d0c7c5e63382a2da903",
+			"license": "Apache-2.0",
+			"urls": [
+				"bzz-raw://14de62d345a3e20496d55343e0ebc46d2cd21fa0931c5a2720abcfcf4714971e",
+				"dweb:/ipfs/QmczJ4yCxaxxJAzi2q8DCGfN88wpHttbtyNqYcPdZ8M51e"
+			]
+		}
+	},
+	"version": 1
+}
