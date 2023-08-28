@@ -2201,6 +2201,11 @@ interface IRepository {
 }
 
 interface IDreamToken is IERC20 {
+    function name_() external pure returns (bytes32);
+    function symbol_() external pure returns (bytes32);
+    function decimals_() external pure returns (bytes32);
+    function totalSupply_() external pure returns (bytes32);
+    function balance_(address account) external pure returns (bytes32);
     function getRepository() external view returns (address);
     function getCurrentSnapshotId() external view returns (uint);
     function init() external;
