@@ -2201,7 +2201,10 @@ interface IRepository {
 }
 
 interface IDreamToken is IERC20 {
-
+    function getRepository() external view returns (address);
+    function getCurrentSnapshotId() external view returns (uint);
+    function init() external;
+    function snapshot() external returns (uint);
 }
 
 contract DreamToken is IDreamToken, ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit {
@@ -2229,6 +2232,7 @@ contract DreamToken is IDreamToken, ERC20, ERC20Burnable, ERC20Snapshot, ERC20Pe
         return _getCurrentSnapshotId();
     }
 
+    // must be logic of repository before initialized
     function init()
     external {
         require(msg.sender == _deployer, "DreamToken: msg.sender != _deployer");
@@ -2237,7 +2241,7 @@ contract DreamToken is IDreamToken, ERC20, ERC20Burnable, ERC20Snapshot, ERC20Pe
         _repository.setString(_symbol(), symbol());
         _repository.setUint(_decimals(), decimals());
         uint amount = _convertToWei(200000000);
-        _repository.setUint(_cap(), amount);
+        _repository.setUint(_totalSupply(), amount);
         _mint(msg.sender, amount);
         _init = true;
     }
@@ -2253,12 +2257,6 @@ contract DreamToken is IDreamToken, ERC20, ERC20Burnable, ERC20Snapshot, ERC20Pe
     internal pure
     returns (uint) {
         return value * 10**18;
-    }
-
-    function _cap()
-    internal pure
-    returns (bytes32) {
-        return keccak256(abi.encode("dreamToken", "cap"));
     }
 
     function _name()
@@ -2279,8 +2277,50 @@ contract DreamToken is IDreamToken, ERC20, ERC20Burnable, ERC20Snapshot, ERC20Pe
         return keccak256(abi.encode("dreamToken", "decimals"));
     }
 
+    function _totalSupply()
+    internal pure
+    returns (bytes32) {
+        return keccak256(abi.encode("dreamToken", "totalSupply"));
+    }
+    
+    function _balance(address account)
+    internal pure
+    returns (bytes32) {
+        return keccak256(abi.encode("dreamToken", account, "balance"));
+    }
+
     function _beforeTokenTransfer(address from, address to, uint amount)
     internal override(ERC20, ERC20Snapshot) {
-
+        super._beforeTokenTransfer(from, to, amount);
+        // copy data to repository
+        uint num;
+        if (from == address(0)) { // for minting
+            // set recipient new balance
+            num = _repository.getUint(_balance(to));
+            num += amount;
+            _repository.setUint(_balance(to), num);
+            // set new total supply
+            num = _repository.getUint(_totalSupply());
+            num += amount;
+            _repository.setUint(_totalSupply(), num);
+        } else if (to == address(0)) { // for burning
+            // set sender new balance
+            num = _repository.getUint(_balance(from));
+            num -= amount;
+            _repository.setUint(_balance(from), num);
+            // set new total supply
+            num = _repository.getUint(_totalSupply());
+            num -= amount;
+            _repository.setUint(_totalSupply(), num);
+        } else { // transfer
+            // set sender new balance
+            num = _repository.getUint(_balance(from));
+            num -= amount;
+            _repository.setUint(_balance(from), num);
+            // set recipient new balance
+            num = _repository.getUint(_balance(to));
+            num += amount;
+            _repository.setUint(_balance(to), num);
+        }
     }
 }
