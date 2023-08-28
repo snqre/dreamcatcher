@@ -2220,6 +2220,36 @@ contract DreamToken is IDreamToken, ERC20, ERC20Burnable, ERC20Snapshot, ERC20Pe
         _init = false;
     }
 
+    function name_()
+    external pure
+    returns (bytes32) {
+        return _name();
+    }
+
+    function symbol_()
+    external pure
+    returns (bytes32) {
+        return _symbol();
+    }
+
+    function decimals_()
+    external pure
+    returns (bytes32) {
+        return _decimals();
+    }
+
+    function totalSupply_()
+    external pure
+    returns (bytes32) {
+        return _totalSupply();
+    }
+
+    function balance_(address account)
+    external pure
+    returns (bytes32) {
+        return _balance(account);
+    }
+
     function getRepository()
     external view
     returns (address) {
@@ -2320,38 +2350,5 @@ contract DreamToken is IDreamToken, ERC20, ERC20Burnable, ERC20Snapshot, ERC20Pe
             num += amount;
             _repository.setUint(_balance(to), num);
         }
-    }
-}
-
-
-contract Enc {
-    function _name()
-    public  pure
-    returns (bytes32) {
-        return keccak256(abi.encode("dreamToken", "name"));
-    }
-
-    function _symbol()
-    public pure
-    returns (bytes32) {
-        return keccak256(abi.encode("dreamToken", "symbol"));
-    }
-
-    function _decimals()
-    public pure
-    returns (bytes32) {
-        return keccak256(abi.encode("dreamToken", "decimals"));
-    }
-
-    function _totalSupply()
-    public pure
-    returns (bytes32) {
-        return keccak256(abi.encode("dreamToken", "totalSupply"));
-    }
-    
-    function _balance(address account)
-    public pure
-    returns (bytes32) {
-        return keccak256(abi.encode("dreamToken", account, "balance"));
     }
 }
