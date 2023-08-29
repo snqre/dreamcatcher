@@ -671,63 +671,67 @@ abstract contract Pausable is Context {
 }
 
 contract QuickSwapOracle is Pausable {
-    using EnumerableSet for EnumerableSet.AddressSet;
-
-    enum Side {
-        A,
-        B
-    }
-
-    IDreamToken public dreamToken;
     IUniswapV2Factory public quickSwapFactory;
-    EnumerableSet.AddressSet private _exclusionAccounts;
 
     constructor() {
         quickSwapFactory = IUniswapV2Factory(0x5757371414417b8C6CAad45bAeF941aBc7d3Ab32);
     }
 
-    function getTokenPrice(address token0, address token1, Side side)
-    external view
-    whenNotPaused
-    returns (uint) {
-        return _getTokenPrice(token0, token1, side);
-    }
-
-    function getTokenPriceByIndex(uint index, Side side)
-    external view
-    whenNotPaused
-    returns (uint) {
-        return _getTokenPriceByIndex(index, side);
-    }
-
-    function _getTokenPrice(address token0, address token1, Side side)
-    internal view 
-    returns (uint) {
-        address pair_ = quickSwapFactory.getPair(token0, token1);
-        require(pair_ != address(0), "QuickSwapOracle: cannot get token price because pair does not exist");
-        if (side == Side.A) {
-            IUniswapV2Pair pair = IUniswapV2Pair(pair_);
-            IERC20Metadata token0_ = IERC20Metadata(pair.token0());
-            (uint reserve0, uint reserve1,) = pair.getReserves();
-            uint reserve1_ = reserve1 * (10**token0_.decimals());
-            return ((1 * reserve1_) / reserve0);
-        } else if (side == Side.B) {
-            IUniswapV2Pair pair = IUniswapV2Pair(pair_);
-            IERC20Metadata token1_ = IERC20Metadata(pair.token1());
-            (uint reserve0, uint reserve1,) = pair.getReserves();
-            uint reserve0_ = reserve0 * (10**token1_.decimals());
-            return ((1 * reserve0_) / reserve1);
-        } else {
-            revert("QuickSwapOracle: unrecognized side");
-        }
-    }
-
-    function _getTokenPriceByIndex(uint index, Side side)
+    function _getPair(uint index)
     internal view
-    returns (uint) {
-        address pair_ = quickSwapFactory.allPairs(index);
-        IUniswapV2Pair pair = IUniswapV2Pair(pair_);
-        return _getTokenPrice(pair.token0(), pair.token1(), side);
+    returns (address) {
+        return quickSwapFactory.allPairs(index);
+    }
+
+    function _getPairMetadata(address addressPair)
+    internal view
+    returns (
+        address addressBase,
+        address addressQuote,
+        string memory nameBase,
+        string memory nameQuote,
+        string memory symbolBase,
+        string memory symbolQuote,
+        uint decimalsBase,
+        uint decimalsQuote
+    ) {
+        IUniswapV2Pair pair  = IUniswapV2Pair(addressPair);
+        IERC20Metadata base  = IERC20Metadata(pair.token0());
+        IERC20Metadata quote = IERC20Metadata(pair.token1());
+        addressBase      = pair.token0();
+        addressQuote     = pair.token1();
+        nameBase         = base.name();
+        nameQuote        = quote.name();
+        symbolBase       = base.symbol();
+        symbolQuote      = quote.symbol();
+        decimalsBase     = base.decimals();
+        decimalsQuote    = quote.decimals();
+        return (
+            addressBase,
+            addressQuote,
+            nameBase,
+            nameQuote,
+            symbolBase,
+            symbolQuote,
+            decimalsBase,
+            decimalsQuote
+        );
+    }
+
+    /** (currency / asset) */
+    function _getPairPrice(address addressPair)
+    internal view
+    returns (uint, uint) {
+        IUniswapV2Pair pair = IUniswapV2Pair(addressPair);
+        IERC20Metadata token1 = IERC20Metadata(pair.token1());
+        ( /** fetch reserve and when last updated */
+            uint reserve0, 
+            uint reserve1, 
+            uint lastTimestamp
+        ) = pair.getReserves();
+        uint reserve0_ = reserve0 * (10**token1.decimals());
+        uint price = ((1 * reserve0_) / reserve1);
+        return (price, lastTimestamp);
     }
 }
 
