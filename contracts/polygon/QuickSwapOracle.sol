@@ -684,6 +684,33 @@ contract QuickSwapOracle is Pausable {
         delayTimestamp = 24 hours;
     }
 
+    function getPairMetadata(uint index)
+    external view
+    returns (
+        address addressBase,
+        address addressQuote,
+        string memory nameBase,
+        string memory nameQuote,
+        string memory symbolBase,
+        string memory symbolQuote,
+        uint decimalsBase,
+        uint decimalsQuote
+    ) {
+        return _getPairMetadata(index);
+    }
+
+    function getPairPrice(uint index)
+    external view
+    returns (uint, uint) {
+        return _getPairPrice(index);
+    }
+
+    function getPairTwap(uint index)
+    external view
+    returns (uint) {
+        return _getPairTwap(index);
+    }
+
     function _requirePairNotZero(address addressPair)
     internal pure {
         require(addressPair != address(0), "QuickSwapOracle: pair is address zero");
