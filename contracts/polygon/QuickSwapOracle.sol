@@ -684,24 +684,6 @@ contract QuickSwapOracle is Pausable {
         delayTimestamp = 24 hours;
     }
 
-    function getAll(uint index)
-    external view
-    returns (
-        address addressBase,
-        address addressQuote,
-        string memory nameBase,
-        string memory nameQuote,
-        string memory symbolBase,
-        string memory symbolQuote,
-        uint decimalsBase,
-        uint decimalsQuote,
-        uint price,
-        uint lastTimestamp,
-        uint twap
-    ) {
-        return _getAll(index);
-    }
-
     function _requirePairNotZero(address addressPair)
     internal pure {
         require(addressPair != address(0), "QuickSwapOracle: pair is address zero");
@@ -715,9 +697,8 @@ contract QuickSwapOracle is Pausable {
         return addressPair;
     }
 
-    function _getPairMetadata(address addressPair)
+    function _getPairMetadata(uint index)
     internal view
-    requirePairNotZero(addressPair)
     returns (
         address addressBase,
         address addressQuote,
@@ -728,7 +709,7 @@ contract QuickSwapOracle is Pausable {
         uint decimalsBase,
         uint decimalsQuote
     ) {
-        IUniswapV2Pair pair  = IUniswapV2Pair(addressPair);
+        IUniswapV2Pair pair  = IUniswapV2Pair(_getPair(index));
         IERC20Metadata base  = IERC20Metadata(pair.token0());
         IERC20Metadata quote = IERC20Metadata(pair.token1());
         addressBase      = pair.token0();
@@ -752,11 +733,10 @@ contract QuickSwapOracle is Pausable {
     }
 
     /** (currency / asset) */
-    function _getPairPrice(address addressPair)
+    function _getPairPrice(uint index)
     internal view
-    requirePairNotZero(addressPair)
     returns (uint, uint) {
-        IUniswapV2Pair pair = IUniswapV2Pair(addressPair);
+        IUniswapV2Pair pair = IUniswapV2Pair(_getPair(index));
         IERC20Metadata token1 = IERC20Metadata(pair.token1());
         ( /** fetch reserve and when last updated */
             uint reserve0, 
@@ -768,56 +748,13 @@ contract QuickSwapOracle is Pausable {
         return (price, lastTimestamp);
     }
 
-    function _getPairTwap(address addressPair)
+    function _getPairTwap(uint index)
     internal view
-    requirePairNotZero(addressPair)
     returns (uint) {
-        IUniswapV2Pair pair = IUniswapV2Pair(addressPair);
+        IUniswapV2Pair pair = IUniswapV2Pair(_getPair(index));
         uint x = pair.price1CumulativeLast() - pair.price0CumulativeLast();
         uint y = block.timestamp - (block.timestamp - delayTimestamp);
         uint twap = x / y;
         return twap;
-    }
-
-    function _getAll(uint index)
-    internal view 
-    returns (
-        address addressBase,
-        address addressQuote,
-        string memory nameBase,
-        string memory nameQuote,
-        string memory symbolBase,
-        string memory symbolQuote,
-        uint decimalsBase,
-        uint decimalsQuote,
-        uint price,
-        uint lastTimestamp,
-        uint twap
-    ) {
-        (
-            addressBase,
-            addressQuote,
-            nameBase,
-            nameQuote,
-            symbolBase,
-            symbolQuote,
-            decimalsBase,
-            decimalsQuote
-        ) = _getPairMetadata(_getPair(index));
-        (price, lastTimestamp) = _getPairPrice(_getPair(index));
-        twap = _getPairTwap(_getPair(index));
-        return (
-            addressBase,
-            addressQuote,
-            nameBase,
-            nameQuote,
-            symbolBase,
-            symbolQuote,
-            decimalsBase,
-            decimalsQuote,
-            price,
-            lastTimestamp,
-            twap
-        );
     }
 }
