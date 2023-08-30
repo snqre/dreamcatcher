@@ -671,20 +671,35 @@ abstract contract Pausable is Context {
 }
 
 contract QuickSwapOracle is Pausable {
+    uint delayTimestamp;
     IUniswapV2Factory public quickSwapFactory;
+
+    modifier requirePairNotZero(address addressPair) {
+        _requirePairNotZero(addressPair);
+        _;
+    }
 
     constructor() {
         quickSwapFactory = IUniswapV2Factory(0x5757371414417b8C6CAad45bAeF941aBc7d3Ab32);
+        delayTimestamp = 24 hours;
+    }
+
+    function _requirePairNotZero(address addressPair)
+    internal pure {
+        require(addressPair != address(0), "QuickSwapOracle: pair is address zero");
     }
 
     function _getPair(uint index)
     internal view
-    returns (address) {
-        return quickSwapFactory.allPairs(index);
+    returns (address addressPair) {
+        addressPair = quickSwapFactory.allPairs(index);
+        _requirePairNotZero(addressPair);
+        return addressPair;
     }
 
     function _getPairMetadata(address addressPair)
     internal view
+    requirePairNotZero(addressPair)
     returns (
         address addressBase,
         address addressQuote,
@@ -721,6 +736,7 @@ contract QuickSwapOracle is Pausable {
     /** (currency / asset) */
     function _getPairPrice(address addressPair)
     internal view
+    requirePairNotZero(addressPair)
     returns (uint, uint) {
         IUniswapV2Pair pair = IUniswapV2Pair(addressPair);
         IERC20Metadata token1 = IERC20Metadata(pair.token1());
@@ -731,7 +747,21 @@ contract QuickSwapOracle is Pausable {
         ) = pair.getReserves();
         uint reserve0_ = reserve0 * (10**token1.decimals());
         uint price = ((1 * reserve0_) / reserve1);
+        price;
         return (price, lastTimestamp);
     }
-}
 
+    function _getPairTwap(address addressPair)
+    internal view
+    requirePairNotZero(addressPair)
+    returns (uint) {
+        IUniswapV2Pair pair = IUniswapV2Pair(addressPair);
+        
+    }
+
+    function _updatePairTwap(address addressPair)
+    internal
+    requirePairNotZero(addressPair) {
+
+    }
+}
