@@ -684,6 +684,24 @@ contract QuickSwapOracle is Pausable {
         delayTimestamp = 24 hours;
     }
 
+    function getAll(uint index)
+    external view
+    returns (
+        address addressBase,
+        address addressQuote,
+        string memory nameBase,
+        string memory nameQuote,
+        string memory symbolBase,
+        string memory symbolQuote,
+        uint decimalsBase,
+        uint decimalsQuote,
+        uint price,
+        uint lastTimestamp,
+        uint twap
+    ) {
+        return _getAll(index);
+    }
+
     function _requirePairNotZero(address addressPair)
     internal pure {
         require(addressPair != address(0), "QuickSwapOracle: pair is address zero");
@@ -747,7 +765,6 @@ contract QuickSwapOracle is Pausable {
         ) = pair.getReserves();
         uint reserve0_ = reserve0 * (10**token1.decimals());
         uint price = ((1 * reserve0_) / reserve1);
-        price;
         return (price, lastTimestamp);
     }
 
@@ -756,12 +773,51 @@ contract QuickSwapOracle is Pausable {
     requirePairNotZero(addressPair)
     returns (uint) {
         IUniswapV2Pair pair = IUniswapV2Pair(addressPair);
-        
+        uint x = pair.price1CumulativeLast() - pair.price0CumulativeLast();
+        uint y = block.timestamp - (block.timestamp - delayTimestamp);
+        uint twap = x / y;
+        return twap;
     }
 
-    function _updatePairTwap(address addressPair)
-    internal
-    requirePairNotZero(addressPair) {
-
+    function _getAll(uint index)
+    internal view 
+    returns (
+        address addressBase,
+        address addressQuote,
+        string memory nameBase,
+        string memory nameQuote,
+        string memory symbolBase,
+        string memory symbolQuote,
+        uint decimalsBase,
+        uint decimalsQuote,
+        uint price,
+        uint lastTimestamp,
+        uint twap
+    ) {
+        (
+            addressBase,
+            addressQuote,
+            nameBase,
+            nameQuote,
+            symbolBase,
+            symbolQuote,
+            decimalsBase,
+            decimalsQuote
+        ) = _getPairMetadata(_getPair(index));
+        (price, lastTimestamp) = _getPairPrice(_getPair(index));
+        twap = _getPairTwap(_getPair(index));
+        return (
+            addressBase,
+            addressQuote,
+            nameBase,
+            nameQuote,
+            symbolBase,
+            symbolQuote,
+            decimalsBase,
+            decimalsQuote,
+            price,
+            lastTimestamp,
+            twap
+        );
     }
 }
