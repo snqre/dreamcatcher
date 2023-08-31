@@ -674,7 +674,6 @@ abstract contract Pausable is Context {
     divisor of 1,000,000 or 1,000,000,000,000,000,000 
     we need to differentiate to make sure we get the accurate price */
 contract QuickSwapOracle is Pausable {
-    uint delayTimestamp;
     IUniswapV2Factory public quickSwapFactory;
 
     modifier requirePairNotZero(address addressPair) {
@@ -684,7 +683,6 @@ contract QuickSwapOracle is Pausable {
 
     constructor() {
         quickSwapFactory = IUniswapV2Factory(0x5757371414417b8C6CAad45bAeF941aBc7d3Ab32);
-        delayTimestamp = 24 hours;
     }
 
     function getPairMetadata(uint index)
@@ -769,6 +767,11 @@ contract QuickSwapOracle is Pausable {
         ) = pair.getReserves();
         uint reserve0_ = reserve0 * (10**token1.decimals());
         uint price = ((1 * reserve0_) / reserve1);
+        if (price <= 9999999999) {
+            price /= 1000000;
+        } else {
+            price /= 1000000000000000000;
+        }
         return (price, lastTimestamp);
     }
 }
