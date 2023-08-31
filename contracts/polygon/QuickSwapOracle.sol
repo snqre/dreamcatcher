@@ -747,58 +747,56 @@ abstract contract Pausable is Context {
     }
 }
 
-/** TODO key issue is at the moment price is given sometimes as a
-    divisor of 1,000,000 or 1,000,000,000,000,000,000 
-    we need to differentiate to make sure we get the accurate price */
-contract QuickSwapOracle is Pausable {
-    
-
-    IUniswapV2Factory public quickSwapFactory;
-
-    modifier requirePairNotZero(address addressPair) {
-        _requirePairNotZero(addressPair);
-        _;
+contract QuickSwapOracle is Ownable, Pausable {
+    struct Metadata {
+        address addressA;
+        address addressB;
+        string nameA;
+        string nameB;
+        string symbolA;
+        string symbolB;
+        uint decimalsA;
+        uint decimalsB;
     }
 
-    constructor() {
-        quickSwapFactory = IUniswapV2Factory(0x5757371414417b8C6CAad45bAeF941aBc7d3Ab32);
+    struct Pair {
+        address address_;
+        IUniswapV2Pair interface_;
+        Metadata metadata;
+        uint price;
+        uint base;
+        uint lastTimestamp;
+        bool isWhitelisted;
     }
 
-    function getPairMetadata(uint index)
-    external view
-    returns (
-        address addressBase,
-        address addressQuote,
-        string memory nameBase,
-        string memory nameQuote,
-        string memory symbolBase,
-        string memory symbolQuote,
-        uint decimalsBase,
-        uint decimalsQuote
-    ) {
-        return _getPairMetadata(index);
+    Pair[] pairs;
+    IUniswapV2Factory factory;
+
+    constructor()
+    Ownable(msg.sender) {
+        factory = IUniswapV2Factory(0x5757371414417b8C6CAad45bAeF941aBc7d3Ab32);
     }
 
-    function getPairPrice(uint index)
-    external view
-    returns (uint, uint) {
-        return _getPairPrice(index);
-    }
-
-    function _requirePairNotZero(address addressPair)
-    internal pure {
-        require(addressPair != address(0), "QuickSwapOracle: pair is address zero");
-    }
-
-    function _getPair(uint index)
+    /** get pair using token contracts */
+    function _getPair(address tokenA, address tokenB)
     internal view
     returns (address addressPair) {
-        addressPair = quickSwapFactory.allPairs(index);
-        _requirePairNotZero(addressPair);
+        addressPair = factory.getPair(tokenA, tokenB);
+        require(addressPair != address(0), "QuickSwapOracle: pair cannot be address zero");
         return addressPair;
     }
 
-    function _getPairMetadata(uint index)
+    /** get pair using indexes */
+    function _allPairs(uint index)
+    internal view
+    returns (address addressPair) {
+        addressPair = factory.allPairs(index);
+        require(addressPair != address(0), "QuickSwapOracle: pair cannot be address zero");
+        return addressPair;
+    }
+
+    /** stand alone get pair metadata */
+    function _getMetadata(address pair)
     internal view
     returns (
         address addressBase,
@@ -810,11 +808,11 @@ contract QuickSwapOracle is Pausable {
         uint decimalsBase,
         uint decimalsQuote
     ) {
-        IUniswapV2Pair pair  = IUniswapV2Pair(_getPair(index));
-        IERC20Metadata base  = IERC20Metadata(pair.token0());
-        IERC20Metadata quote = IERC20Metadata(pair.token1());
-        addressBase      = pair.token0();
-        addressQuote     = pair.token1();
+        IUniswapV2Pair pair_ = IUniswapV2Pair(pair);
+        IERC20Metadata base  = IERC20Metadata(pair_.token0());
+        IERC20Metadata quote = IERC20Metadata(pair_.token1());
+        addressBase      = pair_.token0();
+        addressQuote     = pair_.token1();
         nameBase         = base.name();
         nameQuote        = quote.name();
         symbolBase       = base.symbol();
@@ -832,32 +830,56 @@ contract QuickSwapOracle is Pausable {
             decimalsQuote
         );
     }
-
-    /** (currency / asset) */
-    function _getPairPrice(uint index)
+    
+    /** stand alone return amount of tokenA needed to buy tokenB */
+    function _getPrice(address pair, uint amount)
     internal view
     returns (uint, uint) {
-        IUniswapV2Pair pair = IUniswapV2Pair(_getPair(index));
-        IERC20Metadata token1 = IERC20Metadata(pair.token1());
-        ( /** fetch reserve and when last updated */
-            uint reserve0, 
-            uint reserve1, 
+        IUniswapV2Pair pair_ = IUniswapV2Pair(pair);
+        IERC20Metadata tokenB = IERC20Metadata(pair_.token1());
+        ( /** fetch reserves and when last updated */
+            uint reserveA, 
+            uint reserveB, 
             uint lastTimestamp
-        ) = pair.getReserves();
-        uint reserve0_ = reserve0 * (10**token1.decimals());
-        uint price = ((1 * reserve0_) / reserve1);
-        return (price, lastTimestamp);
+        ) = pair_.getReserves();
+        uint reserveA_ = reserveA * (10**tokenB.decimals());
+        uint price_ = ((amount * reserveA_) / reserveB);
+        return (price_, lastTimestamp);
     }
-}
 
-contract QuickSwapOracle2 is Ownable, Pausable {
-    using EnumerableSet for EnumerableSet.AddressSet;
+    /** update whitelisted pairs */
+    function _update(uint index)
+    internal {
+        Pair storage pair = pairs[index];
+        IERC20Metadata tokenA = IERC20Metadata(pair.interface_.token0());
+        IERC20Metadata tokenB = IERC20Metadata(pair.interface_.token1());
+        pair.metadata.addressA = pair.interface_.token0();
+        pair.metadata.addressB = pair.interface_.token1();
+        pair.metadata.nameA = tokenA.name();
+        pair.metadata.nameB = tokenB.name();
+        pair.metadata.symbolA = tokenA.symbol();
+        pair.metadata.symbolB = tokenB.symbol();
+        pair.metadata.decimalsA = tokenA.decimals();
+        pair.metadata.decimalsB = tokenB.decimals();
+        /** return amount of tokenA needed to buy tokenB */
+        ( /** fetch reserves and when last updated */
+            uint reserveA,
+            uint reserveB,
+            uint lastTimestamp
+        ) = pair.interface_.getReserves();
+        uint reserveA_ = reserveA * (10**tokenB.decimals());
+        uint price = ((1 * reserveA_) / reserveB);
+        pair.price = price;
+        pair.lastTimestamp = lastTimestamp;
+    }
+
+    /** whitelist a pair and add to pairs */
+    function _whitelist(address pair)
+    internal {
+        require(pair != address(0), "QuickSwapOracle: pair == address(0)");
+        require(!_allowedPairs.contains(pair), "QuickSwapOracle: pair is already greenlit");
+        _allowedPairs.add(pair);
+    }
+
     
-    EnumerableSet.AddressSet private _greenlitPairs;
-    IUniswapV2Factory public quickSwapFactory;
-
-    constructor()
-    Ownable(msg.sender) {
-        
-    }
 }
