@@ -670,6 +670,9 @@ abstract contract Pausable is Context {
     }
 }
 
+/** TODO key issue is at the moment price is given sometimes as a
+    divisor of 1,000,000 or 1,000,000,000,000,000,000 
+    we need to differentiate to make sure we get the accurate price */
 contract QuickSwapOracle is Pausable {
     uint delayTimestamp;
     IUniswapV2Factory public quickSwapFactory;
@@ -703,12 +706,6 @@ contract QuickSwapOracle is Pausable {
     external view
     returns (uint, uint) {
         return _getPairPrice(index);
-    }
-
-    function getPairTwap(uint index)
-    external view
-    returns (uint) {
-        return _getPairTwap(index);
     }
 
     function _requirePairNotZero(address addressPair)
@@ -773,15 +770,5 @@ contract QuickSwapOracle is Pausable {
         uint reserve0_ = reserve0 * (10**token1.decimals());
         uint price = ((1 * reserve0_) / reserve1);
         return (price, lastTimestamp);
-    }
-
-    function _getPairTwap(uint index)
-    internal view
-    returns (uint) {
-        IUniswapV2Pair pair = IUniswapV2Pair(_getPair(index));
-        uint x = pair.price1CumulativeLast() - pair.price0CumulativeLast();
-        uint y = block.timestamp - (block.timestamp - delayTimestamp);
-        uint twap = x / y;
-        return twap;
     }
 }
