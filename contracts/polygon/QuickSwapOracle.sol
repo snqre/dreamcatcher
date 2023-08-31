@@ -747,6 +747,8 @@ abstract contract Pausable is Context {
     }
 }
 
+// TODO divisor is determined by tokenA decimals 6 decimals == 1 000 000
+// 18 decimals 1 000 000 000 000 000 000
 contract QuickSwapOracle is Ownable, Pausable {
     struct Metadata {
         address addressA;
@@ -777,109 +779,109 @@ contract QuickSwapOracle is Ownable, Pausable {
         factory = IUniswapV2Factory(0x5757371414417b8C6CAad45bAeF941aBc7d3Ab32);
     }
 
-    /** get pair using token contracts */
+    /** return pair address using token contracts */
     function _getPair(address tokenA, address tokenB)
     internal view
     returns (address addressPair) {
-        addressPair = factory.getPair(tokenA, tokenB);
-        require(addressPair != address(0), "QuickSwapOracle: pair cannot be address zero");
-        return addressPair;
+        Pair memory pair;
+        pair.address_ = factory.getPair(tokenA, tokenB);
+        require(
+            pair.address_ != address(0), 
+            "QuickSwapOracle: pair cannot be address zero"
+        );
+        return pair.address_;
     }
 
-    /** get pair using indexes */
+    /** return pair address using index */
     function _allPairs(uint index)
     internal view
     returns (address addressPair) {
-        addressPair = factory.allPairs(index);
-        require(addressPair != address(0), "QuickSwapOracle: pair cannot be address zero");
-        return addressPair;
+        Pair memory pair;
+        pair.address_ = factory.allPairs(index);
+        require(
+            pair.address_ != address(0), 
+            "QuickSwapOracle: pair cannot be address zero"
+        );
+        return pair.address_;
     }
 
-    /** stand alone get pair metadata */
-    function _getMetadata(address pair)
+    /** return pair metadata */
+    function _getMetadata(address addressPair)
     internal view
     returns (
-        address addressBase,
-        address addressQuote,
-        string memory nameBase,
-        string memory nameQuote,
-        string memory symbolBase,
-        string memory symbolQuote,
-        uint decimalsBase,
-        uint decimalsQuote
+        address addressA,
+        address addressB,
+        string memory nameA,
+        string memory nameB,
+        string memory symbolA,
+        string memory symbolB,
+        uint decimalsA,
+        uint decimalsB
     ) {
-        IUniswapV2Pair pair_ = IUniswapV2Pair(pair);
-        IERC20Metadata base  = IERC20Metadata(pair_.token0());
-        IERC20Metadata quote = IERC20Metadata(pair_.token1());
-        addressBase      = pair_.token0();
-        addressQuote     = pair_.token1();
-        nameBase         = base.name();
-        nameQuote        = quote.name();
-        symbolBase       = base.symbol();
-        symbolQuote      = quote.symbol();
-        decimalsBase     = base.decimals();
-        decimalsQuote    = quote.decimals();
+        Pair memory pair;
+        pair.interface_          = IUniswapV2Pair(addressPair);
+        IERC20Metadata tokenA    = IERC20Metadata(pair.interface_.token0());
+        IERC20Metadata tokenB    = IERC20Metadata(pair.interface_.token1());
+        pair.metadata.addressA   = pair.interface_.token0();
+        pair.metadata.addressB   = pair.interface_.token1();
+        pair.metadata.nameA      = tokenA.name();
+        pair.metadata.nameB      = tokenB.name();
+        pair.metadata.symbolA    = tokenA.symbol();
+        pair.metadata.symbolB    = tokenB.symbol();
+        pair.metadata.decimalsA  = tokenA.decimals();
+        pair.metadata.decimalsB  = tokenB.decimals();
         return (
-            addressBase,
-            addressQuote,
-            nameBase,
-            nameQuote,
-            symbolBase,
-            symbolQuote,
-            decimalsBase,
-            decimalsQuote
+            pair.metadata.addressA,
+            pair.metadata.addressB,
+            pair.metadata.nameA,
+            pair.metadata.nameB,
+            pair.metadata.symbolA,
+            pair.metadata.symbolB,
+            pair.metadata.decimalsA,
+            pair.metadata.decimalsB
         );
     }
     
-    /** stand alone return amount of tokenA needed to buy tokenB */
-    function _getPrice(address pair, uint amount)
+    /** return amount of tokenA needed to buy tokenB */
+    function _getPrice(address addressPair, uint amount)
     internal view
-    returns (uint, uint) {
-        IUniswapV2Pair pair_ = IUniswapV2Pair(pair);
-        IERC20Metadata tokenB = IERC20Metadata(pair_.token1());
+    returns (uint price, uint lastTimestamp_) {
+        Pair memory pair;
+        pair.interface_ = IUniswapV2Pair(addressPair);
+        IERC20Metadata tokenB = IERC20Metadata(pair.interface_.token1());
         ( /** fetch reserves and when last updated */
             uint reserveA, 
             uint reserveB, 
             uint lastTimestamp
-        ) = pair_.getReserves();
+        ) = pair.interface_.getReserves();
         uint reserveA_ = reserveA * (10**tokenB.decimals());
-        uint price_ = ((amount * reserveA_) / reserveB);
-        return (price_, lastTimestamp);
+        price = ((amount * reserveA_) / reserveB);
+        return (price, lastTimestamp);
     }
 
     /** update whitelisted pairs */
     function _update(uint index)
     internal {
         Pair storage pair = pairs[index];
-        IERC20Metadata tokenA = IERC20Metadata(pair.interface_.token0());
-        IERC20Metadata tokenB = IERC20Metadata(pair.interface_.token1());
-        pair.metadata.addressA = pair.interface_.token0();
-        pair.metadata.addressB = pair.interface_.token1();
-        pair.metadata.nameA = tokenA.name();
-        pair.metadata.nameB = tokenB.name();
-        pair.metadata.symbolA = tokenA.symbol();
-        pair.metadata.symbolB = tokenB.symbol();
-        pair.metadata.decimalsA = tokenA.decimals();
-        pair.metadata.decimalsB = tokenB.decimals();
-        /** return amount of tokenA needed to buy tokenB */
-        ( /** fetch reserves and when last updated */
-            uint reserveA,
-            uint reserveB,
-            uint lastTimestamp
-        ) = pair.interface_.getReserves();
-        uint reserveA_ = reserveA * (10**tokenB.decimals());
-        uint price = ((1 * reserveA_) / reserveB);
-        pair.price = price;
-        pair.lastTimestamp = lastTimestamp;
+        ( /** fetch metadata */
+            pair.metadata.addressA,
+            pair.metadata.addressB,
+            pair.metadata.nameA,
+            pair.metadata.nameB,
+            pair.metadata.symbolA,
+            pair.metadata.symbolB,
+            pair.metadata.decimalsA,
+            pair.metadata.decimalsB
+        ) = _getMetadata(pair.address_);
+        ( /** fetch price */
+            pair.price, 
+            pair.lastTimestamp
+        ) = _getPrice(pair.address_, 1);
     }
 
-    /** whitelist a pair and add to pairs */
-    function _whitelist(address pair)
+    /** add pair to whitelisted pairs array */
+    function _whitelist(address addressPair)
     internal {
-        require(pair != address(0), "QuickSwapOracle: pair == address(0)");
-        require(!_allowedPairs.contains(pair), "QuickSwapOracle: pair is already greenlit");
-        _allowedPairs.add(pair);
-    }
 
-    
+    }
 }
