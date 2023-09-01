@@ -747,6 +747,141 @@ abstract contract Pausable is Context {
     }
 }
 
+interface IUniswapV2Router01 {
+    function factory() external pure returns (address);
+    function WETH() external pure returns (address);
+
+    function addLiquidity(
+        address tokenA,
+        address tokenB,
+        uint amountADesired,
+        uint amountBDesired,
+        uint amountAMin,
+        uint amountBMin,
+        address to,
+        uint deadline
+    ) external returns (uint amountA, uint amountB, uint liquidity);
+    function addLiquidityETH(
+        address token,
+        uint amountTokenDesired,
+        uint amountTokenMin,
+        uint amountETHMin,
+        address to,
+        uint deadline
+    ) external payable returns (uint amountToken, uint amountETH, uint liquidity);
+    function removeLiquidity(
+        address tokenA,
+        address tokenB,
+        uint liquidity,
+        uint amountAMin,
+        uint amountBMin,
+        address to,
+        uint deadline
+    ) external returns (uint amountA, uint amountB);
+    function removeLiquidityETH(
+        address token,
+        uint liquidity,
+        uint amountTokenMin,
+        uint amountETHMin,
+        address to,
+        uint deadline
+    ) external returns (uint amountToken, uint amountETH);
+    function removeLiquidityWithPermit(
+        address tokenA,
+        address tokenB,
+        uint liquidity,
+        uint amountAMin,
+        uint amountBMin,
+        address to,
+        uint deadline,
+        bool approveMax, uint8 v, bytes32 r, bytes32 s
+    ) external returns (uint amountA, uint amountB);
+    function removeLiquidityETHWithPermit(
+        address token,
+        uint liquidity,
+        uint amountTokenMin,
+        uint amountETHMin,
+        address to,
+        uint deadline,
+        bool approveMax, uint8 v, bytes32 r, bytes32 s
+    ) external returns (uint amountToken, uint amountETH);
+    function swapExactTokensForTokens(
+        uint amountIn,
+        uint amountOutMin,
+        address[] calldata path,
+        address to,
+        uint deadline
+    ) external returns (uint[] memory amounts);
+    function swapTokensForExactTokens(
+        uint amountOut,
+        uint amountInMax,
+        address[] calldata path,
+        address to,
+        uint deadline
+    ) external returns (uint[] memory amounts);
+    function swapExactETHForTokens(uint amountOutMin, address[] calldata path, address to, uint deadline)
+        external
+        payable
+        returns (uint[] memory amounts);
+    function swapTokensForExactETH(uint amountOut, uint amountInMax, address[] calldata path, address to, uint deadline)
+        external
+        returns (uint[] memory amounts);
+    function swapExactTokensForETH(uint amountIn, uint amountOutMin, address[] calldata path, address to, uint deadline)
+        external
+        returns (uint[] memory amounts);
+    function swapETHForExactTokens(uint amountOut, address[] calldata path, address to, uint deadline)
+        external
+        payable
+        returns (uint[] memory amounts);
+
+    function quote(uint amountA, uint reserveA, uint reserveB) external pure returns (uint amountB);
+    function getAmountOut(uint amountIn, uint reserveIn, uint reserveOut) external pure returns (uint amountOut);
+    function getAmountIn(uint amountOut, uint reserveIn, uint reserveOut) external pure returns (uint amountIn);
+    function getAmountsOut(uint amountIn, address[] calldata path) external view returns (uint[] memory amounts);
+    function getAmountsIn(uint amountOut, address[] calldata path) external view returns (uint[] memory amounts);
+}
+
+interface IUniswapV2Router02 is IUniswapV2Router01 {
+    function removeLiquidityETHSupportingFeeOnTransferTokens(
+        address token,
+        uint liquidity,
+        uint amountTokenMin,
+        uint amountETHMin,
+        address to,
+        uint deadline
+    ) external returns (uint amountETH);
+    function removeLiquidityETHWithPermitSupportingFeeOnTransferTokens(
+        address token,
+        uint liquidity,
+        uint amountTokenMin,
+        uint amountETHMin,
+        address to,
+        uint deadline,
+        bool approveMax, uint8 v, bytes32 r, bytes32 s
+    ) external returns (uint amountETH);
+
+    function swapExactTokensForTokensSupportingFeeOnTransferTokens(
+        uint amountIn,
+        uint amountOutMin,
+        address[] calldata path,
+        address to,
+        uint deadline
+    ) external;
+    function swapExactETHForTokensSupportingFeeOnTransferTokens(
+        uint amountOutMin,
+        address[] calldata path,
+        address to,
+        uint deadline
+    ) external payable;
+    function swapExactTokensForETHSupportingFeeOnTransferTokens(
+        uint amountIn,
+        uint amountOutMin,
+        address[] calldata path,
+        address to,
+        uint deadline
+    ) external;
+}
+
 /**
     we need to be able to import pairs from uniswap v3 pair interface
     we also need to be able to use those imports
@@ -764,11 +899,15 @@ contract QuickSwapOracle is Ownable, Pausable {
         IERC20Metadata tokenB;
     }
 
+    address public WMATIC;
     IUniswapV2Factory public factory;
+    IUniswapV2Router02 public router;
 
     constructor()
     Ownable(msg.sender) {
-        factory = IUniswapV2Factory(0x5757371414417b8C6CAad45bAeF941aBc7d3Ab32);
+        factory  = IUniswapV2Factory(0x5757371414417b8C6CAad45bAeF941aBc7d3Ab32);
+        router   = IUniswapV2Router02(0xa5E0829CaCEd8fFDD4De3c43696c57F7D7A678ff);
+        WMATIC   = 0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270;
     }
 
     function getPair(address tokenA, address tokenB)
@@ -783,7 +922,7 @@ contract QuickSwapOracle is Ownable, Pausable {
         return factory.allPairs(index);
     }
 
-    function getMetadata(address addrPair)
+    function getMetadata(address tokenA, address tokenB)
     public view
     returns (
         address address_,
@@ -796,6 +935,7 @@ contract QuickSwapOracle is Ownable, Pausable {
         uint decimalsA,
         uint decimalsB
     ) {
+        address addrPair = getPair(tokenA, tokenB);
         require( /** pair must not be zero */
             addrPair != address(0x0),
             "QuickSwapOracle: cannot get pair metadata because address pair is zero"
@@ -819,22 +959,23 @@ contract QuickSwapOracle is Ownable, Pausable {
     }
 
     /** return amount of tokenA needed to buy tokenB */
-    function getPrice(address addrPair, uint amount)
+    function getPrice(address tokenA, address tokenB, uint amount)
     public view
     returns (
         uint price,
         uint decimals,
         uint lastTimestamp
     ) {
+        address addrPair = getPair(tokenA, tokenB);
         require( /** pair must not be zero */
             addrPair != address(0x0),
             "QuickSwapOracle: cannot get pair metadata because address pair is zero"
         );
         Pair memory pair;
-        pair.address_ = addrPair;
-        pair.interface_ = IUniswapV2Pair(pair.address_);
-        pair.tokenA = IERC20Metadata(pair.interface_.token0());
-        pair.tokenB = IERC20Metadata(pair.interface_.token1());
+        pair.address_    = addrPair;
+        pair.interface_  = IUniswapV2Pair(pair.address_);
+        pair.tokenA      = IERC20Metadata(pair.interface_.token0());
+        pair.tokenB      = IERC20Metadata(pair.interface_.token1());
         (
             uint reserveA,
             uint reserveB,
@@ -846,4 +987,29 @@ contract QuickSwapOracle is Ownable, Pausable {
             lastTimestamp_
         );
     }
+
+    function swap(
+        address tokenIn, 
+        address tokenOut,
+        uint amountIn,
+        uint amountOutMin,
+        address to
+    ) public {
+        IERC20(tokenIn).transferFrom(msg.sender, address(this), amountIn);
+        IERC20(tokenIn).approve(address(router), amountIn);
+        address[] memory path;
+        path = new address[](3);
+        path[0] = tokenIn;
+        path[1] = WMATIC;
+        path[2] = tokenOut;
+        router.swapExactTokensForTokens(
+            amountIn, 
+            amountOutMin, 
+            path, 
+            to, 
+            block.timestamp
+        );
+    }
+
+
 }
