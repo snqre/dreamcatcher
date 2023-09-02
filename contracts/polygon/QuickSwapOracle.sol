@@ -97,20 +97,6 @@ interface IERC20Metadata is IERC20 {
     function decimals() external view returns (uint8);
 }
 
-interface IDreamToken is IERC20 {
-    function name_() external pure returns (bytes32);
-    function symbol_() external pure returns (bytes32);
-    function decimals_() external pure returns (bytes32);
-    function totalSupply_() external pure returns (bytes32);
-    function balance_(address account) external pure returns (bytes32);
-    function getRepository() external view returns (address);
-    function getCurrentSnapshotId() external view returns (uint);
-    function init() external;
-    function snapshot() external returns (uint);
-    /** note this is not in the initial interface but added here as the token is capable of it */
-    function burn(uint amount) external;
-}
-
 interface IUniswapV2Pair {
     event Approval(address indexed owner, address indexed spender, uint value);
     event Transfer(address indexed from, address indexed to, uint value);
@@ -882,15 +868,7 @@ interface IUniswapV2Router02 is IUniswapV2Router01 {
     ) external;
 }
 
-/**
-    we need to be able to import pairs from uniswap v3 pair interface
-    we also need to be able to use those imports
-    based on research we found that the divisors required to get the price
-    of the assets on quickswap are based on the first tokens tokenA's decimals which are divisible
-    
-
- */
-
+/** WARNING: this code assumes the correct functionality of quick swap's V2 contracts over time */
 contract QuickSwapOracle is Ownable, Pausable {
     struct Pair {
         address address_;
@@ -988,15 +966,20 @@ contract QuickSwapOracle is Ownable, Pausable {
         );
     }
 
-    function swap(
+    /** slippage in basis points ie. 500 means 5% below oracle price is okay for the given trade */
+    function swapTokens(
         address tokenIn, 
         address tokenOut,
         uint amountIn,
-        uint amountOutMin,
+        uint slippage,
         address to
-    ) public {
-        IERC20(tokenIn).transferFrom(msg.sender, address(this), amountIn);
+    ) public
+    onlyOwner
+    whenNotPaused {
         IERC20(tokenIn).approve(address(router), amountIn);
+        IERC20(tokenIn).transferFrom(msg.sender, address(this), amountIn);
+        (uint amountOutMin, ,) = getPrice(tokenIn, tokenOut, amountIn);
+        amountOutMin = (amountOutMin * (10000 - slippage)) / 10000;
         address[] memory path;
         path = new address[](3);
         path[0] = tokenIn;
@@ -1011,5 +994,15 @@ contract QuickSwapOracle is Ownable, Pausable {
         );
     }
 
+    function pause()
+    public 
+    onlyOwner {
+        _pause();
+    }
 
+    function unpause()
+    public
+    onlyOwner {
+        _unpause();
+    }
 }
