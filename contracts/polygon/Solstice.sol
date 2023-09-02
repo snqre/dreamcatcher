@@ -6,24 +6,37 @@ pragma solidity 0.8.19;
     WARNING: This product is in Beta and is meant to be used as a mainnet test
  */
 
+interface IQuickSwapOracle {
+    function getPair(address tokenA, address tokenB) external view returns (address);
+    function allPairs(uint index) external view returns (address);
+    function getMetadata(address tokenA, address tokenB) external view returns (
+        address address_,
+        address addressA,
+        address addressB,
+        string memory nameA,
+        string memory nameB,
+        string memory symbolA,
+        string memory symbolB,
+        uint decimalsA,
+        uint decimalsB
+    );
 
+    function getPrice(address tokenA, address tokenB, uint amount) external view returns (
+        uint price,
+        uint decimals,
+        uint lastTimestamp
+    );
 
+    function swapTokens(
+        address tokenIn,
+        address tokenOut,
+        uint amountIn,
+        uint slippage,
+        address to
+    ) external;
 
-
-
-
-
-
-library Oracle {
-    function getTokenPrice(address pair_, uint amount)
-    external view
-    returns (uint) {
-        IUniswapV2Pair pair = IUniswapV2Pair(pair_);
-        IERC20Metadata token1 = IERC20Metadata(pair.token1());
-        (uint res0, uint res1,) = pair.getReserves();
-        uint res0_ = res0 * (10**token1.decimals());
-        return ((amount*res0_)/res1);
-    }
+    function pause() external;
+    function unpause() external;
 }
 
 interface IRepository {
