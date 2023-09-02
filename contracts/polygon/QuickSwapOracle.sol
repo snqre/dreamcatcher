@@ -881,6 +881,14 @@ contract QuickSwapOracle is Ownable, Pausable {
     IUniswapV2Factory public factory;
     IUniswapV2Router02 public router;
 
+    event Swap(
+        address indexed tokenIn,
+        address indexed tokenOut,
+        uint indexed amountIn,
+        uint slippage,
+        address to
+    );
+
     constructor()
     Ownable(msg.sender) {
         factory  = IUniswapV2Factory(0x5757371414417b8C6CAad45bAeF941aBc7d3Ab32);
@@ -994,6 +1002,7 @@ contract QuickSwapOracle is Ownable, Pausable {
             to, 
             block.timestamp
         );
+        emit Swap(tokenIn, tokenOut, amountIn, slippage, to);
     }
 
     function pause()
