@@ -274,11 +274,9 @@ library SolsticeToolkit {
         bytes32 contribution = keccak256(abi.encode("solstice", index, account, "contribution"));
         repository.setUint(contribution, newContribution);
     }
-
-
 }
 
-contract Solstice {
+contract SolsticeBeta {
     IQuickSwapOracle public oracle;
 
     constructor() {
