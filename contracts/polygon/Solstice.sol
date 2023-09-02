@@ -279,5 +279,9 @@ library SolsticeToolkit {
 }
 
 contract Solstice {
+    IQuickSwapOracle public oracle;
 
+    constructor() {
+        oracle = IQuickSwapOracle(0x1C334Ef8165BEC0db9Cbc0915B6c6d16E1e0da6C);
+    }
 }

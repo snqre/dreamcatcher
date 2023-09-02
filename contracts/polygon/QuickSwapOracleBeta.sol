@@ -869,7 +869,7 @@ interface IUniswapV2Router02 is IUniswapV2Router01 {
 }
 
 /** WARNING: this code assumes the correct functionality of quick swap's V2 contracts over time */
-contract QuickSwapOracle is Ownable, Pausable {
+contract QuickSwapOracleBeta is Ownable, Pausable {
     struct Pair {
         address address_;
         IUniswapV2Pair interface_;
