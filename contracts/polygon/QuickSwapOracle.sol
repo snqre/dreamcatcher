@@ -976,6 +976,7 @@ contract QuickSwapOracle is Ownable, Pausable {
 
     /** slippage in basis points ie. 500 means 5% below oracle price is okay for the given trade
         amounts must be based on the decimal places of the token contract
+        allowance must be granted to this contract to allow it to execute swaps
      */
     function swapTokens(
         address tokenIn, 
@@ -986,8 +987,8 @@ contract QuickSwapOracle is Ownable, Pausable {
     ) public
     onlyOwner
     whenNotPaused {
-        IERC20(tokenIn).approve(address(router), amountIn);
         IERC20(tokenIn).transferFrom(msg.sender, address(this), amountIn);
+        IERC20(tokenIn).approve(address(router), amountIn);
         (uint amountOutMin, ,) = getPrice(tokenIn, tokenOut, amountIn);
         amountOutMin = (amountOutMin * (10000 - slippage)) / 10000;
         address[] memory path;
