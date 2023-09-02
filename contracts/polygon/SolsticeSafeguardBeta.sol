@@ -121,11 +121,20 @@ interface ISolsticeSafeguardBeta {
     function setContribution(address account, uint newContribution) external;
 }
 
-contract SolsticeSafeguardBeta {
+/** storage usage
+    _addressSet     "solsticeBeta", <addr/msg.sender>, "admins"
+    _addressSet     "solsticeBeta", <addr/msg.sender>, "managers"
+    _addressSet     "solsticeBeta", <addr/msg.sender>, "contributors"
+    _string         "solsticeBeta", <addr/msg.sender>, "name"
+    _string         "solsticeBeta", <addr/msg.sender>, "description"
+    _uint           "solsticeBeta", <addr/msg.sender>, <addr/account>, "contribution"
+ */
+contract SolsticeSafeguardBeta is ISolsticeSafeguardBeta {
     IRepository public repository;
+    
 
     modifier onlySolsticeBeta {
-
+        _onlySolsticeBeta();
         _;
     }
 
@@ -143,6 +152,7 @@ contract SolsticeSafeguardBeta {
 
     function isManager(address account)
     public view
+    onlySolsticeBeta
     returns (bool) {
         bytes32 managers = keccak256(abi.encode("solsticeBeta", msg.sender, "managers"));
         return repository.addressSetContains(managers, account);
@@ -150,6 +160,7 @@ contract SolsticeSafeguardBeta {
 
     function isContributor(address account)
     public view
+    onlySolsticeBeta
     returns (bool) {
         bytes32 contributors = keccak256(abi.encode("solsticeBeta", msg.sender, "contributors"));
         return repository.addressSetContains(contributors, account);
@@ -157,189 +168,134 @@ contract SolsticeSafeguardBeta {
 
     function getAdmins()
     public view
+    onlySolsticeBeta
     returns (address[] memory) {
-        bytes32 admins = keccak256(
-            abi.encode(
-                "solsticeBeta", 
-                msg.sender, 
-                "admins"
-            )
-        );
+        bytes32 admins = keccak256(abi.encode("solsticeBeta", msg.sender, "admins"));
         return repository.getAddressSet(admins);
     }
 
     function getManagers()
     public view
+    onlySolsticeBeta
     returns (address[] memory) {
-        bytes32 managers = keccak256(
-            abi.encode(
-                "solsticeBeta", 
-                msg.sender, 
-                "managers"
-            )
-        );
+        bytes32 managers = keccak256(abi.encode("solsticeBeta", msg.sender, "managers"));
         return repository.getAddressSet(managers);
     }
 
     function getContributors()
     public view
+    onlySolsticeBeta
     returns (address[] memory) {
-        bytes32 contributors = keccak256(
-            abi.encode(
-                "solsticeBeta", 
-                msg.sender, 
-                "contributors"
-            )
-        );
+        bytes32 contributors = keccak256(abi.encode("solsticeBeta", msg.sender, "contributors"));
         return repository.getAddressSet(contributors);
     }
 
     function getName()
     public view
+    onlySolsticeBeta
     returns (string memory) {
-        bytes32 name = keccak256(
-            abi.encode(
-                "solsticeBeta", 
-                msg.sender, 
-                "name"
-            )
-        );
+        bytes32 name = keccak256(abi.encode("solsticeBeta", msg.sender, "name"));
         return repository.getString(name);
     }
 
     function getDescription()
     public view
+    onlySolsticeBeta
     returns (string memory) {
-        bytes32 description = keccak256(
-            abi.encode(
-                "solsticeBeta", 
-                msg.sender, 
-                "description"
-            )
-        );
+        bytes32 description = keccak256(abi.encode("solsticeBeta", msg.sender, "description"));
         return repository.getString(description);
     }
 
     function getContribution(address account)
     public view
+    onlySolsticeBeta
     returns (uint) {
-        bytes32 contribution = keccak256(
-            abi.encode(
-                "solsticeBeta", 
-                msg.sender, 
-                account, 
-                "contribution"
-            )
-        );
+        bytes32 contribution = keccak256(abi.encode("solsticeBeta", msg.sender, account, "contribution"));
         return repository.getUint(contribution);
     }
 
+    function getNetAssetValue()
+    public view
+    onlySolsticeBeta
+    returns (uint) {
+        bytes32 netAssetValue = keccak256(abi.encode("solsticeBeta", msg.sender, "netAssetValue"));
+        return repository.getUint(netAssetValue);
+    }
+
     function addAdmin(address account)
-    public {
-        bytes32 admins = keccak256(
-            abi.encode(
-                "solsticeBeta", 
-                msg.sender, 
-                "admins"
-            )
-        );
+    public 
+    onlySolsticeBeta {
+        bytes32 admins = keccak256(abi.encode("solsticeBeta", msg.sender, "admins"));
         repository.addAddressSet(admins, account);
     }
 
     function addManager(address account)
-    public {
-        bytes32 managers = keccak256(
-            abi.encode(
-                "solsticeBeta", 
-                msg.sender, 
-                "managers"
-            )
-        );
+    public 
+    onlySolsticeBeta {
+        bytes32 managers = keccak256(abi.encode("solsticeBeta", msg.sender, "managers"));
         repository.addAddressSet(managers, account);
     }
 
     function addContributor(address account)
-    public {
-        bytes32 contributors = keccak256(
-            abi.encode(
-                "solsticeBeta", 
-                msg.sender, 
-                "contributors"
-            )
-        );
+    public 
+    onlySolsticeBeta {
+        bytes32 contributors = keccak256(abi.encode("solsticeBeta", msg.sender, "contributors"));
         repository.addAddressSet(contributors, account);
     }
 
     function removeAdmin(address account)
-    public {
-        bytes32 admins = keccak256(
-            abi.encode(
-                "solsticeBeta", 
-                msg.sender, 
-                "admins"
-            )
-        );
+    public 
+    onlySolsticeBeta {
+        bytes32 admins = keccak256(abi.encode("solsticeBeta", msg.sender, "admins"));
         repository.removeAddressSet(admins, account);
     }
 
     function removeManager(address account)
-    public {
-        bytes32 managers = keccak256(
-            abi.encode(
-                "solsticeBeta", 
-                msg.sender, 
-                "managers"
-            )
-        );
+    public 
+    onlySolsticeBeta {
+        bytes32 managers = keccak256(abi.encode("solsticeBeta", msg.sender, "managers"));
         repository.removeAddressSet(managers, account);
     }
 
     function removeContributor(address account)
-    public {
-        bytes32 contributors = keccak256(
-            abi.encode(
-                "solsticeBeta",
-                msg.sender,
-                "contributors"
-            )
-        );
+    public 
+    onlySolsticeBeta {
+        bytes32 contributors = keccak256(abi.encode("solsticeBeta",msg.sender,"contributors"));
         repository.removeAddressSet(contributors, account);
     }
 
     function setName(string memory newName)
-    public {
-        bytes32 name = keccak256(
-            abi.encode(
-                "solsticeBeta",
-                msg.sender,
-                "name"
-            )
-        );
+    public 
+    onlySolsticeBeta {
+        bytes32 name = keccak256(abi.encode("solsticeBeta",msg.sender,"name"));
         repository.setString(name, newName);
     }
 
     function setDescription(string memory newDescription)
-    public {
-        bytes32 description = keccak256(
-            abi.encode(
-                "solsticeBeta", 
-                msg.sender, 
-                "description"
-            )
-        );
+    public 
+    onlySolsticeBeta {
+        bytes32 description = keccak256(abi.encode("solsticeBeta", msg.sender, "description"));
         repository.setString(description, newDescription);
     }
 
     function setContribution(address account, uint newContribution)
-    public {
-        bytes32 contribution = keccak256(
-            abi.encode(
-                "solsticeBeta", 
-                msg.sender, 
-                account, 
-                "contribution"
-            )
-        );
+    public 
+    onlySolsticeBeta {
+        bytes32 contribution = keccak256(abi.encode("solsticeBeta", msg.sender, account, "contribution"));
         repository.setUint(contribution, newContribution);
+    }
+
+    function setNetAssetValue(uint newNetAssetValue)
+    public
+    onlySolsticeBeta {
+        bytes32 netAssetValue = keccak256(abi.encode("solsticeBeta", msg.sender, "netAssetValue"));
+        return repository.setUint(netAssetValue, newNetAssetValue);
+    }
+
+    function _onlySolsticeBeta()
+    internal view {
+        bytes32 solsticeBetaContracts = keccak256(abi.encode("solsticeBeta", "solsticeBetaContracts"));
+        bool isSolsticeBetaContract = repository.addressSetContains(solsticeBetaContracts, msg.sender);
+        require(isSolsticeBetaContract, "SolsticeSafeguardBeta: caller is not a solstice beta contract");
     }
 }
