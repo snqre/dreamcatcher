@@ -966,7 +966,9 @@ contract QuickSwapOracle is Ownable, Pausable {
         );
     }
 
-    /** slippage in basis points ie. 500 means 5% below oracle price is okay for the given trade */
+    /** slippage in basis points ie. 500 means 5% below oracle price is okay for the given trade
+        amounts must be based on the decimal places of the token contract
+     */
     function swapTokens(
         address tokenIn, 
         address tokenOut,
