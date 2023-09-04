@@ -672,6 +672,64 @@ interface IRepository {
     function removeBytes32Set(bytes32 key, bytes32 value) external;
 }
 
+interface ISolsticeSafeguardBeta {
+    /** anyone */
+    function getImplementations() external view returns (address[] memory);
+
+    /** only implementations */
+    function getAdmins() external view returns (address[] memory);
+    function isAdmin(address account) external view returns (bool);
+    function getManagers() external view returns (address[] memory);
+    function isManager(address account) external view returns (bool);
+    function getTokenContract(uint index) external view returns (address);
+    function getTokenAmount(uint index) external view returns (uint);
+    function getDenominator() external view returns (address);
+    function willRejectAllDeposits() external view returns (bool);
+    function getMinimumDeposit() external view returns (uint);
+    function getMaximumDeposit() external view returns (uint);
+    function getLockUpPeriod() external view returns (uint);
+    function getCumulativeSlippageTolerance() external view returns (uint);
+    function getManagementFee() external view returns (uint);
+    function isWhitelistedAccount(address account) external view returns (bool);
+    function isAssetForRedemption(address contract_) external view returns (bool);
+
+    function addAdmin(address admin) external;
+    function removeAdmin(address admin) external;
+    function addManager(address manager) external;
+    function removeManager(address manager) external;
+    function setName(string memory newName) external;
+    function setDescription(string memory newDescription) external;
+    function setBalance(uint newBalance) external;
+    function pushTokenContract(address newContract) external;
+    function setTokenContract(uint index, address newContract) external;
+    function pushTokenAmount(uint newAmount) external;
+    function setTokenAmount(uint index, uint newAmount) external;
+    function setDenominator(address newDenominator) external;
+    function setRejectAllDeposits(bool enabled) external;
+    function setMinimumDeposit(uint newMinimumDeposit) external;
+    function setMaximumDeposit(uint newMaximumDeposit) external;
+    function setLockUpPeriod(uint newLockUpPeriod) external;
+    function setCumulativeSlippageTolerance(uint newCumulativeSlippageTolerance) external;
+    function setManagementFee(uint newManagementFee) external;
+    function addWhitelistedAccount(address account) external;
+    function removeWhitelistedAccount(address account) external;
+    function addAssetForRedemption(address contract_) external;
+    function removeAssetForRedemption(address contract_) external;
+    function setTokenName(string memory newTokenName) external;
+    function setTokenSymbol(string memory newTokenSymbol) external;
+    function setTokenDecimals(uint newTokenDecimals) external;
+    function setTokenTotalSupply(uint newTokenTotalSupply) external;
+    function setBalance(address account, uint newBalance) external;
+
+    /** only factory */
+    function addImplementation(address implementation) external;
+    function removeImplementation(address implementation) external;
+    function incrementImplementationCount() external returns (uint);
+    
+    /** owner */
+    function setFactory(address factory_) external;
+}
+
 /** 
     _addressSet     "solsticeBeta", "implementations"
     _uint           "solsticeBeta", "implementationsCount"
@@ -705,7 +763,7 @@ interface IRepository {
     ** accounts
     _uint           "solsticeBeta", <addr/msg.sender>, <addr/account>, "balance"
  */
-contract SolsticeSafeguardBeta is Ownable, Pausable {
+contract SolsticeSafeguardBeta is ISolsticeSafeguardBeta, Ownable, Pausable {
 
     address public factory;
     IRepository public repository;
