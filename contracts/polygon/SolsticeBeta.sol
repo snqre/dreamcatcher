@@ -39,123 +39,121 @@ interface IQuickSwapOracle {
     function unpause() external;
 }
 
-interface IRepository {
+interface ISolsticeSafeguardBeta {
+    /** anyone */
+    function getImplementations() external view returns (address[] memory);
+
+    /** only implementations */
     function getAdmins() external view returns (address[] memory);
-    function getLogics() external view returns (address[] memory);
+    function isAdmin(address account) external view returns (bool);
+    function getManagers() external view returns (address[] memory);
+    function isManager(address account) external view returns (bool);
+    function getTokenContract(uint index) external view returns (address);
+    function getTokenAmount(uint index) external view returns (uint);
+    function getDenominator() external view returns (address);
+    function willRejectAllDeposits() external view returns (bool);
+    function getMinimumDeposit() external view returns (uint);
+    function getMaximumDeposit() external view returns (uint);
+    function getLockUpPeriod() external view returns (uint);
+    function getCumulativeSlippageTolerance() external view returns (uint);
+    function getManagementFee() external view returns (uint);
+    function isWhitelistedAccount(address account) external view returns (bool);
+    function isAssetForRedemption(address contract_) external view returns (bool);
 
-    function getString(bytes32 key) external view returns (string memory);
-    function getBytes(bytes32 key) external view returns (bytes memory);
-    function getUint(bytes32 key) external view returns (uint);
-    function getInt(bytes32 key) external view returns (int);
-    function getAddress(bytes32 key) external view returns (address);
-    function getBool(bytes32 key) external view returns (bool);
-    function getBytes32(bytes32 key) external view returns (bytes32);
+    function addAdmin(address admin) external;
+    function removeAdmin(address admin) external;
+    function addManager(address manager) external;
+    function removeManager(address manager) external;
+    function setName(string memory newName) external;
+    function setDescription(string memory newDescription) external;
+    function setBalance(uint newBalance) external;
+    function pushTokenContract(address newContract) external;
+    function setTokenContract(uint index, address newContract) external;
+    function pushTokenAmount(uint newAmount) external;
+    function setTokenAmount(uint index, uint newAmount) external;
+    function setDenominator(address newDenominator) external;
+    function setRejectAllDeposits(bool enabled) external;
+    function setMinimumDeposit(uint newMinimumDeposit) external;
+    function setMaximumDeposit(uint newMaximumDeposit) external;
+    function setLockUpPeriod(uint newLockUpPeriod) external;
+    function setCumulativeSlippageTolerance(uint newCumulativeSlippageTolerance) external;
+    function setManagementFee(uint newManagementFee) external;
+    function addWhitelistedAccount(address account) external;
+    function removeWhitelistedAccount(address account) external;
+    function addAssetForRedemption(address contract_) external;
+    function removeAssetForRedemption(address contract_) external;
+    function setTokenName(string memory newTokenName) external;
+    function setTokenSymbol(string memory newTokenSymbol) external;
+    function setTokenDecimals(uint newTokenDecimals) external;
+    function setTokenTotalSupply(uint newTokenTotalSupply) external;
+    function setBalance(address account, uint newBalance) external;
 
-    function getStringArray(bytes32 key) external view returns (string[] memory);
-    function getBytesArray(bytes32 key) external view returns (bytes[] memory);
-    function getUintArray(bytes32 key) external view returns (uint[] memory);
-    function getIntArray(bytes32 key) external view returns (int[] memory);
-    function getAddressArray(bytes32 key) external view returns (address[] memory);
-    function getBoolArray(bytes32 key) external view returns (bool[] memory);
-    function getBytes32Array(bytes32 key) external view returns (bytes32[] memory);
-
-    function getIndexedStringArray(bytes32 key, uint index) external view returns (string memory);
-    function getIndexedBytesArray(bytes32 key, uint index) external view returns (bytes memory);
-    function getIndexedUintArray(bytes32 key, uint index) external view returns (uint);
-    function getIndexedIntArray(bytes32 key, uint index) external view returns (int);
-    function getIndexedAddressArray(bytes32 key, uint index) external view returns (address);
-    function getIndexedBoolArray(bytes32 key, uint index) external view returns (bool);
-    function getIndexedBytes32Array(bytes32 key, uint index) external view returns (bytes32);
+    /** only factory */
+    function addImplementation(address implementation) external;
+    function removeImplementation(address implementation) external;
+    function incrementImplementationCount() external returns (uint);
     
-    function getLengthStringArray(bytes32 key) external view returns (uint);
-    function getLengthBytesArray(bytes32 key) external view returns (uint);
-    function getLengthUintArray(bytes32 key) external view returns (uint);
-    function getLengthIntArray(bytes32 key) external view returns (uint);
-    function getLengthAddressArray(bytes32 key) external view returns (uint);
-    function getLengthBoolArray(bytes32 key) external view returns (uint);
-    function getLengthBytes32Array(bytes32 key) external view returns (uint);
-
-    function getAddressSet(bytes32 key) external view returns (address[] memory);
-    function getUintSet(bytes32 key) external view returns (uint[] memory);
-    function getBytes32Set(bytes32 key) external view returns (bytes32[] memory);
-
-    function getIndexedAddressSet(bytes32 key, uint index) external view returns (address);
-    function getIndexedUintSet(bytes32 key, uint index) external view returns (uint);
-    function getIndexedBytes32Set(bytes32 key, uint index) external view returns (bytes32);
-
-    function getLengthAddressSet(bytes32 key) external view returns (uint);
-    function getLengthUintSet(bytes32 key) external view returns (uint);
-    function getLengthBytes32Set(bytes32 key) external view returns (uint);
-    
-    function addressSetContains(bytes32 key, address value) external view returns (bool);
-    function uintSetContains(bytes32 key, uint value) external view returns (bool);
-    function bytes32SetContains(bytes32 key, bytes32 value) external view returns (bool);
-
-    function addAdmin(address account) external;
-    function addLogic(address account) external;
-    
-    function removeAdmin(address account) external;
-    function removeLogic(address account) external;
-
-    function setString(bytes32 key, string memory value) external;
-    function setBytes(bytes32 key, bytes memory value) external;
-    function setUint(bytes32 key, uint value) external;
-    function setInt(bytes32 key, int value) external;
-    function setAddress(bytes32 key, address value) external;
-    function setBool(bytes32 key, bool value) external;
-    function setBytes32(bytes32 key, bytes32 value) external;
-
-    function setStringArray(bytes32 key, uint index, string memory value) external;
-    function setBytesArray(bytes32 key, uint index, bytes memory value) external;
-    function setUintArray(bytes32 key, uint index, uint value) external;
-    function setIntArray(bytes32 key, uint index, int value) external;
-    function setAddressArray(bytes32 key, uint index, address value) external;
-    function setBoolArray(bytes32 key, uint index, bool value) external;
-    function setBytes32Array(bytes32 key, uint index, bytes32 value) external;
-
-    function pushStringArray(bytes32 key, string memory value) external;
-    function pushBytesArray(bytes32 key, bytes memory value) external;
-    function pushUintArray(bytes32 key, uint value) external;
-    function pushIntArray(bytes32 key, int value) external;
-    function pushAddressArray(bytes32 key, address value) external;
-    function pushBoolArray(bytes32 key, bool value) external;
-    function pushBytes32Array(bytes32 key, bytes32 value) external;
-
-    function deleteStringArray(bytes32 key) external;
-    function deleteBytesArray(bytes32 key) external;
-    function deleteUintArray(bytes32 key) external;
-    function deleteIntArray(bytes32 key) external;
-    function deleteAddressArray(bytes32 key) external;
-    function deleteBoolArray(bytes32 key) external;
-    function deleteBytes32Array(bytes32 key) external;
-    
-    function addAddressSet(bytes32 key, address value) external;
-    function addUintSet(bytes32 key, uint value) external;
-    function addBytes32Set(bytes32 key, bytes32 value) external;
-
-    function removeAddressSet(bytes32 key, address value) external;
-    function removeUintSet(bytes32 key, uint value) external;
-    function removeBytes32Set(bytes32 key, bytes32 value) external;
+    /** owner */
+    function setFactory(address factory_) external;
 }
-
-/**
-    _addressSet     "solstice", <uint/index>, "admins"
-    _addressSet     "solstice", <uint/index>, "managers"
-    _addressSet     "solstice", <uint/index>, "contributors"
-    _string         "solstice", <uint/index>, "name"
-    _string         "solstice", <uint/index>, "description"
-    _bool           "solstice", <uint/index>, "whitelisted"
-    _uint           "solstice", <uint/index>, "balance"
-    * _addressArray "solstice", <uint/index>, "tokens"
-    * _uintArray    "solstice", <uint/index>, "tokenAmounts"
-    _uint           "solstice", <uint/index>, <addr/account>, "contribution"
- */
-
 
 contract SolsticeBeta {
     IQuickSwapOracle public oracle;
+    ISolsticeSafeguardBeta public safeguard;
 
-    constructor() {
+    constructor(
+        string memory name,
+        string memory description,
+        address denominator,
+        bool rejectAllDeposits,
+        uint minimumDeposit,
+        uint maximumDeposit,
+        uint lockUpPeriod,
+        uint cumulativeSlippageTolerance,
+        uint managementFee,
+        address[] memory whitelistedAccounts,
+        address[] memory assetsForRedemption,
+        string memory nameToken,
+        string memory symbolToken,
+        uint decimalsToken
+    ) {
         oracle = IQuickSwapOracle(0x1C334Ef8165BEC0db9Cbc0915B6c6d16E1e0da6C);
+        safeguard = ISolsticeSafeguardBeta();
+        safeguard.setName(name);
+        safeguard.setDescription(description);
+        safeguard.setDenominator(denominator);
+        safeguard.setRejectAllDeposits(rejectAllDeposits);
+        safeguard.setMinimumDeposit(minimumDeposit);
+        safeguard.setMaximumDeposit(maximumDeposit);
+        safeguard.setLockUpPeriod(lockUpPeriod);
+        safeguard.setCumulativeSlippageTolerance(cumulativeSlippageTolerance);
+        safeguard.setManagementFee(managementFee);
+        for (uint i = 0; i < whitelistedAccounts.length; i++) {
+            safeguard.addWhitelistedAccount(whitelistedAccounts[i]);
+        }
+        for (uint i = 0; i < assetsForRedemption.length; i++) {
+            safeguard.addAssetForRedemption(assetsForRedemption[i]);
+        }
+        safeguard.setTokenName(nameToken);
+        safeguard.setTokenSymbol(symbolToken);
+        safeguard.setTokenDecimals(decimalsToken);
     }
+
+    
+    function deposit()
+    public {
+
+    }
+
+    function withdraw()
+    public {
+
+    }
+
+    function swap() 
+    public {
+
+    }
+
+    
 }
