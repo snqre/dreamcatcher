@@ -197,6 +197,80 @@ abstract contract Pausable is Context {
     }
 }
 
+/**
+ * @dev Interface of the ERC20 standard as defined in the EIP.
+ */
+interface IERC20 {
+    /**
+     * @dev Emitted when `value` tokens are moved from one account (`from`) to
+     * another (`to`).
+     *
+     * Note that `value` may be zero.
+     */
+    event Transfer(address indexed from, address indexed to, uint256 value);
+
+    /**
+     * @dev Emitted when the allowance of a `spender` for an `owner` is set by
+     * a call to {approve}. `value` is the new allowance.
+     */
+    event Approval(address indexed owner, address indexed spender, uint256 value);
+
+    /**
+     * @dev Returns the amount of tokens in existence.
+     */
+    function totalSupply() external view returns (uint256);
+
+    /**
+     * @dev Returns the amount of tokens owned by `account`.
+     */
+    function balanceOf(address account) external view returns (uint256);
+
+    /**
+     * @dev Moves `amount` tokens from the caller's account to `to`.
+     *
+     * Returns a boolean value indicating whether the operation succeeded.
+     *
+     * Emits a {Transfer} event.
+     */
+    function transfer(address to, uint256 amount) external returns (bool);
+
+    /**
+     * @dev Returns the remaining number of tokens that `spender` will be
+     * allowed to spend on behalf of `owner` through {transferFrom}. This is
+     * zero by default.
+     *
+     * This value changes when {approve} or {transferFrom} are called.
+     */
+    function allowance(address owner, address spender) external view returns (uint256);
+
+    /**
+     * @dev Sets `amount` as the allowance of `spender` over the caller's tokens.
+     *
+     * Returns a boolean value indicating whether the operation succeeded.
+     *
+     * IMPORTANT: Beware that changing an allowance with this method brings the risk
+     * that someone may use both the old and the new allowance by unfortunate
+     * transaction ordering. One possible solution to mitigate this race
+     * condition is to first reduce the spender's allowance to 0 and set the
+     * desired value afterwards:
+     * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+     *
+     * Emits an {Approval} event.
+     */
+    function approve(address spender, uint256 amount) external returns (bool);
+
+    /**
+     * @dev Moves `amount` tokens from `from` to `to` using the
+     * allowance mechanism. `amount` is then deducted from the caller's
+     * allowance.
+     *
+     * Returns a boolean value indicating whether the operation succeeded.
+     *
+     * Emits a {Transfer} event.
+     */
+    function transferFrom(address from, address to, uint256 amount) external returns (bool);
+}
+
 interface IRepository {
     function getAdmins() external view returns (address[] memory);
     function getLogics() external view returns (address[] memory);
@@ -296,157 +370,189 @@ interface IRepository {
     function removeBytes32Set(bytes32 key, bytes32 value) external;
 }
 
-library Safeguard {
-    
-}
+/**
+    _bytes      "solstice", msg.sender, "metadata"
+    _bytes      "solstice", msg.sender, "settings"
+ */
+contract Safeguard {
+    IRepository public repository;
 
-library SafeguardB {
-    struct Keys {
-        bytes32 admins;
-        bytes32 managers;
-        bytes32 name;
-        bytes32 description;
-        bytes32 balance;
-        bytes32 ownedContracts;
-        bytes32 depositEnabled;
-        bytes32 depositMin;
-        bytes32 depositMax;
-        bytes32 lockUpPeriod;
-        bytes32 entryFee;
-        bytes32 exitFee;
-        bytes32 streamingFee;
-        bytes32 allowedAccounts;
-        bytes32 nameToken;
-        bytes32 symbolToken;
-        bytes32 decimalsToken;
-        bytes32 supplyToken;
-    }
-
-    function isRole(IRepository repository, address account)
-    public view
-    returns (
-        bool isAdmin,
-        bool isManager
-    ) {
-        Keys memory keys = _generateKeys();
-        return (
-            repository.addressSetContains(keys.admins, account),
-            repository.addressSetContains(keys.managers, account)
-        );
-    }
-
-    function isAdmin(IRepository repository, address account) 
-    public view 
-    returns (bool isAdmin) {
-        
-    }
-
-    function getVault(IRepository repository)
+    function getCopiedMetadata()
     public view
     returns (
         address[] memory admins,
         address[] memory managers,
+        address[] memory depositors,
         string memory name,
         string memory description,
-        uint balance,
-        address[] memory ownedContracts
+        address[] memory contracts
     ) {
-        Keys memory keys = _generateKeys();
+        bytes memory object = repository.getBytes(
+            _metadata()
+        );
+        (
+            admins,
+            managers,
+            depositors,
+            name,
+            description,
+            contracts
+        ) = abi.decode(
+            object,
+            (
+                address[],
+                address[],
+                address[],
+                string,
+                string,
+                address[]
+            )
+        );
         return (
-            repository.getAddressSet(keys.admins),
-            repository.getAddressSet(keys.managers),
-            repository.getString(keys.name),
-            repository.getString(keys.description),
-            repository.getUint(keys.balance),
-            repository.getAddressSet(keys.ownedContracts)
+            admins,
+            managers,
+            depositors,
+            name,
+            description,
+            contracts
         );
     }
 
-    function getSettings(IRepository repository)
+    function getCopiedSettings()
     public view
     returns (
-        bool depositEnabled,
-        uint depositMin,
-        uint depositMax,
+        bool isPaused,
+        bool isWhitelisted,
+        uint minDeposit,
+        uint maxDeposit,
         uint lockUpPeriod,
-        uint entryFee,
-        uint exitFee,
-        uint streamingFee
+        uint feeManagement,
+        uint feeDeposit,
+        uint feeWithdraw,
+        address[] memory whitelist
     ) {
-        Keys memory keys = _generateKeys();
+        bytes memory object = repository.getBytes(
+            _settings()
+        );
+        (
+            isPaused,
+            isWhitelisted,
+            minDeposit,
+            maxDeposit,
+            lockUpPeriod,
+            feeManagement,
+            feeDeposit,
+            feeWithdraw,
+            whitelist
+        ) = abi.decode(
+            object,
+            (
+                bool,
+                bool,
+                uint,
+                uint,
+                uint,
+                uint,
+                uint,
+                uint,
+                address[]
+            )
+        );
         return (
-            repository.getBool(keys.depositEnabled),
-            repository.getUint(keys.depositMin),
-            repository.getUint(keys.depositMax),
-            repository.getUint(keys.lockUpPeriod),
-            repository.getUint(keys.entryFee),
-            repository.getUint(keys.exitFee),
-            repository.getUint(keys.streamingFee)
+            isPaused,
+            isWhitelisted,
+            minDeposit,
+            maxDeposit,
+            lockUpPeriod,
+            feeManagement,
+            feeDeposit,
+            feeWithdraw,
+            whitelist
         );
     }
 
-    function getAllowedAccounts(IRepository repository)
-    public view
-    returns (address[] memory allowedAccounts) {
-        Keys memory keys = _generateKeys();
-        return repository.getAddressSet(keys.allowedAccounts);
-    }
-
-    function isAllowedAccount(IRepository repository, address account)
-    public view
-    returns (bool) {
-        Keys memory keys = _generateKeys();
-        return repository.addressSetContains(keys.allowedAccounts, account);
-    }
-
-    function getToken(IRepository repository)
-    public view
-    returns (
-        string memory nameToken,
-        string memory symbolToken,
-        uint decimalsToken,
-        uint supplyToken
-    ) {
-        Keys memory keys = _generateKeys();
-        return (
-            repository.getString(keys.nameToken),
-            repository.getString(keys.symbolToken),
-            repository.getUint(keys.decimalsToken),
-            repository.getUint(keys.supplyToken)
+    function copyMetadata(
+        address[] memory admins,
+        address[] memory managers,
+        address[] memory depositors,
+        string memory name,
+        string memory description,
+        address[] memory contracts
+    ) public {
+        bytes memory object = abi.encode(
+            admins,
+            managers,
+            depositors,
+            name,
+            description,
+            contracts
+        );
+        repository.setBytes(
+            _metadata(), 
+            object
         );
     }
 
-    function _generateKeys()
-    private view
-    returns (Keys memory keys) {
-        address msgSender = msg.sender;
-        keys = Keys({
-            admins: keccak256(abi.encode("solstice", msgSender, "admins")),
-            managers: keccak256(abi.encode("solstice", msgSender, "managers")),
-            name: keccak256(abi.encode("solstice", msgSender, "name")),
-            description: keccak256(abi.encode("solstice", msgSender, "description")),
-            balance: keccak256(abi.encode("solstice", msgSender, "balance")),
-            ownedContracts: keccak256(abi.encode("solstice", msgSender, "ownedContracts")),
-            depositEnabled: keccak256(abi.encode("solstice", msgSender, "depositEnabled")),
-            depositMin: keccak256(abi.encode("solstice", msgSender, "depositMin")),
-            depositMax: keccak256(abi.encode("solstice", msgSender, "depositMax")),
-            lockUpPeriod: keccak256(abi.encode("solstice", msgSender, "lockUpPeriod")),
-            entryFee: keccak256(abi.encode("solstice", msgSender, "entryFee")),
-            exitFee: keccak256(abi.encode("solstice", msgSender, "exitFee")),
-            streamingFee: keccak256(abi.encode("solstice", msgSender, "streamingFee")),
-            allowedAccounts: keccak256(abi.encode("solstice", msgSender, "allowedAccounts")),
-            nameToken: keccak256(abi.encode("solstice", msgSender, "nameToken")),
-            symbolToken: keccak256(abi.encode("solstice", msgSender, "symbolToken")),
-            decimalsToken: keccak256(abi.encode("solstice", msgSender, "decimalsToken")),
-            supplyToken: keccak256(abi.encode("solstice", msgSender, "supplyToken"))
-        });
+    function copySettings(
+        bool isPaused,
+        bool isWhitelisted,
+        uint minDeposit,
+        uint maxDeposit,
+        uint lockUpPeriod,
+        uint feeManagement,
+        uint feeDeposit,
+        uint feeWithdraw,
+        address[] memory whitelist
+    ) public {
+        bytes memory object = abi.encode(
+            isPaused,
+            isWhitelisted,
+            minDeposit,
+            maxDeposit,
+            lockUpPeriod,
+            feeManagement,
+            feeDeposit,
+            feeWithdraw,
+            whitelist
+        );
+        repository.setBytes(
+            _settings(),
+            object
+        );
     }
 
-    function _assetAmount(address contract_)
+    function _metadata()
     private view
-    returns () {
+    returns (bytes32) {
+        return keccak256(
+            abi.encode(
+                "solstice", 
+                msg.sender, 
+                "metadata"
+            )
+        );
+    }
+
+    function _settings()
+    private view
+    returns (bytes32) {
+        return keccak256(
+            abi.encode(
+                "solstice",
+                msg.sender,
+                "settings"
+            )
+        );
+    }
+}
+
+contract SolsticeVault {
+
+    constructor() {
 
     }
+
+    
 }
 
 contract Solstice is Ownable, Pausable {
