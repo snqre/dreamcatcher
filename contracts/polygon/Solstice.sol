@@ -334,35 +334,34 @@ library Safeguard {
     function getVault(IRepository repository)
     public view
     returns (
-        address[]    memory admins,
-        address[]    memory managers,
-        string       memory name,
-        string       memory description,
-        uint                balance,
-        address[]    memory ownedContracts
+        address[] memory admins,
+        address[] memory managers,
+        string memory name,
+        string memory description,
+        uint balance,
+        address[] memory ownedContracts
     ) {
         Keys memory keys = _generateKeys();
         return (
-            repository.getAddressSet    (keys.admins),
-            repository.getAddressSet    (keys.managers),
-            repository.getString        (keys.name),
-            repository.getString        (keys.description),
-            repository.getUint          (keys.balance),
-            repository.getAddressSet    (keys.ownedContracts)
+            repository.getAddressSet(keys.admins),
+            repository.getAddressSet(keys.managers),
+            repository.getString(keys.name),
+            repository.getString(keys.description),
+            repository.getUint(keys.balance),
+            repository.getAddressSet(keys.ownedContracts)
         );
     }
 
     function getSettings(IRepository repository)
     public view
     returns (
-        bool                depositEnabled,
-        uint                depositMin,
-        uint                depositMax,
-        uint                lockUpPeriod,
-        uint                entryFee,
-        uint                exitFee,
-        uint                streamingFee,
-        address[]    memory allowedAccounts
+        bool depositEnabled,
+        uint depositMin,
+        uint depositMax,
+        uint lockUpPeriod,
+        uint entryFee,
+        uint exitFee,
+        uint streamingFee
     ) {
         Keys memory keys = _generateKeys();
         return (
@@ -372,25 +371,24 @@ library Safeguard {
             repository.getUint(keys.lockUpPeriod),
             repository.getUint(keys.entryFee),
             repository.getUint(keys.exitFee),
-            repository.getUint(keys.streamingFee),
-            repository.getAddressSet(keys.allowedAccounts)
+            repository.getUint(keys.streamingFee)
         );
     }
 
     function getToken(IRepository repository)
     public view
     returns (
-        string   memory nameToken,
-        string   memory symbolToken,
-        uint            decimalsToken,
-        uint            supplyToken
+        string memory nameToken,
+        string memory symbolToken,
+        uint decimalsToken,
+        uint supplyToken
     ) {
         Keys memory keys = _generateKeys();
         return (
-            repository.getString        (keys.nameToken),
-            repository.getString        (keys.symbolToken),
-            repository.getUint          (keys.decimalsToken),
-            repository.getUint          (keys.supplyToken)
+            repository.getString(keys.nameToken),
+            repository.getString(keys.symbolToken),
+            repository.getUint(keys.decimalsToken),
+            repository.getUint(keys.supplyToken)
         );
     }
 
@@ -399,24 +397,24 @@ library Safeguard {
     returns (Keys memory keys) {
         address msgSender = msg.sender;
         keys = Keys({
-            admins:              keccak256(abi.encode("solstice", msgSender, "admins")),
-            managers:            keccak256(abi.encode("solstice", msgSender, "managers")),
-            name:                keccak256(abi.encode("solstice", msgSender, "name")),
-            description:         keccak256(abi.encode("solstice", msgSender, "description")),
-            balance:             keccak256(abi.encode("solstice", msgSender, "balance")),
-            ownedContracts:      keccak256(abi.encode("solstice", msgSender, "ownedContracts")),
-            depositEnabled:      keccak256(abi.encode("solstice", msgSender, "depositEnabled")),
-            depositMin:          keccak256(abi.encode("solstice", msgSender, "depositMin")),
-            depositMax:          keccak256(abi.encode("solstice", msgSender, "depositMax")),
-            lockUpPeriod:        keccak256(abi.encode("solstice", msgSender, "lockUpPeriod")),
-            entryFee:            keccak256(abi.encode("solstice", msgSender, "entryFee")),
-            exitFee:             keccak256(abi.encode("solstice", msgSender, "exitFee")),
-            streamingFee:        keccak256(abi.encode("solstice", msgSender, "streamingFee")),
-            allowedAccounts:     keccak256(abi.encode("solstice", msgSender, "allowedAccounts")),
-            nameToken:           keccak256(abi.encode("solstice", msgSender, "nameToken")),
-            symbolToken:         keccak256(abi.encode("solstice", msgSender, "symbolToken")),
-            decimalsToken:       keccak256(abi.encode("solstice", msgSender, "decimalsToken")),
-            supplyToken:         keccak256(abi.encode("solstice", msgSender, "supplyToken"))
+            admins: keccak256(abi.encode("solstice", msgSender, "admins")),
+            managers: keccak256(abi.encode("solstice", msgSender, "managers")),
+            name: keccak256(abi.encode("solstice", msgSender, "name")),
+            description: keccak256(abi.encode("solstice", msgSender, "description")),
+            balance: keccak256(abi.encode("solstice", msgSender, "balance")),
+            ownedContracts: keccak256(abi.encode("solstice", msgSender, "ownedContracts")),
+            depositEnabled: keccak256(abi.encode("solstice", msgSender, "depositEnabled")),
+            depositMin: keccak256(abi.encode("solstice", msgSender, "depositMin")),
+            depositMax: keccak256(abi.encode("solstice", msgSender, "depositMax")),
+            lockUpPeriod: keccak256(abi.encode("solstice", msgSender, "lockUpPeriod")),
+            entryFee: keccak256(abi.encode("solstice", msgSender, "entryFee")),
+            exitFee: keccak256(abi.encode("solstice", msgSender, "exitFee")),
+            streamingFee: keccak256(abi.encode("solstice", msgSender, "streamingFee")),
+            allowedAccounts: keccak256(abi.encode("solstice", msgSender, "allowedAccounts")),
+            nameToken: keccak256(abi.encode("solstice", msgSender, "nameToken")),
+            symbolToken: keccak256(abi.encode("solstice", msgSender, "symbolToken")),
+            decimalsToken: keccak256(abi.encode("solstice", msgSender, "decimalsToken")),
+            supplyToken: keccak256(abi.encode("solstice", msgSender, "supplyToken"))
         });
     }
 }
