@@ -339,7 +339,22 @@ library Safeguard {
         string       memory name,
         string       memory description,
         uint                balance,
-        address[]    memory ownedContracts,
+        address[]    memory ownedContracts
+    ) {
+        Keys memory keys = _generateKeys();
+        return (
+            repository.getAddressSet    (keys.admins),
+            repository.getAddressSet    (keys.managers),
+            repository.getString        (keys.name),
+            repository.getString        (keys.description),
+            repository.getUint          (keys.balance),
+            repository.getAddressSet    (keys.ownedContracts)
+        );
+    }
+
+    function getSettings(IRepository repository)
+    public view
+    returns (
         bool                depositEnabled,
         uint                depositMin,
         uint                depositMax,
@@ -351,20 +366,14 @@ library Safeguard {
     ) {
         Keys memory keys = _generateKeys();
         return (
-            repository.getAddressSet    (keys.admins),
-            repository.getAddressSet    (keys.managers),
-            repository.getString        (keys.name),
-            repository.getString        (keys.description),
-            repository.getUint          (keys.balance),
-            repository.getAddressSet    (keys.ownedContracts),
-            repository.getBool          (keys.depositEnabled),
-            repository.getUint          (keys.depositMin),
-            repository.getUint          (keys.depositMax),
-            repository.getUint          (keys.lockUpPeriod),
-            repository.getUint          (keys.entryFee),
-            repository.getUint          (keys.exitFee),
-            repository.getUint          (keys.streamingFee),
-            repository.getAddressSet    (keys.allowedAccounts)
+            repository.getBool(keys.depositEnabled),
+            repository.getUint(keys.depositMin),
+            repository.getUint(keys.depositMax),
+            repository.getUint(keys.lockUpPeriod),
+            repository.getUint(keys.entryFee),
+            repository.getUint(keys.exitFee),
+            repository.getUint(keys.streamingFee),
+            repository.getAddressSet(keys.allowedAccounts)
         );
     }
 
