@@ -331,6 +331,12 @@ library Safeguard {
         );
     }
 
+    function isAdmin(IRepository repository, address account) 
+    public view 
+    returns (bool isAdmin) {
+        
+    }
+
     function getVault(IRepository repository)
     public view
     returns (
@@ -375,6 +381,20 @@ library Safeguard {
         );
     }
 
+    function getAllowedAccounts(IRepository repository)
+    public view
+    returns (address[] memory allowedAccounts) {
+        Keys memory keys = _generateKeys();
+        return repository.getAddressSet(keys.allowedAccounts);
+    }
+
+    function isAllowedAccount(IRepository repository, address account)
+    public view
+    returns (bool) {
+        Keys memory keys = _generateKeys();
+        return repository.addressSetContains(keys.allowedAccounts, account);
+    }
+
     function getToken(IRepository repository)
     public view
     returns (
@@ -416,6 +436,12 @@ library Safeguard {
             decimalsToken: keccak256(abi.encode("solstice", msgSender, "decimalsToken")),
             supplyToken: keccak256(abi.encode("solstice", msgSender, "supplyToken"))
         });
+    }
+
+    function _assetAmount(address contract_)
+    private view
+    returns () {
+
     }
 }
 
