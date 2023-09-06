@@ -297,6 +297,10 @@ interface IRepository {
 }
 
 library Safeguard {
+    
+}
+
+library SafeguardB {
     struct Keys {
         bytes32 admins;
         bytes32 managers;
