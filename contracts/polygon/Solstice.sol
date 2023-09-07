@@ -769,11 +769,31 @@ struct Implementation {
 contract Solstice {
     Implementation implementation;
 
-    constructor() {}
+    constructor(
+        string memory name,
+        string memory description,
+        address[] memory admins,
+        address[] memory managers,
+        uint streamingFee,
+        uint entryFee,
+        uint exitFee,
+        address[] memory recipientsStreamingFee,
+        address[] memory recipientsEntryFee,
+        address[] memory recipientsExitFee,
+        bool depositsEnabled,
+        uint minDeposit,
+        uint maxDeposit,
+        address[] memory permittedTokensDeposit,
+        address[] memory permittedTokensWithdrawal
+    ) {
+        
+    }
 
     function getImplementation()
     external view
     returns (Implementation memory) {
         return implementation;
     }
+
+    
 }
