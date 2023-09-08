@@ -743,56 +743,315 @@ interface IRepository {
     function removeBytes32Set(bytes32 key, bytes32 value) external;
 }
 
-struct Implementation {
-    string name;
-    string description;
-    address[] admins;          
-    address[] managers;
-    address[] depositors;
-    address[] contracts;
-    uint streamingFee;
-    uint entryFee;
-    uint exitFee;
-    address[] recipientsStreamingFee;
-    address[] recipientsEntryFee;
-    address[] recipientsExitFee;
-    bool depositsEnabled;
-    uint minDeposit;
-    uint maxDeposit;
-    uint launchTimestamp;
-    address[] permittedTokensDeposit;
-    address[] permittedTokensWithdrawal;
-    address denominator;
-    uint balance;
+interface IOracle {
+    function getPair(address tokenA, address tokenB) external view returns (address);
+    function allPairs(uint index) external view returns (address);
+    function getMetadata(address tokenA, address tokenB) external view returns (address address_, address addressA, address addressB, string memory nameA, string memory nameB, string memory symbolA, string memory symbolB, uint decimalsA, uint decimalsB);
+    function getPrice(address tokenA, address tokenB, uint amount) external view returns (uint price, uint decimals, uint lastTimestamp);
+    function swapTokens(address tokenIn, address tokenOut, uint amountIn, uint slippage, address to) external;
+    function pause() external;
+    function unpause() external;
 }
 
 contract Solstice {
-    Implementation implementation;
+    using EnumerableSet for EnumerableSet.AddressSet;
 
-    constructor(
-        string memory name,
-        string memory description,
-        address[] memory admins,
-        address[] memory managers,
-        uint streamingFee,
-        uint entryFee,
-        uint exitFee,
-        address[] memory recipientsStreamingFee,
-        address[] memory recipientsEntryFee,
-        address[] memory recipientsExitFee,
-        bool depositsEnabled,
-        uint minDeposit,
-        uint maxDeposit,
-        address[] memory permittedTokensDeposit,
-        address[] memory permittedTokensWithdrawal
-    ) {
+    struct Fee {
+        uint streaming;
+        uint inflow;
+        uint outflow;
+    }
+
+    struct Deposit {
+        uint min;
+        uint max;
+        bool enabled;
+        EnumerableSet
+            .AddressSet 
+                depositors;
+    }
+
+    struct Withdrawal {
+        uint min;
+        uint max;
+        bool enabled;
+    }
+ 
+    struct Role {
+        EnumerableSet
+            .AddressSet 
+                admins;
+        EnumerableSet
+            .AddressSet 
+                managers;
+    }
+
+    struct Time {
+        uint launch;
+    }
+
+    struct Holdings {
+        address denominator;
+        EnumerableSet
+            .AddressSet
+                contracts;
+        EnumerableSet
+            .AddressSet
+                permittedIn;
+        EnumerableSet
+            .AddressSet
+                permittedOut;
+    }
+
+    struct Recipient {
+        EnumerableSet
+            .AddressSet
+                streamingFee;
+        EnumerableSet
+            .AddressSet
+                inflowFee;
+        EnumerableSet
+            .AddressSet
+                outflowFee;
+    }
+
+    struct Metadata {
+        string name;
+        string description;
+    }
+
+    struct Vault {
+        uint index;
+        Metadata metadata;
+        Fee fee;
+        Deposit deposit;
+        Role role;
+        Time time;
+        Holdings holdings;
+        Recipient recipient;
+    }
+
+    Vault vault;
+
+    modifier onlyAdmin() {
+        /** _onlyAdmin() */
+        _;
+    }
+
+    modifier onlyManager() {
+        /** _onlyManager() */
+        _;
+    }
+
+    modifier onlyDepositor() {
+        /** _onlyDepositor() */
+        _;
+    }
+
+    /** factory >>> */
+    constructor(address index) {
+        vault.index = index;
+    }
+
+    function deposit(address contract_, uint amount)
+    external
+    returns (bool success) {
+        /** pull tokens */
+    }
+
+    
+}
+
+contract Pool {
+    Solstice solstice;
+
+    /** factory >>> */
+    constructor(uint index, address msgSender) {
+        implementation.index = index;
+        /** ... set msgSender as admin */
+    }
+
+    function index() public view returns (uint) {
+        return implementation.index;
+    }
+
+    function name() public view returns (string memory) {
+        return implementation.name;
+    }
+
+    function description() public view returns (string memory) {
+        return implementation.description;
+    }
+
+    function admins() public view returns (address[] memory) {
+        return implementation.admins;
+    }
+
+    function managers() public view returns (address[] memory) {
+        return implementation.managers;
+    }
+
+    function depositors() public view returns (address[] memory) {
+        return implementation.depositors;
+    }
+
+    function contracts() public view returns (address[] memory) {
+        return implementation.contracts;
+    }
+
+    function streamingFee() public view returns (uint) {
+        return implementation.streamingFee;
+    }
+
+    function entryFee() public view returns (uint) {
+        return implementation.entryFee;
+    }
+
+    function exitFee() public view returns (uint) {
+        return implementation.exitFee;
+    }
+
+    function recipientsStreamingFee() public view returns (address[] memory) {
+        return implementation.recipientsStreamingFee;
+    }
+
+    function recipientsEntryFee() public view returns (address[] memory) {
+        return implementation.recipientsEntryFee;
+    }
+
+    function recipientsExitFee() public view returns (address[] memory) {
+        return implementation.recipientsExitFee;
+    }
+
+    function depositsEnabled() public view returns (bool) {
+        return implementation.depositsEnabled;
+    }
+
+    function minDeposit() public view returns (uint) {
+        return implementation.minDeposit;
+    }
+
+    function maxDeposit() public view returns (uint) {
+        return implementation.maxDeposit;
+    }
+
+    function launchTimestamp() public view returns (uint) {
+        return implementation.launchTimestamp;
+    }
+
+    function permittedTokensDeposit() public view returns (address[] memory) {
+        return implementation.permittedTokensDeposit;
+    }
+
+    function permittedTokensWithdrawal() public view returns (address[] memory) {
+        return implementation.permittedTokensWithdrawal;
+    }
+
+    function denominator() public view returns (address) {
+        return implementation.denominator;
+    }
+
+    function balance() public view returns (uint) {
+        return address(this).balance;
+    }
+
+    function balanceToken(address contract_) public view returns (uint) {
+        return IERC20(contract_).balanceOf(address(this));
+    }
+
+    function _contains(address[] memory array, address account) internal pure returns (bool isMatch, uint index) {
+        for (uint i = 0; i < array.length; i++) {
+            if (account == array[i]) {
+                isMatch = true;
+                index = i;
+                break;
+            }
+        }
+        return (isMatch, index);
+    }
+
+    function _key() internal view returns (bytes32) {
+        return keccak256(abi.encode("solstice", msg.sender));
+    }
+
+    function _save() internal {
+        repository.setBytes(_key(), abi.encode(implementation));
+    }
+
+    function _load() internal returns (Implementation memory) {
+        bytes memory bytesImplementation = repository.getBytes(_key());
+        return implementation = abi.decode((bytesImplementation), (Implementation));
+    }
+
+    function _pop(address[] storage array, address account) internal {
+        (bool isMatch, uint index) = _contains(array, account);
+        require(isMatch, "Solstice: unable to pop address array because account was not found");
+        address addressMatch = array[index];
         
+    }
+
+
+}
+
+contract Solstice is Pausable {
+    Implementation implementation;
+    IRepository repository;
+
+    modifier onlyAdmin() {
+        _onlyAdmin();
+        _;
+    }
+
+    constructor(uint index, address owner) {
+        implementation.index = index;
+        implementation.admins.push(owner);
     }
 
     function getImplementation()
     external view
     returns (Implementation memory) {
         return implementation;
+    }
+
+    function setName(string memory newName) external onlyAdmin {
+        implementation.name = newName;
+        _save();
+    }
+
+    function setDescription(string memory newDescription) external onlyAdmin {
+        implementation.description = newDescription;
+        _save();
+    }
+
+    function grantRoleAdmin(address account) external onlyAdmin {
+        
+    }
+
+    function _contains(address[] memory array, address account) internal pure returns (bool isMatch) {
+        for (uint i = 0; i < array.length; i++) {
+            if (account == array[i]) {
+                isMatch = true;
+                break;
+            }
+        }
+        return isMatch;
+    }
+
+    function _key() internal view returns (bytes32) {
+        return keccak256(abi.encode("solstice", msg.sender)); 
+    }
+
+    function _save() internal {
+        repository.setBytes(_key(), abi.encode(implementation));
+    }
+
+    function _load() internal returns (Implementation memory) {
+        bytes memory bytesImplementation = repository.getBytes(_key());
+        return implementation = abi.decode((bytesImplementation), (Implementation));
+    }
+
+    function _onlyAdmin() internal view {
+        require(_contains(implementation.admins, msg.sender), "Solstice: caller is not admin");
     }
 
     
