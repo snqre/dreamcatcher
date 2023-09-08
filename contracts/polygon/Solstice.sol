@@ -644,6 +644,28 @@ interface IERC20 {
     function transferFrom(address from, address to, uint256 amount) external returns (bool);
 }
 
+/**
+ * @dev Interface for the optional metadata functions from the ERC20 standard.
+ *
+ * _Available since v4.1._
+ */
+interface IERC20Metadata is IERC20 {
+    /**
+     * @dev Returns the name of the token.
+     */
+    function name() external view returns (string memory);
+
+    /**
+     * @dev Returns the symbol of the token.
+     */
+    function symbol() external view returns (string memory);
+
+    /**
+     * @dev Returns the decimals places of the token.
+     */
+    function decimals() external view returns (uint8);
+}
+
 interface IRepository {
     function getAdmins() external view returns (address[] memory);
     function getLogics() external view returns (address[] memory);
@@ -758,6 +780,184 @@ contract Solstice {
 
     struct Fee {
         uint streaming;
+        uint in_;
+        uint out;
+    }
+
+    struct Deposit {
+        uint min;
+        uint max;
+        bool enabled;
+    }
+
+    struct Withdrawal {
+        uint min;
+        uint max;
+        bool enabled;
+    }
+
+    struct Role {
+        EnumerableSet
+            .AddressSet
+                admins;
+        EnumerableSet
+            .AddressSet
+                managers;
+    }
+
+    struct Time {
+        uint launch;
+    }
+
+    struct Reserve {
+        IERC20Metadata denominator;
+        EnumerableSet
+            .AddressSet
+                contracts;
+        EnumerableSet
+            .AddressSet
+                authorizedIn;
+        EnumerableSet
+            .AddressSet
+                authorizedOut;
+    }
+
+    struct Recipient {
+        EnumerableSet
+            .AddressSet
+                streaming;
+        EnumerableSet
+            .AddressSet
+                in_;
+        EnumerableSet
+            .AddressSet
+                out;
+    }
+
+    struct Metadata {
+        string name;
+        string description;
+    }
+
+    struct Vault {
+        uint index;
+        Fee fee;
+        Deposit deposit;
+        Withdrawal withdrawal;
+        Role role;
+        Time time;
+        Reserve reserve;
+        Recipient recipient;
+        Metadata metadata;
+    }
+
+    IOracle oracle;
+    Vault vault;
+
+    error UNAUTHORIZED_TOKEN_IN();
+    error UNAUTHORIZED_TOKEN_OUT();
+    error PAIR_NOT_FOUND();
+    error INSUFFICIENT_MATH();
+
+    function _amountToMint(
+        uint value,
+        uint supply,
+        uint balance
+    )
+    internal pure
+    returns (uint) {
+        if (value == 0) { revert INSUFFICIENT_MATH(); }
+        if (supply == 0) { revert INSUFFICIENT_MATH(); }
+        if (balance == 0) { revert INSUFFICIENT_MATH(); }
+        return ((value * balance) / supply);
+    }
+
+    function _amountToSend(
+        uint amount,
+        uint supply,
+        uint balance
+    )
+    internal pure
+    returns (uint) {
+        if (amount == 0) { revert INSUFFICIENT_MATH(); }
+        if (supply == 0) { revert INSUFFICIENT_MATH(); }
+        if (balance == 0) { revert INSUFFICIENT_MATH(); }
+        return ((amount * balance) / supply);
+    }
+
+    function _deposit(
+        IERC20Metadata tokenIn,
+        IERC20Metadata tokenOut,
+        IERC20Metadata denominator,
+        uint amount
+    )
+    internal
+    returns (bool success) {
+        if (
+            !vault.reserve.authorizedIn.contains(
+                address(
+                    tokenIn
+                )
+            )
+        ) { revert UNAUTHORIZED_TOKEN_IN(); }
+        (
+            address addrPair,
+            address addressA,
+            address addressB,
+            string memory nameA,
+            string memory nameB,
+            string memory symbolA,
+            string memory symbolB,
+            uint decimalsA,
+            uint decimalsB
+        ) = oracle.getMetadata(
+            address(denominator),
+            address(tokenIn)
+        );
+        if (addrPair == address(0)) { revert PAIR_NOT_FOUND(); }
+        if (
+            address(tokenIn)             == addressA
+            && tokenIn.name()            == nameA
+            && tokenIn.symbol()          == symbolA
+            && tokenIn.decimals()        == decimalsA
+            && address(denominator)      == addressB
+            && denominator.name()        == nameB
+            && denominator.symbol()      == symbolB
+            && denominator.decimals()    == decimalsB
+        ) {
+            /** TOKENIN | DENOMINATOR */
+            
+        }
+        else if (
+            address(tokenIn)             == addressB
+            && tokenIn.name()            == nameB
+            && tokenIn.symbol()          == symbolB
+            && tokenIn.decimals()        == decimalsB
+            && address(denominator)      == addressA
+            && denominator.name()        == nameA
+            && denominator.symbol()      == symbolA
+            && denominator.decimals()    == decimalsA
+        ) {
+            /** DENOMINATOR | TOKENIN */
+            (
+                uint price,
+                uint decimals,
+                uint lastTimestamp
+            ) = oracle.getPrice(
+                address(denominator),
+                address(tokenIn),
+                amount
+            );
+            
+        }
+    }
+}
+
+contract SolsticeB {
+    using EnumerableSet for EnumerableSet.AddressSet;
+
+    struct Fee {
+        uint streaming;
         uint inflow;
         uint outflow;
     }
@@ -791,7 +991,7 @@ contract Solstice {
     }
 
     struct Holdings {
-        address denominator;
+        IERC20 denominator;
         EnumerableSet
             .AddressSet
                 contracts;
@@ -832,6 +1032,7 @@ contract Solstice {
     }
 
     Vault vault;
+    IOracle oracle;
 
     modifier onlyAdmin() {
         /** _onlyAdmin() */
@@ -848,18 +1049,72 @@ contract Solstice {
         _;
     }
 
+    error UNAUTHORIZED_TOKEN_IN();
+    error UNAUTHORIZED_TOKEN_OUT();
+    error PAIR_NOT_FOUND();
+
     /** factory >>> */
     constructor(address index) {
         vault.index = index;
     }
 
-    function deposit(address contract_, uint amount)
-    external
-    returns (bool success) {
-        /** pull tokens */
+    function _amountToMint(uint v, uint s, uint b) 
+    internal pure 
+    returns (uint) {
+        require(
+            v >= 1
+            && s >= 1
+            && b >= 1,
+            "Solstice: insufficient value"
+        );
+        return ((v * b) / s);
     }
 
-    
+    function _amountToSend(uint a, uint s, uint b) 
+    internal pure 
+    returns (uint) {
+        require(
+            a >= 1
+            && s >= 1
+            && b >= 1,
+            "Solstice: insufficient value"
+        );
+    }
+
+    function _deposit(
+        IERC20 tokenIn,
+        IERC20 tokenOut,
+        IERC20 denominator,
+        uint amount
+    ) internal
+    returns (bool success) {
+        if (!vault.holdings.permittedIn.contains(address(tokenIn))) { revert UNAUTHORIZED_TOKEN_IN(); }
+        (
+            address addrPair,
+            address addressA,
+            address addressB,
+            string memory nameA,
+            string memory nameB,
+            string memory symbolA,
+            string memory symbolB,
+            uint decimalsA,
+            uint decimalsB
+        ) = oracle.getMetadata(
+            address(vault.holdings.denominator),
+            address(tokenIn)
+        );
+        if (addrPair == address(0)) { revert PAIR_NOT_FOUND(); }
+        if (
+            address(tokenIn) == addressA
+            && tokenIn.
+        )
+        
+    }
+
+    function _deposit(IERC20 tokenIn, uint amount) internal returns (bool success) {
+        tokenIn.transferFrom(msg.sender, address(this), amount);
+        (, address addressA, address addressB, string memory nameA, string memory nameB, string memory symbolA, string memory symbolB, uint decimalsA, uint decimalsB) = oracle.getMetadata()
+    }
 }
 
 contract Pool {
