@@ -666,6 +666,481 @@ interface IERC20Metadata is IERC20 {
     function decimals() external view returns (uint8);
 }
 
+interface IUniswapV2Pair {
+    event Approval(address indexed owner, address indexed spender, uint value);
+    event Transfer(address indexed from, address indexed to, uint value);
+
+    function name() external pure returns (string memory);
+    function symbol() external pure returns (string memory);
+    function decimals() external pure returns (uint8);
+    function totalSupply() external view returns (uint);
+    function balanceOf(address owner) external view returns (uint);
+    function allowance(address owner, address spender) external view returns (uint);
+
+    function approve(address spender, uint value) external returns (bool);
+    function transfer(address to, uint value) external returns (bool);
+    function transferFrom(address from, address to, uint value) external returns (bool);
+
+    function DOMAIN_SEPARATOR() external view returns (bytes32);
+    function PERMIT_TYPEHASH() external pure returns (bytes32);
+    function nonces(address owner) external view returns (uint);
+
+    function permit(address owner, address spender, uint value, uint deadline, uint8 v, bytes32 r, bytes32 s) external;
+
+    event Mint(address indexed sender, uint amount0, uint amount1);
+    event Burn(address indexed sender, uint amount0, uint amount1, address indexed to);
+    event Swap(
+        address indexed sender,
+        uint amount0In,
+        uint amount1In,
+        uint amount0Out,
+        uint amount1Out,
+        address indexed to
+    );
+    event Sync(uint112 reserve0, uint112 reserve1);
+
+    function MINIMUM_LIQUIDITY() external pure returns (uint);
+    function factory() external view returns (address);
+    function token0() external view returns (address);
+    function token1() external view returns (address);
+    function getReserves() external view returns (uint112 reserve0, uint112 reserve1, uint32 blockTimestampLast);
+    function price0CumulativeLast() external view returns (uint);
+    function price1CumulativeLast() external view returns (uint);
+    function kLast() external view returns (uint);
+
+    function mint(address to) external returns (uint liquidity);
+    function burn(address to) external returns (uint amount0, uint amount1);
+    function swap(uint amount0Out, uint amount1Out, address to, bytes calldata data) external;
+    function skim(address to) external;
+    function sync() external;
+
+    function initialize(address, address) external;
+}
+
+interface IUniswapV2Factory {
+    event PairCreated(address indexed token0, address indexed token1, address pair, uint);
+
+    function feeTo() external view returns (address);
+    function feeToSetter() external view returns (address);
+
+    function getPair(address tokenA, address tokenB) external view returns (address pair);
+    function allPairs(uint) external view returns (address pair);
+    function allPairsLength() external view returns (uint);
+
+    function createPair(address tokenA, address tokenB) external returns (address pair);
+
+    function setFeeTo(address) external;
+    function setFeeToSetter(address) external;
+}
+
+interface IUniswapV2Router01 {
+    function factory() external pure returns (address);
+    function WETH() external pure returns (address);
+
+    function addLiquidity(
+        address tokenA,
+        address tokenB,
+        uint amountADesired,
+        uint amountBDesired,
+        uint amountAMin,
+        uint amountBMin,
+        address to,
+        uint deadline
+    ) external returns (uint amountA, uint amountB, uint liquidity);
+    function addLiquidityETH(
+        address token,
+        uint amountTokenDesired,
+        uint amountTokenMin,
+        uint amountETHMin,
+        address to,
+        uint deadline
+    ) external payable returns (uint amountToken, uint amountETH, uint liquidity);
+    function removeLiquidity(
+        address tokenA,
+        address tokenB,
+        uint liquidity,
+        uint amountAMin,
+        uint amountBMin,
+        address to,
+        uint deadline
+    ) external returns (uint amountA, uint amountB);
+    function removeLiquidityETH(
+        address token,
+        uint liquidity,
+        uint amountTokenMin,
+        uint amountETHMin,
+        address to,
+        uint deadline
+    ) external returns (uint amountToken, uint amountETH);
+    function removeLiquidityWithPermit(
+        address tokenA,
+        address tokenB,
+        uint liquidity,
+        uint amountAMin,
+        uint amountBMin,
+        address to,
+        uint deadline,
+        bool approveMax, uint8 v, bytes32 r, bytes32 s
+    ) external returns (uint amountA, uint amountB);
+    function removeLiquidityETHWithPermit(
+        address token,
+        uint liquidity,
+        uint amountTokenMin,
+        uint amountETHMin,
+        address to,
+        uint deadline,
+        bool approveMax, uint8 v, bytes32 r, bytes32 s
+    ) external returns (uint amountToken, uint amountETH);
+    function swapExactTokensForTokens(
+        uint amountIn,
+        uint amountOutMin,
+        address[] calldata path,
+        address to,
+        uint deadline
+    ) external returns (uint[] memory amounts);
+    function swapTokensForExactTokens(
+        uint amountOut,
+        uint amountInMax,
+        address[] calldata path,
+        address to,
+        uint deadline
+    ) external returns (uint[] memory amounts);
+    function swapExactETHForTokens(uint amountOutMin, address[] calldata path, address to, uint deadline)
+        external
+        payable
+        returns (uint[] memory amounts);
+    function swapTokensForExactETH(uint amountOut, uint amountInMax, address[] calldata path, address to, uint deadline)
+        external
+        returns (uint[] memory amounts);
+    function swapExactTokensForETH(uint amountIn, uint amountOutMin, address[] calldata path, address to, uint deadline)
+        external
+        returns (uint[] memory amounts);
+    function swapETHForExactTokens(uint amountOut, address[] calldata path, address to, uint deadline)
+        external
+        payable
+        returns (uint[] memory amounts);
+
+    function quote(uint amountA, uint reserveA, uint reserveB) external pure returns (uint amountB);
+    function getAmountOut(uint amountIn, uint reserveIn, uint reserveOut) external pure returns (uint amountOut);
+    function getAmountIn(uint amountOut, uint reserveIn, uint reserveOut) external pure returns (uint amountIn);
+    function getAmountsOut(uint amountIn, address[] calldata path) external view returns (uint[] memory amounts);
+    function getAmountsIn(uint amountOut, address[] calldata path) external view returns (uint[] memory amounts);
+}
+
+interface IUniswapV2Router02 is IUniswapV2Router01 {
+    function removeLiquidityETHSupportingFeeOnTransferTokens(
+        address token,
+        uint liquidity,
+        uint amountTokenMin,
+        uint amountETHMin,
+        address to,
+        uint deadline
+    ) external returns (uint amountETH);
+    function removeLiquidityETHWithPermitSupportingFeeOnTransferTokens(
+        address token,
+        uint liquidity,
+        uint amountTokenMin,
+        uint amountETHMin,
+        address to,
+        uint deadline,
+        bool approveMax, uint8 v, bytes32 r, bytes32 s
+    ) external returns (uint amountETH);
+
+    function swapExactTokensForTokensSupportingFeeOnTransferTokens(
+        uint amountIn,
+        uint amountOutMin,
+        address[] calldata path,
+        address to,
+        uint deadline
+    ) external;
+    function swapExactETHForTokensSupportingFeeOnTransferTokens(
+        uint amountOutMin,
+        address[] calldata path,
+        address to,
+        uint deadline
+    ) external payable;
+    function swapExactTokensForETHSupportingFeeOnTransferTokens(
+        uint amountIn,
+        uint amountOutMin,
+        address[] calldata path,
+        address to,
+        uint deadline
+    ) external;
+}
+
+contract QuickSwapOracle is Ownable, Pausable {
+    using EnumerableSet for EnumerableSet.AddressSet;
+
+    enum Gate {
+        WMATIC,
+        WBTC,
+        WETH,
+        USDC,
+        USDT,
+        DAI
+    }
+
+    enum Order {
+        UNRECOGNIZED,
+        REVERSE,
+        SAME
+    }
+
+    address constant WMATIC = 0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270;
+    address constant WBTC = 0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6;
+    address constant WETH = 0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619;
+    address constant USDC = 0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174;
+    address constant USDT = 0xc2132D05D31c914a87C6611C10748AEb04B58e8F;
+    address constant DAI = 0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063;
+
+    IUniswapV2Factory constant FACTORY = IUniswapV2Factory(0x5757371414417b8C6CAad45bAeF941aBc7d3Ab32);
+    IUniswapV2Router02 constant ROUTER = IUniswapV2Router02(0xa5E0829CaCEd8fFDD4De3c43696c57F7D7A678ff);
+
+    EnumerableSet.AddressSet vaults;
+
+    modifier onlyVault() {
+        //_onlyVault();
+        _;
+    }
+
+    event SWAP(
+        address indexed tokenIn,
+        address indexed tokenOut,
+        uint indexed amountIn,
+        uint amountOutMin,
+        address to
+    );
+
+    error PAIR_NOT_FOUND();
+    error UNAUTHORIZED();
+
+    constructor()
+    Ownable(msg.sender) {}
+
+    function metadata(
+        address tokenA,
+        address tokenB
+    )
+    public view
+    returns (
+        address,
+        address,
+        address,
+        string memory,
+        string memory,
+        string memory,
+        string memory,
+        uint,
+        uint
+    ) {
+        address addrPair = FACTORY.getPair(tokenA, tokenB);
+        if (addrPair == address(0)) { revert PAIR_NOT_FOUND(); }
+        IUniswapV2Pair interface_ = IUniswapV2Pair(addrPair);
+        IERC20Metadata tokenA_ = IERC20Metadata(interface_.token0());
+        IERC20Metadata tokenB_ = IERC20Metadata(interface_.token1());
+        return (
+            addrPair,
+            interface_.token0(),
+            interface_.token1(),
+            tokenA_.name(),
+            tokenB_.name(),
+            tokenA_.symbol(),
+            tokenB_.symbol(),
+            tokenA_.decimals(),
+            tokenB_.decimals()
+        );
+    }
+
+    function price(
+        address tokenA,
+        address tokenB,
+        uint amount
+    )
+    public view
+    returns (
+        uint,
+        uint,
+        uint
+    ) {
+        Order order = _isSameOrder(tokenA, tokenB);
+        if (order == Order.SAME) {
+            (uint cost, uint divisor, uint lastTimestamp) = _priceOfTokenBInTokenA(tokenA, tokenB, amount);
+            return (cost, divisor, lastTimestamp);
+        }
+        else if (order == Order.REVERSE) {
+            (uint cost, uint divisor, uint lastTimestamp) = _priceOfTokenAInTokenB(tokenA, tokenB, amount);
+            return (cost, divisor, lastTimestamp);
+        }
+        else { revert PAIR_NOT_FOUND(); }
+    }
+
+    function swapTokens(
+        address tokenIn,
+        address tokenOut,
+        uint amountIn,
+        uint slippage,
+        Gate gate,
+        address to
+    )
+    public
+    onlyVault
+    whenNotPaused {
+        IERC20(tokenIn).transferFrom(msg.sender, address(this), amountIn);
+        IERC20(tokenIn).approve(address(ROUTER), amountIn);
+        (uint amountOutMin, ,) = price(tokenIn, tokenOut, amountIn);
+        amountOutMin = (amountOutMin * (10000 - slippage)) / 10000;
+        address[] memory path;
+        path = new address[](3);
+        path[0] = tokenIn;
+        if (gate == Gate.WMATIC) { path[1] = WMATIC; }
+        else if (gate == Gate.WBTC) { path[1] = WBTC; }
+        else if (gate == Gate.WETH) { path[1] = WETH; }
+        else if (gate == Gate.USDC) { path[1] = USDC; }
+        else if (gate == Gate.USDT) { path[1] = USDT; }
+        else if (gate == Gate.DAI) { path[1] = DAI; }
+        path[2] = tokenOut;
+        ROUTER.swapExactTokensForTokens(amountIn, amountOutMin, path, to, block.timestamp);
+        emit SWAP(tokenIn, tokenOut, amountIn, amountOutMin, to);
+    }
+
+    function grantRoleVault(address account)
+    public 
+    onlyOwner {
+        vaults.add(account);
+    }
+
+    function revokeRoleVault(address account)
+    public 
+    onlyOwner {
+        vaults.remove(account);
+    }
+
+    function _isSameString(
+        string memory stringA,
+        string memory stringB
+    )
+    private pure
+    returns (
+        bool
+    ) {
+        return keccak256(abi.encode(stringA)) == keccak256(abi.encode(stringB));
+    }
+
+    function _priceOfTokenBInTokenA(
+        address tokenA,
+        address tokenB,
+        uint amount
+    )
+    private view
+    returns (
+        uint,
+        uint,
+        uint
+    ) {
+        address addrPair = FACTORY.getPair(tokenA, tokenB);
+        if (addrPair == address(0)) { revert PAIR_NOT_FOUND(); }
+        IUniswapV2Pair interface_ = IUniswapV2Pair(addrPair);
+        IERC20Metadata tokenA_ = IERC20Metadata(interface_.token0());
+        IERC20Metadata tokenB_ = IERC20Metadata(interface_.token1());
+        (
+            uint reserveA,
+            uint reserveB,
+            uint lastTimestamp
+        ) = interface_.getReserves();
+        return (
+            (amount * (reserveA * (10**tokenB_.decimals()))) / reserveB,
+            10**tokenA_.decimals(),
+            lastTimestamp
+        );
+    }
+
+    function _priceOfTokenAInTokenB(
+        address tokenA,
+        address tokenB,
+        uint amount
+    )
+    private view
+    returns (
+        uint,
+        uint,
+        uint
+    ) {
+        address addrPair = FACTORY.getPair(tokenA, tokenB);
+        if (addrPair == address(0)) { revert PAIR_NOT_FOUND(); }
+        IUniswapV2Pair interface_ = IUniswapV2Pair(addrPair);
+        IERC20Metadata tokenA_ = IERC20Metadata(interface_.token0());
+        IERC20Metadata tokenB_ = IERC20Metadata(interface_.token1());
+        (
+            uint reserveA,
+            uint reserveB,
+            uint lastTimestamp
+        ) = interface_.getReserves();
+        return (
+            (amount * (reserveB * (10**tokenA_.decimals()))) / reserveA,
+            10**tokenB_.decimals(),
+            lastTimestamp
+        );
+    }
+
+    function _isSameOrder(
+        address tokenA,
+        address tokenB
+    )
+    private view
+    returns (
+        Order
+    ) {
+        (
+            ,
+            address addressA,
+            address addressB,
+            string memory nameA,
+            string memory nameB,
+            string memory symbolA,
+            string memory symbolB,
+            uint decimalsA,
+            uint decimalsB 
+        ) = metadata(tokenA, tokenB);
+        IERC20Metadata tokenA_ = IERC20Metadata(tokenA);
+        IERC20Metadata tokenB_ = IERC20Metadata(tokenB);
+        if (
+            tokenA == addressA
+            && tokenB == addressB
+            && _isSameString(tokenA_.name(), nameA)
+            && _isSameString(tokenB_.name(), nameB)
+            && _isSameString(tokenA_.symbol(), symbolA)
+            && _isSameString(tokenB_.symbol(), symbolB)
+            && tokenA_.decimals() == decimalsA
+            && tokenB_.decimals() == decimalsB
+        ) {
+            return Order.SAME;
+        }
+        else if (
+            tokenA == addressB
+            && tokenB == addressA
+            && _isSameString(tokenA_.name(), nameB)
+            && _isSameString(tokenB_.name(), nameA)
+            && _isSameString(tokenA_.symbol(), symbolB)
+            && _isSameString(tokenB_.symbol(), symbolA)
+            && tokenA_.decimals() == decimalsB
+            && tokenB_.decimals() == decimalsA
+        ) {
+            return Order.REVERSE;
+        }
+        else {
+            return Order.UNRECOGNIZED;
+        }
+    }
+
+    function _onlyVault()
+    private view {
+        if (!vaults.contains(msg.sender)) { revert UNAUTHORIZED(); }
+    }
+
+    
+
+}
+
 interface IRepository {
     function getAdmins() external view returns (address[] memory);
     function getLogics() external view returns (address[] memory);
@@ -765,15 +1240,7 @@ interface IRepository {
     function removeBytes32Set(bytes32 key, bytes32 value) external;
 }
 
-interface IOracle {
-    function getPair(address tokenA, address tokenB) external view returns (address);
-    function allPairs(uint index) external view returns (address);
-    function getMetadata(address tokenA, address tokenB) external view returns (address address_, address addressA, address addressB, string memory nameA, string memory nameB, string memory symbolA, string memory symbolB, uint decimalsA, uint decimalsB);
-    function getPrice(address tokenA, address tokenB, uint amount) external view returns (uint price, uint decimals, uint lastTimestamp);
-    function swapTokens(address tokenIn, address tokenOut, uint amountIn, uint slippage, address to) external;
-    function pause() external;
-    function unpause() external;
-}
+/**
 
 contract Solstice {
     using EnumerableSet for EnumerableSet.AddressSet;
@@ -884,430 +1351,6 @@ contract Solstice {
         if (balance == 0) { revert INSUFFICIENT_MATH(); }
         return ((amount * balance) / supply);
     }
-
-    function _deposit(
-        IERC20Metadata tokenIn,
-        IERC20Metadata tokenOut,
-        IERC20Metadata denominator,
-        uint amount
-    )
-    internal
-    returns (bool success) {
-        if (
-            !vault.reserve.authorizedIn.contains(
-                address(
-                    tokenIn
-                )
-            )
-        ) { revert UNAUTHORIZED_TOKEN_IN(); }
-        (
-            address addrPair,
-            address addressA,
-            address addressB,
-            string memory nameA,
-            string memory nameB,
-            string memory symbolA,
-            string memory symbolB,
-            uint decimalsA,
-            uint decimalsB
-        ) = oracle.getMetadata(
-            address(denominator),
-            address(tokenIn)
-        );
-        if (addrPair == address(0)) { revert PAIR_NOT_FOUND(); }
-        if (
-            address(tokenIn)             == addressA
-            && tokenIn.name()            == nameA
-            && tokenIn.symbol()          == symbolA
-            && tokenIn.decimals()        == decimalsA
-            && address(denominator)      == addressB
-            && denominator.name()        == nameB
-            && denominator.symbol()      == symbolB
-            && denominator.decimals()    == decimalsB
-        ) {
-            /** TOKENIN | DENOMINATOR */
-            
-        }
-        else if (
-            address(tokenIn)             == addressB
-            && tokenIn.name()            == nameB
-            && tokenIn.symbol()          == symbolB
-            && tokenIn.decimals()        == decimalsB
-            && address(denominator)      == addressA
-            && denominator.name()        == nameA
-            && denominator.symbol()      == symbolA
-            && denominator.decimals()    == decimalsA
-        ) {
-            /** DENOMINATOR | TOKENIN */
-            (
-                uint price,
-                uint decimals,
-                uint lastTimestamp
-            ) = oracle.getPrice(
-                address(denominator),
-                address(tokenIn),
-                amount
-            );
-            
-        }
-    }
 }
 
-contract SolsticeB {
-    using EnumerableSet for EnumerableSet.AddressSet;
-
-    struct Fee {
-        uint streaming;
-        uint inflow;
-        uint outflow;
-    }
-
-    struct Deposit {
-        uint min;
-        uint max;
-        bool enabled;
-        EnumerableSet
-            .AddressSet 
-                depositors;
-    }
-
-    struct Withdrawal {
-        uint min;
-        uint max;
-        bool enabled;
-    }
- 
-    struct Role {
-        EnumerableSet
-            .AddressSet 
-                admins;
-        EnumerableSet
-            .AddressSet 
-                managers;
-    }
-
-    struct Time {
-        uint launch;
-    }
-
-    struct Holdings {
-        IERC20 denominator;
-        EnumerableSet
-            .AddressSet
-                contracts;
-        EnumerableSet
-            .AddressSet
-                permittedIn;
-        EnumerableSet
-            .AddressSet
-                permittedOut;
-    }
-
-    struct Recipient {
-        EnumerableSet
-            .AddressSet
-                streamingFee;
-        EnumerableSet
-            .AddressSet
-                inflowFee;
-        EnumerableSet
-            .AddressSet
-                outflowFee;
-    }
-
-    struct Metadata {
-        string name;
-        string description;
-    }
-
-    struct Vault {
-        uint index;
-        Metadata metadata;
-        Fee fee;
-        Deposit deposit;
-        Role role;
-        Time time;
-        Holdings holdings;
-        Recipient recipient;
-    }
-
-    Vault vault;
-    IOracle oracle;
-
-    modifier onlyAdmin() {
-        /** _onlyAdmin() */
-        _;
-    }
-
-    modifier onlyManager() {
-        /** _onlyManager() */
-        _;
-    }
-
-    modifier onlyDepositor() {
-        /** _onlyDepositor() */
-        _;
-    }
-
-    error UNAUTHORIZED_TOKEN_IN();
-    error UNAUTHORIZED_TOKEN_OUT();
-    error PAIR_NOT_FOUND();
-
-    /** factory >>> */
-    constructor(address index) {
-        vault.index = index;
-    }
-
-    function _amountToMint(uint v, uint s, uint b) 
-    internal pure 
-    returns (uint) {
-        require(
-            v >= 1
-            && s >= 1
-            && b >= 1,
-            "Solstice: insufficient value"
-        );
-        return ((v * b) / s);
-    }
-
-    function _amountToSend(uint a, uint s, uint b) 
-    internal pure 
-    returns (uint) {
-        require(
-            a >= 1
-            && s >= 1
-            && b >= 1,
-            "Solstice: insufficient value"
-        );
-    }
-
-    function _deposit(
-        IERC20 tokenIn,
-        IERC20 tokenOut,
-        IERC20 denominator,
-        uint amount
-    ) internal
-    returns (bool success) {
-        if (!vault.holdings.permittedIn.contains(address(tokenIn))) { revert UNAUTHORIZED_TOKEN_IN(); }
-        (
-            address addrPair,
-            address addressA,
-            address addressB,
-            string memory nameA,
-            string memory nameB,
-            string memory symbolA,
-            string memory symbolB,
-            uint decimalsA,
-            uint decimalsB
-        ) = oracle.getMetadata(
-            address(vault.holdings.denominator),
-            address(tokenIn)
-        );
-        if (addrPair == address(0)) { revert PAIR_NOT_FOUND(); }
-        if (
-            address(tokenIn) == addressA
-            && tokenIn.
-        )
-        
-    }
-
-    function _deposit(IERC20 tokenIn, uint amount) internal returns (bool success) {
-        tokenIn.transferFrom(msg.sender, address(this), amount);
-        (, address addressA, address addressB, string memory nameA, string memory nameB, string memory symbolA, string memory symbolB, uint decimalsA, uint decimalsB) = oracle.getMetadata()
-    }
-}
-
-contract Pool {
-    Solstice solstice;
-
-    /** factory >>> */
-    constructor(uint index, address msgSender) {
-        implementation.index = index;
-        /** ... set msgSender as admin */
-    }
-
-    function index() public view returns (uint) {
-        return implementation.index;
-    }
-
-    function name() public view returns (string memory) {
-        return implementation.name;
-    }
-
-    function description() public view returns (string memory) {
-        return implementation.description;
-    }
-
-    function admins() public view returns (address[] memory) {
-        return implementation.admins;
-    }
-
-    function managers() public view returns (address[] memory) {
-        return implementation.managers;
-    }
-
-    function depositors() public view returns (address[] memory) {
-        return implementation.depositors;
-    }
-
-    function contracts() public view returns (address[] memory) {
-        return implementation.contracts;
-    }
-
-    function streamingFee() public view returns (uint) {
-        return implementation.streamingFee;
-    }
-
-    function entryFee() public view returns (uint) {
-        return implementation.entryFee;
-    }
-
-    function exitFee() public view returns (uint) {
-        return implementation.exitFee;
-    }
-
-    function recipientsStreamingFee() public view returns (address[] memory) {
-        return implementation.recipientsStreamingFee;
-    }
-
-    function recipientsEntryFee() public view returns (address[] memory) {
-        return implementation.recipientsEntryFee;
-    }
-
-    function recipientsExitFee() public view returns (address[] memory) {
-        return implementation.recipientsExitFee;
-    }
-
-    function depositsEnabled() public view returns (bool) {
-        return implementation.depositsEnabled;
-    }
-
-    function minDeposit() public view returns (uint) {
-        return implementation.minDeposit;
-    }
-
-    function maxDeposit() public view returns (uint) {
-        return implementation.maxDeposit;
-    }
-
-    function launchTimestamp() public view returns (uint) {
-        return implementation.launchTimestamp;
-    }
-
-    function permittedTokensDeposit() public view returns (address[] memory) {
-        return implementation.permittedTokensDeposit;
-    }
-
-    function permittedTokensWithdrawal() public view returns (address[] memory) {
-        return implementation.permittedTokensWithdrawal;
-    }
-
-    function denominator() public view returns (address) {
-        return implementation.denominator;
-    }
-
-    function balance() public view returns (uint) {
-        return address(this).balance;
-    }
-
-    function balanceToken(address contract_) public view returns (uint) {
-        return IERC20(contract_).balanceOf(address(this));
-    }
-
-    function _contains(address[] memory array, address account) internal pure returns (bool isMatch, uint index) {
-        for (uint i = 0; i < array.length; i++) {
-            if (account == array[i]) {
-                isMatch = true;
-                index = i;
-                break;
-            }
-        }
-        return (isMatch, index);
-    }
-
-    function _key() internal view returns (bytes32) {
-        return keccak256(abi.encode("solstice", msg.sender));
-    }
-
-    function _save() internal {
-        repository.setBytes(_key(), abi.encode(implementation));
-    }
-
-    function _load() internal returns (Implementation memory) {
-        bytes memory bytesImplementation = repository.getBytes(_key());
-        return implementation = abi.decode((bytesImplementation), (Implementation));
-    }
-
-    function _pop(address[] storage array, address account) internal {
-        (bool isMatch, uint index) = _contains(array, account);
-        require(isMatch, "Solstice: unable to pop address array because account was not found");
-        address addressMatch = array[index];
-        
-    }
-
-
-}
-
-contract Solstice is Pausable {
-    Implementation implementation;
-    IRepository repository;
-
-    modifier onlyAdmin() {
-        _onlyAdmin();
-        _;
-    }
-
-    constructor(uint index, address owner) {
-        implementation.index = index;
-        implementation.admins.push(owner);
-    }
-
-    function getImplementation()
-    external view
-    returns (Implementation memory) {
-        return implementation;
-    }
-
-    function setName(string memory newName) external onlyAdmin {
-        implementation.name = newName;
-        _save();
-    }
-
-    function setDescription(string memory newDescription) external onlyAdmin {
-        implementation.description = newDescription;
-        _save();
-    }
-
-    function grantRoleAdmin(address account) external onlyAdmin {
-        
-    }
-
-    function _contains(address[] memory array, address account) internal pure returns (bool isMatch) {
-        for (uint i = 0; i < array.length; i++) {
-            if (account == array[i]) {
-                isMatch = true;
-                break;
-            }
-        }
-        return isMatch;
-    }
-
-    function _key() internal view returns (bytes32) {
-        return keccak256(abi.encode("solstice", msg.sender)); 
-    }
-
-    function _save() internal {
-        repository.setBytes(_key(), abi.encode(implementation));
-    }
-
-    function _load() internal returns (Implementation memory) {
-        bytes memory bytesImplementation = repository.getBytes(_key());
-        return implementation = abi.decode((bytesImplementation), (Implementation));
-    }
-
-    function _onlyAdmin() internal view {
-        require(_contains(implementation.admins, msg.sender), "Solstice: caller is not admin");
-    }
-
-    
-}
+*/
