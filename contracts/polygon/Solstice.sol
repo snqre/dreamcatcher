@@ -901,7 +901,7 @@ interface IQuickSwapOracle {
         address tokenOut,
         uint amountIn,
         uint slippage,
-        QuickSwapOracle.Gate gate,
+        uint gate,
         address to
     )
     external;
@@ -960,6 +960,7 @@ contract QuickSwapOracle is IQuickSwapOracle, Ownable, Pausable {
 
     error PAIR_NOT_FOUND();
     error UNAUTHORIZED();
+    error INVALID_GATE();
 
     constructor()
     Ownable(msg.sender) {}
@@ -1026,12 +1027,13 @@ contract QuickSwapOracle is IQuickSwapOracle, Ownable, Pausable {
         address tokenOut,
         uint amountIn,
         uint slippage,
-        Gate gate,
+        uint gate,
         address to
     )
     public
     onlyVault
     whenNotPaused {
+        if (gate > 5) { revert INVALID_GATE(); }
         IERC20(tokenIn).transferFrom(msg.sender, address(this), amountIn);
         IERC20(tokenIn).approve(address(ROUTER), amountIn);
         (uint amountOutMin, ,) = price(tokenIn, tokenOut, amountIn);
@@ -1039,12 +1041,12 @@ contract QuickSwapOracle is IQuickSwapOracle, Ownable, Pausable {
         address[] memory path;
         path = new address[](3);
         path[0] = tokenIn;
-        if (gate == Gate.WMATIC) { path[1] = WMATIC; }
-        else if (gate == Gate.WBTC) { path[1] = WBTC; }
-        else if (gate == Gate.WETH) { path[1] = WETH; }
-        else if (gate == Gate.USDC) { path[1] = USDC; }
-        else if (gate == Gate.USDT) { path[1] = USDT; }
-        else if (gate == Gate.DAI) { path[1] = DAI; }
+        if (Gate(gate) == Gate.WMATIC) { path[1] = WMATIC; }
+        else if (Gate(gate) == Gate.WBTC) { path[1] = WBTC; }
+        else if (Gate(gate) == Gate.WETH) { path[1] = WETH; }
+        else if (Gate(gate) == Gate.USDC) { path[1] = USDC; }
+        else if (Gate(gate) == Gate.USDT) { path[1] = USDT; }
+        else if (Gate(gate) == Gate.DAI) { path[1] = DAI; }
         path[2] = tokenOut;
         ROUTER.swapExactTokensForTokens(amountIn, amountOutMin, path, to, block.timestamp);
         emit SWAP(tokenIn, tokenOut, amountIn, amountOutMin, to);
