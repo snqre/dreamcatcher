@@ -868,7 +868,54 @@ interface IUniswapV2Router02 is IUniswapV2Router01 {
     ) external;
 }
 
-contract QuickSwapOracle is Ownable, Pausable {
+interface IQuickSwapOracle {
+    function metadata(
+        address tokenA, 
+        address tokenB
+    ) 
+    external view 
+    returns (
+        address,
+        address,
+        address,
+        string memory,
+        string memory,
+        string memory,
+        string memory,
+        uint,
+        uint
+    );
+    function price(
+        address tokenA, 
+        address tokenB, 
+        uint amount
+    ) 
+    external view 
+    returns (
+        uint, 
+        uint, 
+        uint
+    );
+    function swapTokens(
+        address tokenIn,
+        address tokenOut,
+        uint amountIn,
+        uint slippage,
+        QuickSwapOracle.Gate gate,
+        address to
+    )
+    external;
+    function grantRoleVault(
+        address account
+    )
+    external;
+    function revokeRoleVault(
+        address account
+    )
+    external;
+}
+
+contract QuickSwapOracle is IQuickSwapOracle, Ownable, Pausable {
     using EnumerableSet for EnumerableSet.AddressSet;
 
     enum Gate {
