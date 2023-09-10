@@ -1292,6 +1292,224 @@ library QuickSwapOracle {
     }
 }
 
+interface IRepository {
+    function getAdmins() external view returns (address[] memory);
+    function getLogics() external view returns (address[] memory);
+
+    function getString(bytes32 key) external view returns (string memory);
+    function getBytes(bytes32 key) external view returns (bytes memory);
+    function getUint(bytes32 key) external view returns (uint);
+    function getInt(bytes32 key) external view returns (int);
+    function getAddress(bytes32 key) external view returns (address);
+    function getBool(bytes32 key) external view returns (bool);
+    function getBytes32(bytes32 key) external view returns (bytes32);
+
+    function getStringArray(bytes32 key) external view returns (string[] memory);
+    function getBytesArray(bytes32 key) external view returns (bytes[] memory);
+    function getUintArray(bytes32 key) external view returns (uint[] memory);
+    function getIntArray(bytes32 key) external view returns (int[] memory);
+    function getAddressArray(bytes32 key) external view returns (address[] memory);
+    function getBoolArray(bytes32 key) external view returns (bool[] memory);
+    function getBytes32Array(bytes32 key) external view returns (bytes32[] memory);
+
+    function getIndexedStringArray(bytes32 key, uint index) external view returns (string memory);
+    function getIndexedBytesArray(bytes32 key, uint index) external view returns (bytes memory);
+    function getIndexedUintArray(bytes32 key, uint index) external view returns (uint);
+    function getIndexedIntArray(bytes32 key, uint index) external view returns (int);
+    function getIndexedAddressArray(bytes32 key, uint index) external view returns (address);
+    function getIndexedBoolArray(bytes32 key, uint index) external view returns (bool);
+    function getIndexedBytes32Array(bytes32 key, uint index) external view returns (bytes32);
+    
+    function getLengthStringArray(bytes32 key) external view returns (uint);
+    function getLengthBytesArray(bytes32 key) external view returns (uint);
+    function getLengthUintArray(bytes32 key) external view returns (uint);
+    function getLengthIntArray(bytes32 key) external view returns (uint);
+    function getLengthAddressArray(bytes32 key) external view returns (uint);
+    function getLengthBoolArray(bytes32 key) external view returns (uint);
+    function getLengthBytes32Array(bytes32 key) external view returns (uint);
+
+    function getAddressSet(bytes32 key) external view returns (address[] memory);
+    function getUintSet(bytes32 key) external view returns (uint[] memory);
+    function getBytes32Set(bytes32 key) external view returns (bytes32[] memory);
+
+    function getIndexedAddressSet(bytes32 key, uint index) external view returns (address);
+    function getIndexedUintSet(bytes32 key, uint index) external view returns (uint);
+    function getIndexedBytes32Set(bytes32 key, uint index) external view returns (bytes32);
+
+    function getLengthAddressSet(bytes32 key) external view returns (uint);
+    function getLengthUintSet(bytes32 key) external view returns (uint);
+    function getLengthBytes32Set(bytes32 key) external view returns (uint);
+    
+    function addressSetContains(bytes32 key, address value) external view returns (bool);
+    function uintSetContains(bytes32 key, uint value) external view returns (bool);
+    function bytes32SetContains(bytes32 key, bytes32 value) external view returns (bool);
+
+    function addAdmin(address account) external;
+    function addLogic(address account) external;
+    
+    function removeAdmin(address account) external;
+    function removeLogic(address account) external;
+
+    function setString(bytes32 key, string memory value) external;
+    function setBytes(bytes32 key, bytes memory value) external;
+    function setUint(bytes32 key, uint value) external;
+    function setInt(bytes32 key, int value) external;
+    function setAddress(bytes32 key, address value) external;
+    function setBool(bytes32 key, bool value) external;
+    function setBytes32(bytes32 key, bytes32 value) external;
+
+    function setStringArray(bytes32 key, uint index, string memory value) external;
+    function setBytesArray(bytes32 key, uint index, bytes memory value) external;
+    function setUintArray(bytes32 key, uint index, uint value) external;
+    function setIntArray(bytes32 key, uint index, int value) external;
+    function setAddressArray(bytes32 key, uint index, address value) external;
+    function setBoolArray(bytes32 key, uint index, bool value) external;
+    function setBytes32Array(bytes32 key, uint index, bytes32 value) external;
+
+    function pushStringArray(bytes32 key, string memory value) external;
+    function pushBytesArray(bytes32 key, bytes memory value) external;
+    function pushUintArray(bytes32 key, uint value) external;
+    function pushIntArray(bytes32 key, int value) external;
+    function pushAddressArray(bytes32 key, address value) external;
+    function pushBoolArray(bytes32 key, bool value) external;
+    function pushBytes32Array(bytes32 key, bytes32 value) external;
+
+    function deleteStringArray(bytes32 key) external;
+    function deleteBytesArray(bytes32 key) external;
+    function deleteUintArray(bytes32 key) external;
+    function deleteIntArray(bytes32 key) external;
+    function deleteAddressArray(bytes32 key) external;
+    function deleteBoolArray(bytes32 key) external;
+    function deleteBytes32Array(bytes32 key) external;
+    
+    function addAddressSet(bytes32 key, address value) external;
+    function addUintSet(bytes32 key, uint value) external;
+    function addBytes32Set(bytes32 key, bytes32 value) external;
+
+    function removeAddressSet(bytes32 key, address value) external;
+    function removeUintSet(bytes32 key, uint value) external;
+    function removeBytes32Set(bytes32 key, bytes32 value) external;
+}
+
+interface IDRC80 {
+    function price(
+        address tokenA,
+        address tokenB
+    ) external view returns (
+        uint price,
+        uint lastTimestamp
+    );
+}
+
+contract Oracle is Ownable {
+    IRepository repository;
+
+    constructor()
+    Ownable(msg.sender) {
+
+    }
+
+    function append(address newOracle)
+    public {
+
+    }
+}
+
+library SolsticeToolkit {
+    using EnumerableSet for EnumerableSet.AddressSet;
+
+    struct Vault {
+        string name;
+        string description;
+        uint streamingFee;
+    }
+
+    struct Fee {
+        uint streaming;
+        uint in_;
+        uint out;
+    }
+
+    struct Deposit {
+        uint min;
+        uint max;
+        bool enabled;
+    }
+
+    struct Withdraw {
+        uint min;
+        uint max;
+        bool enabled;
+    }
+
+    struct Role {
+        EnumerableSet.AddressSet admins;
+        EnumerableSet.AddressSet managers;
+    }
+
+    struct Time {
+        uint launch;
+    }
+
+    struct Reserve {
+        IERC20Metadata denominator;
+        bytes[] assets;
+    }
+}
+
+interface ISolstice {
+
+}
+
+contract Solstice is ISolstice, Ownable, Pausable {
+    using EnumerableSet for EnumerableSet.AddressSet;
+
+    EnumerableSet.AddressSet whitelist;
+    QuickSwapOracle.Registry registry;
+
+    modifier onlyWhitelisted() {
+        _onlyWhitelisted();
+        _;
+    }
+
+    constructor() 
+    Ownable (msg.sender) {
+        registry = QuickSwapOracle.Registry({
+            WMATIC: 0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270,
+            WBTC: 0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6,
+            WETH: 0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619,
+            USDC: 0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174,
+            USDT: 0xc2132D05D31c914a87C6611C10748AEb04B58e8F,
+            DAI: 0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063,
+            FACTORY: IUniswapV2Factory(0x5757371414417b8C6CAad45bAeF941aBc7d3Ab32),
+            ROUTER: IUniswapV2Router02(0xa5E0829CaCEd8fFDD4De3c43696c57F7D7A678ff)
+        });
+    }
+
+    function _onlyWhitelisted() 
+    private view {
+        require(whitelist.contains(msg.sender), "Solstice: UNAUTHORIZED");
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1615,104 +1833,7 @@ contract QuickSwapOracleB is IQuickSwapOracleB, Ownable, Pausable {
     }
 }
 
-interface IRepository {
-    function getAdmins() external view returns (address[] memory);
-    function getLogics() external view returns (address[] memory);
 
-    function getString(bytes32 key) external view returns (string memory);
-    function getBytes(bytes32 key) external view returns (bytes memory);
-    function getUint(bytes32 key) external view returns (uint);
-    function getInt(bytes32 key) external view returns (int);
-    function getAddress(bytes32 key) external view returns (address);
-    function getBool(bytes32 key) external view returns (bool);
-    function getBytes32(bytes32 key) external view returns (bytes32);
-
-    function getStringArray(bytes32 key) external view returns (string[] memory);
-    function getBytesArray(bytes32 key) external view returns (bytes[] memory);
-    function getUintArray(bytes32 key) external view returns (uint[] memory);
-    function getIntArray(bytes32 key) external view returns (int[] memory);
-    function getAddressArray(bytes32 key) external view returns (address[] memory);
-    function getBoolArray(bytes32 key) external view returns (bool[] memory);
-    function getBytes32Array(bytes32 key) external view returns (bytes32[] memory);
-
-    function getIndexedStringArray(bytes32 key, uint index) external view returns (string memory);
-    function getIndexedBytesArray(bytes32 key, uint index) external view returns (bytes memory);
-    function getIndexedUintArray(bytes32 key, uint index) external view returns (uint);
-    function getIndexedIntArray(bytes32 key, uint index) external view returns (int);
-    function getIndexedAddressArray(bytes32 key, uint index) external view returns (address);
-    function getIndexedBoolArray(bytes32 key, uint index) external view returns (bool);
-    function getIndexedBytes32Array(bytes32 key, uint index) external view returns (bytes32);
-    
-    function getLengthStringArray(bytes32 key) external view returns (uint);
-    function getLengthBytesArray(bytes32 key) external view returns (uint);
-    function getLengthUintArray(bytes32 key) external view returns (uint);
-    function getLengthIntArray(bytes32 key) external view returns (uint);
-    function getLengthAddressArray(bytes32 key) external view returns (uint);
-    function getLengthBoolArray(bytes32 key) external view returns (uint);
-    function getLengthBytes32Array(bytes32 key) external view returns (uint);
-
-    function getAddressSet(bytes32 key) external view returns (address[] memory);
-    function getUintSet(bytes32 key) external view returns (uint[] memory);
-    function getBytes32Set(bytes32 key) external view returns (bytes32[] memory);
-
-    function getIndexedAddressSet(bytes32 key, uint index) external view returns (address);
-    function getIndexedUintSet(bytes32 key, uint index) external view returns (uint);
-    function getIndexedBytes32Set(bytes32 key, uint index) external view returns (bytes32);
-
-    function getLengthAddressSet(bytes32 key) external view returns (uint);
-    function getLengthUintSet(bytes32 key) external view returns (uint);
-    function getLengthBytes32Set(bytes32 key) external view returns (uint);
-    
-    function addressSetContains(bytes32 key, address value) external view returns (bool);
-    function uintSetContains(bytes32 key, uint value) external view returns (bool);
-    function bytes32SetContains(bytes32 key, bytes32 value) external view returns (bool);
-
-    function addAdmin(address account) external;
-    function addLogic(address account) external;
-    
-    function removeAdmin(address account) external;
-    function removeLogic(address account) external;
-
-    function setString(bytes32 key, string memory value) external;
-    function setBytes(bytes32 key, bytes memory value) external;
-    function setUint(bytes32 key, uint value) external;
-    function setInt(bytes32 key, int value) external;
-    function setAddress(bytes32 key, address value) external;
-    function setBool(bytes32 key, bool value) external;
-    function setBytes32(bytes32 key, bytes32 value) external;
-
-    function setStringArray(bytes32 key, uint index, string memory value) external;
-    function setBytesArray(bytes32 key, uint index, bytes memory value) external;
-    function setUintArray(bytes32 key, uint index, uint value) external;
-    function setIntArray(bytes32 key, uint index, int value) external;
-    function setAddressArray(bytes32 key, uint index, address value) external;
-    function setBoolArray(bytes32 key, uint index, bool value) external;
-    function setBytes32Array(bytes32 key, uint index, bytes32 value) external;
-
-    function pushStringArray(bytes32 key, string memory value) external;
-    function pushBytesArray(bytes32 key, bytes memory value) external;
-    function pushUintArray(bytes32 key, uint value) external;
-    function pushIntArray(bytes32 key, int value) external;
-    function pushAddressArray(bytes32 key, address value) external;
-    function pushBoolArray(bytes32 key, bool value) external;
-    function pushBytes32Array(bytes32 key, bytes32 value) external;
-
-    function deleteStringArray(bytes32 key) external;
-    function deleteBytesArray(bytes32 key) external;
-    function deleteUintArray(bytes32 key) external;
-    function deleteIntArray(bytes32 key) external;
-    function deleteAddressArray(bytes32 key) external;
-    function deleteBoolArray(bytes32 key) external;
-    function deleteBytes32Array(bytes32 key) external;
-    
-    function addAddressSet(bytes32 key, address value) external;
-    function addUintSet(bytes32 key, uint value) external;
-    function addBytes32Set(bytes32 key, bytes32 value) external;
-
-    function removeAddressSet(bytes32 key, address value) external;
-    function removeUintSet(bytes32 key, uint value) external;
-    function removeBytes32Set(bytes32 key, bytes32 value) external;
-}
 
 /**
 
