@@ -1,6 +1,125 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity 0.8.19;
 
+/**
+ * @dev Provides information about the current execution context, including the
+ * sender of the transaction and its data. While these are generally available
+ * via msg.sender and msg.data, they should not be accessed in such a direct
+ * manner, since when dealing with meta-transactions the account sending and
+ * paying for execution may not be the actual sender (as far as an application
+ * is concerned).
+ *
+ * This contract is only required for intermediate, library-like contracts.
+ */
+abstract contract Context {
+    function _msgSender() internal view virtual returns (address) {
+        return msg.sender;
+    }
+
+    function _msgData() internal view virtual returns (bytes calldata) {
+        return msg.data;
+    }
+}
+
+/**
+ * @dev Contract module which allows children to implement an emergency stop
+ * mechanism that can be triggered by an authorized account.
+ *
+ * This module is used through inheritance. It will make available the
+ * modifiers `whenNotPaused` and `whenPaused`, which can be applied to
+ * the functions of your contract. Note that they will not be pausable by
+ * simply including this module, only once the modifiers are put in place.
+ */
+abstract contract Pausable is Context {
+    /**
+     * @dev Emitted when the pause is triggered by `account`.
+     */
+    event Paused(address account);
+
+    /**
+     * @dev Emitted when the pause is lifted by `account`.
+     */
+    event Unpaused(address account);
+
+    bool private _paused;
+
+    /**
+     * @dev Initializes the contract in unpaused state.
+     */
+    constructor() {
+        _paused = false;
+    }
+
+    /**
+     * @dev Modifier to make a function callable only when the contract is not paused.
+     *
+     * Requirements:
+     *
+     * - The contract must not be paused.
+     */
+    modifier whenNotPaused() {
+        _requireNotPaused();
+        _;
+    }
+
+    /**
+     * @dev Modifier to make a function callable only when the contract is paused.
+     *
+     * Requirements:
+     *
+     * - The contract must be paused.
+     */
+    modifier whenPaused() {
+        _requirePaused();
+        _;
+    }
+
+    /**
+     * @dev Returns true if the contract is paused, and false otherwise.
+     */
+    function paused() public view virtual returns (bool) {
+        return _paused;
+    }
+
+    /**
+     * @dev Throws if the contract is paused.
+     */
+    function _requireNotPaused() internal view virtual {
+        require(!paused(), "Pausable: paused");
+    }
+
+    /**
+     * @dev Throws if the contract is not paused.
+     */
+    function _requirePaused() internal view virtual {
+        require(paused(), "Pausable: not paused");
+    }
+
+    /**
+     * @dev Triggers stopped state.
+     *
+     * Requirements:
+     *
+     * - The contract must not be paused.
+     */
+    function _pause() internal virtual whenNotPaused {
+        _paused = true;
+        emit Paused(_msgSender());
+    }
+
+    /**
+     * @dev Returns to normal state.
+     *
+     * Requirements:
+     *
+     * - The contract must be paused.
+     */
+    function _unpause() internal virtual whenPaused {
+        _paused = false;
+        emit Unpaused(_msgSender());
+    }
+}
+
 interface IERC20 {
     event Transfer(
         address indexed from,
@@ -286,6 +405,105 @@ interface IUniswapV2Router02 is IUniswapV2Router01 {
     ) external;
 }
 
+interface IRepository {
+    function getAdmins() external view returns (address[] memory);
+    function getLogics() external view returns (address[] memory);
+
+    function getString(bytes32 key) external view returns (string memory);
+    function getBytes(bytes32 key) external view returns (bytes memory);
+    function getUint(bytes32 key) external view returns (uint);
+    function getInt(bytes32 key) external view returns (int);
+    function getAddress(bytes32 key) external view returns (address);
+    function getBool(bytes32 key) external view returns (bool);
+    function getBytes32(bytes32 key) external view returns (bytes32);
+
+    function getStringArray(bytes32 key) external view returns (string[] memory);
+    function getBytesArray(bytes32 key) external view returns (bytes[] memory);
+    function getUintArray(bytes32 key) external view returns (uint[] memory);
+    function getIntArray(bytes32 key) external view returns (int[] memory);
+    function getAddressArray(bytes32 key) external view returns (address[] memory);
+    function getBoolArray(bytes32 key) external view returns (bool[] memory);
+    function getBytes32Array(bytes32 key) external view returns (bytes32[] memory);
+
+    function getIndexedStringArray(bytes32 key, uint index) external view returns (string memory);
+    function getIndexedBytesArray(bytes32 key, uint index) external view returns (bytes memory);
+    function getIndexedUintArray(bytes32 key, uint index) external view returns (uint);
+    function getIndexedIntArray(bytes32 key, uint index) external view returns (int);
+    function getIndexedAddressArray(bytes32 key, uint index) external view returns (address);
+    function getIndexedBoolArray(bytes32 key, uint index) external view returns (bool);
+    function getIndexedBytes32Array(bytes32 key, uint index) external view returns (bytes32);
+    
+    function getLengthStringArray(bytes32 key) external view returns (uint);
+    function getLengthBytesArray(bytes32 key) external view returns (uint);
+    function getLengthUintArray(bytes32 key) external view returns (uint);
+    function getLengthIntArray(bytes32 key) external view returns (uint);
+    function getLengthAddressArray(bytes32 key) external view returns (uint);
+    function getLengthBoolArray(bytes32 key) external view returns (uint);
+    function getLengthBytes32Array(bytes32 key) external view returns (uint);
+
+    function getAddressSet(bytes32 key) external view returns (address[] memory);
+    function getUintSet(bytes32 key) external view returns (uint[] memory);
+    function getBytes32Set(bytes32 key) external view returns (bytes32[] memory);
+
+    function getIndexedAddressSet(bytes32 key, uint index) external view returns (address);
+    function getIndexedUintSet(bytes32 key, uint index) external view returns (uint);
+    function getIndexedBytes32Set(bytes32 key, uint index) external view returns (bytes32);
+
+    function getLengthAddressSet(bytes32 key) external view returns (uint);
+    function getLengthUintSet(bytes32 key) external view returns (uint);
+    function getLengthBytes32Set(bytes32 key) external view returns (uint);
+    
+    function addressSetContains(bytes32 key, address value) external view returns (bool);
+    function uintSetContains(bytes32 key, uint value) external view returns (bool);
+    function bytes32SetContains(bytes32 key, bytes32 value) external view returns (bool);
+
+    function addAdmin(address account) external;
+    function addLogic(address account) external;
+    
+    function removeAdmin(address account) external;
+    function removeLogic(address account) external;
+
+    function setString(bytes32 key, string memory value) external;
+    function setBytes(bytes32 key, bytes memory value) external;
+    function setUint(bytes32 key, uint value) external;
+    function setInt(bytes32 key, int value) external;
+    function setAddress(bytes32 key, address value) external;
+    function setBool(bytes32 key, bool value) external;
+    function setBytes32(bytes32 key, bytes32 value) external;
+
+    function setStringArray(bytes32 key, uint index, string memory value) external;
+    function setBytesArray(bytes32 key, uint index, bytes memory value) external;
+    function setUintArray(bytes32 key, uint index, uint value) external;
+    function setIntArray(bytes32 key, uint index, int value) external;
+    function setAddressArray(bytes32 key, uint index, address value) external;
+    function setBoolArray(bytes32 key, uint index, bool value) external;
+    function setBytes32Array(bytes32 key, uint index, bytes32 value) external;
+
+    function pushStringArray(bytes32 key, string memory value) external;
+    function pushBytesArray(bytes32 key, bytes memory value) external;
+    function pushUintArray(bytes32 key, uint value) external;
+    function pushIntArray(bytes32 key, int value) external;
+    function pushAddressArray(bytes32 key, address value) external;
+    function pushBoolArray(bytes32 key, bool value) external;
+    function pushBytes32Array(bytes32 key, bytes32 value) external;
+
+    function deleteStringArray(bytes32 key) external;
+    function deleteBytesArray(bytes32 key) external;
+    function deleteUintArray(bytes32 key) external;
+    function deleteIntArray(bytes32 key) external;
+    function deleteAddressArray(bytes32 key) external;
+    function deleteBoolArray(bytes32 key) external;
+    function deleteBytes32Array(bytes32 key) external;
+    
+    function addAddressSet(bytes32 key, address value) external;
+    function addUintSet(bytes32 key, uint value) external;
+    function addBytes32Set(bytes32 key, bytes32 value) external;
+
+    function removeAddressSet(bytes32 key, address value) external;
+    function removeUintSet(bytes32 key, uint value) external;
+    function removeBytes32Set(bytes32 key, bytes32 value) external;
+}
+
 interface IQuickSwapPlugIn {
     function metadata(
         address tokenA,
@@ -324,6 +542,16 @@ interface IQuickSwapPlugIn {
         uint lastTimestamp
     );
 
+    function whitelist(
+        address account
+    )
+    external;
+
+    function blacklist(
+        address account
+    )
+    external;
+
     function swapTokens(
         address tokenIn,
         address tokenOut,
@@ -347,7 +575,7 @@ interface IQuickSwapPlugIn {
     external;
 }
 
-contract QuickSwapPlugIn is IQuickSwapPlugIn {
+contract QuickSwapPlugIn is IQuickSwapPlugIn, Pausable {
     enum GATE { WMATIC, WBTC, WETH, USDC, USDT, DAI }
     enum ORDER { REVERSE, SAME }
     address constant WMATIC = 0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270;
@@ -358,6 +586,9 @@ contract QuickSwapPlugIn is IQuickSwapPlugIn {
     address constant DAI = 0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063;
     IUniswapV2Factory constant FACTORY = IUniswapV2Factory(0x5757371414417b8C6CAad45bAeF941aBc7d3Ab32);
     IUniswapV2Router02 constant ROUTER = IUniswapV2Router02(0xa5E0829CaCEd8fFDD4De3c43696c57F7D7A678ff);
+    IRepository constant REPOSITORY = IRepository(0xE2578e92fB2Ba228b37eD2dFDb1F4444918b64Aa);
+    address private _deployer;
+    bool private _init;
 
     event SWAP(
         address indexed tokenIn,
@@ -367,10 +598,55 @@ contract QuickSwapPlugIn is IQuickSwapPlugIn {
         address to
     );
 
+    event ACCOUNT_WHITELISTED(
+        address indexed account
+    );
+
+    event ACCOUNT_BLACKLISTED(
+        address indexed account
+    );
+
+    event ADMIN_ROLE_GRANTED(
+        address indexed account
+    );
+
+    event ADMIN_ROLE_REVOKED(
+        address indexed account
+    );
+
     error PAIR_NOT_FOUND();
     error UNRECOGNIZED_GATE();
+    error ALREADY_WHITELISTED();
+    error ALREADY_BLACKLISTED();
+    error ALREADY_ADMIN();
+    error NOT_ADMIN();
+    error ONLY_WHITELIST();
+    error ONLY_ADMIN();
+    error ALREADY_INITIALIZED();
+    error NOT_INITIALIZED();
+    error ONLY_DEPLOYER();
 
-    constructor() {}
+    modifier onlyWhitelist() {
+        _onlyWhitelist();
+        _;
+    }
+
+    modifier onlyAdmin() {
+        _onlyAdmin();
+        _;
+    }
+
+    modifier onlyDeployer() {
+        _onlyDeployer();
+        _;
+    }
+
+    modifier whenInitialized() {
+        _whenInitialized();
+        _;
+    }
+
+    constructor() { _deployer = msg.sender; }
 
     function isSameString(
         string memory stringA,
@@ -386,6 +662,8 @@ contract QuickSwapPlugIn is IQuickSwapPlugIn {
         address tokenB
     )
     public view
+    whenNotPaused
+    whenInitialized
     returns (
         address addressPair,
         address addressA,
@@ -420,6 +698,8 @@ contract QuickSwapPlugIn is IQuickSwapPlugIn {
         address tokenB
     )
     public view
+    whenNotPaused
+    whenInitialized
     returns (
         ORDER
     ) {
@@ -465,6 +745,8 @@ contract QuickSwapPlugIn is IQuickSwapPlugIn {
         uint amount
     )
     public view
+    whenNotPaused
+    whenInitialized
     returns (
         uint price, /// will always return (price * (10**18))
         uint lastTimestamp
@@ -494,17 +776,100 @@ contract QuickSwapPlugIn is IQuickSwapPlugIn {
         }
     }
 
+    function init() 
+    public 
+    onlyDeployer {
+        if (_init) { revert ALREADY_INITIALIZED(); }
+        bytes32 quickSwapPlugInV000 = keccak256(abi.encode("quickSwapPlugInV000", "admins"));
+        if (!REPOSITORY.addressSetContains(quickSwapPlugInV000, _deployer)) {
+            REPOSITORY.addAddressSet(quickSwapPlugInV000, _deployer);
+        }
+        _init = true;
+        emit ADMIN_ROLE_GRANTED(msg.sender);
+    }
+
+    function whitelist(
+        address account
+    )
+    public 
+    onlyAdmin 
+    whenInitialized 
+    whenNotPaused {
+        bytes32 quickSwapPlugInV000 = keccak256(abi.encode("quickSwapPlugInV000", "whitelist"));
+        if (REPOSITORY.addressSetContains(quickSwapPlugInV000, account)) { revert ALREADY_WHITELISTED(); }
+        REPOSITORY.addAddressSet(quickSwapPlugInV000, account);
+        emit ACCOUNT_WHITELISTED(account);
+    }
+
+    function blacklist(
+        address account
+    )
+    public 
+    onlyAdmin 
+    whenInitialized 
+    whenNotPaused {
+        bytes32 quickSwapPlugInV000 = keccak256(abi.encode("quickSwapPlugInV000", "whitelist"));
+        if (!REPOSITORY.addressSetContains(quickSwapPlugInV000, account)) { revert ALREADY_BLACKLISTED(); }
+        REPOSITORY.removeAddressSet(quickSwapPlugInV000, account);
+        emit ACCOUNT_BLACKLISTED(account);
+    }
+
+    function grantRoleAdmin(
+        address account
+    )
+    public 
+    onlyAdmin 
+    whenInitialized 
+    whenNotPaused {
+        bytes32 quickSwapPlugInV000 = keccak256(abi.encode("quickSwapPlugInV000", "admins"));
+        if (REPOSITORY.addressSetContains(quickSwapPlugInV000, account)) { revert ALREADY_ADMIN(); }
+        REPOSITORY.addAddressSet(quickSwapPlugInV000, account);
+        emit ADMIN_ROLE_GRANTED(account);
+    }
+
+    function revokeRoleAdmin(
+        address account
+    )
+    public 
+    onlyAdmin 
+    whenInitialized 
+    whenNotPaused {
+        bytes32 quickSwapPlugInV000 = keccak256(abi.encode("quickSwapPlugInV000", "admins"));
+        if (REPOSITORY.addressSetContains(quickSwapPlugInV000, account)) { revert NOT_ADMIN(); }
+        REPOSITORY.removeAddressSet(quickSwapPlugInV000, account);
+        emit ADMIN_ROLE_REVOKED(account);
+    }
+
+    function pause()
+    public
+    onlyAdmin
+    whenInitialized {
+        _pause();
+    }
+
+    function unpause()
+    public
+    onlyAdmin
+    whenInitialized {
+        _unpause();
+    }
+
     function swapTokens(
         address tokenIn,
         address tokenOut,
-        uint amountIn,
+        uint amountIn, /// (amountIn * (10**18))
         uint amountOutMin,
         uint gate,
         address from,
         address to
     )
-    public {
+    public
+    onlyWhitelist
+    whenInitialized 
+    whenNotPaused {
         if (gate > 5) { revert UNRECOGNIZED_GATE(); }
+        amountIn *= 10**IERC20(tokenIn).decimals();
+        amountIn /= 10**18;
         IERC20(tokenIn).transferFrom({from: from, to: address(this), amount: amountIn});
         IERC20(tokenIn).approve({spender: address(ROUTER), amount: amountIn});
         address[] memory path;
@@ -530,14 +895,19 @@ contract QuickSwapPlugIn is IQuickSwapPlugIn {
     function swapTokensSlippage(
         address tokenIn,
         address tokenOut,
-        uint amountIn,
+        uint amountIn, /// (amountIn * (10**18))
         uint slippage,
         uint gate,
         address from,
         address to
     )
-    public {
+    public 
+    onlyWhitelist
+    whenInitialized 
+    whenNotPaused {
         if (gate > 5) { revert UNRECOGNIZED_GATE(); }
+        amountIn *= 10**IERC20(tokenIn).decimals();
+        amountIn /= 10**18;
         IERC20(tokenIn).transferFrom({from: from, to: address(this), amount: amountIn});
         IERC20(tokenIn).approve({spender: address(ROUTER), amount: amountIn});
         (uint amountOutMin,) = price({tokenA: tokenIn, tokenB: tokenOut, amount: amountIn});
@@ -560,5 +930,27 @@ contract QuickSwapPlugIn is IQuickSwapPlugIn {
             deadline: block.timestamp
         });
         emit SWAP(tokenIn, tokenOut, amountIn, amountOutMin, to);
+    }
+
+    function _onlyWhitelist()
+    private view {
+        bytes32 quickSwapPlugInV000 = keccak256(abi.encode("quickSwapPlugInV000", "whitelist"));
+        if (!REPOSITORY.addressSetContains(quickSwapPlugInV000, msg.sender)) { revert ONLY_WHITELIST(); }
+    }
+
+    function _onlyAdmin()
+    private view {
+        bytes32 quickSwapPlugInV000 = keccak256(abi.encode("quickSwapPlugInV000", "admins"));
+        if (!REPOSITORY.addressSetContains(quickSwapPlugInV000, msg.sender)) { revert ONLY_ADMIN(); }
+    }
+    
+    function _onlyDeployer()
+    private view {
+        if (msg.sender != _deployer) { revert ONLY_DEPLOYER(); }
+    }
+
+    function _whenInitialized()
+    private view {
+        if (!_init) { revert NOT_INITIALIZED(); }
     }
 }
