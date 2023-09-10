@@ -1035,14 +1035,6 @@ contract QuickSwapOracle is IQuickSwapOracle, Ownable, Pausable {
     onlyVault
     whenNotPaused {
         if (gate > 5) { revert INVALID_GATE(); }
-        uint allowance = IERC20(tokenIn).allowance(msg.sender, address(this));
-        if (allowance < amountIn) {
-            (
-                bool success,
-                bytes memory data
-            ) = tokenIn.delegatecall(abi.encodeWithSignature("approve(address,uint256)", address(this), amountIn));
-            if (!success) { revert FAILED_TO_APPROVE(); }
-        }
         IERC20(tokenIn).transferFrom(msg.sender, address(this), amountIn);
         IERC20(tokenIn).approve(address(ROUTER), amountIn);
         (uint amountOutMin, ,) = price(tokenIn, tokenOut, amountIn);
