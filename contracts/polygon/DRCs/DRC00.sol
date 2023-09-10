@@ -5,5 +5,5 @@ interface DRC00 {
     function name()
     external view
     returns (string memory name);
-    
+    function 
 }
