@@ -868,7 +868,434 @@ interface IUniswapV2Router02 is IUniswapV2Router01 {
     ) external;
 }
 
-interface IQuickSwapOracle {
+library QuickSwapOracle {
+    enum Gate {
+        WMATIC,
+        WBTC,
+        WETH,
+        USDC,
+        USDT,
+        DAI
+    }
+
+    enum Order {
+        UNRECOGNIZED,
+        REVERSE,
+        SAME
+    }
+
+    struct Registry {
+        address WMATIC;
+        address WBTC;
+        address WETH;
+        address USDC;
+        address USDT;
+        address DAI;
+        IUniswapV2Factory FACTORY;
+        IUniswapV2Router02 ROUTER;
+    }
+
+    function isSameString(
+        string memory stringA,
+        string memory stringB
+    )
+    public pure
+    returns (bool) {
+        return keccak256(abi.encode(stringA)) == keccak256(abi.encode(stringB));
+    }
+
+    function metadata(
+        Registry memory registry,
+        address tokenA,
+        address tokenB
+    )
+    public view
+    returns (
+        bool,
+        address,
+        address,
+        address,
+        string memory,
+        string memory,
+        string memory,
+        string memory,
+        uint,
+        uint
+    ) {
+        address addrPair = registry.FACTORY.getPair(tokenA, tokenB);
+        if (addrPair == address(0)) {
+            return (
+                false,
+                address(0),
+                address(0),
+                address(0),
+                "",
+                "",
+                "",
+                "",
+                0,
+                0
+            );
+        }
+        IUniswapV2Pair interface_ = IUniswapV2Pair(addrPair);
+        IERC20Metadata tokenA_ = IERC20Metadata(interface_.token0());
+        IERC20Metadata tokenB_ = IERC20Metadata(interface_.token1());
+        return (
+            true,
+            addrPair,
+            interface_.token0(),
+            interface_.token1(),
+            tokenA_.name(),
+            tokenB_.name(),
+            tokenA_.symbol(),
+            tokenB_.symbol(),
+            tokenA_.decimals(),
+            tokenB_.decimals()
+        );
+    }
+
+    function isSameOrder(
+        Registry memory registry,
+        address tokenA,
+        address tokenB
+    ) public view
+    returns (Order) {
+        (
+            ,
+            ,
+            address addressA,
+            address addressB,
+            string memory nameA,
+            string memory nameB,
+            string memory symbolA,
+            string memory symbolB,
+            uint decimalsA,
+            uint decimalsB
+        ) = metadata(registry, tokenA, tokenB);
+        IERC20Metadata tokenA_ = IERC20Metadata(tokenA);
+        IERC20Metadata tokenB_ = IERC20Metadata(tokenB);
+        if (
+            tokenA == addressA
+            && tokenB == addressB
+            && isSameString(tokenA_.name(), nameA)
+            && isSameString(tokenB_.name(), nameB)
+            && isSameString(tokenA_.symbol(), symbolA)
+            && isSameString(tokenB_.symbol(), symbolB)
+            && tokenA_.decimals() == decimalsA
+            && tokenB_.decimals() == decimalsB
+        ) { return Order.SAME; }
+        else if (
+            tokenA == addressB
+            && tokenB == addressA
+            && isSameString(tokenA_.name(), nameB)
+            && isSameString(tokenB_.name(), nameA)
+            && isSameString(tokenA_.symbol(), symbolB)
+            && isSameString(tokenB_.symbol(), symbolA)
+            && tokenA_.decimals() == decimalsB
+            && tokenB_.decimals() == decimalsA
+        ) { return Order.REVERSE; }
+        else { return Order.UNRECOGNIZED; }
+    }
+
+    function priceOfTokenBInTokenA(
+        Registry memory registry,
+        address tokenA,
+        address tokenB,
+        uint amount
+    )
+    public view
+    returns (
+        bool,
+        uint,
+        uint,
+        uint
+    ) {
+        address addrPair = registry.FACTORY.getPair(tokenA, tokenB);
+        if (addrPair == address(0)) {
+            return (
+                false,
+                0,
+                0,
+                0
+            );
+        }
+        IUniswapV2Pair interface_ = IUniswapV2Pair(addrPair);
+        IERC20Metadata tokenA_ = IERC20Metadata(interface_.token0());
+        IERC20Metadata tokenB_ = IERC20Metadata(interface_.token1());
+        (
+            uint reserveA,
+            uint reserveB,
+            uint lastTimestamp
+        ) = interface_.getReserves();
+        return (
+            true,
+            (amount * (reserveA * (10**tokenB_.decimals()))) / reserveB,
+            10**tokenA_.decimals(),
+            lastTimestamp
+        );
+    }
+
+    function priceOfTokenAInTokenB(
+        Registry memory registry,
+        address tokenA,
+        address tokenB,
+        uint amount
+    )
+    public view
+    returns (
+        bool,
+        uint,
+        uint,
+        uint
+    ) {
+        address addrPair = registry.FACTORY.getPair(tokenA, tokenB);
+        if (addrPair == address(0)) {
+            return (
+                false,
+                0,
+                0,
+                0
+            );
+        }
+        IUniswapV2Pair interface_ = IUniswapV2Pair(addrPair);
+        IERC20Metadata tokenA_ = IERC20Metadata(interface_.token0());
+        IERC20Metadata tokenB_ = IERC20Metadata(interface_.token1());
+        (
+            uint reserveA,
+            uint reserveB,
+            uint lastTimestamp
+        ) = interface_.getReserves();
+        return (
+            true,
+            (amount * (reserveB * (10**tokenA_.decimals()))) / reserveA,
+            10**tokenB_.decimals(),
+            lastTimestamp
+        );
+    }
+
+    function price(
+        Registry memory registry,
+        address tokenA,
+        address tokenB,
+        uint amount
+    )
+    public view
+    returns (
+        bool,
+        uint,
+        uint,
+        uint
+    ) {
+        Order order = isSameOrder(registry, tokenA, tokenB);
+        if (order == Order.SAME) {
+            (
+                bool success,
+                uint price,
+                uint divisor,
+                uint lastTimestamp
+            ) = priceOfTokenBInTokenA(registry, tokenA, tokenB, amount);
+            return (
+                success,
+                price,
+                divisor,
+                lastTimestamp
+            );
+        }
+        else if (order == Order.REVERSE) {
+            (
+                bool success,
+                uint price,
+                uint divisor,
+                uint lastTimestamp
+            ) = priceOfTokenAInTokenB(registry, tokenA, tokenB, amount);
+            return (
+                success,
+                price,
+                divisor,
+                lastTimestamp
+            );
+        }
+        else {
+            return (
+                false,
+                0,
+                0,
+                0
+            );
+        }
+    }
+
+    function grossAssetValue(
+        Registry memory registry,
+        address[] memory contracts,
+        uint[] memory amounts,
+        address denomination
+    )
+    public view
+    returns (
+        uint,
+        uint,
+        uint
+    ) {
+        uint grossAssetValue;
+        uint averageTimestamp;
+        for (uint i = 0; i < contracts.length; i++) {
+            (
+                bool success,
+                uint price,
+                uint divisor,
+                uint lastTimestamp
+            ) = price(registry, denomination, contracts[i], amounts[i]);
+            require(success, "FAILED_TO_FETCH_PRICE");
+            grossAssetValue += (price * (10**18)) / divisor;
+            averageTimestamp += lastTimestamp;
+        }
+        return (
+            grossAssetValue,
+            10**18,
+            averageTimestamp /= contracts.length
+        );
+    }
+
+    function grossAssetValuePerShare(
+        Registry memory registry,
+        address[] memory contracts,
+        uint[] memory amounts,
+        address denomination,
+        address token
+    )
+    public view
+    returns (
+        uint,
+        uint,
+        uint
+    ) {
+        uint supply = IERC20Metadata(token).totalSupply();
+        (
+            uint grossAssetValue,
+            uint divisor,
+            uint averageTimestamp
+        ) = grossAssetValue(registry, contracts, amounts, denomination);
+        return (
+            grossAssetValue / supply,
+            divisor,
+            averageTimestamp
+        );
+    }
+
+    function swapTokens(
+        Registry memory registry,
+        address tokenIn,
+        address tokenOut,
+        uint amountIn,
+        uint amountOutMin,
+        uint gate,
+        address from,
+        address to
+    )
+    public {
+        require(gate <= 5, "QuickSwapOracle: UNRECOGNIZED_GATE");
+        IERC20(tokenIn).transferFrom(from, address(this), amountIn);
+        IERC20(tokenIn).approve(address(registry.ROUTER), amountIn);
+        address[] memory path;
+        path = new address[](3);
+        path[0] = tokenIn;
+        if (Gate(gate) == Gate.WMATIC) { path[1] = registry.WMATIC; }
+        else if (Gate(gate) == Gate.WBTC) { path[1] = registry.WBTC; }
+        else if (Gate(gate) == Gate.WETH) { path[1] = registry.WETH; }
+        else if (Gate(gate) == Gate.USDC) { path[1] = registry.USDC; }
+        else if (Gate(gate) == Gate.USDT) { path[1] = registry.USDT; }
+        else if (Gate(gate) == Gate.DAI) { path[1] = registry.DAI; }
+        path[2] = tokenOut;
+        registry.ROUTER.swapExactTokensForTokens(amountIn, amountOutMin, path, to, block.timestamp);
+    }
+
+    function swapTokensSlippage(
+        Registry memory registry,
+        address tokenIn,
+        address tokenOut,
+        uint amountIn,
+        uint slippage,
+        uint gate,
+        address from,
+        address to
+    )
+    public {
+        require(gate <= 5, "QuickSwapOracle: UNRECOGNIZED_GATE");
+        IERC20(tokenIn).transferFrom(from, address(this), amountIn);
+        IERC20(tokenIn).approve(address(registry.ROUTER), amountIn);
+        (bool success, uint amountOutMin, ,) = price(registry, tokenIn, tokenOut, amountIn);
+        require(success, "QuickSwapOracle: FAILED_TO_FETCH_PRICE");
+        amountOutMin = (amountOutMin * (10000 - slippage)) / 10000;
+        address[] memory path;
+        path = new address[](3);
+        path[0] = tokenIn;
+        if (Gate(gate) == Gate.WMATIC) { path[1] = registry.WMATIC; }
+        else if (Gate(gate) == Gate.WBTC) { path[1] = registry.WBTC; }
+        else if (Gate(gate) == Gate.WETH) { path[1] = registry.WETH; }
+        else if (Gate(gate) == Gate.USDC) { path[1] = registry.USDC; }
+        else if (Gate(gate) == Gate.USDT) { path[1] = registry.USDT; }
+        else if (Gate(gate) == Gate.DAI) { path[1] = registry.DAI; }
+        path[2] = tokenOut;
+        registry.ROUTER.swapExactTokensForTokens(amountIn, amountOutMin, path, to, block.timestamp);
+    }
+
+    function swapTokensInternal(
+        Registry memory registry,
+        address tokenIn,
+        address tokenOut,
+        uint amountIn,
+        uint amountOutMin,
+        uint gate
+    )
+    public {
+        require(gate <= 5, "QuickSwapOracle: UNRECOGNIZED_GATE");
+        IERC20(tokenIn).approve(address(registry.ROUTER), amountIn);
+        address[] memory path;
+        path = new address[](3);
+        path[0] = tokenIn;
+        if (Gate(gate) == Gate.WMATIC) { path[1] = registry.WMATIC; }
+        else if (Gate(gate) == Gate.WBTC) { path[1] = registry.WBTC; }
+        else if (Gate(gate) == Gate.WETH) { path[1] = registry.WETH; }
+        else if (Gate(gate) == Gate.USDC) { path[1] = registry.USDC; }
+        else if (Gate(gate) == Gate.USDT) { path[1] = registry.USDT; }
+        else if (Gate(gate) == Gate.DAI) { path[1] = registry.DAI; }
+        path[2] = tokenOut;
+        registry.ROUTER.swapExactTokensForTokens(amountIn, amountOutMin, path, address(this), block.timestamp);
+    }
+
+    function swapTokensInternalSlippage(
+        Registry memory registry,
+        address tokenIn,
+        address tokenOut,
+        uint amountIn,
+        uint slippage,
+        uint gate
+    )
+    public {
+        require(gate <= 5, "QuickSwapOracle: UNRECOGNIZED_GATE");
+        IERC20(tokenIn).approve(address(registry.ROUTER), amountIn);
+        (bool success, uint amountOutMin, ,) = price(registry, tokenIn, tokenOut, amountIn);
+        require(success, "QuickSwapOracle: FAILED_TO_FETCH_PRICE");
+        amountOutMin = (amountOutMin * (10000 - slippage)) / 10000;
+        address[] memory path;
+        path = new address[](3);
+        path[0] = tokenIn;
+        if (Gate(gate) == Gate.WMATIC) { path[1] = registry.WMATIC; }
+        else if (Gate(gate) == Gate.WBTC) { path[1] = registry.WBTC; }
+        else if (Gate(gate) == Gate.WETH) { path[1] = registry.WETH; }
+        else if (Gate(gate) == Gate.USDC) { path[1] = registry.USDC; }
+        else if (Gate(gate) == Gate.USDT) { path[1] = registry.USDT; }
+        else if (Gate(gate) == Gate.DAI) { path[1] = registry.DAI; }
+        path[2] = tokenOut;
+        registry.ROUTER.swapExactTokensForTokens(amountIn, amountOutMin, path, address(this), block.timestamp);
+    }
+}
+
+
+
+
+interface IQuickSwapOracleB {
     function metadata(
         address tokenA, 
         address tokenB
@@ -915,7 +1342,7 @@ interface IQuickSwapOracle {
     external;
 }
 
-contract QuickSwapOracle is IQuickSwapOracle, Ownable, Pausable {
+contract QuickSwapOracleB is IQuickSwapOracleB, Ownable, Pausable {
     using EnumerableSet for EnumerableSet.AddressSet;
 
     enum Gate {
