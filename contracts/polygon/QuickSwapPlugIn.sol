@@ -121,11 +121,7 @@ abstract contract Pausable is Context {
 }
 
 interface IERC20 {
-    event Transfer(
-        address indexed from,
-        address indexed to,
-        uint256 value
-    );
+    event Transfer(address indexed from, address indexed to, uint256 value);
 
     event Approval(
         address indexed owner,
@@ -133,419 +129,666 @@ interface IERC20 {
         uint256 value
     );
 
-    function name()
-    external view
-    returns (
-        string memory
-    );
+    function name() external view returns (string memory);
 
-    function symbol()
-    external view
-    returns (
-        string memory
-    );
+    function symbol() external view returns (string memory);
 
-    function decimals()
-    external view
-    returns (
-        uint8
-    );
+    function decimals() external view returns (uint8);
 
-    function totalSupply()
-    external view
-    returns (
-        uint256
-    );
+    function totalSupply() external view returns (uint256);
 
-    function balanceOf(
-        address account
-    )
-    external view
-    returns (
-        uint256
-    );
+    function balanceOf(address account) external view returns (uint256);
 
-    function transfer(
-        address to,
-        uint256 amount
-    )
-    external
-    returns (
-        bool
-    );
+    function transfer(address to, uint256 amount) external returns (bool);
 
-    function allowance(
-        address owner,
-        address spender
-    )
-    external view
-    returns (
-        uint256
-    );
+    function allowance(address owner, address spender)
+        external
+        view
+        returns (uint256);
 
-    function approve(
-        address spender,
-        uint256 amount
-    )
-    external
-    returns (
-        bool
-    );
+    function approve(address spender, uint256 amount) external returns (bool);
 
     function transferFrom(
         address from,
         address to,
         uint256 amount
-    )
-    external
-    returns (
-        bool
-    );
+    ) external returns (bool);
 }
 
 interface IUniswapV2Pair {
-    event Approval(address indexed owner, address indexed spender, uint value);
-    event Transfer(address indexed from, address indexed to, uint value);
+    event Approval(
+        address indexed owner,
+        address indexed spender,
+        uint256 value
+    );
+    event Transfer(address indexed from, address indexed to, uint256 value);
 
     function name() external pure returns (string memory);
-    function symbol() external pure returns (string memory);
-    function decimals() external pure returns (uint8);
-    function totalSupply() external view returns (uint);
-    function balanceOf(address owner) external view returns (uint);
-    function allowance(address owner, address spender) external view returns (uint);
 
-    function approve(address spender, uint value) external returns (bool);
-    function transfer(address to, uint value) external returns (bool);
-    function transferFrom(address from, address to, uint value) external returns (bool);
+    function symbol() external pure returns (string memory);
+
+    function decimals() external pure returns (uint8);
+
+    function totalSupply() external view returns (uint256);
+
+    function balanceOf(address owner) external view returns (uint256);
+
+    function allowance(address owner, address spender)
+        external
+        view
+        returns (uint256);
+
+    function approve(address spender, uint256 value) external returns (bool);
+
+    function transfer(address to, uint256 value) external returns (bool);
+
+    function transferFrom(
+        address from,
+        address to,
+        uint256 value
+    ) external returns (bool);
 
     function DOMAIN_SEPARATOR() external view returns (bytes32);
+
     function PERMIT_TYPEHASH() external pure returns (bytes32);
-    function nonces(address owner) external view returns (uint);
 
-    function permit(address owner, address spender, uint value, uint deadline, uint8 v, bytes32 r, bytes32 s) external;
+    function nonces(address owner) external view returns (uint256);
 
-    event Mint(address indexed sender, uint amount0, uint amount1);
-    event Burn(address indexed sender, uint amount0, uint amount1, address indexed to);
+    function permit(
+        address owner,
+        address spender,
+        uint256 value,
+        uint256 deadline,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) external;
+
+    event Mint(address indexed sender, uint256 amount0, uint256 amount1);
+    event Burn(
+        address indexed sender,
+        uint256 amount0,
+        uint256 amount1,
+        address indexed to
+    );
     event Swap(
         address indexed sender,
-        uint amount0In,
-        uint amount1In,
-        uint amount0Out,
-        uint amount1Out,
+        uint256 amount0In,
+        uint256 amount1In,
+        uint256 amount0Out,
+        uint256 amount1Out,
         address indexed to
     );
     event Sync(uint112 reserve0, uint112 reserve1);
 
-    function MINIMUM_LIQUIDITY() external pure returns (uint);
-    function factory() external view returns (address);
-    function token0() external view returns (address);
-    function token1() external view returns (address);
-    function getReserves() external view returns (uint112 reserve0, uint112 reserve1, uint32 blockTimestampLast);
-    function price0CumulativeLast() external view returns (uint);
-    function price1CumulativeLast() external view returns (uint);
-    function kLast() external view returns (uint);
+    function MINIMUM_LIQUIDITY() external pure returns (uint256);
 
-    function mint(address to) external returns (uint liquidity);
-    function burn(address to) external returns (uint amount0, uint amount1);
-    function swap(uint amount0Out, uint amount1Out, address to, bytes calldata data) external;
+    function factory() external view returns (address);
+
+    function token0() external view returns (address);
+
+    function token1() external view returns (address);
+
+    function getReserves()
+        external
+        view
+        returns (
+            uint112 reserve0,
+            uint112 reserve1,
+            uint32 blockTimestampLast
+        );
+
+    function price0CumulativeLast() external view returns (uint256);
+
+    function price1CumulativeLast() external view returns (uint256);
+
+    function kLast() external view returns (uint256);
+
+    function mint(address to) external returns (uint256 liquidity);
+
+    function burn(address to)
+        external
+        returns (uint256 amount0, uint256 amount1);
+
+    function swap(
+        uint256 amount0Out,
+        uint256 amount1Out,
+        address to,
+        bytes calldata data
+    ) external;
+
     function skim(address to) external;
+
     function sync() external;
 
     function initialize(address, address) external;
 }
 
 interface IUniswapV2Factory {
-    event PairCreated(address indexed token0, address indexed token1, address pair, uint);
+    event PairCreated(
+        address indexed token0,
+        address indexed token1,
+        address pair,
+        uint256
+    );
 
     function feeTo() external view returns (address);
+
     function feeToSetter() external view returns (address);
 
-    function getPair(address tokenA, address tokenB) external view returns (address pair);
-    function allPairs(uint) external view returns (address pair);
-    function allPairsLength() external view returns (uint);
+    function getPair(address tokenA, address tokenB)
+        external
+        view
+        returns (address pair);
 
-    function createPair(address tokenA, address tokenB) external returns (address pair);
+    function allPairs(uint256) external view returns (address pair);
+
+    function allPairsLength() external view returns (uint256);
+
+    function createPair(address tokenA, address tokenB)
+        external
+        returns (address pair);
 
     function setFeeTo(address) external;
+
     function setFeeToSetter(address) external;
 }
 
 interface IUniswapV2Router01 {
     function factory() external pure returns (address);
+
     function WETH() external pure returns (address);
 
     function addLiquidity(
         address tokenA,
         address tokenB,
-        uint amountADesired,
-        uint amountBDesired,
-        uint amountAMin,
-        uint amountBMin,
+        uint256 amountADesired,
+        uint256 amountBDesired,
+        uint256 amountAMin,
+        uint256 amountBMin,
         address to,
-        uint deadline
-    ) external returns (uint amountA, uint amountB, uint liquidity);
+        uint256 deadline
+    )
+        external
+        returns (
+            uint256 amountA,
+            uint256 amountB,
+            uint256 liquidity
+        );
+
     function addLiquidityETH(
         address token,
-        uint amountTokenDesired,
-        uint amountTokenMin,
-        uint amountETHMin,
+        uint256 amountTokenDesired,
+        uint256 amountTokenMin,
+        uint256 amountETHMin,
         address to,
-        uint deadline
-    ) external payable returns (uint amountToken, uint amountETH, uint liquidity);
+        uint256 deadline
+    )
+        external
+        payable
+        returns (
+            uint256 amountToken,
+            uint256 amountETH,
+            uint256 liquidity
+        );
+
     function removeLiquidity(
         address tokenA,
         address tokenB,
-        uint liquidity,
-        uint amountAMin,
-        uint amountBMin,
+        uint256 liquidity,
+        uint256 amountAMin,
+        uint256 amountBMin,
         address to,
-        uint deadline
-    ) external returns (uint amountA, uint amountB);
+        uint256 deadline
+    ) external returns (uint256 amountA, uint256 amountB);
+
     function removeLiquidityETH(
         address token,
-        uint liquidity,
-        uint amountTokenMin,
-        uint amountETHMin,
+        uint256 liquidity,
+        uint256 amountTokenMin,
+        uint256 amountETHMin,
         address to,
-        uint deadline
-    ) external returns (uint amountToken, uint amountETH);
+        uint256 deadline
+    ) external returns (uint256 amountToken, uint256 amountETH);
+
     function removeLiquidityWithPermit(
         address tokenA,
         address tokenB,
-        uint liquidity,
-        uint amountAMin,
-        uint amountBMin,
+        uint256 liquidity,
+        uint256 amountAMin,
+        uint256 amountBMin,
         address to,
-        uint deadline,
-        bool approveMax, uint8 v, bytes32 r, bytes32 s
-    ) external returns (uint amountA, uint amountB);
+        uint256 deadline,
+        bool approveMax,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) external returns (uint256 amountA, uint256 amountB);
+
     function removeLiquidityETHWithPermit(
         address token,
-        uint liquidity,
-        uint amountTokenMin,
-        uint amountETHMin,
+        uint256 liquidity,
+        uint256 amountTokenMin,
+        uint256 amountETHMin,
         address to,
-        uint deadline,
-        bool approveMax, uint8 v, bytes32 r, bytes32 s
-    ) external returns (uint amountToken, uint amountETH);
-    function swapExactTokensForTokens(
-        uint amountIn,
-        uint amountOutMin,
-        address[] calldata path,
-        address to,
-        uint deadline
-    ) external returns (uint[] memory amounts);
-    function swapTokensForExactTokens(
-        uint amountOut,
-        uint amountInMax,
-        address[] calldata path,
-        address to,
-        uint deadline
-    ) external returns (uint[] memory amounts);
-    function swapExactETHForTokens(uint amountOutMin, address[] calldata path, address to, uint deadline)
-        external
-        payable
-        returns (uint[] memory amounts);
-    function swapTokensForExactETH(uint amountOut, uint amountInMax, address[] calldata path, address to, uint deadline)
-        external
-        returns (uint[] memory amounts);
-    function swapExactTokensForETH(uint amountIn, uint amountOutMin, address[] calldata path, address to, uint deadline)
-        external
-        returns (uint[] memory amounts);
-    function swapETHForExactTokens(uint amountOut, address[] calldata path, address to, uint deadline)
-        external
-        payable
-        returns (uint[] memory amounts);
+        uint256 deadline,
+        bool approveMax,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) external returns (uint256 amountToken, uint256 amountETH);
 
-    function quote(uint amountA, uint reserveA, uint reserveB) external pure returns (uint amountB);
-    function getAmountOut(uint amountIn, uint reserveIn, uint reserveOut) external pure returns (uint amountOut);
-    function getAmountIn(uint amountOut, uint reserveIn, uint reserveOut) external pure returns (uint amountIn);
-    function getAmountsOut(uint amountIn, address[] calldata path) external view returns (uint[] memory amounts);
-    function getAmountsIn(uint amountOut, address[] calldata path) external view returns (uint[] memory amounts);
+    function swapExactTokensForTokens(
+        uint256 amountIn,
+        uint256 amountOutMin,
+        address[] calldata path,
+        address to,
+        uint256 deadline
+    ) external returns (uint256[] memory amounts);
+
+    function swapTokensForExactTokens(
+        uint256 amountOut,
+        uint256 amountInMax,
+        address[] calldata path,
+        address to,
+        uint256 deadline
+    ) external returns (uint256[] memory amounts);
+
+    function swapExactETHForTokens(
+        uint256 amountOutMin,
+        address[] calldata path,
+        address to,
+        uint256 deadline
+    ) external payable returns (uint256[] memory amounts);
+
+    function swapTokensForExactETH(
+        uint256 amountOut,
+        uint256 amountInMax,
+        address[] calldata path,
+        address to,
+        uint256 deadline
+    ) external returns (uint256[] memory amounts);
+
+    function swapExactTokensForETH(
+        uint256 amountIn,
+        uint256 amountOutMin,
+        address[] calldata path,
+        address to,
+        uint256 deadline
+    ) external returns (uint256[] memory amounts);
+
+    function swapETHForExactTokens(
+        uint256 amountOut,
+        address[] calldata path,
+        address to,
+        uint256 deadline
+    ) external payable returns (uint256[] memory amounts);
+
+    function quote(
+        uint256 amountA,
+        uint256 reserveA,
+        uint256 reserveB
+    ) external pure returns (uint256 amountB);
+
+    function getAmountOut(
+        uint256 amountIn,
+        uint256 reserveIn,
+        uint256 reserveOut
+    ) external pure returns (uint256 amountOut);
+
+    function getAmountIn(
+        uint256 amountOut,
+        uint256 reserveIn,
+        uint256 reserveOut
+    ) external pure returns (uint256 amountIn);
+
+    function getAmountsOut(uint256 amountIn, address[] calldata path)
+        external
+        view
+        returns (uint256[] memory amounts);
+
+    function getAmountsIn(uint256 amountOut, address[] calldata path)
+        external
+        view
+        returns (uint256[] memory amounts);
 }
 
 interface IUniswapV2Router02 is IUniswapV2Router01 {
     function removeLiquidityETHSupportingFeeOnTransferTokens(
         address token,
-        uint liquidity,
-        uint amountTokenMin,
-        uint amountETHMin,
+        uint256 liquidity,
+        uint256 amountTokenMin,
+        uint256 amountETHMin,
         address to,
-        uint deadline
-    ) external returns (uint amountETH);
+        uint256 deadline
+    ) external returns (uint256 amountETH);
+
     function removeLiquidityETHWithPermitSupportingFeeOnTransferTokens(
         address token,
-        uint liquidity,
-        uint amountTokenMin,
-        uint amountETHMin,
+        uint256 liquidity,
+        uint256 amountTokenMin,
+        uint256 amountETHMin,
         address to,
-        uint deadline,
-        bool approveMax, uint8 v, bytes32 r, bytes32 s
-    ) external returns (uint amountETH);
+        uint256 deadline,
+        bool approveMax,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) external returns (uint256 amountETH);
 
     function swapExactTokensForTokensSupportingFeeOnTransferTokens(
-        uint amountIn,
-        uint amountOutMin,
+        uint256 amountIn,
+        uint256 amountOutMin,
         address[] calldata path,
         address to,
-        uint deadline
+        uint256 deadline
     ) external;
+
     function swapExactETHForTokensSupportingFeeOnTransferTokens(
-        uint amountOutMin,
+        uint256 amountOutMin,
         address[] calldata path,
         address to,
-        uint deadline
+        uint256 deadline
     ) external payable;
+
     function swapExactTokensForETHSupportingFeeOnTransferTokens(
-        uint amountIn,
-        uint amountOutMin,
+        uint256 amountIn,
+        uint256 amountOutMin,
         address[] calldata path,
         address to,
-        uint deadline
+        uint256 deadline
     ) external;
 }
 
 interface IRepository {
     function getAdmins() external view returns (address[] memory);
+
     function getLogics() external view returns (address[] memory);
 
     function getString(bytes32 key) external view returns (string memory);
+
     function getBytes(bytes32 key) external view returns (bytes memory);
-    function getUint(bytes32 key) external view returns (uint);
-    function getInt(bytes32 key) external view returns (int);
+
+    function getUint(bytes32 key) external view returns (uint256);
+
+    function getInt(bytes32 key) external view returns (int256);
+
     function getAddress(bytes32 key) external view returns (address);
+
     function getBool(bytes32 key) external view returns (bool);
+
     function getBytes32(bytes32 key) external view returns (bytes32);
 
-    function getStringArray(bytes32 key) external view returns (string[] memory);
+    function getStringArray(bytes32 key)
+        external
+        view
+        returns (string[] memory);
+
     function getBytesArray(bytes32 key) external view returns (bytes[] memory);
-    function getUintArray(bytes32 key) external view returns (uint[] memory);
-    function getIntArray(bytes32 key) external view returns (int[] memory);
-    function getAddressArray(bytes32 key) external view returns (address[] memory);
+
+    function getUintArray(bytes32 key) external view returns (uint256[] memory);
+
+    function getIntArray(bytes32 key) external view returns (int256[] memory);
+
+    function getAddressArray(bytes32 key)
+        external
+        view
+        returns (address[] memory);
+
     function getBoolArray(bytes32 key) external view returns (bool[] memory);
-    function getBytes32Array(bytes32 key) external view returns (bytes32[] memory);
 
-    function getIndexedStringArray(bytes32 key, uint index) external view returns (string memory);
-    function getIndexedBytesArray(bytes32 key, uint index) external view returns (bytes memory);
-    function getIndexedUintArray(bytes32 key, uint index) external view returns (uint);
-    function getIndexedIntArray(bytes32 key, uint index) external view returns (int);
-    function getIndexedAddressArray(bytes32 key, uint index) external view returns (address);
-    function getIndexedBoolArray(bytes32 key, uint index) external view returns (bool);
-    function getIndexedBytes32Array(bytes32 key, uint index) external view returns (bytes32);
-    
-    function getLengthStringArray(bytes32 key) external view returns (uint);
-    function getLengthBytesArray(bytes32 key) external view returns (uint);
-    function getLengthUintArray(bytes32 key) external view returns (uint);
-    function getLengthIntArray(bytes32 key) external view returns (uint);
-    function getLengthAddressArray(bytes32 key) external view returns (uint);
-    function getLengthBoolArray(bytes32 key) external view returns (uint);
-    function getLengthBytes32Array(bytes32 key) external view returns (uint);
+    function getBytes32Array(bytes32 key)
+        external
+        view
+        returns (bytes32[] memory);
 
-    function getAddressSet(bytes32 key) external view returns (address[] memory);
-    function getUintSet(bytes32 key) external view returns (uint[] memory);
-    function getBytes32Set(bytes32 key) external view returns (bytes32[] memory);
+    function getIndexedStringArray(bytes32 key, uint256 index)
+        external
+        view
+        returns (string memory);
 
-    function getIndexedAddressSet(bytes32 key, uint index) external view returns (address);
-    function getIndexedUintSet(bytes32 key, uint index) external view returns (uint);
-    function getIndexedBytes32Set(bytes32 key, uint index) external view returns (bytes32);
+    function getIndexedBytesArray(bytes32 key, uint256 index)
+        external
+        view
+        returns (bytes memory);
 
-    function getLengthAddressSet(bytes32 key) external view returns (uint);
-    function getLengthUintSet(bytes32 key) external view returns (uint);
-    function getLengthBytes32Set(bytes32 key) external view returns (uint);
-    
-    function addressSetContains(bytes32 key, address value) external view returns (bool);
-    function uintSetContains(bytes32 key, uint value) external view returns (bool);
-    function bytes32SetContains(bytes32 key, bytes32 value) external view returns (bool);
+    function getIndexedUintArray(bytes32 key, uint256 index)
+        external
+        view
+        returns (uint256);
+
+    function getIndexedIntArray(bytes32 key, uint256 index)
+        external
+        view
+        returns (int256);
+
+    function getIndexedAddressArray(bytes32 key, uint256 index)
+        external
+        view
+        returns (address);
+
+    function getIndexedBoolArray(bytes32 key, uint256 index)
+        external
+        view
+        returns (bool);
+
+    function getIndexedBytes32Array(bytes32 key, uint256 index)
+        external
+        view
+        returns (bytes32);
+
+    function getLengthStringArray(bytes32 key) external view returns (uint256);
+
+    function getLengthBytesArray(bytes32 key) external view returns (uint256);
+
+    function getLengthUintArray(bytes32 key) external view returns (uint256);
+
+    function getLengthIntArray(bytes32 key) external view returns (uint256);
+
+    function getLengthAddressArray(bytes32 key) external view returns (uint256);
+
+    function getLengthBoolArray(bytes32 key) external view returns (uint256);
+
+    function getLengthBytes32Array(bytes32 key) external view returns (uint256);
+
+    function getAddressSet(bytes32 key)
+        external
+        view
+        returns (address[] memory);
+
+    function getUintSet(bytes32 key) external view returns (uint256[] memory);
+
+    function getBytes32Set(bytes32 key)
+        external
+        view
+        returns (bytes32[] memory);
+
+    function getIndexedAddressSet(bytes32 key, uint256 index)
+        external
+        view
+        returns (address);
+
+    function getIndexedUintSet(bytes32 key, uint256 index)
+        external
+        view
+        returns (uint256);
+
+    function getIndexedBytes32Set(bytes32 key, uint256 index)
+        external
+        view
+        returns (bytes32);
+
+    function getLengthAddressSet(bytes32 key) external view returns (uint256);
+
+    function getLengthUintSet(bytes32 key) external view returns (uint256);
+
+    function getLengthBytes32Set(bytes32 key) external view returns (uint256);
+
+    function addressSetContains(bytes32 key, address value)
+        external
+        view
+        returns (bool);
+
+    function uintSetContains(bytes32 key, uint256 value)
+        external
+        view
+        returns (bool);
+
+    function bytes32SetContains(bytes32 key, bytes32 value)
+        external
+        view
+        returns (bool);
 
     function addAdmin(address account) external;
+
     function addLogic(address account) external;
-    
+
     function removeAdmin(address account) external;
+
     function removeLogic(address account) external;
 
     function setString(bytes32 key, string memory value) external;
+
     function setBytes(bytes32 key, bytes memory value) external;
-    function setUint(bytes32 key, uint value) external;
-    function setInt(bytes32 key, int value) external;
+
+    function setUint(bytes32 key, uint256 value) external;
+
+    function setInt(bytes32 key, int256 value) external;
+
     function setAddress(bytes32 key, address value) external;
+
     function setBool(bytes32 key, bool value) external;
+
     function setBytes32(bytes32 key, bytes32 value) external;
 
-    function setStringArray(bytes32 key, uint index, string memory value) external;
-    function setBytesArray(bytes32 key, uint index, bytes memory value) external;
-    function setUintArray(bytes32 key, uint index, uint value) external;
-    function setIntArray(bytes32 key, uint index, int value) external;
-    function setAddressArray(bytes32 key, uint index, address value) external;
-    function setBoolArray(bytes32 key, uint index, bool value) external;
-    function setBytes32Array(bytes32 key, uint index, bytes32 value) external;
+    function setStringArray(
+        bytes32 key,
+        uint256 index,
+        string memory value
+    ) external;
+
+    function setBytesArray(
+        bytes32 key,
+        uint256 index,
+        bytes memory value
+    ) external;
+
+    function setUintArray(
+        bytes32 key,
+        uint256 index,
+        uint256 value
+    ) external;
+
+    function setIntArray(
+        bytes32 key,
+        uint256 index,
+        int256 value
+    ) external;
+
+    function setAddressArray(
+        bytes32 key,
+        uint256 index,
+        address value
+    ) external;
+
+    function setBoolArray(
+        bytes32 key,
+        uint256 index,
+        bool value
+    ) external;
+
+    function setBytes32Array(
+        bytes32 key,
+        uint256 index,
+        bytes32 value
+    ) external;
 
     function pushStringArray(bytes32 key, string memory value) external;
+
     function pushBytesArray(bytes32 key, bytes memory value) external;
-    function pushUintArray(bytes32 key, uint value) external;
-    function pushIntArray(bytes32 key, int value) external;
+
+    function pushUintArray(bytes32 key, uint256 value) external;
+
+    function pushIntArray(bytes32 key, int256 value) external;
+
     function pushAddressArray(bytes32 key, address value) external;
+
     function pushBoolArray(bytes32 key, bool value) external;
+
     function pushBytes32Array(bytes32 key, bytes32 value) external;
 
     function deleteStringArray(bytes32 key) external;
+
     function deleteBytesArray(bytes32 key) external;
+
     function deleteUintArray(bytes32 key) external;
+
     function deleteIntArray(bytes32 key) external;
+
     function deleteAddressArray(bytes32 key) external;
+
     function deleteBoolArray(bytes32 key) external;
+
     function deleteBytes32Array(bytes32 key) external;
-    
+
     function addAddressSet(bytes32 key, address value) external;
-    function addUintSet(bytes32 key, uint value) external;
+
+    function addUintSet(bytes32 key, uint256 value) external;
+
     function addBytes32Set(bytes32 key, bytes32 value) external;
 
     function removeAddressSet(bytes32 key, address value) external;
-    function removeUintSet(bytes32 key, uint value) external;
+
+    function removeUintSet(bytes32 key, uint256 value) external;
+
     function removeBytes32Set(bytes32 key, bytes32 value) external;
 }
 
-interface IQuickSwapPlugIn {
-    
-}
+interface IQuickSwapPlugIn {}
 
 contract QuickSwapPlugIn is IQuickSwapPlugIn, Pausable {
-    enum GATE { WMATIC, WBTC, WETH, USDC, USDT, DAI }
-    enum ORDER { REVERSE, SAME }
+    enum GATE {
+        WMATIC,
+        WBTC,
+        WETH,
+        USDC,
+        USDT,
+        DAI
+    }
+    enum ORDER {
+        REVERSE,
+        SAME
+    }
     address constant WMATIC = 0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270;
     address constant WBTC = 0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6;
     address constant WETH = 0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619;
     address constant USDC = 0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174;
     address constant USDT = 0xc2132D05D31c914a87C6611C10748AEb04B58e8F;
     address constant DAI = 0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063;
-    IUniswapV2Factory constant FACTORY = IUniswapV2Factory(0x5757371414417b8C6CAad45bAeF941aBc7d3Ab32);
-    IUniswapV2Router02 constant ROUTER = IUniswapV2Router02(0xa5E0829CaCEd8fFDD4De3c43696c57F7D7A678ff);
-    IRepository constant REPOSITORY = IRepository(0xE2578e92fB2Ba228b37eD2dFDb1F4444918b64Aa);
+    IUniswapV2Factory constant FACTORY =
+        IUniswapV2Factory(0x5757371414417b8C6CAad45bAeF941aBc7d3Ab32);
+    IUniswapV2Router02 constant ROUTER =
+        IUniswapV2Router02(0xa5E0829CaCEd8fFDD4De3c43696c57F7D7A678ff);
+    IRepository constant REPOSITORY =
+        IRepository(0xE2578e92fB2Ba228b37eD2dFDb1F4444918b64Aa);
     address private _deployer;
     bool private _init;
 
     event SWAP(
         address indexed tokenIn,
         address indexed tokenOut,
-        uint indexed amountIn,
-        uint amountOutMin,
+        uint256 indexed amountIn,
+        uint256 amountOutMin,
         address to
     );
 
-    event ACCOUNT_WHITELISTED(
-        address indexed account
-    );
+    event ACCOUNT_WHITELISTED(address indexed account);
 
-    event ACCOUNT_BLACKLISTED(
-        address indexed account
-    );
+    event ACCOUNT_BLACKLISTED(address indexed account);
 
-    event ADMIN_ROLE_GRANTED(
-        address indexed account
-    );
+    event ADMIN_ROLE_GRANTED(address indexed account);
 
-    event ADMIN_ROLE_REVOKED(
-        address indexed account
-    );
+    event ADMIN_ROLE_REVOKED(address indexed account);
 
     error PAIR_NOT_FOUND();
     error UNRECOGNIZED_GATE();
@@ -580,37 +823,39 @@ contract QuickSwapPlugIn is IQuickSwapPlugIn, Pausable {
         _;
     }
 
-    constructor() { _deployer = msg.sender; }
+    constructor() {
+        _deployer = msg.sender;
+    }
 
-    function isSameString(
-        string memory stringA,
-        string memory stringB
-    )
-    public pure
-    returns (bool isMatch) {
+    function isSameString(string memory stringA, string memory stringB)
+        public
+        pure
+        returns (bool isMatch)
+    {
         return keccak256(abi.encode(stringA)) == keccak256(abi.encode(stringB));
     }
 
-    function metadata(
-        address tokenA,
-        address tokenB
-    )
-    public view
-    whenNotPaused
-    whenInitialized
-    returns (
-        address addressPair,
-        address addressA,
-        address addressB,
-        string memory nameA,
-        string memory nameB,
-        string memory symbolA,
-        string memory symbolB,
-        uint decimalsA,
-        uint decimalsB
-    ) {
+    function metadata(address tokenA, address tokenB)
+        public
+        view
+        whenNotPaused
+        whenInitialized
+        returns (
+            address addressPair,
+            address addressA,
+            address addressB,
+            string memory nameA,
+            string memory nameB,
+            string memory symbolA,
+            string memory symbolB,
+            uint256 decimalsA,
+            uint256 decimalsB
+        )
+    {
         addressPair = FACTORY.getPair({tokenA: tokenA, tokenB: tokenB});
-        if (addressPair == address(0)) { revert PAIR_NOT_FOUND(); }
+        if (addressPair == address(0)) {
+            revert PAIR_NOT_FOUND();
+        }
         IUniswapV2Pair interface_ = IUniswapV2Pair(addressPair);
         IERC20 tokenA_ = IERC20(interface_.token0());
         IERC20 tokenB_ = IERC20(interface_.token1());
@@ -627,16 +872,13 @@ contract QuickSwapPlugIn is IQuickSwapPlugIn, Pausable {
         );
     }
 
-    function isSameOrder(
-        address tokenA,
-        address tokenB
-    )
-    public view
-    whenNotPaused
-    whenInitialized
-    returns (
-        ORDER
-    ) {
+    function isSameOrder(address tokenA, address tokenB)
+        public
+        view
+        whenNotPaused
+        whenInitialized
+        returns (ORDER)
+    {
         (
             ,
             address addressA,
@@ -645,8 +887,8 @@ contract QuickSwapPlugIn is IQuickSwapPlugIn, Pausable {
             string memory nameB,
             string memory symbolA,
             string memory symbolB,
-            uint decimalsA,
-            uint decimalsB
+            uint256 decimalsA,
+            uint256 decimalsB
         ) = metadata({tokenA: tokenA, tokenB: tokenB});
         IERC20 tokenA_ = IERC20(tokenA);
         IERC20 tokenB_ = IERC20(tokenB);
@@ -659,8 +901,9 @@ contract QuickSwapPlugIn is IQuickSwapPlugIn, Pausable {
             isSameString(tokenB_.symbol(), symbolB) &&
             tokenA_.decimals() == decimalsA &&
             tokenB_.decimals() == decimalsB
-        ) { return ORDER.SAME; }
-        else if (
+        ) {
+            return ORDER.SAME;
+        } else if (
             tokenA == addressB &&
             tokenB == addressA &&
             isSameString(tokenA_.name(), nameB) &&
@@ -669,43 +912,73 @@ contract QuickSwapPlugIn is IQuickSwapPlugIn, Pausable {
             isSameString(tokenB_.symbol(), symbolA) &&
             tokenA_.decimals() == decimalsB &&
             tokenB_.decimals() == decimalsA
-        ) { return ORDER.REVERSE; }
-        else { revert PAIR_NOT_FOUND(); }
+        ) {
+            return ORDER.REVERSE;
+        } else {
+            revert PAIR_NOT_FOUND();
+        }
     }
 
-    function getPrice(address tokenA, address tokenB, uint amount) public view whenNotPaused whenInitialized returns (uint price, uint) {
+    function getPrice(
+        address tokenA,
+        address tokenB,
+        uint256 amount
+    )
+        public
+        view
+        whenNotPaused
+        whenInitialized
+        returns (uint256 price, uint256)
+    {
         ORDER order = isSameOrder({tokenA: tokenA, tokenB: tokenB});
         address addressPair = FACTORY.getPair(tokenA, tokenB);
-        if (addressPair == address(0)) { revert PAIR_NOT_FOUND(); }
+        if (addressPair == address(0)) {
+            revert PAIR_NOT_FOUND();
+        }
         IUniswapV2Pair interface_ = IUniswapV2Pair(addressPair);
         IERC20 tokenA_ = IERC20(interface_.token0());
         IERC20 tokenB_ = IERC20(interface_.token1());
-        (uint reserveA, uint reserveB, uint lastTimestamp) = interface_.getReserves();
+        (uint256 reserveA, uint256 reserveB, uint256 lastTimestamp) = interface_
+            .getReserves();
         if (order == ORDER.SAME) {
             price = (amount * (reserveA * (10**tokenB_.decimals()))) / reserveB;
             price *= 10**18;
             price /= 10**tokenA_.decimals();
             return (price, lastTimestamp);
-        }
-        else if (order == ORDER.REVERSE) {
+        } else if (order == ORDER.REVERSE) {
             price = (amount * (reserveB * (10**tokenA_.decimals()))) / reserveA;
             price *= 10**18;
             price /= 10**tokenB_.decimals();
             return (price, lastTimestamp);
+        } else {
+            revert PAIR_NOT_FOUND();
         }
-        else { revert PAIR_NOT_FOUND(); }
     }
 
     /**
-    * @dev calculates the total value in the denominator for all the tokens within a vault
-    *
-    * @param contracts tokens within the vault
-    * @param amounts corresponding amounts of each token
-    * @param denominator the currency in which value is being calculated
+     * @dev calculates the total value in the denominator for all the tokens within a vault
+     *
+     * @param contracts tokens within the vault
+     * @param amounts corresponding amounts of each token
+     * @param denominator the currency in which value is being calculated
      */
-    function getValue(address[] memory contracts, uint[] memory amounts, address denominator) public view whenNotPaused whenInitialized returns (uint value, uint averageTimestamp) {
-        for (uint i = 0; i < contracts.length; i++) {
-            (uint price, uint lastTimestamp) = getPrice({tokenA: denominator, tokenB: contracts[i], amount: amounts[i]});
+    function getValue(
+        address[] memory contracts,
+        uint256[] memory amounts,
+        address denominator
+    )
+        public
+        view
+        whenNotPaused
+        whenInitialized
+        returns (uint256 value, uint256 averageTimestamp)
+    {
+        for (uint256 i = 0; i < contracts.length; i++) {
+            (uint256 price, uint256 lastTimestamp) = getPrice({
+                tokenA: denominator,
+                tokenB: contracts[i],
+                amount: amounts[i]
+            });
             value += price;
             averageTimestamp += lastTimestamp;
         }
@@ -713,89 +986,177 @@ contract QuickSwapPlugIn is IQuickSwapPlugIn, Pausable {
         return (value, averageTimestamp);
     }
 
-    function getValuePerShare(address[] memory contracts, uint[] memory amounts, address denominator, address tokenOut) public view whenNotPaused whenInitialized returns (uint valuePerShare, uint averageTimestamp) {
-        (valuePerShare, averageTimestamp) = getValue({contracts: contracts, amounts: amounts, denominator: denominator});
+    function getValuePerShare(
+        address[] memory contracts,
+        uint256[] memory amounts,
+        address denominator,
+        address tokenOut
+    )
+        public
+        view
+        whenNotPaused
+        whenInitialized
+        returns (uint256 valuePerShare, uint256 averageTimestamp)
+    {
+        (valuePerShare, averageTimestamp) = getValue({
+            contracts: contracts,
+            amounts: amounts,
+            denominator: denominator
+        });
         valuePerShare /= IERC20(tokenOut).totalSupply();
         return (valuePerShare, averageTimestamp);
     }
 
     /**
-    * @dev returns the amount that should be minted within a vault based on the value of the token sent
-    *
-    * @param contracts array of tokens contained within the vault
-    * @param amounts array of corresponding amounts of each token within the vault
-    * @param denominator base pricing for the vault **recommended to keep this the same for all calculations 
-    * @param tokenOut token acting as shares for the vault that should be minted
-    * @param tokenIn the token being deposited
-    * @param amountIn the amount of the deposited token
-    *
-    * @return amountToMint the amount of tokens that should be minted from the tokenOut address
+     * @dev returns the amount that should be minted within a vault based on the value of the token sent
+     *
+     * @param contracts array of tokens contained within the vault
+     * @param amounts array of corresponding amounts of each token within the vault
+     * @param denominator base pricing for the vault **recommended to keep this the same for all calculations
+     * @param tokenOut token acting as shares for the vault that should be minted
+     * @param tokenIn the token being deposited
+     * @param amountIn the amount of the deposited token
+     *
+     * @return amountToMint the amount of tokens that should be minted from the tokenOut address
      */
-    function getAmountToMint(address[] memory contracts, uint[] memory amounts, address denominator, address tokenOut, address tokenIn, uint amountIn) public view whenNotPaused whenInitialized returns (uint amountToMint) {
-        (uint valueIn,) = getPrice({tokenA: denominator, tokenB: tokenIn, amount: amountIn});
-        (uint balance,) = getValue({contracts: contracts, amounts: amounts, denominator: denominator});
-        uint totalSupply = IERC20(tokenOut).totalSupply();
-        if (valueIn == 0) { revert INSUFFICIENT_MATH(); }
-        if (totalSupply == 0) { revert INSUFFICIENT_MATH(); }
-        if (balance == 0) { revert INSUFFICIENT_MATH(); }
+    function getAmountToMint(
+        address[] memory contracts,
+        uint256[] memory amounts,
+        address denominator,
+        address tokenOut,
+        address tokenIn,
+        uint256 amountIn
+    ) public view whenNotPaused whenInitialized returns (uint256 amountToMint) {
+        (uint256 valueIn, ) = getPrice({
+            tokenA: denominator,
+            tokenB: tokenIn,
+            amount: amountIn
+        });
+        (uint256 balance, ) = getValue({
+            contracts: contracts,
+            amounts: amounts,
+            denominator: denominator
+        });
+        uint256 totalSupply = IERC20(tokenOut).totalSupply();
+        if (valueIn == 0) {
+            revert INSUFFICIENT_MATH();
+        }
+        if (totalSupply == 0) {
+            revert INSUFFICIENT_MATH();
+        }
+        if (balance == 0) {
+            revert INSUFFICIENT_MATH();
+        }
         return (valueIn * balance) / totalSupply;
     }
 
     /**
-    * @dev returns the value in the denominator that should be sent back **this could be paid of if a combination of assets up to that value
-    *
-    * @param contracts array of tokens contained within the vault
-    * @param amounts array of corresponding amounts of each token within the vault
-    * @param denominator base pricing for the vault **recommended to keep this the same for all calculations
-    * @param tokenOut token acting as shares for the vault that is being deposited
-    * @param amountIn the amount of the deposited token
-    *
-    * @return valueToSend the amount in value that should be sent back
+     * @dev returns the value in the denominator that should be sent back **this could be paid of if a combination of assets up to that value
+     *
+     * @param contracts array of tokens contained within the vault
+     * @param amounts array of corresponding amounts of each token within the vault
+     * @param denominator base pricing for the vault **recommended to keep this the same for all calculations
+     * @param tokenOut token acting as shares for the vault that is being deposited
+     * @param amountIn the amount of the deposited token
+     *
+     * @return valueToSend the amount in value that should be sent back
      */
-    function getValueToSend(address[] memory contracts, uint[] memory amounts, address denominator, address tokenOut, uint amountIn) public view whenNotPaused whenInitialized returns (uint valueToSend) {
-        (uint balance,) = getValue(contracts, amounts, denominator);
-        uint totalSupply = IERC20(tokenOut).totalSupply();
-        if (amountIn == 0) { revert INSUFFICIENT_MATH(); }
-        if (totalSupply == 0) { revert INSUFFICIENT_MATH(); }
-        if (balance == 0) { revert INSUFFICIENT_MATH(); }
+    function getValueToSend(
+        address[] memory contracts,
+        uint256[] memory amounts,
+        address denominator,
+        address tokenOut,
+        uint256 amountIn
+    ) public view whenNotPaused whenInitialized returns (uint256 valueToSend) {
+        (uint256 balance, ) = getValue(contracts, amounts, denominator);
+        uint256 totalSupply = IERC20(tokenOut).totalSupply();
+        if (amountIn == 0) {
+            revert INSUFFICIENT_MATH();
+        }
+        if (totalSupply == 0) {
+            revert INSUFFICIENT_MATH();
+        }
+        if (balance == 0) {
+            revert INSUFFICIENT_MATH();
+        }
         return (amountIn * balance) / totalSupply;
     }
 
     function init() public onlyDeployer {
-        if (_init) { revert ALREADY_INITIALIZED(); }
-        bytes32 quickSwapPlugInV000 = keccak256(abi.encode("quickSwapPlugInV000", "admins"));
+        if (_init) {
+            revert ALREADY_INITIALIZED();
+        }
+        bytes32 quickSwapPlugInV000 = keccak256(
+            abi.encode("quickSwapPlugInV000", "admins")
+        );
         if (!REPOSITORY.addressSetContains(quickSwapPlugInV000, _deployer)) {
             REPOSITORY.addAddressSet(quickSwapPlugInV000, _deployer);
         }
         _init = true;
         emit ADMIN_ROLE_GRANTED(msg.sender);
     }
-    
+
     /// @dev only whitelisted accounts can swap using this contract
-    function whitelist (address account) public onlyAdmin whenInitialized whenNotPaused {
-        bytes32 quickSwapPlugInV000 = keccak256(abi.encode("quickSwapPlugInV000", "whitelist"));
-        if (REPOSITORY.addressSetContains(quickSwapPlugInV000, account)) { revert ALREADY_WHITELISTED(); }
+    function whitelist(address account)
+        public
+        onlyAdmin
+        whenInitialized
+        whenNotPaused
+    {
+        bytes32 quickSwapPlugInV000 = keccak256(
+            abi.encode("quickSwapPlugInV000", "whitelist")
+        );
+        if (REPOSITORY.addressSetContains(quickSwapPlugInV000, account)) {
+            revert ALREADY_WHITELISTED();
+        }
         REPOSITORY.addAddressSet(quickSwapPlugInV000, account);
         emit ACCOUNT_WHITELISTED(account);
     }
 
-    function blacklist(address account) public onlyAdmin whenInitialized whenNotPaused {
-        bytes32 quickSwapPlugInV000 = keccak256(abi.encode("quickSwapPlugInV000", "whitelist"));
-        if (!REPOSITORY.addressSetContains(quickSwapPlugInV000, account)) { revert ALREADY_BLACKLISTED(); }
+    function blacklist(address account)
+        public
+        onlyAdmin
+        whenInitialized
+        whenNotPaused
+    {
+        bytes32 quickSwapPlugInV000 = keccak256(
+            abi.encode("quickSwapPlugInV000", "whitelist")
+        );
+        if (!REPOSITORY.addressSetContains(quickSwapPlugInV000, account)) {
+            revert ALREADY_BLACKLISTED();
+        }
         REPOSITORY.removeAddressSet(quickSwapPlugInV000, account);
         emit ACCOUNT_BLACKLISTED(account);
     }
 
-    function grantRoleAdmin(address account) public onlyAdmin whenInitialized whenNotPaused {
-        bytes32 quickSwapPlugInV000 = keccak256(abi.encode("quickSwapPlugInV000", "admins"));
-        if (REPOSITORY.addressSetContains(quickSwapPlugInV000, account)) { revert ALREADY_ADMIN(); }
+    function grantRoleAdmin(address account)
+        public
+        onlyAdmin
+        whenInitialized
+        whenNotPaused
+    {
+        bytes32 quickSwapPlugInV000 = keccak256(
+            abi.encode("quickSwapPlugInV000", "admins")
+        );
+        if (REPOSITORY.addressSetContains(quickSwapPlugInV000, account)) {
+            revert ALREADY_ADMIN();
+        }
         REPOSITORY.addAddressSet(quickSwapPlugInV000, account);
         emit ADMIN_ROLE_GRANTED(account);
     }
 
-    function revokeRoleAdmin(address account) public onlyAdmin whenInitialized whenNotPaused {
-        bytes32 quickSwapPlugInV000 = keccak256(abi.encode("quickSwapPlugInV000", "admins"));
-        if (REPOSITORY.addressSetContains(quickSwapPlugInV000, account)) { revert NOT_ADMIN(); }
+    function revokeRoleAdmin(address account)
+        public
+        onlyAdmin
+        whenInitialized
+        whenNotPaused
+    {
+        bytes32 quickSwapPlugInV000 = keccak256(
+            abi.encode("quickSwapPlugInV000", "admins")
+        );
+        if (REPOSITORY.addressSetContains(quickSwapPlugInV000, account)) {
+            revert NOT_ADMIN();
+        }
         REPOSITORY.removeAddressSet(quickSwapPlugInV000, account);
         emit ADMIN_ROLE_REVOKED(account);
     }
@@ -811,30 +1172,39 @@ contract QuickSwapPlugIn is IQuickSwapPlugIn, Pausable {
     function swapTokens(
         address tokenIn,
         address tokenOut,
-        uint amountIn, /// (amountIn * (10**18))
-        uint amountOutMin,
-        uint gate,
+        uint256 amountIn, /// (amountIn * (10**18))
+        uint256 amountOutMin,
+        uint256 gate,
         address from,
         address to
-    )
-    public
-    onlyWhitelist
-    whenInitialized 
-    whenNotPaused {
-        if (gate > 5) { revert UNRECOGNIZED_GATE(); }
+    ) public onlyWhitelist whenInitialized whenNotPaused {
+        if (gate > 5) {
+            revert UNRECOGNIZED_GATE();
+        }
         amountIn *= 10**IERC20(tokenIn).decimals();
         amountIn /= 10**18;
-        IERC20(tokenIn).transferFrom({from: from, to: address(this), amount: amountIn});
+        IERC20(tokenIn).transferFrom({
+            from: from,
+            to: address(this),
+            amount: amountIn
+        });
         IERC20(tokenIn).approve({spender: address(ROUTER), amount: amountIn});
         address[] memory path;
         path = new address[](3);
         path[0] = tokenIn;
-        if (GATE(gate) == GATE.WMATIC) { path[1] = WMATIC; }
-        else if (GATE(gate) == GATE.WBTC) { path[1] = WBTC; }
-        else if (GATE(gate) == GATE.WETH) { path[1] = WETH; }
-        else if (GATE(gate) == GATE.USDC) { path[1] = USDC; }
-        else if (GATE(gate) == GATE.USDT) { path[1] = USDT; }
-        else if (GATE(gate) == GATE.DAI) { path[1] = DAI; }
+        if (GATE(gate) == GATE.WMATIC) {
+            path[1] = WMATIC;
+        } else if (GATE(gate) == GATE.WBTC) {
+            path[1] = WBTC;
+        } else if (GATE(gate) == GATE.WETH) {
+            path[1] = WETH;
+        } else if (GATE(gate) == GATE.USDC) {
+            path[1] = USDC;
+        } else if (GATE(gate) == GATE.USDT) {
+            path[1] = USDT;
+        } else if (GATE(gate) == GATE.DAI) {
+            path[1] = DAI;
+        }
         path[2] = tokenOut;
         ROUTER.swapExactTokensForTokens({
             amountIn: amountIn,
@@ -845,36 +1215,49 @@ contract QuickSwapPlugIn is IQuickSwapPlugIn, Pausable {
         });
         emit SWAP(tokenIn, tokenOut, amountIn, amountOutMin, to);
     }
- 
+
     function swapTokensSlippage(
         address tokenIn,
         address tokenOut,
-        uint amountIn, /// (amountIn * (10**18))
-        uint slippage,
-        uint gate,
+        uint256 amountIn, /// (amountIn * (10**18))
+        uint256 slippage,
+        uint256 gate,
         address from,
         address to
-    )
-    public 
-    onlyWhitelist
-    whenInitialized 
-    whenNotPaused {
-        if (gate > 5) { revert UNRECOGNIZED_GATE(); }
+    ) public onlyWhitelist whenInitialized whenNotPaused {
+        if (gate > 5) {
+            revert UNRECOGNIZED_GATE();
+        }
         amountIn *= 10**IERC20(tokenIn).decimals();
         amountIn /= 10**18;
-        IERC20(tokenIn).transferFrom({from: from, to: address(this), amount: amountIn});
+        IERC20(tokenIn).transferFrom({
+            from: from,
+            to: address(this),
+            amount: amountIn
+        });
         IERC20(tokenIn).approve({spender: address(ROUTER), amount: amountIn});
-        (uint amountOutMin,) = getPrice({tokenA: tokenIn, tokenB: tokenOut, amount: amountIn});
+        (uint256 amountOutMin, ) = getPrice({
+            tokenA: tokenIn,
+            tokenB: tokenOut,
+            amount: amountIn
+        });
         amountOutMin = (amountOutMin * (10000 - slippage)) / 10000;
         address[] memory path;
         path = new address[](3);
         path[0] = tokenIn;
-        if (GATE(gate) == GATE.WMATIC) { path[1] = WMATIC; }
-        else if (GATE(gate) == GATE.WBTC) { path[1] = WBTC; }
-        else if (GATE(gate) == GATE.WETH) { path[1] = WETH; }
-        else if (GATE(gate) == GATE.USDC) { path[1] = USDC; }
-        else if (GATE(gate) == GATE.USDT) { path[1] = USDT; }
-        else if (GATE(gate) == GATE.DAI) { path[1] = DAI; }
+        if (GATE(gate) == GATE.WMATIC) {
+            path[1] = WMATIC;
+        } else if (GATE(gate) == GATE.WBTC) {
+            path[1] = WBTC;
+        } else if (GATE(gate) == GATE.WETH) {
+            path[1] = WETH;
+        } else if (GATE(gate) == GATE.USDC) {
+            path[1] = USDC;
+        } else if (GATE(gate) == GATE.USDT) {
+            path[1] = USDT;
+        } else if (GATE(gate) == GATE.DAI) {
+            path[1] = DAI;
+        }
         path[2] = tokenOut;
         ROUTER.swapExactTokensForTokens({
             amountIn: amountIn,
@@ -886,25 +1269,33 @@ contract QuickSwapPlugIn is IQuickSwapPlugIn, Pausable {
         emit SWAP(tokenIn, tokenOut, amountIn, amountOutMin, to);
     }
 
-    function _onlyWhitelist()
-    private view {
-        bytes32 quickSwapPlugInV000 = keccak256(abi.encode("quickSwapPlugInV000", "whitelist"));
-        if (!REPOSITORY.addressSetContains(quickSwapPlugInV000, msg.sender)) { revert ONLY_WHITELIST(); }
+    function _onlyWhitelist() private view {
+        bytes32 quickSwapPlugInV000 = keccak256(
+            abi.encode("quickSwapPlugInV000", "whitelist")
+        );
+        if (!REPOSITORY.addressSetContains(quickSwapPlugInV000, msg.sender)) {
+            revert ONLY_WHITELIST();
+        }
     }
 
-    function _onlyAdmin()
-    private view {
-        bytes32 quickSwapPlugInV000 = keccak256(abi.encode("quickSwapPlugInV000", "admins"));
-        if (!REPOSITORY.addressSetContains(quickSwapPlugInV000, msg.sender)) { revert ONLY_ADMIN(); }
-    }
-    
-    function _onlyDeployer()
-    private view {
-        if (msg.sender != _deployer) { revert ONLY_DEPLOYER(); }
+    function _onlyAdmin() private view {
+        bytes32 quickSwapPlugInV000 = keccak256(
+            abi.encode("quickSwapPlugInV000", "admins")
+        );
+        if (!REPOSITORY.addressSetContains(quickSwapPlugInV000, msg.sender)) {
+            revert ONLY_ADMIN();
+        }
     }
 
-    function _whenInitialized()
-    private view {
-        if (!_init) { revert NOT_INITIALIZED(); }
+    function _onlyDeployer() private view {
+        if (msg.sender != _deployer) {
+            revert ONLY_DEPLOYER();
+        }
+    }
+
+    function _whenInitialized() private view {
+        if (!_init) {
+            revert NOT_INITIALIZED();
+        }
     }
 }
