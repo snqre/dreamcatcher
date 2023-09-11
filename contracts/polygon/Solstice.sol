@@ -9,7 +9,7 @@ pragma solidity 0.8.19;
  * presenting a message signed by the account. By not relying on {IERC20-approve}, the token holder account doesn't
  * need to send a transaction, and thus is not required to hold Ether at all.
  */
- interface IERC20Permit {
+interface IERC20Permit {
     /**
      * @dev Sets `value` as the allowance of `spender` over ``owner``'s tokens,
      * given ``owner``'s signed approval.
@@ -73,7 +73,11 @@ interface IERC20 {
      * @dev Emitted when the allowance of a `spender` for an `owner` is set by
      * a call to {approve}. `value` is the new allowance.
      */
-    event Approval(address indexed owner, address indexed spender, uint256 value);
+    event Approval(
+        address indexed owner,
+        address indexed spender,
+        uint256 value
+    );
 
     /**
      * @dev Returns the amount of tokens in existence.
@@ -101,7 +105,10 @@ interface IERC20 {
      *
      * This value changes when {approve} or {transferFrom} are called.
      */
-    function allowance(address owner, address spender) external view returns (uint256);
+    function allowance(address owner, address spender)
+        external
+        view
+        returns (uint256);
 
     /**
      * @dev Sets `amount` as the allowance of `spender` over the caller's tokens.
@@ -128,7 +135,11 @@ interface IERC20 {
      *
      * Emits a {Transfer} event.
      */
-    function transferFrom(address from, address to, uint256 amount) external returns (bool);
+    function transferFrom(
+        address from,
+        address to,
+        uint256 amount
+    ) external returns (bool);
 }
 
 /**
@@ -264,7 +275,13 @@ contract ERC20 is Context, IERC20, IERC20Metadata {
     /**
      * @dev See {IERC20-balanceOf}.
      */
-    function balanceOf(address account) public view virtual override returns (uint256) {
+    function balanceOf(address account)
+        public
+        view
+        virtual
+        override
+        returns (uint256)
+    {
         return _balances[account];
     }
 
@@ -276,7 +293,12 @@ contract ERC20 is Context, IERC20, IERC20Metadata {
      * - `to` cannot be the zero address.
      * - the caller must have a balance of at least `amount`.
      */
-    function transfer(address to, uint256 amount) public virtual override returns (bool) {
+    function transfer(address to, uint256 amount)
+        public
+        virtual
+        override
+        returns (bool)
+    {
         address owner = _msgSender();
         _transfer(owner, to, amount);
         return true;
@@ -285,7 +307,13 @@ contract ERC20 is Context, IERC20, IERC20Metadata {
     /**
      * @dev See {IERC20-allowance}.
      */
-    function allowance(address owner, address spender) public view virtual override returns (uint256) {
+    function allowance(address owner, address spender)
+        public
+        view
+        virtual
+        override
+        returns (uint256)
+    {
         return _allowances[owner][spender];
     }
 
@@ -299,7 +327,12 @@ contract ERC20 is Context, IERC20, IERC20Metadata {
      *
      * - `spender` cannot be the zero address.
      */
-    function approve(address spender, uint256 amount) public virtual override returns (bool) {
+    function approve(address spender, uint256 amount)
+        public
+        virtual
+        override
+        returns (bool)
+    {
         address owner = _msgSender();
         _approve(owner, spender, amount);
         return true;
@@ -321,7 +354,11 @@ contract ERC20 is Context, IERC20, IERC20Metadata {
      * - the caller must have allowance for ``from``'s tokens of at least
      * `amount`.
      */
-    function transferFrom(address from, address to, uint256 amount) public virtual override returns (bool) {
+    function transferFrom(
+        address from,
+        address to,
+        uint256 amount
+    ) public virtual override returns (bool) {
         address spender = _msgSender();
         _spendAllowance(from, spender, amount);
         _transfer(from, to, amount);
@@ -340,7 +377,11 @@ contract ERC20 is Context, IERC20, IERC20Metadata {
      *
      * - `spender` cannot be the zero address.
      */
-    function increaseAllowance(address spender, uint256 addedValue) public virtual returns (bool) {
+    function increaseAllowance(address spender, uint256 addedValue)
+        public
+        virtual
+        returns (bool)
+    {
         address owner = _msgSender();
         _approve(owner, spender, allowance(owner, spender) + addedValue);
         return true;
@@ -360,10 +401,17 @@ contract ERC20 is Context, IERC20, IERC20Metadata {
      * - `spender` must have allowance for the caller of at least
      * `subtractedValue`.
      */
-    function decreaseAllowance(address spender, uint256 subtractedValue) public virtual returns (bool) {
+    function decreaseAllowance(address spender, uint256 subtractedValue)
+        public
+        virtual
+        returns (bool)
+    {
         address owner = _msgSender();
         uint256 currentAllowance = allowance(owner, spender);
-        require(currentAllowance >= subtractedValue, "ERC20: decreased allowance below zero");
+        require(
+            currentAllowance >= subtractedValue,
+            "ERC20: decreased allowance below zero"
+        );
         unchecked {
             _approve(owner, spender, currentAllowance - subtractedValue);
         }
@@ -385,14 +433,21 @@ contract ERC20 is Context, IERC20, IERC20Metadata {
      * - `to` cannot be the zero address.
      * - `from` must have a balance of at least `amount`.
      */
-    function _transfer(address from, address to, uint256 amount) internal virtual {
+    function _transfer(
+        address from,
+        address to,
+        uint256 amount
+    ) internal virtual {
         require(from != address(0), "ERC20: transfer from the zero address");
         require(to != address(0), "ERC20: transfer to the zero address");
 
         _beforeTokenTransfer(from, to, amount);
 
         uint256 fromBalance = _balances[from];
-        require(fromBalance >= amount, "ERC20: transfer amount exceeds balance");
+        require(
+            fromBalance >= amount,
+            "ERC20: transfer amount exceeds balance"
+        );
         unchecked {
             _balances[from] = fromBalance - amount;
             // Overflow not possible: the sum of all balances is capped by totalSupply, and the sum is preserved by
@@ -471,7 +526,11 @@ contract ERC20 is Context, IERC20, IERC20Metadata {
      * - `owner` cannot be the zero address.
      * - `spender` cannot be the zero address.
      */
-    function _approve(address owner, address spender, uint256 amount) internal virtual {
+    function _approve(
+        address owner,
+        address spender,
+        uint256 amount
+    ) internal virtual {
         require(owner != address(0), "ERC20: approve from the zero address");
         require(spender != address(0), "ERC20: approve to the zero address");
 
@@ -487,10 +546,17 @@ contract ERC20 is Context, IERC20, IERC20Metadata {
      *
      * Might emit an {Approval} event.
      */
-    function _spendAllowance(address owner, address spender, uint256 amount) internal virtual {
+    function _spendAllowance(
+        address owner,
+        address spender,
+        uint256 amount
+    ) internal virtual {
         uint256 currentAllowance = allowance(owner, spender);
         if (currentAllowance != type(uint256).max) {
-            require(currentAllowance >= amount, "ERC20: insufficient allowance");
+            require(
+                currentAllowance >= amount,
+                "ERC20: insufficient allowance"
+            );
             unchecked {
                 _approve(owner, spender, currentAllowance - amount);
             }
@@ -511,7 +577,11 @@ contract ERC20 is Context, IERC20, IERC20Metadata {
      *
      * To learn more about hooks, head to xref:ROOT:extending-contracts.adoc#using-hooks[Using Hooks].
      */
-    function _beforeTokenTransfer(address from, address to, uint256 amount) internal virtual {}
+    function _beforeTokenTransfer(
+        address from,
+        address to,
+        uint256 amount
+    ) internal virtual {}
 
     /**
      * @dev Hook that is called after any transfer of tokens. This includes
@@ -527,7 +597,11 @@ contract ERC20 is Context, IERC20, IERC20Metadata {
      *
      * To learn more about hooks, head to xref:ROOT:extending-contracts.adoc#using-hooks[Using Hooks].
      */
-    function _afterTokenTransfer(address from, address to, uint256 amount) internal virtual {}
+    function _afterTokenTransfer(
+        address from,
+        address to,
+        uint256 amount
+    ) internal virtual {}
 }
 
 /**
@@ -545,7 +619,11 @@ library Math {
      *
      * _Available since v5.0._
      */
-    function tryAdd(uint256 a, uint256 b) internal pure returns (bool, uint256) {
+    function tryAdd(uint256 a, uint256 b)
+        internal
+        pure
+        returns (bool, uint256)
+    {
         unchecked {
             uint256 c = a + b;
             if (c < a) return (false, 0);
@@ -558,7 +636,11 @@ library Math {
      *
      * _Available since v5.0._
      */
-    function trySub(uint256 a, uint256 b) internal pure returns (bool, uint256) {
+    function trySub(uint256 a, uint256 b)
+        internal
+        pure
+        returns (bool, uint256)
+    {
         unchecked {
             if (b > a) return (false, 0);
             return (true, a - b);
@@ -570,7 +652,11 @@ library Math {
      *
      * _Available since v5.0._
      */
-    function tryMul(uint256 a, uint256 b) internal pure returns (bool, uint256) {
+    function tryMul(uint256 a, uint256 b)
+        internal
+        pure
+        returns (bool, uint256)
+    {
         unchecked {
             // Gas optimization: this is cheaper than requiring 'a' not being zero, but the
             // benefit is lost if 'b' is also tested.
@@ -587,7 +673,11 @@ library Math {
      *
      * _Available since v5.0._
      */
-    function tryDiv(uint256 a, uint256 b) internal pure returns (bool, uint256) {
+    function tryDiv(uint256 a, uint256 b)
+        internal
+        pure
+        returns (bool, uint256)
+    {
         unchecked {
             if (b == 0) return (false, 0);
             return (true, a / b);
@@ -599,7 +689,11 @@ library Math {
      *
      * _Available since v5.0._
      */
-    function tryMod(uint256 a, uint256 b) internal pure returns (bool, uint256) {
+    function tryMod(uint256 a, uint256 b)
+        internal
+        pure
+        returns (bool, uint256)
+    {
         unchecked {
             if (b == 0) return (false, 0);
             return (true, a % b);
@@ -645,7 +739,11 @@ library Math {
      * @dev Original credit to Remco Bloemen under MIT license (https://xn--2-umb.com/21/muldiv)
      * with further edits by Uniswap Labs also under MIT license.
      */
-    function mulDiv(uint256 x, uint256 y, uint256 denominator) internal pure returns (uint256 result) {
+    function mulDiv(
+        uint256 x,
+        uint256 y,
+        uint256 denominator
+    ) internal pure returns (uint256 result) {
         unchecked {
             // 512-bit multiply [prod1 prod0] = x * y. Compute the product mod 2^256 and mod 2^256 - 1, then use
             // use the Chinese Remainder Theorem to reconstruct the 512 bit result. The result is stored in two 256
@@ -729,7 +827,12 @@ library Math {
     /**
      * @notice Calculates x * y / denominator with full precision, following the selected rounding direction.
      */
-    function mulDiv(uint256 x, uint256 y, uint256 denominator, Rounding rounding) internal pure returns (uint256) {
+    function mulDiv(
+        uint256 x,
+        uint256 y,
+        uint256 denominator,
+        Rounding rounding
+    ) internal pure returns (uint256) {
         uint256 result = mulDiv(x, y, denominator);
         if (rounding == Rounding.Up && mulmod(x, y, denominator) > 0) {
             result += 1;
@@ -778,10 +881,16 @@ library Math {
     /**
      * @notice Calculates sqrt(a), following the selected rounding direction.
      */
-    function sqrt(uint256 a, Rounding rounding) internal pure returns (uint256) {
+    function sqrt(uint256 a, Rounding rounding)
+        internal
+        pure
+        returns (uint256)
+    {
         unchecked {
             uint256 result = sqrt(a);
-            return result + (rounding == Rounding.Up && result * result < a ? 1 : 0);
+            return
+                result +
+                (rounding == Rounding.Up && result * result < a ? 1 : 0);
         }
     }
 
@@ -831,10 +940,16 @@ library Math {
      * @dev Return the log in base 2, following the selected rounding direction, of a positive value.
      * Returns 0 if given 0.
      */
-    function log2(uint256 value, Rounding rounding) internal pure returns (uint256) {
+    function log2(uint256 value, Rounding rounding)
+        internal
+        pure
+        returns (uint256)
+    {
         unchecked {
             uint256 result = log2(value);
-            return result + (rounding == Rounding.Up && 1 << result < value ? 1 : 0);
+            return
+                result +
+                (rounding == Rounding.Up && 1 << result < value ? 1 : 0);
         }
     }
 
@@ -845,31 +960,31 @@ library Math {
     function log10(uint256 value) internal pure returns (uint256) {
         uint256 result = 0;
         unchecked {
-            if (value >= 10 ** 64) {
-                value /= 10 ** 64;
+            if (value >= 10**64) {
+                value /= 10**64;
                 result += 64;
             }
-            if (value >= 10 ** 32) {
-                value /= 10 ** 32;
+            if (value >= 10**32) {
+                value /= 10**32;
                 result += 32;
             }
-            if (value >= 10 ** 16) {
-                value /= 10 ** 16;
+            if (value >= 10**16) {
+                value /= 10**16;
                 result += 16;
             }
-            if (value >= 10 ** 8) {
-                value /= 10 ** 8;
+            if (value >= 10**8) {
+                value /= 10**8;
                 result += 8;
             }
-            if (value >= 10 ** 4) {
-                value /= 10 ** 4;
+            if (value >= 10**4) {
+                value /= 10**4;
                 result += 4;
             }
-            if (value >= 10 ** 2) {
-                value /= 10 ** 2;
+            if (value >= 10**2) {
+                value /= 10**2;
                 result += 2;
             }
-            if (value >= 10 ** 1) {
+            if (value >= 10**1) {
                 result += 1;
             }
         }
@@ -880,10 +995,16 @@ library Math {
      * @dev Return the log in base 10, following the selected rounding direction, of a positive value.
      * Returns 0 if given 0.
      */
-    function log10(uint256 value, Rounding rounding) internal pure returns (uint256) {
+    function log10(uint256 value, Rounding rounding)
+        internal
+        pure
+        returns (uint256)
+    {
         unchecked {
             uint256 result = log10(value);
-            return result + (rounding == Rounding.Up && 10 ** result < value ? 1 : 0);
+            return
+                result +
+                (rounding == Rounding.Up && 10**result < value ? 1 : 0);
         }
     }
 
@@ -923,10 +1044,16 @@ library Math {
      * @dev Return the log in base 256, following the selected rounding direction, of a positive value.
      * Returns 0 if given 0.
      */
-    function log256(uint256 value, Rounding rounding) internal pure returns (uint256) {
+    function log256(uint256 value, Rounding rounding)
+        internal
+        pure
+        returns (uint256)
+    {
         unchecked {
             uint256 result = log256(value);
-            return result + (rounding == Rounding.Up && 1 << (result << 3) < value ? 1 : 0);
+            return
+                result +
+                (rounding == Rounding.Up && 1 << (result << 3) < value ? 1 : 0);
         }
     }
 }
@@ -1006,7 +1133,13 @@ library Strings {
      * @dev Converts a `int256` to its ASCII `string` decimal representation.
      */
     function toString(int256 value) internal pure returns (string memory) {
-        return string(abi.encodePacked(value < 0 ? "-" : "", toString(SignedMath.abs(value))));
+        return
+            string(
+                abi.encodePacked(
+                    value < 0 ? "-" : "",
+                    toString(SignedMath.abs(value))
+                )
+            );
     }
 
     /**
@@ -1021,7 +1154,11 @@ library Strings {
     /**
      * @dev Converts a `uint256` to its ASCII `string` hexadecimal representation with fixed length.
      */
-    function toHexString(uint256 value, uint256 length) internal pure returns (string memory) {
+    function toHexString(uint256 value, uint256 length)
+        internal
+        pure
+        returns (string memory)
+    {
         bytes memory buffer = new bytes(2 * length + 2);
         buffer[0] = "0";
         buffer[1] = "x";
@@ -1043,8 +1180,14 @@ library Strings {
     /**
      * @dev Returns true if the two strings are equal.
      */
-    function equal(string memory a, string memory b) internal pure returns (bool) {
-        return bytes(a).length == bytes(b).length && keccak256(bytes(a)) == keccak256(bytes(b));
+    function equal(string memory a, string memory b)
+        internal
+        pure
+        returns (bool)
+    {
+        return
+            bytes(a).length == bytes(b).length &&
+            keccak256(bytes(a)) == keccak256(bytes(b));
     }
 }
 
@@ -1094,7 +1237,11 @@ library ECDSA {
      *
      * _Available since v4.3._
      */
-    function tryRecover(bytes32 hash, bytes memory signature) internal pure returns (address, RecoverError) {
+    function tryRecover(bytes32 hash, bytes memory signature)
+        internal
+        pure
+        returns (address, RecoverError)
+    {
         if (signature.length == 65) {
             bytes32 r;
             bytes32 s;
@@ -1127,7 +1274,11 @@ library ECDSA {
      * this is by receiving a hash of the original message (which may otherwise
      * be too long), and then calling {toEthSignedMessageHash} on it.
      */
-    function recover(bytes32 hash, bytes memory signature) internal pure returns (address) {
+    function recover(bytes32 hash, bytes memory signature)
+        internal
+        pure
+        returns (address)
+    {
         (address recovered, RecoverError error) = tryRecover(hash, signature);
         _throwError(error);
         return recovered;
@@ -1140,8 +1291,15 @@ library ECDSA {
      *
      * _Available since v4.3._
      */
-    function tryRecover(bytes32 hash, bytes32 r, bytes32 vs) internal pure returns (address, RecoverError) {
-        bytes32 s = vs & bytes32(0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff);
+    function tryRecover(
+        bytes32 hash,
+        bytes32 r,
+        bytes32 vs
+    ) internal pure returns (address, RecoverError) {
+        bytes32 s = vs &
+            bytes32(
+                0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+            );
         uint8 v = uint8((uint256(vs) >> 255) + 27);
         return tryRecover(hash, v, r, s);
     }
@@ -1151,7 +1309,11 @@ library ECDSA {
      *
      * _Available since v4.2._
      */
-    function recover(bytes32 hash, bytes32 r, bytes32 vs) internal pure returns (address) {
+    function recover(
+        bytes32 hash,
+        bytes32 r,
+        bytes32 vs
+    ) internal pure returns (address) {
         (address recovered, RecoverError error) = tryRecover(hash, r, vs);
         _throwError(error);
         return recovered;
@@ -1163,7 +1325,12 @@ library ECDSA {
      *
      * _Available since v4.3._
      */
-    function tryRecover(bytes32 hash, uint8 v, bytes32 r, bytes32 s) internal pure returns (address, RecoverError) {
+    function tryRecover(
+        bytes32 hash,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) internal pure returns (address, RecoverError) {
         // EIP-2 still allows signature malleability for ecrecover(). Remove this possibility and make the signature
         // unique. Appendix F in the Ethereum Yellow paper (https://ethereum.github.io/yellowpaper/paper.pdf), defines
         // the valid range for s in (301): 0 < s < secp256k1n ÷ 2 + 1, and for v in (302): v ∈ {27, 28}. Most
@@ -1173,7 +1340,10 @@ library ECDSA {
         // with 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141 - s1 and flip v from 27 to 28 or
         // vice versa. If your library also generates signatures with 0/1 for v instead 27/28, add 27 to v to accept
         // these malleable signatures as well.
-        if (uint256(s) > 0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5D576E7357A4501DDFE92F46681B20A0) {
+        if (
+            uint256(s) >
+            0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5D576E7357A4501DDFE92F46681B20A0
+        ) {
             return (address(0), RecoverError.InvalidSignatureS);
         }
 
@@ -1190,7 +1360,12 @@ library ECDSA {
      * @dev Overload of {ECDSA-recover} that receives the `v`,
      * `r` and `s` signature fields separately.
      */
-    function recover(bytes32 hash, uint8 v, bytes32 r, bytes32 s) internal pure returns (address) {
+    function recover(
+        bytes32 hash,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) internal pure returns (address) {
         (address recovered, RecoverError error) = tryRecover(hash, v, r, s);
         _throwError(error);
         return recovered;
@@ -1204,7 +1379,11 @@ library ECDSA {
      *
      * See {recover}.
      */
-    function toEthSignedMessageHash(bytes32 hash) internal pure returns (bytes32 message) {
+    function toEthSignedMessageHash(bytes32 hash)
+        internal
+        pure
+        returns (bytes32 message)
+    {
         // 32 is the length in bytes of hash,
         // enforced by the type signature above
         /// @solidity memory-safe-assembly
@@ -1223,8 +1402,19 @@ library ECDSA {
      *
      * See {recover}.
      */
-    function toEthSignedMessageHash(bytes memory s) internal pure returns (bytes32) {
-        return keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n", Strings.toString(s.length), s));
+    function toEthSignedMessageHash(bytes memory s)
+        internal
+        pure
+        returns (bytes32)
+    {
+        return
+            keccak256(
+                abi.encodePacked(
+                    "\x19Ethereum Signed Message:\n",
+                    Strings.toString(s.length),
+                    s
+                )
+            );
     }
 
     /**
@@ -1236,7 +1426,11 @@ library ECDSA {
      *
      * See {recover}.
      */
-    function toTypedDataHash(bytes32 domainSeparator, bytes32 structHash) internal pure returns (bytes32 data) {
+    function toTypedDataHash(bytes32 domainSeparator, bytes32 structHash)
+        internal
+        pure
+        returns (bytes32 data)
+    {
         /// @solidity memory-safe-assembly
         assembly {
             let ptr := mload(0x40)
@@ -1253,7 +1447,10 @@ library ECDSA {
      *
      * See {recover}.
      */
-    function toDataWithIntendedValidatorHash(address validator, bytes memory data) internal pure returns (bytes32) {
+    function toDataWithIntendedValidatorHash(
+        address validator,
+        bytes memory data
+    ) internal pure returns (bytes32) {
         return keccak256(abi.encodePacked(hex"19_00", validator, data));
     }
 }
@@ -1313,7 +1510,11 @@ library StorageSlot {
     /**
      * @dev Returns an `AddressSlot` with member `value` located at `slot`.
      */
-    function getAddressSlot(bytes32 slot) internal pure returns (AddressSlot storage r) {
+    function getAddressSlot(bytes32 slot)
+        internal
+        pure
+        returns (AddressSlot storage r)
+    {
         /// @solidity memory-safe-assembly
         assembly {
             r.slot := slot
@@ -1323,7 +1524,11 @@ library StorageSlot {
     /**
      * @dev Returns an `BooleanSlot` with member `value` located at `slot`.
      */
-    function getBooleanSlot(bytes32 slot) internal pure returns (BooleanSlot storage r) {
+    function getBooleanSlot(bytes32 slot)
+        internal
+        pure
+        returns (BooleanSlot storage r)
+    {
         /// @solidity memory-safe-assembly
         assembly {
             r.slot := slot
@@ -1333,7 +1538,11 @@ library StorageSlot {
     /**
      * @dev Returns an `Bytes32Slot` with member `value` located at `slot`.
      */
-    function getBytes32Slot(bytes32 slot) internal pure returns (Bytes32Slot storage r) {
+    function getBytes32Slot(bytes32 slot)
+        internal
+        pure
+        returns (Bytes32Slot storage r)
+    {
         /// @solidity memory-safe-assembly
         assembly {
             r.slot := slot
@@ -1343,7 +1552,11 @@ library StorageSlot {
     /**
      * @dev Returns an `Uint256Slot` with member `value` located at `slot`.
      */
-    function getUint256Slot(bytes32 slot) internal pure returns (Uint256Slot storage r) {
+    function getUint256Slot(bytes32 slot)
+        internal
+        pure
+        returns (Uint256Slot storage r)
+    {
         /// @solidity memory-safe-assembly
         assembly {
             r.slot := slot
@@ -1353,7 +1566,11 @@ library StorageSlot {
     /**
      * @dev Returns an `StringSlot` with member `value` located at `slot`.
      */
-    function getStringSlot(bytes32 slot) internal pure returns (StringSlot storage r) {
+    function getStringSlot(bytes32 slot)
+        internal
+        pure
+        returns (StringSlot storage r)
+    {
         /// @solidity memory-safe-assembly
         assembly {
             r.slot := slot
@@ -1363,7 +1580,11 @@ library StorageSlot {
     /**
      * @dev Returns an `StringSlot` representation of the string storage pointer `store`.
      */
-    function getStringSlot(string storage store) internal pure returns (StringSlot storage r) {
+    function getStringSlot(string storage store)
+        internal
+        pure
+        returns (StringSlot storage r)
+    {
         /// @solidity memory-safe-assembly
         assembly {
             r.slot := store.slot
@@ -1373,7 +1594,11 @@ library StorageSlot {
     /**
      * @dev Returns an `BytesSlot` with member `value` located at `slot`.
      */
-    function getBytesSlot(bytes32 slot) internal pure returns (BytesSlot storage r) {
+    function getBytesSlot(bytes32 slot)
+        internal
+        pure
+        returns (BytesSlot storage r)
+    {
         /// @solidity memory-safe-assembly
         assembly {
             r.slot := slot
@@ -1383,7 +1608,11 @@ library StorageSlot {
     /**
      * @dev Returns an `BytesSlot` representation of the bytes storage pointer `store`.
      */
-    function getBytesSlot(bytes storage store) internal pure returns (BytesSlot storage r) {
+    function getBytesSlot(bytes storage store)
+        internal
+        pure
+        returns (BytesSlot storage r)
+    {
         /// @solidity memory-safe-assembly
         assembly {
             r.slot := store.slot
@@ -1425,7 +1654,8 @@ type ShortString is bytes32;
  */
 library ShortStrings {
     // Used as an identifier for strings longer than 31 bytes.
-    bytes32 private constant _FALLBACK_SENTINEL = 0x00000000000000000000000000000000000000000000000000000000000000FF;
+    bytes32 private constant _FALLBACK_SENTINEL =
+        0x00000000000000000000000000000000000000000000000000000000000000FF;
 
     error StringTooLong(string str);
     error InvalidShortString();
@@ -1435,7 +1665,11 @@ library ShortStrings {
      *
      * This will trigger a `StringTooLong` error is the input string is too long.
      */
-    function toShortString(string memory str) internal pure returns (ShortString) {
+    function toShortString(string memory str)
+        internal
+        pure
+        returns (ShortString)
+    {
         bytes memory bstr = bytes(str);
         if (bstr.length > 31) {
             revert StringTooLong(str);
@@ -1472,7 +1706,10 @@ library ShortStrings {
     /**
      * @dev Encode a string into a `ShortString`, or write it to storage if it is too long.
      */
-    function toShortStringWithFallback(string memory value, string storage store) internal returns (ShortString) {
+    function toShortStringWithFallback(
+        string memory value,
+        string storage store
+    ) internal returns (ShortString) {
         if (bytes(value).length < 32) {
             return toShortString(value);
         } else {
@@ -1484,7 +1721,11 @@ library ShortStrings {
     /**
      * @dev Decode a string that was encoded to `ShortString` or written to storage using {setWithFallback}.
      */
-    function toStringWithFallback(ShortString value, string storage store) internal pure returns (string memory) {
+    function toStringWithFallback(ShortString value, string storage store)
+        internal
+        pure
+        returns (string memory)
+    {
         if (ShortString.unwrap(value) != _FALLBACK_SENTINEL) {
             return toString(value);
         } else {
@@ -1498,7 +1739,11 @@ library ShortStrings {
      * WARNING: This will return the "byte length" of the string. This may not reflect the actual length in terms of
      * actual characters as the UTF-8 encoding of a single character can span over multiple bytes.
      */
-    function byteLengthWithFallback(ShortString value, string storage store) internal view returns (uint256) {
+    function byteLengthWithFallback(ShortString value, string storage store)
+        internal
+        view
+        returns (uint256)
+    {
         if (ShortString.unwrap(value) != _FALLBACK_SENTINEL) {
             return byteLength(value);
         } else {
@@ -1560,7 +1805,9 @@ abstract contract EIP712 is IERC5267 {
     using ShortStrings for *;
 
     bytes32 private constant _TYPE_HASH =
-        keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)");
+        keccak256(
+            "EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"
+        );
 
     // Cache the domain separator as an immutable value, but also store the chain id that it corresponds to, in order to
     // invalidate the cached domain separator if the chain id changes.
@@ -1611,7 +1858,16 @@ abstract contract EIP712 is IERC5267 {
     }
 
     function _buildDomainSeparator() private view returns (bytes32) {
-        return keccak256(abi.encode(_TYPE_HASH, _hashedName, _hashedVersion, block.chainid, address(this)));
+        return
+            keccak256(
+                abi.encode(
+                    _TYPE_HASH,
+                    _hashedName,
+                    _hashedVersion,
+                    block.chainid,
+                    address(this)
+                )
+            );
     }
 
     /**
@@ -1629,7 +1885,12 @@ abstract contract EIP712 is IERC5267 {
      * address signer = ECDSA.recover(digest, signature);
      * ```
      */
-    function _hashTypedDataV4(bytes32 structHash) internal view virtual returns (bytes32) {
+    function _hashTypedDataV4(bytes32 structHash)
+        internal
+        view
+        virtual
+        returns (bytes32)
+    {
         return ECDSA.toTypedDataHash(_domainSeparatorV4(), structHash);
     }
 
@@ -1720,7 +1981,9 @@ abstract contract ERC20Permit is ERC20, IERC20Permit, EIP712 {
 
     // solhint-disable-next-line var-name-mixedcase
     bytes32 private constant _PERMIT_TYPEHASH =
-        keccak256("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)");
+        keccak256(
+            "Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)"
+        );
     /**
      * @dev In previous versions `_PERMIT_TYPEHASH` was declared as `immutable`.
      * However, to ensure consistency with the upgradeable transpiler, we will continue
@@ -1751,7 +2014,16 @@ abstract contract ERC20Permit is ERC20, IERC20Permit, EIP712 {
     ) public virtual override {
         require(block.timestamp <= deadline, "ERC20Permit: expired deadline");
 
-        bytes32 structHash = keccak256(abi.encode(_PERMIT_TYPEHASH, owner, spender, value, _useNonce(owner), deadline));
+        bytes32 structHash = keccak256(
+            abi.encode(
+                _PERMIT_TYPEHASH,
+                owner,
+                spender,
+                value,
+                _useNonce(owner),
+                deadline
+            )
+        );
 
         bytes32 hash = _hashTypedDataV4(structHash);
 
@@ -1764,7 +2036,13 @@ abstract contract ERC20Permit is ERC20, IERC20Permit, EIP712 {
     /**
      * @dev See {IERC20Permit-nonces}.
      */
-    function nonces(address owner) public view virtual override returns (uint256) {
+    function nonces(address owner)
+        public
+        view
+        virtual
+        override
+        returns (uint256)
+    {
         return _nonces[owner].current();
     }
 
@@ -1781,7 +2059,11 @@ abstract contract ERC20Permit is ERC20, IERC20Permit, EIP712 {
      *
      * _Available since v4.1._
      */
-    function _useNonce(address owner) internal virtual returns (uint256 current) {
+    function _useNonce(address owner)
+        internal
+        virtual
+        returns (uint256 current)
+    {
         Counters.Counter storage nonce = _nonces[owner];
         current = nonce.current();
         nonce.increment();
@@ -1803,7 +2085,11 @@ library Arrays {
      * `array` is expected to be sorted in ascending order, and to contain no
      * repeated elements.
      */
-    function findUpperBound(uint256[] storage array, uint256 element) internal view returns (uint256) {
+    function findUpperBound(uint256[] storage array, uint256 element)
+        internal
+        view
+        returns (uint256)
+    {
         if (array.length == 0) {
             return 0;
         }
@@ -1836,7 +2122,11 @@ library Arrays {
      *
      * WARNING: Only use if you are certain `pos` is lower than the array length.
      */
-    function unsafeAccess(address[] storage arr, uint256 pos) internal pure returns (StorageSlot.AddressSlot storage) {
+    function unsafeAccess(address[] storage arr, uint256 pos)
+        internal
+        pure
+        returns (StorageSlot.AddressSlot storage)
+    {
         bytes32 slot;
         // We use assembly to calculate the storage slot of the element at index `pos` of the dynamic array `arr`
         // following https://docs.soliditylang.org/en/v0.8.17/internals/layout_in_storage.html#mappings-and-dynamic-arrays.
@@ -1854,7 +2144,11 @@ library Arrays {
      *
      * WARNING: Only use if you are certain `pos` is lower than the array length.
      */
-    function unsafeAccess(bytes32[] storage arr, uint256 pos) internal pure returns (StorageSlot.Bytes32Slot storage) {
+    function unsafeAccess(bytes32[] storage arr, uint256 pos)
+        internal
+        pure
+        returns (StorageSlot.Bytes32Slot storage)
+    {
         bytes32 slot;
         // We use assembly to calculate the storage slot of the element at index `pos` of the dynamic array `arr`
         // following https://docs.soliditylang.org/en/v0.8.17/internals/layout_in_storage.html#mappings-and-dynamic-arrays.
@@ -1872,7 +2166,11 @@ library Arrays {
      *
      * WARNING: Only use if you are certain `pos` is lower than the array length.
      */
-    function unsafeAccess(uint256[] storage arr, uint256 pos) internal pure returns (StorageSlot.Uint256Slot storage) {
+    function unsafeAccess(uint256[] storage arr, uint256 pos)
+        internal
+        pure
+        returns (StorageSlot.Uint256Slot storage)
+    {
         bytes32 slot;
         // We use assembly to calculate the storage slot of the element at index `pos` of the dynamic array `arr`
         // following https://docs.soliditylang.org/en/v0.8.17/internals/layout_in_storage.html#mappings-and-dynamic-arrays.
@@ -1982,8 +2280,16 @@ abstract contract ERC20Snapshot is ERC20 {
     /**
      * @dev Retrieves the balance of `account` at the time `snapshotId` was created.
      */
-    function balanceOfAt(address account, uint256 snapshotId) public view virtual returns (uint256) {
-        (bool snapshotted, uint256 value) = _valueAt(snapshotId, _accountBalanceSnapshots[account]);
+    function balanceOfAt(address account, uint256 snapshotId)
+        public
+        view
+        virtual
+        returns (uint256)
+    {
+        (bool snapshotted, uint256 value) = _valueAt(
+            snapshotId,
+            _accountBalanceSnapshots[account]
+        );
 
         return snapshotted ? value : balanceOf(account);
     }
@@ -1991,15 +2297,27 @@ abstract contract ERC20Snapshot is ERC20 {
     /**
      * @dev Retrieves the total supply at the time `snapshotId` was created.
      */
-    function totalSupplyAt(uint256 snapshotId) public view virtual returns (uint256) {
-        (bool snapshotted, uint256 value) = _valueAt(snapshotId, _totalSupplySnapshots);
+    function totalSupplyAt(uint256 snapshotId)
+        public
+        view
+        virtual
+        returns (uint256)
+    {
+        (bool snapshotted, uint256 value) = _valueAt(
+            snapshotId,
+            _totalSupplySnapshots
+        );
 
         return snapshotted ? value : totalSupply();
     }
 
     // Update balance and/or total supply snapshots before the values are modified. This is implemented
     // in the _beforeTokenTransfer hook, which is executed for _mint, _burn, and _transfer operations.
-    function _beforeTokenTransfer(address from, address to, uint256 amount) internal virtual override {
+    function _beforeTokenTransfer(
+        address from,
+        address to,
+        uint256 amount
+    ) internal virtual override {
         super._beforeTokenTransfer(from, to, amount);
 
         if (from == address(0)) {
@@ -2017,9 +2335,16 @@ abstract contract ERC20Snapshot is ERC20 {
         }
     }
 
-    function _valueAt(uint256 snapshotId, Snapshots storage snapshots) private view returns (bool, uint256) {
+    function _valueAt(uint256 snapshotId, Snapshots storage snapshots)
+        private
+        view
+        returns (bool, uint256)
+    {
         require(snapshotId > 0, "ERC20Snapshot: id is 0");
-        require(snapshotId <= _getCurrentSnapshotId(), "ERC20Snapshot: nonexistent id");
+        require(
+            snapshotId <= _getCurrentSnapshotId(),
+            "ERC20Snapshot: nonexistent id"
+        );
 
         // When a valid snapshot is queried, there are three possibilities:
         //  a) The queried value was not modified after the snapshot was taken. Therefore, a snapshot entry was never
@@ -2052,7 +2377,9 @@ abstract contract ERC20Snapshot is ERC20 {
         _updateSnapshot(_totalSupplySnapshots, totalSupply());
     }
 
-    function _updateSnapshot(Snapshots storage snapshots, uint256 currentValue) private {
+    function _updateSnapshot(Snapshots storage snapshots, uint256 currentValue)
+        private
+    {
         uint256 currentId = _getCurrentSnapshotId();
         if (_lastSnapshotId(snapshots.ids) < currentId) {
             snapshots.ids.push(currentId);
@@ -2060,7 +2387,11 @@ abstract contract ERC20Snapshot is ERC20 {
         }
     }
 
-    function _lastSnapshotId(uint256[] storage ids) private view returns (uint256) {
+    function _lastSnapshotId(uint256[] storage ids)
+        private
+        view
+        returns (uint256)
+    {
         if (ids.length == 0) {
             return 0;
         } else {
@@ -2110,7 +2441,7 @@ abstract contract ERC20Burnable is Context, ERC20 {
  * the functions of your contract. Note that they will not be pausable by
  * simply including this module, only once the modifiers are put in place.
  */
- abstract contract Pausable is Context {
+abstract contract Pausable is Context {
     /**
      * @dev Emitted when the pause is triggered by `account`.
      */
@@ -2212,10 +2543,13 @@ abstract contract ERC20Burnable is Context, ERC20 {
  * `onlyOwner`, which can be applied to your functions to restrict their use to
  * the owner.
  */
- abstract contract Ownable is Context {
+abstract contract Ownable is Context {
     address private _owner;
 
-    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+    event OwnershipTransferred(
+        address indexed previousOwner,
+        address indexed newOwner
+    );
 
     /**
      * @dev Initializes the contract setting the deployer as the initial owner.
@@ -2262,7 +2596,10 @@ abstract contract ERC20Burnable is Context, ERC20 {
      * Can only be called by the current owner.
      */
     function transferOwnership(address newOwner) public virtual onlyOwner {
-        require(newOwner != address(0), "Ownable: new owner is the zero address");
+        require(
+            newOwner != address(0),
+            "Ownable: new owner is the zero address"
+        );
         _transferOwnership(newOwner);
     }
 
@@ -2278,46 +2615,143 @@ abstract contract ERC20Burnable is Context, ERC20 {
 }
 
 interface IToken is IERC20Metadata {
-    function mint(address account, uint amount) external;
-    function burn(uint amount) external;
+    function mint(address account, uint256 amount) external;
+
+    function burn(uint256 amount) external;
 }
 
-contract Token is IToken, ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit, Ownable, Pausable {
-    constructor(string memory name, string memory description) ERC20(name, description) ERC20Permit(name) Ownable(msg.sender) {}
+contract Token is
+    IToken,
+    ERC20,
+    ERC20Burnable,
+    ERC20Snapshot,
+    ERC20Permit,
+    Ownable,
+    Pausable
+{
+    constructor(string memory name, string memory description)
+        ERC20(name, description)
+        ERC20Permit(name)
+        Ownable(msg.sender)
+    {}
 
-    function mint(address account, uint amount) public onlyOwner {
+    function mint(address account, uint256 amount) public onlyOwner {
         _mint(account, amount);
     }
 
-    function burn(uint amount) public override(ERC20Burnable, IToken) {
+    function burn(uint256 amount) public override(ERC20Burnable, IToken) {
         super.burn(amount);
     }
 
-    function _beforeTokenTransfer(address from, address to, uint amount) internal override(ERC20, ERC20Snapshot) {
+    function _beforeTokenTransfer(
+        address from,
+        address to,
+        uint256 amount
+    ) internal override(ERC20, ERC20Snapshot) {
         super._beforeTokenTransfer(from, to, amount);
     }
 }
 
 interface IQuickSwapPlugIn {
-    enum ORDER { REVERSE, SAME }
+    enum ORDER {
+        REVERSE,
+        SAME
+    }
 
-    function isSameString(string memory stringA, string memory stringB) external pure returns (bool isMatch);
-    function metadata(address tokenA, address tokenB) external view returns (address addressPair, address addressA, address addressB, string memory nameA, string memory nameB, string memory symbolA, string memory symbolB, uint decimalsA, uint decimalsB);
-    function isSameOrder(address tokenA, address tokenB) external view returns (ORDER);
-    function getPrice(address tokenA, address tokenB, uint amount) external view returns (uint price, uint);
-    function getValue(address[] memory contracts, uint[] memory amounts, address denominator) external view returns (uint value, uint averageTimestamp);
-    function getValuePerShare(address[] memory contracts, uint[] memory amounts, address denominator, address tokenOut) external view returns (uint valuePerShare, uint averageTimestamp);
-    function getAmountToMint(address[] memory contracts, uint[] memory amounts, address denominator, address tokenOut, address tokenIn, uint amountIn) external view returns (uint amountToMint);
-    function getValueToSend(address[] memory contracts, uint[] memory amounts, address denominator, address tokenOut, uint amountIn) external view returns (uint valueToSend);
+    function isSameString(string memory stringA, string memory stringB)
+        external
+        pure
+        returns (bool isMatch);
+
+    function metadata(address tokenA, address tokenB)
+        external
+        view
+        returns (
+            address addressPair,
+            address addressA,
+            address addressB,
+            string memory nameA,
+            string memory nameB,
+            string memory symbolA,
+            string memory symbolB,
+            uint256 decimalsA,
+            uint256 decimalsB
+        );
+
+    function isSameOrder(address tokenA, address tokenB)
+        external
+        view
+        returns (ORDER);
+
+    function getPrice(
+        address tokenA,
+        address tokenB,
+        uint256 amount
+    ) external view returns (uint256 price, uint256);
+
+    function getValue(
+        address[] memory contracts,
+        uint256[] memory amounts,
+        address denominator
+    ) external view returns (uint256 value, uint256 averageTimestamp);
+
+    function getValuePerShare(
+        address[] memory contracts,
+        uint256[] memory amounts,
+        address denominator,
+        address tokenOut
+    ) external view returns (uint256 valuePerShare, uint256 averageTimestamp);
+
+    function getAmountToMint(
+        address[] memory contracts,
+        uint256[] memory amounts,
+        address denominator,
+        address tokenOut,
+        address tokenIn,
+        uint256 amountIn
+    ) external view returns (uint256 amountToMint);
+
+    function getValueToSend(
+        address[] memory contracts,
+        uint256[] memory amounts,
+        address denominator,
+        address tokenOut,
+        uint256 amountIn
+    ) external view returns (uint256 valueToSend);
+
     function init() external;
+
     function whitelist(address account) external;
+
     function blacklist(address account) external;
+
     function grantRoleAdmin(address account) external;
+
     function revokeRoleAdmin(address account) external;
+
     function pause() external;
+
     function unpause() external;
-    function swapTokens(address tokenIn, address tokenOut, uint amountIn, uint amountOutMin, uint gate, address from, address to) external;
-    function swapTokensSlippage(address tokenIn, address tokenOut, uint amountIn, uint slippage, uint gate, address from, address to) external;
+
+    function swapTokens(
+        address tokenIn,
+        address tokenOut,
+        uint256 amountIn,
+        uint256 amountOutMin,
+        uint256 gate,
+        address from,
+        address to
+    ) external;
+
+    function swapTokensSlippage(
+        address tokenIn,
+        address tokenOut,
+        uint256 amountIn,
+        uint256 slippage,
+        uint256 gate,
+        address from,
+        address to
+    ) external;
 }
 
 interface IRepository {
@@ -2565,8 +2999,12 @@ interface IRepository {
 }
 
 library Toolkit {
-    function addressContains(address[] memory array, address account) public pure returns (bool success, uint index) {
-        for (uint i = 0; i < array.length; i++) {
+    function addressContains(address[] memory array, address account)
+        public
+        pure
+        returns (bool success, uint256 index)
+    {
+        for (uint256 i = 0; i < array.length; i++) {
             if (array[i] == account) {
                 success = true;
                 index = i;
@@ -2576,26 +3014,38 @@ library Toolkit {
         return (success, index);
     }
 
-    function addressPush(address[] storage array, address account) public returns (bool success, uint index) {
+    function addressPush(address[] storage array, address account)
+        public
+        returns (bool success, uint256 index)
+    {
         (success, index) = addressContains(array, account);
-        if (success) { revert ("Toolkit: cannot push address because address is already in the array"); }
+        if (success) {
+            revert(
+                "Toolkit: cannot push address because address is already in the array"
+            );
+        }
         success = false;
         index = 0;
         (success, index) = addressContains(array, address(0));
         if (success) {
             array[index] = account;
-        } 
-        else if (!success) {
+        } else if (!success) {
             array.push(account);
             success = true;
         }
         return (success, index);
     }
 
-    function addressPull(address[] storage array, address account) public returns (bool success, uint index) {
+    function addressPull(address[] storage array, address account)
+        public
+        returns (bool success, uint256 index)
+    {
         (success, index) = addressContains(array, account);
-        if (!success) { revert ("Toolkit: cannot pull address because address is not in the array"); }
-        else if (success) {
+        if (!success) {
+            revert(
+                "Toolkit: cannot pull address because address is not in the array"
+            );
+        } else if (success) {
             array[index] = address(0);
         }
         return (success, index);
@@ -2607,7 +3057,7 @@ contract Solstice {
         string name;
         uint64 launch;
         address owner;
-        uint[] amountsTokens;
+        uint256[] amountsTokens;
         address[] depositors;
         IToken token;
     }
@@ -2622,18 +3072,20 @@ contract Solstice {
 
     address admin;
 
-    IQuickSwapPlugIn public quickSwapPlugIn = IQuickSwapPlugIn(0x00F66EAC4d1e4e4c54ea2E289cF2FD0Ce04C3f78);
-    IRepository public repository = IRepository(0xE2578e92fB2Ba228b37eD2dFDb1F4444918b64Aa);
+    IQuickSwapPlugIn public quickSwapPlugIn =
+        IQuickSwapPlugIn(0x00F66EAC4d1e4e4c54ea2E289cF2FD0Ce04C3f78);
+    IRepository public repository =
+        IRepository(0xE2578e92fB2Ba228b37eD2dFDb1F4444918b64Aa);
     Configuration public configuration;
 
-    mapping(address => uint) public map;
+    mapping(address => uint256) public map;
 
     modifier onlyAdmin() {
         _onlyAdmin();
         _;
     }
 
-    modifier onlyOwner(uint index) {
+    modifier onlyOwner(uint256 index) {
         _onlyOwner(index);
         _;
     }
@@ -2652,6 +3104,7 @@ contract Solstice {
         admin = msg.sender;
         configuration.whitelistedAccounts.push(msg.sender);
         /// @dev USDT
+        /// denominator should be within supported tokens
         configuration.denominator = 0xc2132D05D31c914a87C6611C10748AEb04B58e8F;
         _pushSupportedToken(0xc2132D05D31c914a87C6611C10748AEb04B58e8F); /// USDT
         _pushSupportedToken(0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270); /// WMATIC
@@ -2668,58 +3121,119 @@ contract Solstice {
         return _load();
     }
 
-    function getSafe(uint index) public view returns (Safe memory) {
+    function getSafe(uint256 index) public view returns (Safe memory) {
         return configuration.safes[index];
     }
 
-    function getSafeToken(uint index) public view returns (address) {
+    function getSafeToken(uint256 index) public view returns (address) {
         return address(configuration.safes[index].token);
     }
 
-    function getSafeTokenAmount(uint index, address token) public view returns (uint) {
-        uint tokenIndex = map[token];
+    function getSafeTokenAmount(uint256 index, address token)
+        public
+        view
+        returns (uint256)
+    {
+        uint256 tokenIndex = map[token];
         return configuration.safes[index].amountsTokens[tokenIndex];
     }
 
-    function getSafeValue(uint index) public view returns (uint, uint) {
-        (uint value, uint averageTimestamp) = quickSwapPlugIn.getValue(configuration.supportedTokens, configuration.safes[index].amountsTokens, configuration.denominator);
+    function getSafeValue(uint256 index)
+        public
+        view
+        returns (uint256, uint256)
+    {
+        (uint256 value, uint256 averageTimestamp) = quickSwapPlugIn.getValue(
+            configuration.supportedTokens,
+            configuration.safes[index].amountsTokens,
+            configuration.denominator
+        );
         return (value, averageTimestamp);
     }
 
-    function getSafeShareValue(uint index) public view returns (uint, uint) {
-        (uint valuePerShare, uint averageTimestamp) = quickSwapPlugIn.getValuePerShare(configuration.supportedTokens, configuration.safes[index].amountsTokens, configuration.denominator, address(configuration.safes[index].token));
+    function getSafeShareValue(uint256 index)
+        public
+        view
+        returns (uint256, uint256)
+    {
+        (uint256 valuePerShare, uint256 averageTimestamp) = quickSwapPlugIn
+            .getValuePerShare(
+                configuration.supportedTokens,
+                configuration.safes[index].amountsTokens,
+                configuration.denominator,
+                address(configuration.safes[index].token)
+            );
         return (valuePerShare, averageTimestamp);
     }
 
-    function pushSupportedToken(address token) public onlyAdmin returns (bool success, uint index) {
+    function pushSupportedToken(address token)
+        public
+        onlyAdmin
+        returns (bool success, uint256 index)
+    {
         (success, index) = _pushSupportedToken(token);
         return (success, index);
     }
 
-    function pullSupportedToken(address token) public onlyAdmin returns (bool success, uint index) {
+    function pullSupportedToken(address token)
+        public
+        onlyAdmin
+        returns (bool success, uint256 index)
+    {
         (success, index) = _pullSupportedToken(token);
         return (success, index);
     }
 
-    function pushWhitelistedAccount(address account) public onlyAdmin returns (bool success, uint index) {
-        (success, index) = Toolkit.addressPush(configuration.whitelistedAccounts, account);
+    function pushWhitelistedAccount(address account)
+        public
+        onlyAdmin
+        returns (bool success, uint256 index)
+    {
+        (success, index) = Toolkit.addressPush(
+            configuration.whitelistedAccounts,
+            account
+        );
         emit AccountPushedInWhitelistedAccounts(account);
         return (success, index);
     }
 
-    function pullWhitelistedAccount(address account) public onlyAdmin returns (bool success, uint index) {
-        (success, index) = Toolkit.addressPull(configuration.whitelistedAccounts, account);
+    function pullWhitelistedAccount(address account)
+        public
+        onlyAdmin
+        returns (bool success, uint256 index)
+    {
+        (success, index) = Toolkit.addressPull(
+            configuration.whitelistedAccounts,
+            account
+        );
         emit AccountPulledInWhitelistedAccounts(account);
         return (success, index);
     }
 
     /// @dev only send a small amount that should be locked within the safe ... $1 should be enough
-    function createNewSafe(string memory name, string memory symbol, address tokenIn, uint amountIn) public returns (Safe memory newSafe, uint index) {
-        (uint price,) = quickSwapPlugIn.getPrice(configuration.denominator, tokenIn, amountIn);
-        if (price <= 1000000000000) { revert("Solstice: liquidity lock amount is too low please deposit an amount slightly less than $1 in value"); }
-        if (price >= 1 * (10**18)) { revert("Solstice: liquidity lock amount is too great please deposit an amount slightly less than $1 in value"); }
+    function createNewSafe(
+        string memory name,
+        string memory symbol,
+        address tokenIn,
+        uint256 amountIn
+    ) public returns (Safe memory newSafe, uint256 index) {
+        (uint256 price, ) = quickSwapPlugIn.getPrice(
+            configuration.denominator,
+            tokenIn,
+            amountIn
+        );
+        if (price <= 1000000000000) {
+            revert(
+                "Solstice: liquidity lock amount is too low please deposit an amount slightly less than $1 in value"
+            );
+        }
+        if (price >= 1 * (10**18)) {
+            revert(
+                "Solstice: liquidity lock amount is too great please deposit an amount slightly less than $1 in value"
+            );
+        }
         IERC20(tokenIn).transferFrom(msg.sender, address(this), amountIn);
-        uint newIndex = _increment();
+        uint256 newIndex = _increment();
         newSafe.name = name;
         newSafe.launch = uint64(block.timestamp);
         newSafe.owner = msg.sender;
@@ -2730,98 +3244,178 @@ contract Solstice {
         return (newSafe, newIndex);
     }
 
-    function deposit(uint index, address tokenIn, uint amountIn) public {
-        (bool success,) = Toolkit.addressContains(configuration.supportedTokens, tokenIn);
-        if (!success) { revert("Solstice: cannot accept deposit because tokenIn is not supported"); }
-        (uint amountToMint) = quickSwapPlugIn.getAmountToMint(configuration.supportedTokens, configuration.safes[index].amountsTokens, configuration.denominator, address(configuration.safes[index].token), tokenIn, amountIn);
+    function deposit(
+        uint256 index,
+        address tokenIn,
+        uint256 amountIn
+    ) public {
+        (bool success, ) = Toolkit.addressContains(
+            configuration.supportedTokens,
+            tokenIn
+        );
+        if (!success) {
+            revert(
+                "Solstice: cannot accept deposit because tokenIn is not supported"
+            );
+        }
+        uint256 amountToMint = quickSwapPlugIn.getAmountToMint(
+            configuration.supportedTokens,
+            configuration.safes[index].amountsTokens,
+            configuration.denominator,
+            address(configuration.safes[index].token),
+            tokenIn,
+            amountIn
+        );
         IERC20(tokenIn).transferFrom(msg.sender, address(this), amountIn);
         configuration.safes[index].amountsTokens[map[tokenIn]];
         configuration.safes[index].token.mint(msg.sender, amountToMint);
         _save();
     }
 
-    
-    function withdraw(uint index, uint amountIn) public {
-        (uint valueToSend) = quickSwapPlugIn.getValueToSend(configuration.supportedTokens, configuration.safes[index].amountsTokens, configuration.denominator, address(configuration.safes[index].token), amountIn);
-        uint totalSupply = configuration.safes[index].token.totalSupply();
-        uint ownershipBasisPoints = (amountIn * 10000) / totalSupply;
-        IERC20(configuration.safes[index].token).transferFrom(msg.sender, address(this), amountIn);
+    function withdraw(uint256 index, uint256 amountIn) public {
+        uint256 valueToSend = quickSwapPlugIn.getValueToSend(
+            configuration.supportedTokens,
+            configuration.safes[index].amountsTokens,
+            configuration.denominator,
+            address(configuration.safes[index].token),
+            amountIn
+        );
+        uint256 totalSupply = configuration.safes[index].token.totalSupply();
+        uint256 ownershipBasisPoints = (amountIn * 10000) / totalSupply;
+        IERC20(configuration.safes[index].token).transferFrom(
+            msg.sender,
+            address(this),
+            amountIn
+        );
         configuration.safes[index].token.burn(amountIn);
-        uint denominatorBalance = configuration.safes[index].amountsTokens[map[configuration.denominator]];
+        uint256 denominatorBalance = configuration.safes[index].amountsTokens[
+            map[configuration.denominator]
+        ];
         if (denominatorBalance >= valueToSend) {
             IERC20(configuration.denominator).transfer(msg.sender, valueToSend);
-        }
-        else { /// pay in kind
-            uint[] memory amountsToSend;
-            for (uint i = 0; i < configuration.supportedTokens.length; i++) {
-                amountsToSend[i] = (configuration.safes[index].amountsTokens[i] / 10000) * ownershipBasisPoints;
-                IERC20(configuration.supportedTokens[i]).transfer(msg.sender, amountsToSend[i]);
+        } else {
+            /// pay in kind
+            uint256[] memory amountsToSend;
+            for (uint256 i = 0; i < configuration.supportedTokens.length; i++) {
+                amountsToSend[i] =
+                    (configuration.safes[index].amountsTokens[i] / 10000) *
+                    ownershipBasisPoints;
+                IERC20(configuration.supportedTokens[i]).transfer(
+                    msg.sender,
+                    amountsToSend[i]
+                );
             }
         }
         _save();
     }
 
     /// will likely require a rate limiter here or a reward of plug in as we need a way to get tokeOut amounts
-    function swap(uint index, address tokenIn, address tokenOut, uint amountIn, uint gate) public onlyOwner(index) {
-        (bool success,) = Toolkit.addressContains(configuration.supportedTokens, tokenIn);
+    function swap(
+        uint256 index,
+        address tokenIn,
+        address tokenOut,
+        uint256 amountIn,
+        uint256 gate
+    ) public onlyOwner(index) {
+        (bool success, ) = Toolkit.addressContains(
+            configuration.supportedTokens,
+            tokenIn
+        );
         require(success, "Solstice: tokenIn not supported");
-        (success,) = Toolkit.addressContains(configuration.supportedTokens, tokenOut);
+        (success, ) = Toolkit.addressContains(
+            configuration.supportedTokens,
+            tokenOut
+        );
         require(success, "Solstice: tokenOut not supported");
         Safe storage safe = configuration.safes[index];
-        uint balanceA = safe.amountsTokens[map[tokenIn]];
-        if (balanceA < amountIn) { revert("Solstice: insufficient balance"); }
-        uint bA = IERC20(tokenOut).balanceOf(address(this));
+        uint256 balanceA = safe.amountsTokens[map[tokenIn]];
+        if (balanceA < amountIn) {
+            revert("Solstice: insufficient balance");
+        }
+        uint256 bA = IERC20(tokenOut).balanceOf(address(this));
         safe.amountsTokens[map[tokenIn]] -= amountIn;
-        quickSwapPlugIn.swapTokensSlippage(tokenIn, tokenOut, amountIn, 100, gate, address(this), address(this));
-        uint bB = IERC20(tokenOut).balanceOf(address(this));
+        quickSwapPlugIn.swapTokensSlippage(
+            tokenIn,
+            tokenOut,
+            amountIn,
+            100,
+            gate,
+            address(this),
+            address(this)
+        );
+        uint256 bB = IERC20(tokenOut).balanceOf(address(this));
         safe.amountsTokens[map[tokenOut]] += (bB - bA);
     }
 
     function _load() private view returns (Configuration memory) {
-        bytes32 bytesSolsticeConfiguration = keccak256(abi.encode("solstice", "configuration"));
-        bytes memory encodedConfiguration = repository.getBytes(bytesSolsticeConfiguration);
+        bytes32 bytesSolsticeConfiguration = keccak256(
+            abi.encode("solstice", "configuration")
+        );
+        bytes memory encodedConfiguration = repository.getBytes(
+            bytesSolsticeConfiguration
+        );
         return abi.decode(encodedConfiguration, (Configuration));
     }
 
     function _onlyAdmin() private view {
         if (msg.sender != admin) {
-            revert ("Solstice: caller is not admin");
+            revert("Solstice: caller is not admin");
         }
     }
 
-    function _onlyOwner(uint index) private view {
+    function _onlyOwner(uint256 index) private view {
         if (msg.sender != configuration.safes[index].owner) {
-            revert ("Solstice: caller is not the owner of this safe");
+            revert("Solstice: caller is not the owner of this safe");
         }
     }
 
     function _onlyWhitelisted() private view {
-        (bool success,) = Toolkit.addressContains(configuration.whitelistedAccounts, msg.sender);
+        (bool success, ) = Toolkit.addressContains(
+            configuration.whitelistedAccounts,
+            msg.sender
+        );
         if (!success) {
-            revert ("Solstice: caller is not whitelisted");
+            revert("Solstice: caller is not whitelisted");
         }
     }
 
-    function _pushSupportedToken(address token) private returns (bool success, uint index) {
-        (success, index) = Toolkit.addressPush(configuration.supportedTokens, token);
+    function _pushSupportedToken(address token)
+        private
+        returns (bool success, uint256 index)
+    {
+        (success, index) = Toolkit.addressPush(
+            configuration.supportedTokens,
+            token
+        );
         map[token] = index;
         emit TokenPushedInSupported(token);
         return (success, index);
     }
 
-    function _pullSupportedToken(address token) private returns (bool success, uint index) {
-        (success, index) = Toolkit.addressPull(configuration.supportedTokens, token);
+    function _pullSupportedToken(address token)
+        private
+        returns (bool success, uint256 index)
+    {
+        (success, index) = Toolkit.addressPull(
+            configuration.supportedTokens,
+            token
+        );
         map[token] = 0;
         emit TokenPulledInSupported(token);
         return (success, index);
     }
 
     function _save() private {
-        bytes32 bytesSolsticeConfiguration = keccak256(abi.encode("solstice", "configuration"));
-        repository.setBytes(bytesSolsticeConfiguration, abi.encode(configuration));
+        bytes32 bytesSolsticeConfiguration = keccak256(
+            abi.encode("solstice", "configuration")
+        );
+        repository.setBytes(
+            bytesSolsticeConfiguration,
+            abi.encode(configuration)
+        );
     }
 
-    function _increment() private returns (uint index) {
+    function _increment() private returns (uint256 index) {
         bytes32 uintSolsticeCount = keccak256(abi.encode("solstice", "count"));
         index = repository.getUint(uintSolsticeCount) + 1;
         repository.setUint(uintSolsticeCount, index);
