@@ -505,74 +505,7 @@ interface IRepository {
 }
 
 interface IQuickSwapPlugIn {
-    function metadata(
-        address tokenA,
-        address tokenB
-    )
-    external view
-    returns (
-        address addressPair,
-        address addressA,
-        address addressB,
-        string memory nameA,
-        string memory nameB,
-        string memory symbolA,
-        string memory symbolB,
-        uint decimalsA,
-        uint decimalsB
-    );
     
-    function isSameOrder(
-        address tokenA,
-        address tokenB
-    )
-    external view
-    returns (
-        QuickSwapPlugIn.ORDER
-    );
-
-    function price(
-        address tokenA,
-        address tokenB,
-        uint amount
-    )
-    external view
-    returns (
-        uint price,
-        uint lastTimestamp
-    );
-
-    function whitelist(
-        address account
-    )
-    external;
-
-    function blacklist(
-        address account
-    )
-    external;
-
-    function swapTokens(
-        address tokenIn,
-        address tokenOut,
-        uint amountIn,
-        uint amountOutMin,
-        uint gate,
-        address from,
-        address to
-    )
-    external;
-
-    function swapTokensSlippage(
-        address tokenIn,
-        address tokenOut,
-        uint amountIn,
-        uint slippage,
-        uint gate,
-        address from,
-        address to
-    )
-    external;
 }
 
 contract QuickSwapPlugIn is IQuickSwapPlugIn, Pausable {
@@ -625,6 +558,7 @@ contract QuickSwapPlugIn is IQuickSwapPlugIn, Pausable {
     error ALREADY_INITIALIZED();
     error NOT_INITIALIZED();
     error ONLY_DEPLOYER();
+    error INSUFFICIENT_MATH();
 
     modifier onlyWhitelist() {
         _onlyWhitelist();
@@ -739,46 +673,95 @@ contract QuickSwapPlugIn is IQuickSwapPlugIn, Pausable {
         else { revert PAIR_NOT_FOUND(); }
     }
 
-    function price(
-        address tokenA,
-        address tokenB,
-        uint amount
-    )
-    public view
-    whenNotPaused
-    whenInitialized
-    returns (
-        uint price, /// will always return (price * (10**18))
-        uint lastTimestamp
-    ) {
+    function getPrice(address tokenA, address tokenB, uint amount) public view whenNotPaused whenInitialized returns (uint price, uint) {
         ORDER order = isSameOrder({tokenA: tokenA, tokenB: tokenB});
-        address addressPair = FACTORY.getPair({tokenA: tokenA, tokenB: tokenB});
+        address addressPair = FACTORY.getPair(tokenA, tokenB);
         if (addressPair == address(0)) { revert PAIR_NOT_FOUND(); }
         IUniswapV2Pair interface_ = IUniswapV2Pair(addressPair);
         IERC20 tokenA_ = IERC20(interface_.token0());
         IERC20 tokenB_ = IERC20(interface_.token1());
-        (
-            uint reserveA,
-            uint reserveB,
-            uint lastTimestamp_
-        ) = interface_.getReserves();
+        (uint reserveA, uint reserveB, uint lastTimestamp) = interface_.getReserves();
         if (order == ORDER.SAME) {
             price = (amount * (reserveA * (10**tokenB_.decimals()))) / reserveB;
             price *= 10**18;
             price /= 10**tokenA_.decimals();
-            return (price, lastTimestamp_);
+            return (price, lastTimestamp);
         }
         else if (order == ORDER.REVERSE) {
             price = (amount * (reserveB * (10**tokenA_.decimals()))) / reserveA;
             price *= 10**18;
             price /= 10**tokenB_.decimals();
-            return (price, lastTimestamp_);
+            return (price, lastTimestamp);
         }
+        else { revert PAIR_NOT_FOUND(); }
     }
 
-    function init() 
-    public 
-    onlyDeployer {
+    /**
+    * @dev calculates the total value in the denominator for all the tokens within a vault
+    *
+    * @param contracts tokens within the vault
+    * @param amounts corresponding amounts of each token
+    * @param denominator the currency in which value is being calculated
+     */
+    function getValue(address[] memory contracts, uint[] memory amounts, address denominator) public view whenNotPaused whenInitialized returns (uint value, uint averageTimestamp) {
+        for (uint i = 0; i < contracts.length; i++) {
+            (uint price, uint lastTimestamp) = getPrice({tokenA: denominator, tokenB: contracts[i], amount: amounts[i]});
+            value += price;
+            averageTimestamp += lastTimestamp;
+        }
+        averageTimestamp /= contracts.length;
+        return (value, averageTimestamp);
+    }
+
+    function getValuePerShare(address[] memory contracts, uint[] memory amounts, address denominator, address tokenOut) public view whenNotPaused whenInitialized returns (uint valuePerShare, uint averageTimestamp) {
+        (valuePerShare, averageTimestamp) = getValue({contracts: contracts, amounts: amounts, denominator: denominator});
+        valuePerShare /= IERC20(tokenOut).totalSupply();
+        return (valuePerShare, averageTimestamp);
+    }
+
+    /**
+    * @dev returns the amount that should be minted within a vault based on the value of the token sent
+    *
+    * @param contracts array of tokens contained within the vault
+    * @param amounts array of corresponding amounts of each token within the vault
+    * @param denominator base pricing for the vault **recommended to keep this the same for all calculations 
+    * @param tokenOut token acting as shares for the vault that should be minted
+    * @param tokenIn the token being deposited
+    * @param amountIn the amount of the deposited token
+    *
+    * @return amountToMint the amount of tokens that should be minted from the tokenOut address
+     */
+    function getAmountToMint(address[] memory contracts, uint[] memory amounts, address denominator, address tokenOut, address tokenIn, uint amountIn) public view whenNotPaused whenInitialized returns (uint amountToMint) {
+        (uint valueIn,) = getPrice({tokenA: denominator, tokenB: tokenIn, amount: amountIn});
+        (uint balance,) = getValue({contracts: contracts, amounts: amounts, denominator: denominator});
+        uint totalSupply = IERC20(tokenOut).totalSupply();
+        if (valueIn == 0) { revert INSUFFICIENT_MATH(); }
+        if (totalSupply == 0) { revert INSUFFICIENT_MATH(); }
+        if (balance == 0) { revert INSUFFICIENT_MATH(); }
+        return (valueIn * balance) / totalSupply;
+    }
+
+    /**
+    * @dev returns the value in the denominator that should be sent back **this could be paid of if a combination of assets up to that value
+    *
+    * @param contracts array of tokens contained within the vault
+    * @param amounts array of corresponding amounts of each token within the vault
+    * @param denominator base pricing for the vault **recommended to keep this the same for all calculations
+    * @param tokenOut token acting as shares for the vault that is being deposited
+    * @param amountIn the amount of the deposited token
+    *
+    * @return valueToSend the amount in value that should be sent back
+     */
+    function getValueToSend(address[] memory contracts, uint[] memory amounts, address denominator, address tokenOut, uint amountIn) public view whenNotPaused whenInitialized returns (uint valueToSend) {
+        (uint balance,) = getValue(contracts, amounts, denominator);
+        uint totalSupply = IERC20(tokenOut).totalSupply();
+        if (amountIn == 0) { revert INSUFFICIENT_MATH(); }
+        if (totalSupply == 0) { revert INSUFFICIENT_MATH(); }
+        if (balance == 0) { revert INSUFFICIENT_MATH(); }
+        return (amountIn * balance) / totalSupply;
+    }
+
+    function init() public onlyDeployer {
         if (_init) { revert ALREADY_INITIALIZED(); }
         bytes32 quickSwapPlugInV000 = keccak256(abi.encode("quickSwapPlugInV000", "admins"));
         if (!REPOSITORY.addressSetContains(quickSwapPlugInV000, _deployer)) {
@@ -787,70 +770,41 @@ contract QuickSwapPlugIn is IQuickSwapPlugIn, Pausable {
         _init = true;
         emit ADMIN_ROLE_GRANTED(msg.sender);
     }
-
-    function whitelist(
-        address account
-    )
-    public 
-    onlyAdmin 
-    whenInitialized 
-    whenNotPaused {
+    
+    /// @dev only whitelisted accounts can swap using this contract
+    function whitelist (address account) public onlyAdmin whenInitialized whenNotPaused {
         bytes32 quickSwapPlugInV000 = keccak256(abi.encode("quickSwapPlugInV000", "whitelist"));
         if (REPOSITORY.addressSetContains(quickSwapPlugInV000, account)) { revert ALREADY_WHITELISTED(); }
         REPOSITORY.addAddressSet(quickSwapPlugInV000, account);
         emit ACCOUNT_WHITELISTED(account);
     }
 
-    function blacklist(
-        address account
-    )
-    public 
-    onlyAdmin 
-    whenInitialized 
-    whenNotPaused {
+    function blacklist(address account) public onlyAdmin whenInitialized whenNotPaused {
         bytes32 quickSwapPlugInV000 = keccak256(abi.encode("quickSwapPlugInV000", "whitelist"));
         if (!REPOSITORY.addressSetContains(quickSwapPlugInV000, account)) { revert ALREADY_BLACKLISTED(); }
         REPOSITORY.removeAddressSet(quickSwapPlugInV000, account);
         emit ACCOUNT_BLACKLISTED(account);
     }
 
-    function grantRoleAdmin(
-        address account
-    )
-    public 
-    onlyAdmin 
-    whenInitialized 
-    whenNotPaused {
+    function grantRoleAdmin(address account) public onlyAdmin whenInitialized whenNotPaused {
         bytes32 quickSwapPlugInV000 = keccak256(abi.encode("quickSwapPlugInV000", "admins"));
         if (REPOSITORY.addressSetContains(quickSwapPlugInV000, account)) { revert ALREADY_ADMIN(); }
         REPOSITORY.addAddressSet(quickSwapPlugInV000, account);
         emit ADMIN_ROLE_GRANTED(account);
     }
 
-    function revokeRoleAdmin(
-        address account
-    )
-    public 
-    onlyAdmin 
-    whenInitialized 
-    whenNotPaused {
+    function revokeRoleAdmin(address account) public onlyAdmin whenInitialized whenNotPaused {
         bytes32 quickSwapPlugInV000 = keccak256(abi.encode("quickSwapPlugInV000", "admins"));
         if (REPOSITORY.addressSetContains(quickSwapPlugInV000, account)) { revert NOT_ADMIN(); }
         REPOSITORY.removeAddressSet(quickSwapPlugInV000, account);
         emit ADMIN_ROLE_REVOKED(account);
     }
 
-    function pause()
-    public
-    onlyAdmin
-    whenInitialized {
+    function pause() public onlyAdmin whenInitialized {
         _pause();
     }
 
-    function unpause()
-    public
-    onlyAdmin
-    whenInitialized {
+    function unpause() public onlyAdmin whenInitialized {
         _unpause();
     }
 
@@ -891,7 +845,7 @@ contract QuickSwapPlugIn is IQuickSwapPlugIn, Pausable {
         });
         emit SWAP(tokenIn, tokenOut, amountIn, amountOutMin, to);
     }
-
+ 
     function swapTokensSlippage(
         address tokenIn,
         address tokenOut,
@@ -910,7 +864,7 @@ contract QuickSwapPlugIn is IQuickSwapPlugIn, Pausable {
         amountIn /= 10**18;
         IERC20(tokenIn).transferFrom({from: from, to: address(this), amount: amountIn});
         IERC20(tokenIn).approve({spender: address(ROUTER), amount: amountIn});
-        (uint amountOutMin,) = price({tokenA: tokenIn, tokenB: tokenOut, amount: amountIn});
+        (uint amountOutMin,) = getPrice({tokenA: tokenIn, tokenB: tokenOut, amount: amountIn});
         amountOutMin = (amountOutMin * (10000 - slippage)) / 10000;
         address[] memory path;
         path = new address[](3);
