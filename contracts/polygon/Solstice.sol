@@ -3216,7 +3216,7 @@ contract Solstice {
         string memory symbol,
         address tokenIn,
         uint256 amountIn
-    ) public returns (Safe memory newSafe, uint256 index) {
+    ) public onlyWhitelisted returns (Safe memory newSafe, uint256 index) {
         (uint256 price, ) = quickSwapPlugIn.getPrice(
             configuration.denominator,
             tokenIn,
@@ -3248,7 +3248,7 @@ contract Solstice {
         uint256 index,
         address tokenIn,
         uint256 amountIn
-    ) public {
+    ) public onlyWhitelisted {
         (bool success, ) = Toolkit.addressContains(
             configuration.supportedTokens,
             tokenIn
@@ -3272,7 +3272,7 @@ contract Solstice {
         _save();
     }
 
-    function withdraw(uint256 index, uint256 amountIn) public {
+    function withdraw(uint256 index, uint256 amountIn) public onlyWhitelisted {
         uint256 valueToSend = quickSwapPlugIn.getValueToSend(
             configuration.supportedTokens,
             configuration.safes[index].amountsTokens,
