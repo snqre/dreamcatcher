@@ -2279,6 +2279,7 @@ abstract contract ERC20Burnable is Context, ERC20 {
 
 interface IToken is IERC20Metadata {
     function mint(address account, uint amount) external;
+    function burn(uint amount) external;
 }
 
 contract Token is IToken, ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit, Ownable, Pausable {
@@ -2286,6 +2287,10 @@ contract Token is IToken, ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit, Owna
 
     function mint(address account, uint amount) public onlyOwner {
         _mint(account, amount);
+    }
+
+    function burn(uint amount) public override(ERC20Burnable, IToken) {
+        super.burn(amount);
     }
 
     function _beforeTokenTransfer(address from, address to, uint amount) internal override(ERC20, ERC20Snapshot) {
@@ -2559,148 +2564,267 @@ interface IRepository {
     function removeBytes32Set(bytes32 key, bytes32 value) external;
 }
 
-/**
-    _bytes      "solstice", <uint/index>
-*/
-contract Host {
-    struct Holding {
-        IERC20Metadata interface_;
-        string name;
-        string symbol;
-        uint8 decimals;
-        uint amount;
-    }
-
-    struct Solstice {
-        uint index;
-        string name;
-        uint launchTimestamp;
-        uint streamingFee;
-        Holding[] holdings;
-        address[] admins;
-        address[] managers;
-        address[] depositors;
-        address[] recipientsStreamingFees;    
-        IToken token;    
-    }
-
-    struct Settings {
-        uint lastTimestampThreshold;
-    }
-
-    IQuickSwapPlugIn plugIn = IQuickSwapPlugIn(0x00F66EAC4d1e4e4c54ea2E289cF2FD0Ce04C3f78);
-    IRepository repo = IRepository(0xE2578e92fB2Ba228b37eD2dFDb1F4444918b64Aa);
-    Settings settings;
-
-    IERC20Metadata denominator = IERC20Metadata(0xc2132D05D31c914a87C6611C10748AEb04B58e8F);
-    address[] authorizedIn;
-    address[] authorizedOut;
-
-    error UNAUTHORIZED_TOKEN_IN();
-    error UNAUTHORIZED_TOKEN_OUT();
-    error UNUSUAL_PRICE();
-    error OUTDATED_PRICE();
-    error INSUFFICIENT_DEPOSIT();
-
-    modifier isAdmin(uint index) {
-        _isAdmin(index);
-        _;
-    }
-
-    modifier isManager(uint index) {
-        _isManager(index);
-        _;
-    }
-
-    modifier isDepositor(uint index) {
-        _isDepositor(index);
-        _;
-    }
-
-    constructor() {
-        settings.lastTimestampThreshold = 3600;
-    }
-
-    function createNewVault(string memory name, string memory symbol, address tokenIn, uint amountIn) public returns (uint index, Solstice memory newSolstice) {
-        IERC20(tokenIn).transferFrom(msg.sender, address(this), amountIn);
-        uint newIndex = _increment();
-        newSolstice.index = newIndex;
-        newSolstice.name = name;
-        newSolstice.launchTimestamp = block.timestamp;
-        newSolstice.admins[0] = msg.sender;
-        newSolstice.managers[0] = msg.sender;
-        newSolstice.token = new Token(name, symbol);
-        (uint price, uint lastTimestamp) = plugIn.getPrice(address(denominator), tokenIn, amountIn);
-        if (block.timestamp - lastTimestamp >= settings.lastTimestampThreshold) { revert OUTDATED_PRICE(); }
-        if (price < 1 * (10**18)) { revert INSUFFICIENT_DEPOSIT(); }
-        newSolstice.token.mint(msg.sender, 1000000 * (10**18));
-        newSolstice.holdings[0] = Holding({
-            interface_: IERC20Metadata(tokenIn),
-            name: IERC20Metadata(tokenIn).name(),
-            symbol: IERC20Metadata(tokenIn).symbol(),
-            decimals: IERC20Metadata(tokenIn).decimals(),
-            amount: amountIn
-        });
-        _save(newIndex, newSolstice);
-        return (newIndex, newSolstice);
-    }
-
-    function deposit(uint index, address tokenIn, uint amountIn) public {
-        IERC20(tokenIn).transferFrom(msg.sender, address(this), amountIn);
-        Solstice memory solstice = _load(index);
-
-        address[] memory contracts;
-        uint[] memory amounts;
-        address denominator;
-        address token;
-        
-
-        plugIn.getAmountToMint();
-    }
-
-    function _contains(address[] memory array, address account) private pure returns (bool isMatch) {
+library Toolkit {
+    function addressContains(address[] memory array, address account) public pure returns (bool success, uint index) {
         for (uint i = 0; i < array.length; i++) {
             if (array[i] == account) {
-                isMatch = true;
+                success = true;
+                index = i;
                 break;
             }
         }
-        return isMatch;
+        return (success, index);
     }
 
-    function _isAdmin(uint index) private view returns (bool) {
-        Solstice memory solstice = _load(index);
-        return _contains(solstice.admins, msg.sender);
+    function addressPush(address[] storage array, address account) public returns (bool success, uint index) {
+        (success, index) = addressContains(array, account);
+        if (success) { revert ("Toolkit: cannot push address because address is already in the array"); }
+        success = false;
+        index = 0;
+        (success, index) = addressContains(array, address(0));
+        if (success) {
+            array[index] = account;
+        } 
+        else if (!success) {
+            array.push(account);
+            success = true;
+        }
+        return (success, index);
     }
 
-    function _isManager(uint index) private view returns (bool) {
-        Solstice memory solstice = _load(index);
-        return _contains(solstice.managers, msg.sender);
+    function addressPull(address[] storage array, address account) public returns (bool success, uint index) {
+        (success, index) = addressContains(array, account);
+        if (!success) { revert ("Toolkit: cannot pull address because address is not in the array"); }
+        else if (success) {
+            array[index] = address(0);
+        }
+        return (success, index);
+    }
+}
+
+contract Solstice {
+    struct Safe {
+        string name;
+        uint64 launch;
+        address owner;
+        uint[] amountsTokens;
+        address[] depositors;
+        IToken token;
     }
 
-    function _isDepositor(uint index) private view returns (bool) {
-        Solstice memory solstice = _load(index);
-        return _contains(solstice.depositors, msg.sender);
+    struct Configuration {
+        address[] supportedTokens;
+        address denominator;
+        uint16 streamingFee;
+        address[] whitelistedAccounts;
+        Safe[] safes;
     }
 
-    function _load(uint index) private view returns (Solstice memory solstice) {
-        bytes32 addressSetSolsticeIndex = keccak256(abi.encode("solstice", index));
-        bytes memory bytesSolstice = repo.getBytes(addressSetSolsticeIndex);
-        solstice = abi.decode(bytesSolstice, (Solstice));
-        return solstice;
+    address admin;
+
+    IQuickSwapPlugIn public quickSwapPlugIn = IQuickSwapPlugIn(0x00F66EAC4d1e4e4c54ea2E289cF2FD0Ce04C3f78);
+    IRepository public repository = IRepository(0xE2578e92fB2Ba228b37eD2dFDb1F4444918b64Aa);
+    Configuration public configuration;
+
+    mapping(address => uint) public map;
+
+    modifier onlyAdmin() {
+        _onlyAdmin();
+        _;
     }
 
-    function _save(uint index, Solstice memory solstice) private {
-        bytes32 addressSetSolsticeIndex = keccak256(abi.encode("solstice", index));
-        repo.setBytes(addressSetSolsticeIndex, abi.encode(solstice));
+    modifier onlyOwner(uint index) {
+        _onlyOwner(index);
+        _;
+    }
+
+    modifier onlyWhitelisted() {
+        _onlyWhitelisted();
+        _;
+    }
+
+    event TokenPushedInSupported(address indexed token);
+    event TokenPulledInSupported(address indexed token);
+    event AccountPushedInWhitelistedAccounts(address indexed account);
+    event AccountPulledInWhitelistedAccounts(address indexed account);
+
+    constructor() {
+        admin = msg.sender;
+        configuration.whitelistedAccounts.push(msg.sender);
+        /// @dev USDT
+        configuration.denominator = 0xc2132D05D31c914a87C6611C10748AEb04B58e8F;
+        _pushSupportedToken(0xc2132D05D31c914a87C6611C10748AEb04B58e8F); /// USDT
+        _pushSupportedToken(0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270); /// WMATIC
+        _pushSupportedToken(0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063); /// DAI
+        _pushSupportedToken(0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174); /// USDC
+        _pushSupportedToken(0xB5C064F955D8e7F38fE0460C556a72987494eE17); /// QUICK
+        _pushSupportedToken(0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619); /// WETH
+        _pushSupportedToken(0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6); /// WBTC
+        _pushSupportedToken(0x53E0bca35eC356BD5ddDFebbD1Fc0fD03FaBad39); /// LINK
+    }
+
+    /// get configuration from eternal storage
+    function load() public view returns (Configuration memory) {
+        return _load();
+    }
+
+    function getSafe(uint index) public view returns (Safe memory) {
+        return configuration.safes[index];
+    }
+
+    function getSafeToken(uint index) public view returns (address) {
+        return address(configuration.safes[index].token);
+    }
+
+    function getSafeTokenAmount(uint index, address token) public view returns (uint) {
+        uint tokenIndex = map[token];
+        return configuration.safes[index].amountsTokens[tokenIndex];
+    }
+
+    function getSafeValue(uint index) public view returns (uint, uint) {
+        (uint value, uint averageTimestamp) = quickSwapPlugIn.getValue(configuration.supportedTokens, configuration.safes[index].amountsTokens, configuration.denominator);
+        return (value, averageTimestamp);
+    }
+
+    function getSafeShareValue(uint index) public view returns (uint, uint) {
+        (uint valuePerShare, uint averageTimestamp) = quickSwapPlugIn.getValuePerShare(configuration.supportedTokens, configuration.safes[index].amountsTokens, configuration.denominator, address(configuration.safes[index].token));
+        return (valuePerShare, averageTimestamp);
+    }
+
+    function pushSupportedToken(address token) public onlyAdmin returns (bool success, uint index) {
+        (success, index) = _pushSupportedToken(token);
+        return (success, index);
+    }
+
+    function pullSupportedToken(address token) public onlyAdmin returns (bool success, uint index) {
+        (success, index) = _pullSupportedToken(token);
+        return (success, index);
+    }
+
+    function pushWhitelistedAccount(address account) public onlyAdmin returns (bool success, uint index) {
+        (success, index) = Toolkit.addressPush(configuration.whitelistedAccounts, account);
+        emit AccountPushedInWhitelistedAccounts(account);
+        return (success, index);
+    }
+
+    function pullWhitelistedAccount(address account) public onlyAdmin returns (bool success, uint index) {
+        (success, index) = Toolkit.addressPull(configuration.whitelistedAccounts, account);
+        emit AccountPulledInWhitelistedAccounts(account);
+        return (success, index);
+    }
+
+    /// @dev only send a small amount that should be locked within the safe ... $1 should be enough
+    function createNewSafe(string memory name, string memory symbol, address tokenIn, uint amountIn) public returns (Safe memory newSafe, uint index) {
+        (uint price,) = quickSwapPlugIn.getPrice(configuration.denominator, tokenIn, amountIn);
+        if (price <= 1000000000000) { revert("Solstice: liquidity lock amount is too low please deposit an amount slightly less than $1 in value"); }
+        if (price >= 1 * (10**18)) { revert("Solstice: liquidity lock amount is too great please deposit an amount slightly less than $1 in value"); }
+        IERC20(tokenIn).transferFrom(msg.sender, address(this), amountIn);
+        uint newIndex = _increment();
+        newSafe.name = name;
+        newSafe.launch = uint64(block.timestamp);
+        newSafe.owner = msg.sender;
+        newSafe.token = new Token(name, symbol);
+        newSafe.token.mint(address(this), 1000000);
+        configuration.safes[newIndex] = newSafe;
+        _save();
+        return (newSafe, newIndex);
+    }
+
+    function deposit(uint index, address tokenIn, uint amountIn) public {
+        (bool success,) = Toolkit.addressContains(configuration.supportedTokens, tokenIn);
+        if (!success) { revert("Solstice: cannot accept deposit because tokenIn is not supported"); }
+        (uint amountToMint) = quickSwapPlugIn.getAmountToMint(configuration.supportedTokens, configuration.safes[index].amountsTokens, configuration.denominator, address(configuration.safes[index].token), tokenIn, amountIn);
+        IERC20(tokenIn).transferFrom(msg.sender, address(this), amountIn);
+        configuration.safes[index].amountsTokens[map[tokenIn]];
+        configuration.safes[index].token.mint(msg.sender, amountToMint);
+        _save();
+    }
+
+    
+    function withdraw(uint index, uint amountIn) public {
+        (uint valueToSend) = quickSwapPlugIn.getValueToSend(configuration.supportedTokens, configuration.safes[index].amountsTokens, configuration.denominator, address(configuration.safes[index].token), amountIn);
+        uint totalSupply = configuration.safes[index].token.totalSupply();
+        uint ownershipBasisPoints = (amountIn * 10000) / totalSupply;
+        IERC20(configuration.safes[index].token).transferFrom(msg.sender, address(this), amountIn);
+        configuration.safes[index].token.burn(amountIn);
+        uint denominatorBalance = configuration.safes[index].amountsTokens[map[configuration.denominator]];
+        if (denominatorBalance >= valueToSend) {
+            IERC20(configuration.denominator).transfer(msg.sender, valueToSend);
+        }
+        else { /// pay in kind
+            uint[] memory amountsToSend;
+            for (uint i = 0; i < configuration.supportedTokens.length; i++) {
+                amountsToSend[i] = (configuration.safes[index].amountsTokens[i] / 10000) * ownershipBasisPoints;
+                IERC20(configuration.supportedTokens[i]).transfer(msg.sender, amountsToSend[i]);
+            }
+        }
+        _save();
+    }
+
+    /// will likely require a rate limiter here or a reward of plug in as we need a way to get tokeOut amounts
+    function swap(uint index, address tokenIn, address tokenOut, uint amountIn, uint gate) public onlyOwner(index) {
+        (bool success,) = Toolkit.addressContains(configuration.supportedTokens, tokenIn);
+        require(success, "Solstice: tokenIn not supported");
+        (success,) = Toolkit.addressContains(configuration.supportedTokens, tokenOut);
+        require(success, "Solstice: tokenOut not supported");
+        Safe storage safe = configuration.safes[index];
+        uint balanceA = safe.amountsTokens[map[tokenIn]];
+        if (balanceA < amountIn) { revert("Solstice: insufficient balance"); }
+        uint bA = IERC20(tokenOut).balanceOf(address(this));
+        safe.amountsTokens[map[tokenIn]] -= amountIn;
+        quickSwapPlugIn.swapTokensSlippage(tokenIn, tokenOut, amountIn, 100, gate, address(this), address(this));
+        uint bB = IERC20(tokenOut).balanceOf(address(this));
+        safe.amountsTokens[map[tokenOut]] += (bB - bA);
+    }
+
+    function _load() private view returns (Configuration memory) {
+        bytes32 bytesSolsticeConfiguration = keccak256(abi.encode("solstice", "configuration"));
+        bytes memory encodedConfiguration = repository.getBytes(bytesSolsticeConfiguration);
+        return abi.decode(encodedConfiguration, (Configuration));
+    }
+
+    function _onlyAdmin() private view {
+        if (msg.sender != admin) {
+            revert ("Solstice: caller is not admin");
+        }
+    }
+
+    function _onlyOwner(uint index) private view {
+        if (msg.sender != configuration.safes[index].owner) {
+            revert ("Solstice: caller is not the owner of this safe");
+        }
+    }
+
+    function _onlyWhitelisted() private view {
+        (bool success,) = Toolkit.addressContains(configuration.whitelistedAccounts, msg.sender);
+        if (!success) {
+            revert ("Solstice: caller is not whitelisted");
+        }
+    }
+
+    function _pushSupportedToken(address token) private returns (bool success, uint index) {
+        (success, index) = Toolkit.addressPush(configuration.supportedTokens, token);
+        map[token] = index;
+        emit TokenPushedInSupported(token);
+        return (success, index);
+    }
+
+    function _pullSupportedToken(address token) private returns (bool success, uint index) {
+        (success, index) = Toolkit.addressPull(configuration.supportedTokens, token);
+        map[token] = 0;
+        emit TokenPulledInSupported(token);
+        return (success, index);
+    }
+
+    function _save() private {
+        bytes32 bytesSolsticeConfiguration = keccak256(abi.encode("solstice", "configuration"));
+        repository.setBytes(bytesSolsticeConfiguration, abi.encode(configuration));
     }
 
     function _increment() private returns (uint index) {
         bytes32 uintSolsticeCount = keccak256(abi.encode("solstice", "count"));
-        index = repo.getUint(uintSolsticeCount) + 1;
-        repo.setUint(uintSolsticeCount, index);
+        index = repository.getUint(uintSolsticeCount) + 1;
+        repository.setUint(uintSolsticeCount, index);
         return index;
     }
-
-    
 }
