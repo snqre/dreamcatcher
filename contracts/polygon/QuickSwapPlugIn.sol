@@ -6,32 +6,26 @@ import "contracts/polygon/deps/openzeppelin/security/Pausable.sol";
 import "contracts/polygon/deps/openzeppelin/security/ReentrancyGuard.sol";
 import "contracts/polygon/deps/openzeppelin/token/ERC20/extensions/IERC20Metadata.sol";
 import "contracts/polygon/deps/openzeppelin/access/AccessControlEnumerable.sol";
-import "contracts/polygon/interfaces/IRepository.sol";
 import "contracts/polygon/deps/uniswap/interfaces/IUniswapV2Factory.sol";
 import "contracts/polygon/deps/uniswap/interfaces/IUniswapV2Pair.sol";
 import "contracts/polygon/deps/uniswap/interfaces/IUniswapV2Router02.sol";
 import "contracts/polygon/Matcher.sol";
+import "contracts/polygon/deps/openzeppelin/utils/structs/EnumerableSet.sol";
 
 contract QuickSwapPlugIn is 
 AccessControlEnumerable,
 ReentrancyGuard,
 Pausable 
 {
-    bytes32 admin;
-    bytes32 consumer;
+    using EnumerableSet for EnumerableSet.AddressSet;
 
-    address private _deployer;
-    bool private _init;
+    bytes32 constant CONSUMER = keccak256("CONSUMER");
 
-    IUniswapV2Factory public uniswapV2Factory;
-    IUniswapV2Router02 public uniswapV2Router02;
-    IRepository public repository;
+    IUniswapV2Factory public uniswapV2Factory
+    = IUniswapV2Factory(0x5757371414417b8C6CAad45bAeF941aBc7d3Ab32);
 
-    modifier whenInitialized()
-    {
-        require(_init);
-        _;
-    }
+    IUniswapV2Router02 public uniswapV2Router02
+    = IUniswapV2Router02(0xa5E0829CaCEd8fFDD4De3c43696c57F7D7A678ff);
 
     event Swap
     (
@@ -46,14 +40,8 @@ Pausable
 
     constructor() 
     {
-        _deployer = msg.sender;
-        _init = false;
-
-        admin = keccak256(abi.encode("admin"));
-        consumer = keccak256(abi.encode("consumer"));
-
-        _grantRole(admin, msg.sender);
-        _grantRole(consumer, msg.sender);
+        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        _grantRole(CONSUMER, msg.sender);
     }
 
     /**
@@ -75,8 +63,7 @@ Pausable
     )
     public view
     whenNotPaused
-    whenInitialized
-    onlyRole(consumer)
+    onlyRole(CONSUMER)
     returns
     (
         address,
@@ -121,8 +108,7 @@ Pausable
     )
     public view
     whenNotPaused
-    whenInitialized
-    onlyRole(consumer)
+    onlyRole(CONSUMER)
     returns (uint8)
     {
         (
@@ -186,8 +172,7 @@ Pausable
     )
     public view
     whenNotPaused
-    whenInitialized
-    onlyRole(consumer)
+    onlyRole(CONSUMER)
     returns 
     (
         uint256,
@@ -244,5 +229,121 @@ Pausable
                 "QuickSwapPlugIn: pair not found"
             );
         }
+    }
+
+    function swapTokens
+    (
+        address tokenIn,
+        address tokenOut,
+        uint256 amountIn,
+        uint256 amountOutMin,
+        address gate,
+        address from,
+        address to
+    )
+    public
+    whenNotPaused
+    onlyRole(CONSUMER)
+    returns (uint256[] memory)
+    {
+        IERC20Metadata tknIn = IERC20Metadata(tokenIn);
+        amountIn *= 10**tknIn.decimals();
+        amountIn /= 10**18;
+        tknIn.transferFrom(from, address(this), amountIn);
+        tknIn.approve(
+            address(uniswapV2Router02),
+            amountIn
+        );
+
+        address[] memory path;
+        path = new address[](3);
+        path[0] = tokenIn;
+        path[1] = gate;
+        path[2] = tokenOut;
+        uint256[] memory amounts 
+        = uniswapV2Router02.swapExactTokensForTokens
+        (
+            amountIn,
+            amountOutMin,
+            path,
+            to,
+            block.timestamp
+        );
+
+        emit Swap
+        (
+            tokenIn,
+            tokenOut,
+            amountIn,
+            amountOutMin,
+            amountOut,
+            from,
+            to
+        );
+
+        return amounts;
+    }
+
+    function swapTokensSlippage
+    (
+        address tokenIn,
+        address tokenOut,
+        uint256 amountIn,
+        uint256 slippage,
+        address gate,
+        address from,
+        address to
+    )
+    public
+    whenNotPaused
+    onlyRole(CONSUMER)
+    returns (uint256[] memory)
+    {
+        IERC20Metadata tknIn = IERC20Metadata(tokenIn);
+        amountIn *= 10**tknIn.decimals();
+        amountIn /= 10**18;
+        tknIn.transferFrom(from, address(this), amountIn);
+        tknIn.approve(
+            address(uniswapV2Router02),
+            amountIn
+        );
+        /// needs to be double checked because price form changed
+        (uint256 amountOutMin,) = getPrice
+        (
+            tokenOut,
+            tokenIn,
+            amountIn
+        );
+
+        amountOutMin *= 10000 - slippage;
+        amountOutMin /= 10000;
+
+        address[] memory path;
+        path = new address[](3);
+        path[0] = tokenIn;
+        path[1] = gate;
+        path[2] = tokenOut;
+        uint256[] memory amounts 
+        = uniswapV2Router02.swapExactTokensForTokens
+        (
+            amountIn,
+            amountOutMin,
+            path,
+            to,
+            block.timestamp
+        );
+
+        emit Swap
+        (
+            tokenIn,
+            tokenOut,
+            amountIn,
+            amountOutMin,
+            amountOut,
+            from,
+            to
+        );
+
+        return amounts;
     }
 }
