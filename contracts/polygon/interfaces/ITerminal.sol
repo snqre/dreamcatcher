@@ -40,10 +40,6 @@ interface ITerminal {
         bool terminated
     );
 
-    function active() external view returns (string[] memory);
-
-    function terminated() external view returns (string[] memory);
-
     function deploy(string memory module) external;
 
     function upgrade(string memory module, address newLogic) external;

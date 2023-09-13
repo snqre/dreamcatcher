@@ -12,7 +12,6 @@ contract Terminal {
 
     State[] private _modules;
 
-    uint256 private _count;
     address admin;
 
     mapping(string => uint256) private _modulesMapping;
@@ -31,6 +30,7 @@ contract Terminal {
     constructor(string memory name_) {
         admin = msg.sender;
         _meta.name = name_;
+        _modules.push(new State(""));
     }
 
     function name() public view returns (string memory) {
@@ -93,38 +93,11 @@ contract Terminal {
         );
     }
 
-    /// returns active modules string array
-    function active() public view returns (string[] memory) {
-        uint256 count;
-        string[] memory list;
-        for (uint256 i = 1; i < _modules.length; i++) {
-            if (!_terminated[i]) {
-                list[count] = _modules[i].module();
-                count += 1;
-            }
-        }
-        return list;
-    }
-
-    /// returns terminated modules string array
-    function terminated() public view returns (string[] memory) {
-        uint256 count;
-        string[] memory list;
-        for (uint256 i = 1; i < _modules.length; i++) {
-            if (_terminated[i]) {
-                list[count] = _modules[i].module();
-                count += 1;
-            }
-        }
-        return list;
-    }
-
     /// deploys new State contract as a module
     function deploy(string memory module) public onlyAdmin {
         _reqNotInUse(module);
-        uint256 index = _increment();
-        _modules[index] = new State(module);
-        _modulesMapping[module] = index;
+        _modules.push(new State(module));
+        _modulesMapping[module] = _modules.length - 1;
         emit Deploy(module, address(_modules[_modulesMapping[module]]));
     }
 
@@ -174,10 +147,5 @@ contract Terminal {
                 require(Match.isSameString(module, _modules[i].module()), "Terminal: module name not in use");
             }
         }
-    }
-
-    function _increment() private returns (uint256) {
-        _count += 1;
-        return _count;
     }
 }
