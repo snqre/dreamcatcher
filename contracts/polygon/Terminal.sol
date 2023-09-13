@@ -112,9 +112,8 @@ contract Terminal {
     function rename(string memory module, string memory newModule) public onlyAdmin {
         _reqInUse(module);
         _reqNotInUse(newModule);
-        uint256 index = _modulesMapping[module];
+        _modulesMapping[newModule] = _modulesMapping[module];
         delete _modulesMapping[module];
-        _modulesMapping[newModule] = index;
         _modules[_modulesMapping[newModule]].update(newModule);
         emit Rename(module, newModule, address(_modules[_modulesMapping[module]]));
     }
@@ -134,18 +133,10 @@ contract Terminal {
     }
 
     function _reqNotInUse(string memory module) private view {
-        for (uint256 i = 0; i < _modules.length; i++) {
-            if (!_terminated[i]) {
-                require(!Match.isSameString(module, _modules[i].module()), "Terminal: module name in use");
-            }
-        }
+        require(_modulesMapping[module] == 0, "Terminal: module name in use");
     }
 
     function _reqInUse(string memory module) private view {
-        for (uint256 i = 0; i < _modules.length; i++) {
-            if (!_terminated[i]) {
-                require(Match.isSameString(module, _modules[i].module()), "Terminal: module name not in use");
-            }
-        }
+        require(_modulesMapping[module] != 0, "Terminal: module name not in use");
     }
 }
