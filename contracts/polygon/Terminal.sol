@@ -97,7 +97,7 @@ contract Terminal {
             _terminated[_modulesMapping[module]]
         );
     }
-    
+
     function count() public view returns (uint256) {
         return _modules.length;
     }
@@ -127,6 +127,7 @@ contract Terminal {
         emit Rename(module, newModule, address(_modules[_modulesMapping[module]]));
     }
 
+    /// THIS BREAKS THE VIEW FUNCTION
     /// WARNING: will permanently lock a State contract and it will no longer be able to store new data
     function terminate(string memory module) public onlyAdmin {
         _reqInUse(module);
