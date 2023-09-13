@@ -38,22 +38,27 @@ contract Terminal {
     }
 
     function access(string memory module, bytes32 location) public view returns (bytes memory) {
+        _reqInUse(module);
         return _modules[_modulesMapping[module]].access(location);
     }
 
     function version(string memory module) public view returns (uint256) {
+        _reqInUse(module);
         return _modules[_modulesMapping[module]].version();
     }
 
     function latest(string memory module) public view returns (address) {
+        _reqInUse(module);
         return _modules[_modulesMapping[module]].latest();
     }
 
     function previous(string memory module, uint index) public view returns (address) {
+        _reqInUse(module);
         return _modules[_modulesMapping[module]].previous(index);
     }
 
     function empty(string memory module, bytes32 location) public view returns (bool) {
+        _reqInUse(module);
         return _modules[_modulesMapping[module]].empty(location);
     }
 
@@ -91,6 +96,10 @@ contract Terminal {
             _modules[index].version(),
             _terminated[_modulesMapping[module]]
         );
+    }
+    
+    function count() public view returns (uint256) {
+        return _modules.length;
     }
 
     /// deploys new State contract as a module
