@@ -6,6 +6,14 @@ import "contracts/polygon/libraries/Match.sol";
 import "contracts/polygon/State.sol";
 
 /// POSSIBLY USE ENUMERABLE SETS INSTEAD OF State[] and use IState??
+/// OPTION BETWEEN CORE AND LOCKABLE CONTRACTS
+/// LOCKED LIST AND ACTIVE LIST
+/// ABILITY TO TRANSFER OWNERSHIP
+/// AUTHENTICATOR SYSTEM ON Terminal
+/// SHARED STATE THE TERMINAL IS ALSO A STATE BUT ITS SHARED AMONGST IMPLEMENTATIONS
+    /// ROLES
+/// ABILITY TO REATTACH STATES WHICH HAVE BEEN DROPPED
+/// AND DETACH
 contract Terminal {
     struct Meta { string name; }
 

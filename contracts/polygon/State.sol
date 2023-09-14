@@ -1,56 +1,199 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity 0.8.19;
+pragma solidity 0.8.19; /** compiler is latest usable on polygon */
+
+import "contracts/polygon/external/openzeppelin/security/Pausable.sol";
 
 import "contracts/polygon/external/openzeppelin/utils/structs/EnumerableSet.sol";
 
-contract State {
+/**
+* minimalist implementation of ERC930
+* able to set core or lockable
+* able to revert
+ */
+contract State is Pausable {
     using EnumerableSet for EnumerableSet.AddressSet;
     using EnumerableSet for EnumerableSet.Bytes32Set;
 
-    struct Meta { string module; }
+    /// State Variables
 
-    Meta private _meta;
+    Dat private _dat;
 
-    address public admin;
+    address public terminal;
     address public logic;
 
-    bool private _lock;
+    bool private _locked;
+    bool private _core;
+    bool private _timer;
+    bool private _timerSet;
+
+    uint64 private _timestamp;
 
     mapping(bytes32 => bytes) public state;
 
-    EnumerableSet.Bytes32Set private _isNotEmpty;
+    EnumerableSet.Bytes32Set private _empty;
 
-    EnumerableSet.AddressSet private _logics;
+    EnumerableSet.AddressSet private _implementations;
+
+    /// Events
+
+    event Stored(address indexed account, bytes32 indexed location, bytes indexed data);
+    event Updated(address indexed account, string indexed module);
+    event TimerSet(address indexed account, uint64 indexed duration);
+    event Upgraded(address indexed account, address indexed newLogic);
+    event Locked(address indexed account);
+    event Wiped(address indexed account);
+
+    /// Function Modifiers
 
     modifier onlyLogic() {
-        _onlyLogic();
+        require(msg.sender == logic, "State: msg.sender != logic");
         _;
     }
 
-    modifier onlyAdmin() {
-        _onlyAdmin();
+    modifier onlyTerminal() {
+        require(msg.sender == terminal, "State: msg.sender != terminal");
         _;
     }
 
-    modifier whenNotLocked() {
-        _whenNotLocked();
+    modifier onlyNotLocked() {
+        require(!_locked, "State: permanently locked");
         _;
     }
 
-    event Store(bytes32 indexed location, bytes indexed data);
-    event Update(string indexed module);
-    event Upgrade(address indexed newLogic);
-    event Lock();
-    event Wipe();
-
-    constructor(string memory module_) {
-        admin = msg.sender;
-        logic = msg.sender;
-        update(module_);
+    modifier onlyNotTimedOut() {
+        if (_timer && _timerSet) {
+            require(block.timestamp <= _timestamp, "State: permanently locked");
+        }
+        _;
     }
+
+    modifier onlyNotCore() {
+        require(!_core, "State: is core");
+        _;
+    }
+
+    modifier onlyNotTimed() {
+        require(_timestamp == 0, "State: is timed");
+        _;
+    }
+
+    modifier onlyIfTimerNotSet() {
+        require(!_timerSet, "State: timer already set");
+        _;
+    }
+
+    modifier onlyIfNotAddressZero() {
+        require(msg.sender != address(0), "State: msg.sender is address zero");
+        _;
+    }
+
+    /// Struct, Arrays or Enums
+
+    struct Dat { string module; }
+
+    /// Constructor
+
+    /** @param isCore if the state is lockable or can expire */
+    constructor(string memory nameModule, bool isCore) payable {
+        terminal = msg.sender;
+        /** logic starts as address zero which is unable to call any functions */
+        _locked = false;
+        _core = isCore;
+        _timer = false;
+        _timerSet = false;
+        _timestamp = 0;
+        update(nameModule);
+    }
+
+    /// External
+
+    /**
+    * @dev set a timer and once block.timestamp is over new data will not be able to be stored
+    * SHOULD only be able to be called by terminal
+    * SHOULD only be able to called if not locked
+    * SHOULD only be able to called if not already timed out
+    * SHOULD only be able to called if the timer was not set already
+    * SHOULD only be able to called if the state is not a core module
+    * SHOULD only be able to called if not paused
+    * WARNING permanently locks entire contract!
+    * SHOULD only be able to be called if caller is not address zero
+     */
+    function timer(uint64 duration) external onlyTerminal() onlyNotLocked() onlyNotTimedOut() onlyIfTimerNotSet() onlyNotCore() whenNotPaused() onlyIfNotAddressZero() {
+        _timer = true;
+        _timerSet = true;
+        _timestamp = uint64(block.timestamp);
+        /** x = x + y is more gas effective than x += y */
+        _timestamp = _timestamp + duration;
+        emit TimerSet(msg.sender, duration);
+    }
+
+    /**
+    * @dev lock the state so new data will not be able to be stored
+    * SHOULD only be able to be called by terminal
+    * SHOULD only be able to be called if not locked
+    * SHOULD only be able to be called if not timed out
+    * SHOULD only be able to be called if not timed
+    * SHOULD only be able to be called if timer was not set already
+    * SHOULD only be able to be called if the state is not a core module
+    * SHOULD only be able to be called if not paused
+    * SHOULD only be able to be called if caller is not address zero
+    * WARNING permanently locks entire contract!
+     */
+    function lock() external onlyTerminal() onlyNotLocked() onlyNotTimedOut() onlyNotTimed() onlyIfTimerNotSet() onlyNotCore() whenNotPaused() onlyIfNotAddressZero() {
+        _locked = true;
+        emit Locked(msg.sender);
+    }
+
+    /**
+    * @dev wipe all data within state mapping
+    * SHOULD only be able to be called by current logic address
+    * SHOULD only be able to be called if not locked
+    * SHOULD only be able to be called if not timed out
+    * SHOULD only be able to be called if not paused
+    * SHOULD only be able to be called if caller is not address zero
+    * note unchecked because if the iteration gets large enough there wont be a enough gas to continue
+     */
+    function wipe() external onlyLogic() onlyNotLocked() onlyNotTimedOut() whenNotPaused() onlyIfNotAddressZero() {
+        unchecked {
+            bytes memory emptyBytes;
+            uint256 len = _empty.length();
+            for (uint256 i = 0; i < len; ++i) {
+                store(_empty.at(i - 1), emptyBytes);
+            }
+            emit Wiped(msg.sender);
+        }
+    }
+
+    /**
+    * @dev upgrade logic by giving permission to new logic
+    * SHOULD only be able to be called by terminal
+    * SHOULD only be able to be called if not locked
+    * SHOULD only be able to be called if not timed out
+    * SHOULD only be able to be called if not paused
+    * SHOULD only be able to be called if caller is not address zero
+     */
+    function upgrade(address newLogic) external onlyTerminal() onlyNotLocked() onlyNotTimedOut() whenNotPaused() onlyIfNotAddressZero() {
+        require(!_implementations.contains(newLogic), "State: previous implementation");
+        require(newLogic != address(0), "State: newLogic is address zero");
+        _implementations.add(newLogic);
+        logic = newLogic;
+        emit Upgraded(msg.sender, newLogic);
+    }
+
+    function pause() external onlyTerminal() onlyNotLocked() onlyNotTimedOut() onlyIfNotAddressZero() {
+        _pause();
+        /** @dev event inherited and emited within _pause */
+    }
+
+    function unpause() external onlyTerminal() onlyNotLocked() onlyNotTimedOut() onlyIfNotAddressZero() {
+        _unpause();
+        /** @dev event inherited and emitted within _unpause */
+    }
+
+    /// Public View
 
     function module() public view returns (string memory) {
-        return _meta.module;
+        return _dat.module;
     }
 
     function access(bytes32 location) public view returns (bytes memory) {
@@ -58,15 +201,15 @@ contract State {
     }
 
     function version() public view returns (uint256) {
-        return _logics.length();
+        return _implementations.length();
     }
 
     function latest() public view returns (address) {
-        return _logics.at(version() - 1);
+        return _implementations.at(version() - 1);
     }
 
     function previous(uint index) public view returns (address) {
-        return _logics.at(index);
+        return _implementations.at(index);
     }
 
     function empty(bytes32 location) public view returns (bool) {
@@ -74,47 +217,40 @@ contract State {
         return keccak256(state[location]) == keccak256(emptyBytes);
     }
 
-    function store(bytes32 location, bytes memory data) public onlyLogic whenNotLocked {
-        if (_isNotEmpty.contains(location) && empty(location)) { _isNotEmpty.remove(location); }
-        if (!_isNotEmpty.contains(location) && !empty(location)) { _isNotEmpty.add(location); }
+    function timestamp() public view returns (uint64) {
+        return _timestamp;
+    }
+
+    function locked() public view returns (bool) {
+        return _locked;
+    }
+
+    function core() public view returns (bool) {
+        return _core;
+    }
+
+    /// Public
+
+    /**
+    * @dev store data within state mapping
+    * @param location key of where to store the data
+    * @param data can store any type of data by converting to bytes
+    * SHOULD only be able to be called by current logic address
+    * SHOULD only be able to be called if not locked
+    * SHOULD only be able to be called if not timed out
+    * SHOULD only be able to be called if not paused
+    * SHOULD only be able to be called if caller is not address zero
+     */
+    function store(bytes32 location, bytes memory data) public onlyLogic() onlyNotLocked() onlyNotTimedOut() whenNotPaused() onlyIfNotAddressZero() {
+        if (_empty.contains(location) && empty(location)) { _empty.remove(location); }
+        if (!_empty.contains(location) && !empty(location)) { _empty.add(location); }
         state[location] = data;
-        emit Store(location, data);
+        emit Stored(msg.sender, location, data);
     }
 
-    function wipe() public onlyLogic whenNotLocked {
-        bytes memory emptyBytes;
-        for (uint256 i = 0; i < _isNotEmpty.length(); i++) {
-            store(_isNotEmpty.at(i), emptyBytes);
-        }
-        emit Wipe();
-    }
-
-    function upgrade(address newLogic) public onlyAdmin {
-        require(newLogic != address(0), "State: new logic is address zero");
-        _logics.add(newLogic);
-        logic = newLogic;
-        emit Upgrade(newLogic);
-    }
-
-    function update(string memory module_) public onlyAdmin {
-        _meta.module = module_;
-        emit Update(module_);
-    }
-
-    function lock() public onlyAdmin whenNotLocked {
-        _lock = true;
-        emit Lock();
-    }
-
-    function _onlyLogic() private view {
-        require(msg.sender == logic, "State: msg.sender != logic");
-    }
-
-    function _onlyAdmin() private view {
-        require(msg.sender == admin, "State: msg.sender != admin");
-    }
-
-    function _whenNotLocked() private view {
-        require(!_lock, "State: permanently locked");
+    /** @dev updates module name */
+    function update(string memory nameModule) public onlyTerminal() whenNotPaused() onlyIfNotAddressZero() {
+        _dat.module = nameModule;
+        emit Updated(msg.sender, nameModule);
     }
 }
