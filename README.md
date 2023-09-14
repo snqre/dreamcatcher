@@ -1,3 +1,10 @@
+# Dreamcatcher
+## Protocol Documentation
+
+- **Terminal** The Terminal is 
+
+
+
 # Dreamcatcher: Mirai Platform Documentation
 
 ## Introduction
