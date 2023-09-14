@@ -1,4 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
+
+// File: contracts\polygon\external\openzeppelin\utils\Context.sol
+
+// OpenZeppelin Contracts v4.4.1 (utils/Context.sol)
+
 pragma solidity ^0.8.19;
 
 /**
@@ -21,6 +26,11 @@ abstract contract Context {
     }
 }
 
+// File: contracts\polygon\external\openzeppelin\security\Pausable.sol
+
+// OpenZeppelin Contracts (last updated v4.7.0) (security/Pausable.sol)
+
+pragma solidity ^0.8.19;
 /**
  * @dev Contract module which allows children to implement an emergency stop
  * mechanism that can be triggered by an authorized account.
@@ -119,6 +129,13 @@ abstract contract Pausable is Context {
         emit Unpaused(_msgSender());
     }
 }
+
+// File: contracts\polygon\external\openzeppelin\utils\structs\EnumerableSet.sol
+
+// OpenZeppelin Contracts (last updated v4.9.0) (utils/structs/EnumerableSet.sol)
+// This file was procedurally generated from scripts/generate/templates/EnumerableSet.js.
+
+pragma solidity ^0.8.19;
 
 /**
  * @dev Library for managing
@@ -493,6 +510,10 @@ library EnumerableSet {
     }
 }
 
+// File: contracts\polygon\interfaces\IState.sol
+
+pragma solidity 0.8.19;
+
 interface IState {
     event Stored(address indexed msgSender, bytes32 indexed location, bytes indexed data);
 
@@ -551,6 +572,9 @@ interface IState {
     function unpause() external;
 }
 
+// File: contracts\polygon\State.sol
+
+pragma solidity 0.8.19; /** compiler is latest usable on polygon */
 /**
 * minimalist implementation of ERC930
 * able to set core or lockable
@@ -819,6 +843,9 @@ contract State is Pausable {
     }
 }
 
+// File: contracts\polygon\Terminal.sol
+
+pragma solidity 0.8.19;
 /**
 * control routers, upgrades, all in one place
 * call Terminal to find the up to date location of all other modules and use the appropriate interface
