@@ -139,7 +139,7 @@ contract Terminal is Pausable {
 
     function searchByName(string memory module) public view
     returns (
-        string memory module,
+        string memory module_,
         address terminal_,
         address state_,
         address logic_,
