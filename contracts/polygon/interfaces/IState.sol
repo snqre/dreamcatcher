@@ -2,35 +2,57 @@
 pragma solidity 0.8.19;
 
 interface IState {
-    event Store(bytes32 indexed location, bytes indexed data);
-    
-    event Update(string indexed module);
+    event Stored(address indexed msgSender, bytes32 indexed location, bytes indexed data);
 
-    event Upgrade(address indexed newLogic);
+    event Updated(address indexed msgSender, string indexed module);
 
-    event Lock();
+    event TimerSet(address indexed msgSender, uint64 indexed duration);
 
-    event Wupe();
+    event Upgraded(address indexed msgSender, address indexed newLogic);
 
-    function module() external view returns (string memory);
+    event Locked(address indexed msgSender);
 
-    function access(bytes32 location) external view returns (bytes memory);
-
-    function version() external view returns (uint256);
-
-    function latest() external view returns (address);
+    event Wiped(address indexed msgSender);
 
     function previous(uint index) external view returns (address);
 
+    function latest() external view returns (address);
+
+    function access(bytes32 location) external view returns (bytes memory);
+
+    function module() external view returns (string memory);
+
+    function version() external view returns (uint256);
+
     function empty(bytes32 location) external view returns (bool);
 
+    function timestamp() external view returns (uint64);
+
+    function locked() external view returns (bool);
+
+    function core() external view returns (bool);
+
+    function timerSet() external view returns (bool);
+
+    function logic() external view returns (address);
+
+    function terminal() external view returns (address);
+
+    function state(bytes32) external view returns (bytes memory);
+
     function store(bytes32 location, bytes memory data) external;
+
+    function update(string memory nameModule) external;
+
+    function timer(uint64 duration) external;
+
+    function lock() external;
 
     function wipe() external;
 
     function upgrade(address newLogic) external;
 
-    function update(string memory module) external;
+    function pause() external;
 
-    function lock() external;
+    function unpause() external;
 }
