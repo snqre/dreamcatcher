@@ -1,161 +1,270 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity 0.8.19;
 
-import "contracts/polygon/libraries/Match.sol";
+import { Pausable } from "contracts/polygon/external/openzeppelin/security/Pausable.sol";
 
-import "contracts/polygon/State.sol";
+import { EnumerableSet } from "contracts/polygon/external/openzeppelin/utils/structs/EnumerableSet.sol";
 
-/// POSSIBLY USE ENUMERABLE SETS INSTEAD OF State[] and use IState??
-/// OPTION BETWEEN CORE AND LOCKABLE CONTRACTS
-/// LOCKED LIST AND ACTIVE LIST
-/// ABILITY TO TRANSFER OWNERSHIP
-/// AUTHENTICATOR SYSTEM ON Terminal
-/// SHARED STATE THE TERMINAL IS ALSO A STATE BUT ITS SHARED AMONGST IMPLEMENTATIONS
-    /// ROLES
-/// ABILITY TO REATTACH STATES WHICH HAVE BEEN DROPPED
-/// AND DETACH
-contract Terminal {
-    struct Meta { string name; }
+import { IState } from "contracts/polygon/interfaces/IState.sol";
 
-    Meta private _meta;
+contract Terminal is Pausable {
+    using EnumerableSet for EnumerableSet.AddressSet;
 
-    State[] private _modules;
+    /// State Variables
 
-    address admin;
+    Dat private _dat;
 
-    mapping(string => uint256) private _modulesMapping;
-    mapping(uint256 => bool) private _terminated;
+    address public admin;
+
+    EnumerableSet.AddressSet private _module;
+
+    EnumerableSet.AddressSet private _active;
+    EnumerableSet.AddressSet private _locked;
+    EnumerableSet.AddressSet private _paused;
+    
+    mapping(string => uint256) public moduleMapping;
+
+    /// Events
+
+    event Deployed(address indexed msgSender, string indexed module);
+    event Upgraded(address indexed msgSender, string indexed module, address indexed newLogic);
+    event Rename(address indexed msgSender, string indexed module, string indexed newModule);
+
+    /// Function Modifiers
 
     modifier onlyAdmin() {
-        _onlyAdmin();
+        require(msg.sender == admin, "Terminal: msg.sender != admin");
         _;
     }
+    
+    /// Struct, Arrays or Enums
 
-    event Deploy(string indexed module, address indexed state);
-    event Upgrade(string indexed module, address indexed newLogic, address indexed state);
-    event Rename(string indexed module, string indexed newModule, address indexed state);
-    event Terminate(string indexed module, address indexed state);
+    struct Dat { string name; }
 
-    constructor(string memory name_) {
+    /// Constructor
+
+    constructor(string memory name) payable {
         admin = msg.sender;
-        _meta.name = name_;
-        _modules.push(new State(""));
+        _dat.name = name;
+        _module.add(address(new State("root", false)));
     }
 
     function name() public view returns (string memory) {
-        return _meta.name;
+        return _dat.name;
     }
 
     function access(string memory module, bytes32 location) public view returns (bytes memory) {
         _reqInUse(module);
-        return _modules[_modulesMapping[module]].access(location);
+        IState state = IState(_module[moduleMapping[module]]);
+        return state.access(location);
     }
 
     function version(string memory module) public view returns (uint256) {
         _reqInUse(module);
-        return _modules[_modulesMapping[module]].version();
+        IState state = IState(_module[moduleMapping[module]]);
+        return state.version();
     }
 
     function latest(string memory module) public view returns (address) {
         _reqInUse(module);
-        return _modules[_modulesMapping[module]].latest();
+        IState state = IState(_module[moduleMapping[module]]);
+        return state.latest();
     }
 
-    function previous(string memory module, uint index) public view returns (address) {
+    function previous(string memory module, uint256 index) public view returns (address) {
         _reqInUse(module);
-        return _modules[_modulesMapping[module]].previous(index);
+        IState state = IState(_module[moduleMapping[module]]);
+        return state.previous(index);
     }
 
     function empty(string memory module, bytes32 location) public view returns (bool) {
         _reqInUse(module);
-        return _modules[_modulesMapping[module]].empty(location);
+        IState state = IState(_module[moduleMapping[module]]);
+        return state.empty(location);
     }
 
-    /// returns module data by using string search
-    function modules(string memory module) public view 
+    function timestamp(string memory module) public view returns (uint64) {
+        _reqInUse(module);
+        IState state = IState(_module[moduleMapping[module]]);
+        return state.timestamp();
+    }
+
+    function locked(string memory module) public view returns (bool) {
+        _reqInUse(module);
+        IState state = IState(_module[moduleMapping[module]]);
+        return state.locked();
+    }
+
+    function core(string memory module) public view returns (bool) {
+        _reqInUse(module);
+        IState state = IState(_module[moduleMapping[module]]);
+        return state.core();
+    }
+
+    function timerSet(string memory module) public view returns (bool) {
+        _reqInUse(module);
+        IState state = IState(_module[moduleMapping[module]]);
+        return state.timerSet();
+    }
+
+    function logic(string memory module) public view returns (address) {
+        _reqInUse(module);
+        IState state = IState(_module[moduleMapping[module]]);
+        return state.logic();
+    }
+
+    function terminal(string memory module) public view returns (address) {
+        _reqInUse(module);
+        IState state = IState(_module[moduleMapping[module]]);
+        return state.terminal();
+    }
+
+    function searchByName(string memory module) public view
     returns (
-        string memory module_,
+        address terminal,
         address state,
         address logic,
-        uint256 version_,
-        bool terminated_
+        uint256 version,
+        uint64 timestamp,
+        bool core,
+        bool locked,
+        bool paused,
+        bool timerSet
     ) {
+        _reqInUse(module);
+        IState state = IState(_module[moduleMapping[module]]);
         return (
-            _modules[_modulesMapping[module]].module(),
-            address(_modules[_modulesMapping[module]]),
-            _modules[_modulesMapping[module]].latest(),
-            _modules[_modulesMapping[module]].version(),
-            _terminated[_modulesMapping[module]]
+            state.terminal(),
+            address(state),
+            state.logic(),
+            state.version(),
+            state.timestamp(),
+            state.core(),
+            state.locked(),
+            state.paused(),
+            state.timerSet()
         );
     }
 
-    /// returns module data by using index note index 0 is used as default
-    function modulesIndexed(uint256 index) public view
+    function searchByIndex(uint index) public view
     returns (
-        string memory module,
+        address terminal,
         address state,
         address logic,
-        uint256 version_,
-        bool terminated_
+        uint256 version,
+        uint64 timestamp,
+        bool core,
+        bool locked,
+        bool paused,
+        bool timerSet
     ) {
+        IState state = IState(_module[index]);
         return (
-            _modules[index].module(),
-            address(_modules[index]),
-            _modules[index].latest(),
-            _modules[index].version(),
-            _terminated[_modulesMapping[module]]
+            state.terminal(),
+            address(state),
+            state.logic(),
+            state.version(),
+            state.timestamp(),
+            state.core(),
+            state.locked(),
+            state.paused(),
+            state.timerSet()
+        );
+    }
+
+    function searcByAccount(address account) public view
+    returns (
+        address terminal,
+        address state,
+        address logic,
+        uint256 version,
+        uint64 timestamp,
+        bool core,
+        bool locked,
+        bool paused,
+        bool timerSet
+    ) {
+        require(_module.contains(account), "State: module not found");
+        IState state = IState(account);
+        return (
+            state.terminal(),
+            address(state),
+            state.logic(),
+            state.version(),
+            state.timestamp(),
+            state.core(),
+            state.locked(),
+            state.paused(),
+            state.timerSet()
         );
     }
 
     function count() public view returns (uint256) {
-        return _modules.length;
+        return _module.length();
     }
 
-    /// deploys new State contract as a module
-    function deploy(string memory module) public onlyAdmin {
+    function deploy(string memory module, bool core) public onlyAdmin() {
         _reqNotInUse(module);
-        _modules.push(new State(module));
-        _modulesMapping[module] = _modules.length - 1;
-        emit Deploy(module, address(_modules[_modulesMapping[module]]));
+        _module.add(address(new State(module, core)));
+        moduleMapping[module] = _module.length() - 1;
+        _active.add(_module[moduleMapping[module]]);
+        emit Deployed(msg.sender, module);
     }
 
-    /// upgrades existing State contract logic
-    function upgrade(string memory module, address newLogic) public onlyAdmin {
+    function upgrade(string memory module, address newLogic) public onlyAdmin() {
         _reqInUse(module);
-        _modules[_modulesMapping[module]].upgrade(newLogic);
-        emit Upgrade(module, newLogic, address(_modules[_modulesMapping[module]]));
+        IState state = IState(_module[moduleMapping[module]]);
+        state.upgrade(newLogic);
+        emit Upgraded(msg.sender, module, newLogic);
     }
 
-    /// change name of a current module to a new name
-    function rename(string memory module, string memory newModule) public onlyAdmin {
+    function rename(string memory module, string memory newModule) public onlyAdmin() {
         _reqInUse(module);
         _reqNotInUse(newModule);
-        _modulesMapping[newModule] = _modulesMapping[module];
-        delete _modulesMapping[module];
-        _modules[_modulesMapping[newModule]].update(newModule);
-        emit Rename(module, newModule, address(_modules[_modulesMapping[module]]));
+        moduleMapping[newModule] = moduleMapping[module];
+        moduleMapping[module] = 0;
+        IState state = IState(_module[moduleMapping[module]]);
+        state.update(nameModule);
+        emit Rename(msg.sender, module, newModule);
     }
 
-    /// THIS BREAKS THE VIEW FUNCTION
-    /// WARNING: will permanently lock a State contract and it will no longer be able to store new data
-    function terminate(string memory module) public onlyAdmin {
+    function lock(string memory module) public onlyAdmin() {
         _reqInUse(module);
-        _modules[_modulesMapping[module]].lock();
-        _terminated[_modulesMapping[module]] = true;
-        delete _modules[_modulesMapping[module]];
-        delete _modulesMapping[module];
-        emit Terminate(module, address(_modules[_modulesMapping[module]]));
+        IState state = IState(_module[moduleMapping[module]]);
+        state.lock();
+        _active.remove(_module[moduleMapping[module]]);
+        _locked.add(_module[moduleMapping[module]]);
     }
 
-    function _onlyAdmin() private view {
-        require(msg.sender == admin, "msg.sender != admin");
+    function pause(string memory module) public onlyAdmin() {
+        _reqInUse(module);
+        IState state = IState(_module[moduleMapping[module]]);
+        state.pause();
+        _paused.add(_module[moduleMapping[module]]);
+    }
+
+    function unpause(string memory module) public onlyAdmin() {
+        _reqInUse(module);
+        IState state = IState(_module[moduleMapping[module]]);
+        state.unpause();
+        _paused.remove(_module[moduleMapping[module]]);
+    }
+
+    function timer(string memory module, uint64 duration) public onlyAdmin() {
+        _reqInUse(module);
+        IState state = IState(_module[moduleMapping[module]]);
+        state.timer(duration);
+    }
+
+    function updateTerminal(string memory newName) public onlyAdmin() {
+        _dat.name = newName;
     }
 
     function _reqNotInUse(string memory module) private view {
-        require(_modulesMapping[module] == 0, "Terminal: module name in use");
+        require(moduleMapping[module] == 0, "Terminal: module != 0");
     }
 
     function _reqInUse(string memory module) private view {
-        require(_modulesMapping[module] != 0, "Terminal: module name not in use");
+        require(moduleMapping[module] != 0, "Terminal: module == 0");
     }
 }
