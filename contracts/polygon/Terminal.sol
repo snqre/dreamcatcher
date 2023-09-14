@@ -9,6 +9,11 @@ import { IState } from "contracts/polygon/interfaces/IState.sol";
 
 import { State } from "contracts/polygon/State.sol";
 
+/**
+* control routers, upgrades, all in one place
+* call Terminal to find the up to date location of all other modules and use the appropriate interface
+* with this mechanism old implementations cannot store information within each router hence they will not be able to be used
+ */
 contract Terminal is Pausable {
     using EnumerableSet for EnumerableSet.AddressSet;
 
@@ -137,6 +142,7 @@ contract Terminal is Pausable {
         return state.terminal();
     }
 
+    /** @dev lookup routers by module name */
     function searchByName(string memory module) public view
     returns (
         string memory module_,
@@ -166,6 +172,7 @@ contract Terminal is Pausable {
         );
     }
 
+    /** @dev look up routers by module index */
     function searchByIndex(uint index) public view
     returns (
         string memory module,
@@ -194,6 +201,7 @@ contract Terminal is Pausable {
         );
     }
 
+    /** @dev look up routers by address */
     function searchByAccount(address account) public view
     returns (
         string memory module,
@@ -223,12 +231,28 @@ contract Terminal is Pausable {
         );
     }
 
+    function arrayActive() public view returns (string[] memory) {
+        address[] memory addrActive = _active.values();
+        string[] memory active;
+        uint256 count_;
+        for (uint i = 0; i < addrActive.length; i++) {
+            (string memory module, , , , , , , , , ,) = searchByAccount(addrActive[i]);
+            active[count_] = module;
+            count_ += 1;
+        }
+    }
+
+    /** @dev number of routrs deployed without root router */
     function count() public view returns (uint256) {
         return _module.length() - 1;
     }
 
     /// Public
 
+    /**
+    * @dev deploys a State.sol contract (see State.sol) which acts as a router and ERC930 implementation
+    * @param core_ core router cannot be paused, unpaused, locked, or set to exipire
+     */
     function deploy(string memory module, bool core_) public onlyAdmin() {
         _reqNotInUse(module);
         _module.add(address(new State(module, core_)));
@@ -254,6 +278,7 @@ contract Terminal is Pausable {
         emit RouterRenamed(msg.sender, module, newModule);
     }
 
+    /** @dev WARNING permanently locks non core router which will not be able to store any more data */
     function lock(string memory module) public onlyAdmin() {
         _reqInUse(module);
         IState state = IState(_module.at(moduleMapping[module]));
@@ -279,6 +304,7 @@ contract Terminal is Pausable {
         emit RouterUnpaused(msg.sender, module);
     }
 
+    /** @dev set a timer at which the non core router will stop storing data */
     function timer(string memory module, uint64 duration) public onlyAdmin() {
         _reqInUse(module);
         IState state = IState(_module.at(moduleMapping[module]));
@@ -286,6 +312,7 @@ contract Terminal is Pausable {
         emit RouterTimerSet(msg.sender, module, duration);
     }
 
+    /** update terminal name */
     function update(string memory newName) public onlyAdmin() {
         _dat.name = newName;
         emit Updated(msg.sender, newName);
