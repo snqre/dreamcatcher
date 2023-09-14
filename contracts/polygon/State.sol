@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity 0.8.19; /** compiler is latest usable on polygon */
 
-import "contracts/polygon/external/openzeppelin/security/Pausable.sol";
+import { Pausable } from "contracts/polygon/external/openzeppelin/security/Pausable.sol";
 
-import "contracts/polygon/external/openzeppelin/utils/structs/EnumerableSet.sol";
+import { EnumerableSet } from "contracts/polygon/external/openzeppelin/utils/structs/EnumerableSet.sol";
 
 /**
 * minimalist implementation of ERC930
@@ -62,7 +62,7 @@ contract State is Pausable {
 
     modifier onlyNotTimedOut() {
         if (_timer && _timerSet) {
-            require(block.timestamp <= _timestamp, "State: permanently locked");
+            require(block.timestamp <= _timestamp, "State: permanently locked"); /** noted use of block.timestamp and its vulnerabilities */
         }
         _;
     }
@@ -83,7 +83,7 @@ contract State is Pausable {
     }
 
     modifier onlyIfNotAddressZero() {
-        require(msg.sender != address(0), "State: msg.sender is address zero");
+        require(msg.sender != address(0), "State: caller is address zero");
         _;
     }
 
@@ -121,7 +121,7 @@ contract State is Pausable {
     function timer(uint64 duration) external onlyTerminal() onlyNotLocked() onlyNotTimedOut() onlyIfTimerNotSet() onlyNotCore() whenNotPaused() onlyIfNotAddressZero() {
         _timer = true;
         _timerSet = true;
-        _timestamp = uint64(block.timestamp);
+        _timestamp = uint64(block.timestamp); /** noted use of block.timestamp and its potential vulnerabilities */
         /** x = x + y is more gas effective than x += y */
         _timestamp = _timestamp + duration;
         emit TimerSet(msg.sender, duration);
