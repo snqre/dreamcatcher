@@ -40,6 +40,8 @@ interface IState {
 
     function state(bytes32) external view returns (bytes memory);
 
+    function paused() external view returns (bool);
+
     function store(bytes32 location, bytes memory data) external;
 
     function update(string memory nameModule) external;

@@ -45,12 +45,12 @@ contract State is Pausable {
     /// Function Modifiers
 
     modifier onlyLogic() {
-        require(msg.sender == logic(), "State: msg.sender != logic");
+        require(msg.sender == latest(), "State: msg.sender != logic");
         _;
     }
 
     modifier onlyTerminal() {
-        require(msg.sender == terminal(), "State: msg.sender != terminal");
+        require(msg.sender == terminal, "State: msg.sender != terminal");
         _;
     }
 
@@ -196,10 +196,6 @@ contract State is Pausable {
         return _implementations.at(index);
     }
 
-    function latest() external view returns (address) {
-        return _implementations.at(version() - 1);
-    }
-
     function access(bytes32 location) external view returns (bytes memory) {
         return state[location];
     }
@@ -233,6 +229,10 @@ contract State is Pausable {
 
     function timerSet() public view returns (bool) {
         return _timerSet;
+    }
+
+    function latest() public view returns (address) {
+        return _implementations.at(version() - 1);
     }
 
     /// Public
