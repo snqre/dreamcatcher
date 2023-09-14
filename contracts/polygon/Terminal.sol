@@ -286,7 +286,7 @@ contract Terminal is Pausable {
         emit RouterTimerSet(msg.sender, module, duration);
     }
 
-    function updateTerminal(string memory newName) public onlyAdmin() {
+    function update(string memory newName) public onlyAdmin() {
         _dat.name = newName;
         emit Updated(msg.sender, newName);
     }
