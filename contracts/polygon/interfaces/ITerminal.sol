@@ -46,6 +46,20 @@ interface ITerminal {
 
     function searchByName(string memory module) external view
     returns (
+        string memory module_,
+        address terminal,
+        address state,
+        address logic,
+        uint256 version,
+        uint64 timestamp,
+        bool core,
+        bool locked,
+        bool paused,
+        bool timerSet
+    );
+
+    function searchByIndex(uint index) external view
+    returns (
         string memory module,
         address terminal,
         address state,
@@ -57,4 +71,44 @@ interface ITerminal {
         bool paused,
         bool timerSet
     );
+
+    function searchByAccount(address account) external view
+    returns (
+        string memory module,
+        address terminal,
+        address state,
+        address logic,
+        uint256 version,
+        uint64 timestamp,
+        bool core,
+        bool locked,
+        bool paused,
+        bool timerSet
+    );
+
+    function arrayActive() external view returns (address[] memory);
+
+    function arrayLocked() external view returns (address[] memory);
+
+    function arrayPaused() external view returns (address[] memory);
+
+    function count() external view returns (uint256);
+
+    function deploy(string memory module, bool core) external;
+
+    function upgrade(string memory module, address newLogic) external;
+
+    function rename(string memory module, string memory newModule) external;
+
+    function lock(string memory module) external;
+
+    function pause(string memory module) external;
+
+    function unpause(string memory module) external;
+
+    function setTimer(string memory module, uint64 duration) external;
+
+    function update(string memory newName) external;
+
+    function transferOwnership(address account) external;
 }

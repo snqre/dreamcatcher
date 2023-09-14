@@ -306,7 +306,7 @@ contract Terminal is Pausable {
     }
 
     /** @dev set a timer at which the non core router will stop storing data */
-    function timer(string memory module, uint64 duration) public onlyAdmin() {
+    function setTimer(string memory module, uint64 duration) public onlyAdmin() {
         _reqInUse(module);
         IState state = IState(_module.at(moduleMapping[module]));
         state.timer(duration);
