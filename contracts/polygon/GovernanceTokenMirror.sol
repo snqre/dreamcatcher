@@ -16,7 +16,7 @@ import { IState } from "contracts/polygon/interfaces/IState.sol";
 * if terminal upgrades its state and its no longer logic it doesnt break and can still be used
 * this gives us the community to upgrade later or decide to keep this as the functional main token
  */
-contract Dream is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit {
+contract GovernanceTokenMirror is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit {
     /// State Variables
 
     IState public state;
@@ -30,7 +30,7 @@ contract Dream is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit {
 
     /// Struct, Arrays or Enums
 
-    constructor(address state_) ERC20("Dream Token", symbol) ERC20Permit(name) {
+    constructor(address state_, string memory name, string memory symbol) ERC20(name, symbol) ERC20Permit(name) {
         state = IState(state_);
         _deployer = msg.sender;
         _init = false;
@@ -60,7 +60,7 @@ contract Dream is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit {
         bytes memory data = state.access(account_);
         bytes memory emptyBytes;
         uint256 balance;
-        if (data == emptyBytes) { balance = 0; }
+        if (keccak256(data) == keccak256(emptyBytes)) { balance = 0; }
         else {
             balance = abi.decode(data, (uint256));
         }
@@ -76,8 +76,8 @@ contract Dream is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit {
     function init() external {
         require(msg.sender == _deployer, "Dream: msg.sender != _deployer");
         require(!_init, "Dream: _init");
-        state.store(NAME, abi.encode(name));
-        state.store(SYMBOL, abi.encode(symbol));
+        state.store(NAME, abi.encode(name()));
+        state.store(SYMBOL, abi.encode(symbol()));
         state.store(DECIMALS, abi.encode(decimals()));
         state.store(TOTAL_SUPPLY, abi.encode(uint256(0)));
         _mint(msg.sender, _convertToWei(200000000));
@@ -93,7 +93,7 @@ contract Dream is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit {
 
     function _beforeTokenTransfer(address from, address to, uint256 amount) internal override(ERC20, ERC20Snapshot) {
         super._beforeTokenTransfer(from, to, amount);
-        if (_isLogic) { /// will stop copying data if it is not longer logic without breaking the contract
+        if (_isLogic()) { /// will stop copying data if it is not longer logic without breaking the contract
             if (from == address(0)) {
                 _stateAddAccountBalance(to, amount);
                 _stateAddTokenTotalSupply(amount);
@@ -109,42 +109,44 @@ contract Dream is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit {
         }
     }
 
+    /// Private Pure
+
+    function _convertToWei(uint256 value) private pure returns (uint256) {
+        return value * 10**18;
+    }
+
     /// Private View
 
     function _isLogic() private view returns (bool) {
         return address(this) == state.latest();
     }
 
-    function _convertToWei() private view returns (uint256) {
-        return value * 10**18;
-    }
-
     /// Private
-
+    
     function _stateAddAccountBalance(address account, uint256 amount) private {
-        bytes32 account = keccak256(abi.encode("account", "balance", account));
-        bytes memory data = state.access(account);
+        bytes32 account_ = keccak256(abi.encode("account", "balance", account));
+        bytes memory data = state.access(account_);
         bytes memory emptyBytes;
         uint256 balance;
-        if (data == emptyBytes) { balance = 0; }
+        if (keccak256(data) == keccak256(emptyBytes)) { balance = 0; }
         else {
             balance = abi.decode(data, (uint256));
         }
         balance += amount;
-        state.store(account, abi.encode(balance));
+        state.store(account_, abi.encode(balance));
     }
 
     function _stateSubAccountBalance(address account, uint256 amount) private {
-        bytes32 account = keccak256(abi.encode("account", "balance", account));
-        bytes memory data = state.access(account);
+        bytes32 account_ = keccak256(abi.encode("account", "balance", account));
+        bytes memory data = state.access(account_);
         bytes memory emptyBytes;
         uint256 balance;
-        if (data == emptyBytes) { balance = 0; }
+        if (keccak256(data) == keccak256(emptyBytes)) { balance = 0; }
         else {
             balance = abi.decode(data, (uint256));
         }
         balance -= amount;
-        state.store(account, abi.encode(balance));
+        state.store(account_, abi.encode(balance));
     }
 
     function _stateAddTokenTotalSupply(uint256 amount) private {
