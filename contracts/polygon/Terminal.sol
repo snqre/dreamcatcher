@@ -231,15 +231,16 @@ contract Terminal is Pausable {
         );
     }
 
-    /** @dev this is a monstruousity */
-    function arrayActive() public view returns (string[10000000] memory) {
-        address[] memory addrActive = _active.values();
-        string[10000000] memory active;
-        for (uint i = 0; i < addrActive.length; i++) {
-            (string memory module, , , , , , , , ,) = searchByAccount(addrActive[i]);
-            active[i] = module;
-        }
-        return active;
+    function arrayActive() public view returns (address[] memory) {
+        return _active.values();
+    }
+
+    function arrayLocked() public view returns (address[] memory) {
+        return _locked.values();
+    }
+
+    function arrayPaused() public view returns (address[] memory) {
+        return _paused.values();
     }
 
     /** @dev number of routrs deployed without root router */
