@@ -8,7 +8,6 @@ import { EnumerableSet } from "contracts/polygon/external/openzeppelin/utils/str
 /**
 * minimalist implementation of ERC930
 * able to set core or lockable
-* able to revert
  */
 contract State is Pausable {
     using EnumerableSet for EnumerableSet.AddressSet;
@@ -46,39 +45,39 @@ contract State is Pausable {
     /// Function Modifiers
 
     modifier onlyLogic() {
-        require(msg.sender == logic, "State: msg.sender != logic");
+        require(msg.sender == logic(), "State: msg.sender != logic");
         _;
     }
 
     modifier onlyTerminal() {
-        require(msg.sender == terminal, "State: msg.sender != terminal");
+        require(msg.sender == terminal(), "State: msg.sender != terminal");
         _;
     }
 
     modifier onlyNotLocked() {
-        require(!_locked, "State: permanently locked");
+        require(!locked(), "State: permanently locked");
         _;
     }
 
     modifier onlyNotTimedOut() {
-        if (_timer && _timerSet) {
-            require(block.timestamp <= _timestamp, "State: permanently locked"); /** noted use of block.timestamp and its vulnerabilities */
+        if (_timer && timerSet()) {
+            require(block.timestamp <= timestamp(), "State: permanently locked"); /** noted use of block.timestamp and its vulnerabilities */
         }
         _;
     }
 
     modifier onlyNotCore() {
-        require(!_core, "State: is core");
+        require(!core(), "State: is core");
         _;
     }
 
     modifier onlyNotTimed() {
-        require(_timestamp == 0, "State: is timed");
+        require(timestamp() == 0, "State: is timed");
         _;
     }
 
     modifier onlyIfTimerNotSet() {
-        require(!_timerSet, "State: timer already set");
+        require(!timerSet(), "State: timer already set");
         _;
     }
 
@@ -151,9 +150,10 @@ contract State is Pausable {
     * SHOULD only be able to be called if not timed out
     * SHOULD only be able to be called if not paused
     * SHOULD only be able to be called if caller is not address zero
+    * SHOULD only be able to called if the state is not a core module
     * note unchecked because if the iteration gets large enough there wont be a enough gas to continue
      */
-    function wipe() external onlyLogic() onlyNotLocked() onlyNotTimedOut() whenNotPaused() onlyIfNotAddressZero() {
+    function wipe() external onlyLogic() onlyNotLocked() onlyNotTimedOut() whenNotPaused() onlyIfNotAddressZero() onlyNotCore() {
         unchecked {
             bytes memory emptyBytes;
             uint256 len = _empty.length();
@@ -180,14 +180,28 @@ contract State is Pausable {
         emit Upgraded(msg.sender, newLogic);
     }
 
-    function pause() external onlyTerminal() onlyNotLocked() onlyNotTimedOut() onlyIfNotAddressZero() {
+    function pause() external onlyTerminal() onlyNotLocked() onlyNotTimedOut() onlyIfNotAddressZero() onlyNotCore() {
         _pause();
         /** @dev event inherited and emited within _pause */
     }
 
-    function unpause() external onlyTerminal() onlyNotLocked() onlyNotTimedOut() onlyIfNotAddressZero() {
+    function unpause() external onlyTerminal() onlyNotLocked() onlyNotTimedOut() onlyIfNotAddressZero() onlyNotCore() {
         _unpause();
         /** @dev event inherited and emitted within _unpause */
+    }
+
+    /// External View
+
+    function previous(uint index) external view returns (address) {
+        return _implementations.at(index);
+    }
+
+    function latest() external view returns (address) {
+        return _implementations.at(version() - 1);
+    }
+
+    function access(bytes32 location) external view returns (bytes memory) {
+        return state[location];
     }
 
     /// Public View
@@ -196,20 +210,8 @@ contract State is Pausable {
         return _dat.module;
     }
 
-    function access(bytes32 location) public view returns (bytes memory) {
-        return state[location];
-    }
-
     function version() public view returns (uint256) {
         return _implementations.length();
-    }
-
-    function latest() public view returns (address) {
-        return _implementations.at(version() - 1);
-    }
-
-    function previous(uint index) public view returns (address) {
-        return _implementations.at(index);
     }
 
     function empty(bytes32 location) public view returns (bool) {
@@ -227,6 +229,10 @@ contract State is Pausable {
 
     function core() public view returns (bool) {
         return _core;
+    }
+
+    function timerSet() public view returns (bool) {
+        return _timerSet;
     }
 
     /// Public
@@ -250,7 +256,14 @@ contract State is Pausable {
 
     /** @dev updates module name */
     function update(string memory nameModule) public onlyTerminal() whenNotPaused() onlyIfNotAddressZero() {
+        require(!_isSameString(module(), nameModule), "State: same module name");
         _dat.module = nameModule;
         emit Updated(msg.sender, nameModule);
+    }
+
+    /// Private Pure
+
+    function _isSameString(string memory stringA, string memory stringB) private pure returns (bool) {
+        return keccak256(abi.encode(stringA)) == keccak256(abi.encode(stringB));
     }
 }
