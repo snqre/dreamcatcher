@@ -36,10 +36,15 @@ contract State is Pausable {
     /// Events
 
     event Stored(address indexed msgSender, bytes32 indexed location, bytes indexed data);
+
     event Updated(address indexed msgSender, string indexed module);
+
     event TimerSet(address indexed msgSender, uint64 indexed duration);
+
     event Upgraded(address indexed msgSender, address indexed newLogic);
+    
     event Locked(address indexed msgSender);
+    
     event Wiped(address indexed msgSender);
 
     /// Function Modifiers

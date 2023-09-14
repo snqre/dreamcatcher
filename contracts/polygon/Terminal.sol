@@ -28,10 +28,24 @@ contract Terminal is Pausable {
 
     /// Events
 
-    event Deployed(address indexed msgSender, string indexed module);
-    event Upgraded(address indexed msgSender, string indexed module, address indexed newLogic);
-    event Rename(address indexed msgSender, string indexed module, string indexed newModule);
+    event RouterDeployed(address indexed msgSender, string indexed module);
 
+    event RouterUpgraded(address indexed msgSender, string indexed module, address indexed newLogic);
+
+    event RouterRenamed(address indexed msgSender, string indexed module, string indexed newModule);
+
+    event RouterLocked(address indexed msgSender, string indexed module);
+
+    event RouterTimerSet(address indexed msgSender, string indexed module, uint64 indexed duration);
+
+    event RouterPaused(address indexed msgSender, string indexed module);
+
+    event RouterUnpaused(address indexed msgSender, string indexed module);
+
+    event OwnershipTransferred(address indexed msgSender, address indexed newOwner);
+
+    event Updated(address indexed msgSender, string indexed newName);
+    
     /// Function Modifiers
 
     modifier onlyAdmin() {
@@ -125,6 +139,7 @@ contract Terminal is Pausable {
 
     function searchByName(string memory module) public view
     returns (
+        string memory module,
         address terminal_,
         address state_,
         address logic_,
@@ -138,6 +153,7 @@ contract Terminal is Pausable {
         _reqInUse(module);
         IState state = IState(_module.at(moduleMapping[module]));
         return (
+            state.module(),
             state.terminal(),
             address(state),
             state.logic(),
@@ -152,6 +168,7 @@ contract Terminal is Pausable {
 
     function searchByIndex(uint index) public view
     returns (
+        string memory module,
         address terminal_,
         address state_,
         address logic_,
@@ -164,6 +181,7 @@ contract Terminal is Pausable {
     ) {
         IState state = IState(_module.at(index));
         return (
+            state.module(),
             state.terminal(),
             address(state),
             state.logic(),
@@ -176,8 +194,9 @@ contract Terminal is Pausable {
         );
     }
 
-    function searcByAccount(address account) public view
+    function searchByAccount(address account) public view
     returns (
+        string memory module,
         address terminal_,
         address state_,
         address logic_,
@@ -191,6 +210,7 @@ contract Terminal is Pausable {
         require(_module.contains(account), "State: module not found");
         IState state = IState(account);
         return (
+            state.module(),
             state.terminal(),
             address(state),
             state.logic(),
@@ -204,22 +224,24 @@ contract Terminal is Pausable {
     }
 
     function count() public view returns (uint256) {
-        return _module.length();
+        return _module.length() - 1;
     }
+
+    /// Public
 
     function deploy(string memory module, bool core_) public onlyAdmin() {
         _reqNotInUse(module);
         _module.add(address(new State(module, core_)));
         moduleMapping[module] = _module.length() - 1;
         _active.add(_module.at(moduleMapping[module]));
-        emit Deployed(msg.sender, module);
+        emit RouterDeployed(msg.sender, module);
     }
 
     function upgrade(string memory module, address newLogic) public onlyAdmin() {
         _reqInUse(module);
         IState state = IState(_module.at(moduleMapping[module]));
         state.upgrade(newLogic);
-        emit Upgraded(msg.sender, module, newLogic);
+        emit RouterUpgraded(msg.sender, module, newLogic);
     }
 
     function rename(string memory module, string memory newModule) public onlyAdmin() {
@@ -229,7 +251,7 @@ contract Terminal is Pausable {
         moduleMapping[module] = 0;
         IState state = IState(_module.at(moduleMapping[module]));
         state.update(newModule);
-        emit Rename(msg.sender, module, newModule);
+        emit RouterRenamed(msg.sender, module, newModule);
     }
 
     function lock(string memory module) public onlyAdmin() {
@@ -238,6 +260,7 @@ contract Terminal is Pausable {
         state.lock();
         _active.remove(_module.at(moduleMapping[module]));
         _locked.add(_module.at(moduleMapping[module]));
+        emit RouterLocked(msg.sender, module);
     }
 
     function pause(string memory module) public onlyAdmin() {
@@ -245,6 +268,7 @@ contract Terminal is Pausable {
         IState state = IState(_module.at(moduleMapping[module]));
         state.pause();
         _paused.add(_module.at(moduleMapping[module]));
+        emit RouterPaused(msg.sender, module);
     }
 
     function unpause(string memory module) public onlyAdmin() {
@@ -252,17 +276,27 @@ contract Terminal is Pausable {
         IState state = IState(_module.at(moduleMapping[module]));
         state.unpause();
         _paused.remove(_module.at(moduleMapping[module]));
+        emit RouterUnpaused(msg.sender, module);
     }
 
     function timer(string memory module, uint64 duration) public onlyAdmin() {
         _reqInUse(module);
         IState state = IState(_module.at(moduleMapping[module]));
         state.timer(duration);
+        emit RouterTimerSet(msg.sender, module, duration);
     }
 
     function updateTerminal(string memory newName) public onlyAdmin() {
         _dat.name = newName;
+        emit Updated(msg.sender, newName);
     }
+
+    function transferOwnership(address account) public onlyAdmin() {
+        admin = account;
+        emit OwnershipTransferred(msg.sender, account);
+    }
+
+    /// Private View
 
     function _reqNotInUse(string memory module) private view {
         require(moduleMapping[module] == 0, "Terminal: module != 0");
