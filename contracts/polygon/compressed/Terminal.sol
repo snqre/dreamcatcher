@@ -1,6 +1,7 @@
+// SPDX-License-Identifier: Apache-2.0
+
 // File: contracts\polygon\external\openzeppelin\utils\Context.sol
 
-// SPDX-License-Identifier: MIT
 // OpenZeppelin Contracts v4.4.1 (utils/Context.sol)
 
 pragma solidity ^0.8.19;
@@ -27,7 +28,6 @@ abstract contract Context {
 
 // File: contracts\polygon\external\openzeppelin\security\Pausable.sol
 
-// SPDX-License-Identifier: MIT
 // OpenZeppelin Contracts (last updated v4.7.0) (security/Pausable.sol)
 
 pragma solidity ^0.8.19;
@@ -132,7 +132,6 @@ abstract contract Pausable is Context {
 
 // File: contracts\polygon\external\openzeppelin\utils\structs\EnumerableSet.sol
 
-// SPDX-License-Identifier: MIT
 // OpenZeppelin Contracts (last updated v4.9.0) (utils/structs/EnumerableSet.sol)
 // This file was procedurally generated from scripts/generate/templates/EnumerableSet.js.
 
@@ -513,7 +512,6 @@ library EnumerableSet {
 
 // File: contracts\polygon\interfaces\IState.sol
 
-// SPDX-License-Identifier: Apache-2.0
 pragma solidity 0.8.19;
 
 interface IState {
@@ -576,7 +574,6 @@ interface IState {
 
 // File: contracts\polygon\State.sol
 
-// SPDX-License-Identifier: Apache-2.0
 pragma solidity 0.8.19; /** compiler is latest usable on polygon */
 /**
 * minimalist implementation of ERC930
@@ -848,7 +845,6 @@ contract State is Pausable {
 
 // File: contracts\polygon\Terminal.sol
 
-// SPDX-License-Identifier: Apache-2.0
 pragma solidity 0.8.19;
 /**
 * control routers, upgrades, all in one place
