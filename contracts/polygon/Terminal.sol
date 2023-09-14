@@ -5,6 +5,7 @@ import "contracts/polygon/libraries/Match.sol";
 
 import "contracts/polygon/State.sol";
 
+/// POSSIBLY USE ENUMERABLE SETS INSTEAD OF State[] and use IState??
 contract Terminal {
     struct Meta { string name; }
 
