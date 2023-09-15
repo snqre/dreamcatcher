@@ -11,14 +11,25 @@ contract OracleUniswapFeedV2 {
 
     /** @dev state variables */
 
+    IUniswapV2Factory public uniswapV2Factory;
+
+    /** @dev structs arrays enums */
+
     struct Dat { string name; }
 
-    IUniswapV2Factory public uniswapV2Factory;
+    Dat private _dat;
 
     /** @dev constructor */
 
-    constructor(address uniswapV2Factory_) {
+    constructor(address uniswapV2Factory_, string memory name_) {
         uniswapV2Factory = IUniswapV2Factory(uniswapV2Factory_);
+        _dat.name = name_;
+    }
+
+    /** @dev external view */
+
+    function name() external view returns (string memory) {
+        return _dat.name;
     }
 
     /** @dev public view */
