@@ -88,7 +88,7 @@ contract OracleUniswapFeedV2 {
         _verifyPair(tokenA, tokenB, iUV2Pair);
         IERC20Metadata iERC20TokenA = IERC20Metadata(iUV2Pair.token0());
         IERC20Metadata iERC20TokenB = IERC20Metadata(iUV2Pair.token1());
-        (uint256 reserveA, uint256 reserveB, ,) = iUV2Pair.getReserves();
+        (uint256 reserveA, uint256 reserveB,) = iUV2Pair.getReserves();
         require(
             reserveA != 0 &&
             reserveB != 0,
@@ -96,7 +96,7 @@ contract OracleUniswapFeedV2 {
         );
         if (order == 0) {
             uint256 rA = reserveA * (10**iERC20TokenA.decimals());
-            uint256 price = (amount * rA) / reservB;
+            uint256 price = (amount * rA) / reserveB;
             price *= 10**18;
             price /= 10**iERC20TokenA.decimals();
             return price;
@@ -153,54 +153,6 @@ contract OracleUniswapFeedV2 {
             iERC20TokenA.decimals() == decimalsTokenB &&
             iERC20TokenB.decimals() == decimalsTokenA
         ) { return 0; }
-        revert("OracleUniswapFeedV2: pair not found");
-    }
-
-    function _verifyPair(address inputTokenA, address inputTokenB, IUniswapV2Pair iUV2Pair) private view {
-        uint8 order = _isSameOrder(tokenA, tokenB);
-        if (order == 1) {
-            /** @dev inputTokenA == iUVPair.token0 | is same order as input */
-            string memory emptyString;
-            bytes32 emptyBytes32;
-            
-            /** 
-            * @dev verify pair interface compliance and token match 
-            * if any of these fields dont match it should revert anyway but the protocol will double check
-             */
-            require(
-                !_isSameString(iUV2Pair.name(), emptyString) &&
-                !_isSameString(iUV2Pair.symbol(), emptyString) &&
-                iUV2Pair.decimals() != 0 &&
-                iUV2Pair.DOMAIN_SEPARATOR() != emptyBytes32 &&
-                iUV2Pair.PERMIT_TYPEHASH() != emptyBytes32 &&
-                iUV2Pair.MINIMUM_LIQUIDITY() != 0 &&
-                iUV2Pair.factory() == address(uniswapV2Factory) &&
-                iUV2Pair.token0() == inputTokenA &&
-                iUV2Pair.token1() == inputTokenB,
-                "OracleUniswapFeedV2: pair verification failed"
-            );
-        }
-        else if (order == 2) {
-            /** @dev inputTokenA == iUVPair.token1 | is reverse order as input */
-            string memory emptyString;
-            bytes32 emptyBytes32;
-
-            /** 
-            * @dev verify pair interface compliance and token match 
-            * if any of these fields dont match it should revert anyway but the protocol will double check
-             */
-            require(
-                !_isSameString(iUV2Pair.name(), emptyString) &&
-                !_isSameString(iUV2Pair.symbol(), emptyString) &&
-                iUV2Pair.decimals() != 0 &&
-                iUV2Pair.DOMAIN_SEPARATOR() != emptyBytes32 &&
-                iUV2Pair.PERMIT_TYPEHASH() != emptyBytes32 &&
-                iUV2Pair.MINIMUM_LIQUIDITY() != 0 &&
-                iUV2Pair.factory() == address(uniswapV2Factory) &&
-                iUV2Pair.token0() == inputTokenB &&
-                iUV2Pair.token1() == inputTokenA,
-                "OracleUniswapFeedV2: pair verification failed"
-            );
-        }
+        else { revert("OracleUniswapFeedV2: pair not found"); }
     }
 }
