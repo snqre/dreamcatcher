@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
 // File: contracts\polygon\external\openzeppelin\token\ERC20\IERC20.sol
@@ -2174,215 +2174,32 @@ abstract contract ERC20Permit is ERC20, IERC20Permit, EIP712 {
     }
 }
 
-// File: contracts\polygon\interfaces\IState.sol
+// File: contracts\polygon\GovernanceToken.sol
 
-interface IState {
-    event Stored(address indexed msgSender, bytes32 indexed location, bytes indexed data);
+contract GovernanceToken is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit {
 
-    event Updated(address indexed msgSender, string indexed module);
+    /** @dev constructor */
 
-    event TimerSet(address indexed msgSender, uint64 indexed duration);
-
-    event Upgraded(address indexed msgSender, address indexed newLogic);
-
-    event Locked(address indexed msgSender);
-
-    event Wiped(address indexed msgSender);
-
-    function previous(uint index) external view returns (address);
-
-    function latest() external view returns (address);
-
-    function access(bytes32 location) external view returns (bytes memory);
-
-    function module() external view returns (string memory);
-
-    function version() external view returns (uint256);
-
-    function empty(bytes32 location) external view returns (bool);
-
-    function timestamp() external view returns (uint64);
-
-    function locked() external view returns (bool);
-
-    function core() external view returns (bool);
-
-    function timerSet() external view returns (bool);
-
-    function logic() external view returns (address);
-
-    function terminal() external view returns (address);
-
-    function state(bytes32) external view returns (bytes memory);
-
-    function paused() external view returns (bool);
-
-    function store(bytes32 location, bytes memory data) external;
-
-    function update(string memory nameModule) external;
-
-    function timer(uint64 duration) external;
-
-    function lock() external;
-
-    function wipe() external;
-
-    function upgrade(address newLogic) external;
-
-    function pause() external;
-
-    function unpause() external;
-}
-
-// File: contracts\polygon\GovernanceTokenMirror.sol
-
-/**
-* standard governance token with minor edit to copy data to state
-* if terminal upgrades its state and its no longer logic it doesnt break and can still be used
-* this gives us the community to upgrade later or decide to keep this as the functional main token
- */
-contract GovernanceTokenMirror is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit {
-    /// State Variables
-
-    IState public state;
-    address private _deployer;
-    bool private _init;
-
-    bytes32 constant TOTAL_SUPPLY = keccak256("TOTAL_SUPPLY");
-    bytes32 constant NAME = keccak256("NAME");
-    bytes32 constant SYMBOL = keccak256("SYMBOL");
-    bytes32 constant DECIMALS = keccak256("DECIMALS");
-
-    /// Struct, Arrays or Enums
-
-    constructor(address state_, string memory name, string memory symbol) ERC20(name, symbol) ERC20Permit(name) {
-        state = IState(state_);
-        _deployer = msg.sender;
-        _init = false;
+    constructor(string memory name, string memory symbol) ERC20(name, symbol) ERC20Permit(name) {
+        _mint(msg.sender, 200000000 * (10**18));
     }
 
-    /// External View
-
-    /** @dev these functions access the state directly to ensure that values allign */
-    function stateName() external view returns (string memory) {
-        return abi.decode(state.access(NAME), (string));
-    }
-
-    function stateSymbol() external view returns (string memory) {
-        return abi.decode(state.access(SYMBOL), (string));
-    }
-
-    function stateDecimals() external view returns (uint8) {
-        return abi.decode(state.access(DECIMALS), (uint8));
-    }
-
-    function stateTotalSupply() external view returns (uint256) {
-        return abi.decode(state.access(TOTAL_SUPPLY), (uint256));
-    }
-
-    function stateBalanceOf(address account) external view returns (uint256) {
-        bytes32 account_ = keccak256(abi.encode("account", "balance", account));
-        bytes memory data = state.access(account_);
-        bytes memory emptyBytes;
-        uint256 balance;
-        if (keccak256(data) == keccak256(emptyBytes)) { balance = 0; }
-        else {
-            balance = abi.decode(data, (uint256));
-        }
-        return balance;
-    }
+    /** @dev external view */
 
     function getCurrentSnapshotId() external view returns (uint256) {
         return _getCurrentSnapshotId();
     }
 
-    /// External
-
-    function init() external {
-        require(msg.sender == _deployer, "Dream: msg.sender != _deployer");
-        require(!_init, "Dream: _init");
-        state.store(NAME, abi.encode(name()));
-        state.store(SYMBOL, abi.encode(symbol()));
-        state.store(DECIMALS, abi.encode(decimals()));
-        state.store(TOTAL_SUPPLY, abi.encode(uint256(0)));
-        _mint(msg.sender, _convertToWei(200000000));
-        _init = true;
-    }
+    /** @dev external */
 
     function snapshot() external returns (uint256) {
         _snapshot();
         return _getCurrentSnapshotId();
     }
 
-    /// Internal
-
+    /** @dev internal */
+    
     function _beforeTokenTransfer(address from, address to, uint256 amount) internal override(ERC20, ERC20Snapshot) {
         super._beforeTokenTransfer(from, to, amount);
-        if (_isLogic()) { /// will stop copying data if it is not longer logic without breaking the contract
-            if (from == address(0)) {
-                _stateAddAccountBalance(to, amount);
-                _stateAddTokenTotalSupply(amount);
-            }
-            else if (to == address(0)) {
-                _stateSubAccountBalance(from, amount);
-                _stateSubTokenTotalSupply(amount);
-            }
-            else {
-                _stateSubAccountBalance(from, amount);
-                _stateAddAccountBalance(to, amount);
-            }
-        }
-    }
-
-    /// Private Pure
-
-    function _convertToWei(uint256 value) private pure returns (uint256) {
-        return value * 10**18;
-    }
-
-    /// Private View
-
-    function _isLogic() private view returns (bool) {
-        return address(this) == state.latest();
-    }
-
-    /// Private
-    
-    function _stateAddAccountBalance(address account, uint256 amount) private {
-        bytes32 account_ = keccak256(abi.encode("account", "balance", account));
-        bytes memory data = state.access(account_);
-        bytes memory emptyBytes;
-        uint256 balance;
-        if (keccak256(data) == keccak256(emptyBytes)) { balance = 0; }
-        else {
-            balance = abi.decode(data, (uint256));
-        }
-        balance += amount;
-        state.store(account_, abi.encode(balance));
-    }
-
-    function _stateSubAccountBalance(address account, uint256 amount) private {
-        bytes32 account_ = keccak256(abi.encode("account", "balance", account));
-        bytes memory data = state.access(account_);
-        bytes memory emptyBytes;
-        uint256 balance;
-        if (keccak256(data) == keccak256(emptyBytes)) { balance = 0; }
-        else {
-            balance = abi.decode(data, (uint256));
-        }
-        balance -= amount;
-        state.store(account_, abi.encode(balance));
-    }
-
-    function _stateAddTokenTotalSupply(uint256 amount) private {
-        uint256 supply = abi.decode(state.access(TOTAL_SUPPLY), (uint256));
-        supply += amount;
-        state.store(TOTAL_SUPPLY, abi.encode(supply));
-    }
-
-    function _stateSubTokenTotalSupply(uint256 amount) private {
-        uint256 supply = abi.decode(state.access(TOTAL_SUPPLY), (uint256));
-        supply -= amount;
-        state.store(TOTAL_SUPPLY, abi.encode(supply));
     }
 }
