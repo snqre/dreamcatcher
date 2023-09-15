@@ -2176,11 +2176,11 @@ abstract contract ERC20Permit is ERC20, IERC20Permit, EIP712 {
 
 // File: contracts\polygon\GovernanceToken.sol
 
-contract GovernanceToken is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit {
+contract Dream is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit {
 
     /** @dev constructor */
 
-    constructor(string memory name, string memory symbol) ERC20(name, symbol) ERC20Permit(name) {
+    constructor() ERC20("Dream", "DREAM") ERC20Permit("Dream") {
         _mint(msg.sender, 200000000 * (10**18));
     }
 
