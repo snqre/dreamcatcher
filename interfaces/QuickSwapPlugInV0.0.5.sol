@@ -918,7 +918,7 @@ contract QuickSwapPlugIn is IQuickSwapPlugIn, Pausable {
             revert PAIR_NOT_FOUND();
         }
     }
-
+    /// IS REVERSED NOTE RE REVERSE IT BACK SO EG BTC / USDT -> price
     function getPrice(
         address tokenA,
         address tokenB,

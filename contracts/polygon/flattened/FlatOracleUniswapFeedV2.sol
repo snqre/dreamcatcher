@@ -301,8 +301,8 @@ contract OracleUniswapFeedV2 {
         nameTokenB = iERC20TokenB.name();
         symbolTokenA = iERC20TokenA.symbol();
         symbolTokenB = iERC20TokenB.symbol();
-        decimalsTokenA = uint8(iERC20TokenA.decimals());
-        decimalsTokenB = uint8(iERC20TokenB.decimals());
+        decimalsTokenA = iERC20TokenA.decimals();
+        decimalsTokenB = iERC20TokenB.decimals();
         return (
             addressPair,
             addressTokenA,
@@ -339,14 +339,14 @@ contract OracleUniswapFeedV2 {
             uint256 rA = reserveA * (10**iERC20TokenA.decimals());
             uint256 price = (amount * rA) / reserveB;
             price *= 10**18;
-            price /= 10**iERC20TokenA.decimals();
+            price /= 10**iERC20TokenB.decimals();
             return price;
         }
         else if (order == 1) {
             uint256 rB = reserveB * (10**iERC20TokenB.decimals());
             uint256 price = (amount * rB) / reserveA;
             price *= 10**18;
-            price /= 10**iERC20TokenB.decimals();
+            price /= 10**iERC20TokenA.decimals();
             return price;
         }
         else { revert("OracleUniswapFeedV2: pair not found"); }
@@ -376,23 +376,11 @@ contract OracleUniswapFeedV2 {
         IERC20Metadata iERC20TokenB = IERC20Metadata(tokenB);
         if (
             tokenA == addressTokenA &&
-            tokenB == addressTokenB &&
-            _isSameString(iERC20TokenA.name(), nameTokenA) &&
-            _isSameString(iERC20TokenB.name(), nameTokenB) &&
-            _isSameString(iERC20TokenA.symbol(), symbolTokenA) &&
-            _isSameString(iERC20TokenB.symbol(), symbolTokenB) &&
-            iERC20TokenA.decimals() == decimalsTokenA &&
-            iERC20TokenB.decimals() == decimalsTokenB
+            tokenB == addressTokenB
         ) { return 1; }
         else if (
             tokenA == addressTokenB &&
-            tokenB == addressTokenA &&
-            _isSameString(iERC20TokenA.name(), nameTokenB) &&
-            _isSameString(iERC20TokenB.name(), nameTokenA) &&
-            _isSameString(iERC20TokenA.name(), symbolTokenB) &&
-            _isSameString(iERC20TokenB.name(), symbolTokenA) &&
-            iERC20TokenA.decimals() == decimalsTokenB &&
-            iERC20TokenB.decimals() == decimalsTokenA
+            tokenB == addressTokenA
         ) { return 0; }
         else { revert("OracleUniswapFeedV2: pair not found"); }
     }

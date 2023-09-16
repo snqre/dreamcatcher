@@ -1,336 +1,399 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity 0.8.19;
 
-import { Pausable } from "contracts/polygon/external/openzeppelin/security/Pausable.sol";
+import "contracts/polygon/external/openzeppelin/access/AccessControlDefaultAdminRules.sol";
 
-import { EnumerableSet } from "contracts/polygon/external/openzeppelin/utils/structs/EnumerableSet.sol";
+import "contracts/polygon/external/openzeppelin/access/AccessControlEnumerable.sol";
 
-import { IState } from "contracts/polygon/interfaces/IState.sol";
+import "contracts/polygon/external/openzeppelin/proxy/Proxy.sol";
 
-import { State } from "contracts/polygon/State.sol";
+import "contracts/polygon/external/openzeppelin/security/Pausable.sol";
 
-/**
-* control routers, upgrades, all in one place
-* call Terminal to find the up to date location of all other modules and use the appropriate interface
-* with this mechanism old implementations cannot store information within each router hence they will not be able to be used
- */
-contract Terminal is Pausable {
-    using EnumerableSet for EnumerableSet.AddressSet;
+import "contracts/polygon/external/openzeppelin/security/ReentrancyGuard.sol";
 
-    /// State Variables
+import "contracts/polygon/external/openzeppelin/utils/Address.sol";
 
-    Dat private _dat;
+import "contracts/polygon/external/openzeppelin/utils/structs/BitMaps.sol";
 
-    address public admin;
+import "contracts/polygon/external/openzeppelin/utils/structs/Checkpoints.sol";
 
-    EnumerableSet.AddressSet private _module;
+import "contracts/polygon/external/openzeppelin/utils/structs/DoubleEndedQueue.sol";
 
-    EnumerableSet.AddressSet private _active;
-    EnumerableSet.AddressSet private _locked;
-    EnumerableSet.AddressSet private _paused;
-    
-    mapping(string => uint256) public moduleMapping;
+import "contracts/polygon/external/openzeppelin/utils/structs/EnumerableMap.sol";
 
-    /// Events
+import "contracts/polygon/external/openzeppelin/utils/structs/EnumerableSet.sol";
 
-    event RouterDeployed(address indexed msgSender, string indexed module);
+contract Terminal is AccessControlDefaultAdminRules, AccessControlEnumerable, ReentrancyGuard, Pausable, Proxy {
 
-    event RouterUpgraded(address indexed msgSender, string indexed module, address indexed newLogic);
-
-    event RouterRenamed(address indexed msgSender, string indexed module, string indexed newModule);
-
-    event RouterLocked(address indexed msgSender, string indexed module);
-
-    event RouterTimerSet(address indexed msgSender, string indexed module, uint64 indexed duration);
-
-    event RouterPaused(address indexed msgSender, string indexed module);
-
-    event RouterUnpaused(address indexed msgSender, string indexed module);
-
-    event OwnershipTransferred(address indexed msgSender, address indexed newOwner);
-
-    event Updated(address indexed msgSender, string indexed newName);
-    
-    /// Function Modifiers
-
-    modifier onlyAdmin() {
-        require(msg.sender == admin, "Terminal: msg.sender != admin");
-        _;
-    }
-    
-    /// Struct, Arrays or Enums
-
-    struct Dat { string name; }
-
-    /// Constructor
-
-    constructor(string memory newName) payable {
-        admin = msg.sender;
-        _dat.name = newName;
-        _module.add(address(new State("root", false)));
-    }
-
-    /// Plublic View
-
-    function name() public view returns (string memory) {
-        return _dat.name;
-    }
-
-    function access(string memory module, bytes32 location) public view returns (bytes memory) {
-        _reqInUse(module);
-        IState state = IState(_module.at(moduleMapping[module]));
-        return state.access(location);
-    }
-
-    function version(string memory module) public view returns (uint256) {
-        _reqInUse(module);
-        IState state = IState(_module.at(moduleMapping[module]));
-        return state.version();
-    }
-
-    function latest(string memory module) public view returns (address) {
-        _reqInUse(module);
-        IState state = IState(_module.at(moduleMapping[module]));
-        return state.latest();
-    }
-
-    function previous(string memory module, uint256 index) public view returns (address) {
-        _reqInUse(module);
-        IState state = IState(_module.at(moduleMapping[module]));
-        return state.previous(index);
-    }
-
-    function empty(string memory module, bytes32 location) public view returns (bool) {
-        _reqInUse(module);
-        IState state = IState(_module.at(moduleMapping[module]));
-        return state.empty(location);
-    }
-
-    function timestamp(string memory module) public view returns (uint64) {
-        _reqInUse(module);
-        IState state = IState(_module.at(moduleMapping[module]));
-        return state.timestamp();
-    }
-
-    function locked(string memory module) public view returns (bool) {
-        _reqInUse(module);
-        IState state = IState(_module.at(moduleMapping[module]));
-        return state.locked();
-    }
-
-    function core(string memory module) public view returns (bool) {
-        _reqInUse(module);
-        IState state = IState(_module.at(moduleMapping[module]));
-        return state.core();
-    }
-
-    function timerSet(string memory module) public view returns (bool) {
-        _reqInUse(module);
-        IState state = IState(_module.at(moduleMapping[module]));
-        return state.timerSet();
-    }
-
-    function logic(string memory module) public view returns (address) {
-        _reqInUse(module);
-        IState state = IState(_module.at(moduleMapping[module]));
-        return state.logic();
-    }
-
-    function terminal(string memory module) public view returns (address) {
-        _reqInUse(module);
-        IState state = IState(_module.at(moduleMapping[module]));
-        return state.terminal();
-    }
-
-    /** @dev lookup routers by module name */
-    function searchByName(string memory module) public view
-    returns (
-        string memory module_,
-        address terminal_,
-        address state_,
-        address logic_,
-        uint256 version_,
-        uint64 timestamp_,
-        bool core_,
-        bool locked_,
-        bool paused_,
-        bool timerSet_
-    ) {
-        _reqInUse(module);
-        IState state = IState(_module.at(moduleMapping[module]));
-        return (
-            state.module(),
-            state.terminal(),
-            address(state),
-            state.logic(),
-            state.version(),
-            state.timestamp(),
-            state.core(),
-            state.locked(),
-            state.paused(),
-            state.timerSet()
-        );
-    }
-
-    /** @dev look up routers by module index */
-    function searchByIndex(uint index) public view
-    returns (
-        string memory module,
-        address terminal_,
-        address state_,
-        address logic_,
-        uint256 version_,
-        uint64 timestamp_,
-        bool core_,
-        bool locked_,
-        bool paused_,
-        bool timerSet_
-    ) {
-        IState state = IState(_module.at(index));
-        return (
-            state.module(),
-            state.terminal(),
-            address(state),
-            state.logic(),
-            state.version(),
-            state.timestamp(),
-            state.core(),
-            state.locked(),
-            state.paused(),
-            state.timerSet()
-        );
-    }
-
-    /** @dev look up routers by address */
-    function searchByAccount(address account) public view
-    returns (
-        string memory module,
-        address terminal_,
-        address state_,
-        address logic_,
-        uint256 version_,
-        uint64 timestamp_,
-        bool core_,
-        bool locked_,
-        bool paused_,
-        bool timerSet_
-    ) {
-        require(_module.contains(account), "State: module not found");
-        IState state = IState(account);
-        return (
-            state.module(),
-            state.terminal(),
-            address(state),
-            state.logic(),
-            state.version(),
-            state.timestamp(),
-            state.core(),
-            state.locked(),
-            state.paused(),
-            state.timerSet()
-        );
-    }
-
-    function arrayActive() public view returns (address[] memory) {
-        return _active.values();
-    }
-
-    function arrayLocked() public view returns (address[] memory) {
-        return _locked.values();
-    }
-
-    function arrayPaused() public view returns (address[] memory) {
-        return _paused.values();
-    }
-
-    /** @dev number of routrs deployed without root router */
-    function count() public view returns (uint256) {
-        return _module.length() - 1;
-    }
-
-    /// Public
+    /** Imports. */
 
     /**
-    * @dev deploys a State.sol contract (see State.sol) which acts as a router and ERC930 implementation
-    * @param core_ core router cannot be paused, unpaused, locked, or set to exipire
+    * @dev Library for managing uint256 to bool mapping in a compact and efficient way, providing the keys are sequential.
+    * Largely inspired by Uniswap's https://github.com/Uniswap/merkle-distributor/blob/master/contracts/MerkleDistributor.sol[merkle-distributor].
+    */
+    using BitMaps for BitMaps.BitMap;
+
+    /**
+    * @dev This library defines the `History` struct, for checkpointing values as they change at different points in
+    * time, and later looking up past values by block number. See {Votes} as an example.
+    *
+    * To create a history of checkpoints define a variable type `Checkpoints.History` in your contract, and store a new
+    * checkpoint for the current transaction block using the {push} function.
+    *
+    * _Available since v4.5._
+    */
+    using Checkpoints for Checkpoints.Trace224;
+
+    /**
+    * @dev A sequence of items with the ability to efficiently push and pop items (i.e. insert and remove) on both ends of
+    * the sequence (called front and back). Among other access patterns, it can be used to implement efficient LIFO and
+    * FIFO queues. Storage use is optimized, and all operations are O(1) constant time. This includes {clear}, given that
+    * the existing queue contents are left in storage.
+    *
+    * The struct is called `Bytes32Deque`. Other types can be cast to and from `bytes32`. This data structure can only be
+    * used in storage, and not in memory.
+    * ```solidity
+    * DoubleEndedQueue.Bytes32Deque queue;
+    * ```
+    *
+    * _Available since v4.6._
+    */
+    using DoubleEndedQueue for DoubleEndedQueue.Bytes32Deque;
+
+    /**
+    * @dev Library for managing an enumerable variant of Solidity's
+    * https://solidity.readthedocs.io/en/latest/types.html#mapping-types[`mapping`]
+    * type.
+    *
+    * Maps have the following properties:
+    *
+    * - Entries are added, removed, and checked for existence in constant time
+    * (O(1)).
+    * - Entries are enumerated in O(n). No guarantees are made on the ordering.
+    *
+    * ```solidity
+    * contract Example {
+    *     // Add the library methods
+    *     using EnumerableMap for EnumerableMap.UintToAddressMap;
+    *
+    *     // Declare a set state variable
+    *     EnumerableMap.UintToAddressMap private myMap;
+    * }
+    * ```
+    *
+    * The following map types are supported:
+    *
+    * - `uint256 -> address` (`UintToAddressMap`) since v3.0.0
+    * - `address -> uint256` (`AddressToUintMap`) since v4.6.0
+    * - `bytes32 -> bytes32` (`Bytes32ToBytes32Map`) since v4.6.0
+    * - `uint256 -> uint256` (`UintToUintMap`) since v4.7.0
+    * - `bytes32 -> uint256` (`Bytes32ToUintMap`) since v4.7.0
+    *
+    * [WARNING]
+    * ====
+    * Trying to delete such a structure from storage will likely result in data corruption, rendering the structure
+    * unusable.
+    * See https://github.com/ethereum/solidity/pull/11843[ethereum/solidity#11843] for more info.
+    *
+    * In order to clean an EnumerableMap, you can either remove all elements one by one or create a fresh instance using an
+    * array of EnumerableMap.
+    * ====
+    */
+    using EnumerableMap for EnumerableMap.Bytes32ToBytes32Map;
+
+    using EnumerableMap for EnumerableMap.UintToUintMap;
+
+    using EnumerableMap for EnumerableMap.UintToAddressMap;
+
+    using EnumerableMap for EnumerableMap.AddressToUintMap;
+
+    using EnumerableMap for EnumerableMap.Bytes32ToUintMap;
+
+    /**
+    * @dev Library for managing
+    * https://en.wikipedia.org/wiki/Set_(abstract_data_type)[sets] of primitive
+    * types.
+    *
+    * Sets have the following properties:
+    *
+    * - Elements are added, removed, and checked for existence in constant time
+    * (O(1)).
+    * - Elements are enumerated in O(n). No guarantees are made on the ordering.
+    *
+    * ```solidity
+    * contract Example {
+    *     // Add the library methods
+    *     using EnumerableSet for EnumerableSet.AddressSet;
+    *
+    *     // Declare a set state variable
+    *     EnumerableSet.AddressSet private mySet;
+    * }
+    * ```
+    *
+    * As of v3.3.0, sets of type `bytes32` (`Bytes32Set`), `address` (`AddressSet`)
+    * and `uint256` (`UintSet`) are supported.
+    *
+    * [WARNING]
+    * ====
+    * Trying to delete such a structure from storage will likely result in data corruption, rendering the structure
+    * unusable.
+    * See https://github.com/ethereum/solidity/pull/11843[ethereum/solidity#11843] for more info.
+    *
+    * In order to clean an EnumerableSet, you can either remove all elements one by one or create a fresh instance using an
+    * array of EnumerableSet.
+    * ====
+    */
+    using EnumerableSet for EnumerableSet.AddressSet;
+
+    using EnumerableSet for EnumerableSet.Bytes32Set;
+
+    using EnumerableSet for EnumerableSet.UintSet;
+
+    /** TODO State Variables. */
+
+    /** Native Storage Mappings. */
+
+    /**
+    * port: uint256
+    * key: bytes32
+    * value: string
      */
-    function deploy(string memory module, bool core_) public onlyAdmin() {
-        _reqNotInUse(module);
-        _module.add(address(new State(module, core_)));
-        moduleMapping[module] = _module.length() - 1;
-        _active.add(_module.at(moduleMapping[module]));
-        emit RouterDeployed(msg.sender, module);
+    mapping(uint256 => mapping(bytes32 => string)) private _string;
+    
+    /**
+    * port: uint256
+    * key: bytes32
+    * value: bytes
+     */
+    mapping(uint256 => mapping(bytes32 => bytes)) private _bytes;
+
+    /**
+    * port: uint256
+    * key: bytes32
+    * value: uint256
+     */
+    mapping(uint256 => mapping(bytes32 => uint256)) private _uint256;
+
+    /**
+    * port: uint256
+    * key: bytes32
+    * value: int256
+     */
+    mapping(uint256 => mapping(bytes32 => int256)) private _int256;
+
+    /**
+    * port: uint256
+    * key: bytes32
+    * value: address
+     */
+    mapping(uint256 => mapping(bytes32 => address)) private _address;
+
+    /**
+    * port: uint256
+    * key: bytes32
+    * value: bool
+     */
+    mapping(uint256 => mapping(bytes32 => bool)) private _bool;
+
+    /**
+    * port: uint256
+    * key: bytes32
+    * value: bytes32
+     */
+    mapping(uint256 => mapping(bytes32 => bytes32)) private _bytes32;
+
+    /**
+    * port: uint256
+    * key: bytes32
+    * value: string[]
+     */
+    mapping(uint256 => mapping(bytes32 => string[])) private _stringArray;
+
+    /**
+    * port: uint256
+    * key: bytes32
+    * value: bytes[]
+     */
+    mapping(uint256 => mapping(bytes32 => bytes[])) private _bytesArray;
+    
+    /**
+    * port: uint256
+    * key: bytes32
+    * value: uint256[]
+     */
+    mapping(uint256 => mapping(bytes32 => uint256[])) private _uint256Array;
+
+    /**
+    * port: uint256
+    * key: bytes32
+    * value: int256[]
+     */
+    mapping(uint256 => mapping(bytes32 => int256[])) private _int256Array;
+
+    /**
+    * port: uint256
+    * key: bytes32
+    * value: address[]
+     */
+    mapping(uint256 => mapping(bytes32 => address[])) private _addressArray;
+
+    /**
+    * port: uint256
+    * key: bytes32
+    * value: bool[]
+     */
+    mapping(uint256 => mapping(bytes32 => bool[])) private _boolArray;
+
+    /**
+    * port: uint256
+    * key: bytes32
+    * value: bytes32[]
+     */
+    mapping(uint256 => mapping(bytes32 => bytes32[])) private _bytes32Array;
+
+    /** Openzeppelin Storage Mappings. */
+
+    /**
+    * port: uint256
+    * key: bytes32
+    * value: BitMaps.BitMap
+     */
+    mapping(uint256 => mapping(bytes32 => BitMaps.BitMap)) private _bitmap;
+
+    /**
+    * port: uint256
+    * key: bytes32
+    * value: Checkpoints.Trace224
+     */
+    mapping(uint256 => mapping(bytes32 => Checkpoints.Trace224)) private _trace224;
+
+    /**
+    * port: uint256
+    * key: bytes32
+    * value: DoubleEndedQueue.Bytes32Deque
+     */
+    mapping(uint256 => mapping(bytes32 => DoubleEndedQueue.Bytes32Deque)) private _bytes32Deque;
+
+    /**
+    * port: uint256
+    * key: bytes32
+    * value: EnumerableMap.Bytes32ToBytes32Map
+     */
+    mapping(uint256 => mapping(bytes32 => EnumerableMap.Bytes32ToBytes32Map)) private _bytes32ToBytes32Map;
+
+    /**
+    * port: uint256
+    * key: bytes32
+    * value: EnumerableMap.UintToUintMap
+     */
+    mapping(uint256 => mapping(bytes32 => EnumerableMap.UintToUintMap)) private _uintToUintMap;
+
+    /**
+    * port: uint256
+    * key: bytes32
+    * value: EnumerableMap.UintToAddressMap
+     */
+    mapping(uint256 => mapping(bytes32 => EnumerableMap.UintToAddressMap)) private _uintToAddressMap;
+
+    /**
+    * port: uint256
+    * key: bytes32
+    * value: EnumerableMap.AddressToUintMap
+     */
+    mapping(uint256 => mapping(bytes32 => EnumerableMap.AddressToUintMap)) private _addressToUintMap;
+
+    /**
+    * port: uint256
+    * key: bytes32
+    * value: EnumerableMap.Bytes32ToUintMap
+     */
+    mapping(uint256 => mapping(bytes32 => EnumerableMap.Bytes32ToUintMap)) private _bytes32ToUintMap;
+
+    /**
+    * port: uint256
+    * key: bytes32
+    * value: EnumerableSet.AddressSet
+     */
+    mapping(uint256 => mapping(bytes32 => EnumerableSet.AddressSet)) private _addressSet;
+
+    /**
+    * port: uint256
+    * key: bytes32
+    * value: EnumerableSet.Bytes32Set
+     */
+    mapping(uint256 => mapping(bytes32 => EnumerableSet.Bytes32Set)) private _bytes32Set;
+
+    /**
+    * port: uint256
+    * key: bytes32
+    * value: EnumerableSet.UintSet
+     */
+    mapping(uint256 => mapping(bytes32 => EnumerableSet.UintSet)) private _uintSet;
+
+    /**
+    * @param initialDelay
+    * @param initialDefaultAdmin Set initial admin
+    * @note 
+     */
+    constructor(uint48 initialDelay, address initialDefaultAdmin) AccessControlDefaultAdminRules(initialDelay, initialDefaultAdmin) {}
+/** TODO SET WHAT IMPLEMENTATION IS SELECTED */
+    /** External.  */
+
+    /**
+     * @dev Fallback function that delegates calls to the address returned by `_implementation()`. Will run if no other
+     * function in the contract matches the call data.
+     */
+    fallback() external payable virtual override {
+        _fallback();
     }
 
-    function upgrade(string memory module, address newLogic) public onlyAdmin() {
-        _reqInUse(module);
-        IState state = IState(_module.at(moduleMapping[module]));
-        state.upgrade(newLogic);
-        emit RouterUpgraded(msg.sender, module, newLogic);
+    /**
+     * @dev Fallback function that delegates calls to the address returned by `_implementation()`. Will run if call data
+     * is empty.
+     */
+    receive() external payable virtual override {
+        _fallback();
     }
 
-    function rename(string memory module, string memory newModule) public onlyAdmin() {
-        _reqInUse(module);
-        _reqNotInUse(newModule);
-        moduleMapping[newModule] = moduleMapping[module];
-        moduleMapping[module] = 0;
-        IState state = IState(_module.at(moduleMapping[module]));
-        state.update(newModule);
-        emit RouterRenamed(msg.sender, module, newModule);
+    /** Internal View. */
+
+    /**
+     * @dev This is a virtual function that should be overridden so it returns the address to which the fallback function
+     * and {_fallback} should delegate.
+     * @dev @note This has been overriden here.
+     */
+    function _implementation() internal view virtual override returns (address) {
+        super._implementation();
+        /** TODO */
     }
 
-    /** @dev WARNING permanently locks non core router which will not be able to store any more data */
-    function lock(string memory module) public onlyAdmin() {
-        _reqInUse(module);
-        IState state = IState(_module.at(moduleMapping[module]));
-        state.lock();
-        _active.remove(_module.at(moduleMapping[module]));
-        _locked.add(_module.at(moduleMapping[module]));
-        emit RouterLocked(msg.sender, module);
+    /** Internal. */
+
+    /**
+     * @dev Delegates the current call to `implementation`.
+     *
+     * This function does not return to its internal call site, it will return directly to the external caller.
+     */
+    function _delegate(address implementation) internal virtual override {
+        super._delegate(implementation);
     }
 
-    function pause(string memory module) public onlyAdmin() {
-        _reqInUse(module);
-        IState state = IState(_module.at(moduleMapping[module]));
-        state.pause();
-        _paused.add(_module.at(moduleMapping[module]));
-        emit RouterPaused(msg.sender, module);
+    /**
+     * @dev Delegates the current call to the address returned by `_implementation()`.
+     *
+     * This function does not return to its internal call site, it will return directly to the external caller.
+     */
+    function _fallback() internal virtual override {
+        super._fallback();
     }
 
-    function unpause(string memory module) public onlyAdmin() {
-        _reqInUse(module);
-        IState state = IState(_module.at(moduleMapping[module]));
-        state.unpause();
-        _paused.remove(_module.at(moduleMapping[module]));
-        emit RouterUnpaused(msg.sender, module);
-    }
-
-    /** @dev set a timer at which the non core router will stop storing data */
-    function setTimer(string memory module, uint64 duration) public onlyAdmin() {
-        _reqInUse(module);
-        IState state = IState(_module.at(moduleMapping[module]));
-        state.timer(duration);
-        emit RouterTimerSet(msg.sender, module, duration);
-    }
-
-    /** update terminal name */
-    function update(string memory newName) public onlyAdmin() {
-        _dat.name = newName;
-        emit Updated(msg.sender, newName);
-    }
-
-    function transferOwnership(address account) public onlyAdmin() {
-        admin = account;
-        emit OwnershipTransferred(msg.sender, account);
-    }
-
-    /// Private View
-
-    function _reqNotInUse(string memory module) private view {
-        require(moduleMapping[module] == 0, "Terminal: module != 0");
-    }
-
-    function _reqInUse(string memory module) private view {
-        require(moduleMapping[module] != 0, "Terminal: module == 0");
+    /**
+     * @dev Hook that is called before falling back to the implementation. Can happen as part of a manual `_fallback`
+     * call, or as part of the Solidity `fallback` or `receive` functions.
+     *
+     * If overridden should call `super._beforeFallback()`.
+     */
+    function _beforeFallback() internal virtual override {
+        super._beforeFallback();
     }
 }
