@@ -7,8 +7,7 @@ import "contracts/polygon/external/openzeppelin/access/AccessControlEnumerable.s
 
 import "contracts/polygon/abstract/Implementation.sol";
 
-abstract contract ImplementationAccessControl is Implementation, AccessControlDefaultAdminRules, AccessControlEnumerable {
-    
+/** @dev This inheritance adds storage to the implementation */
+abstract contract ImplementationAccessControl is Implementation, AccessControlDefaultAdminRules {
     constructor(uint48 initialDelay, address initialDefaultAdmin) AccessControlDefaultAdminRules(initialDelay, initialDefaultAdmin) {}
-
 }
