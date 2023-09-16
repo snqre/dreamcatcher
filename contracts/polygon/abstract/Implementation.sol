@@ -38,10 +38,6 @@ abstract contract Implementation is State, Proxy {
         _fallback();
     }
 
-    function upgradeTo(address implementation) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        _address[$implementation] = implementation;
-    }
-
     /** Internal View. */
 
     /**
@@ -50,11 +46,14 @@ abstract contract Implementation is State, Proxy {
      * @dev @note This has been overriden here.
      */
     function _implementation() internal view virtual override returns (address) {
-        super._implementation();
-        return _address[$];
+        return _address[$implementation];
     }
 
     /** Internal. */
+
+    function _upgrade(address implementation) internal virtual {
+        _address[$implementation] = implementation;
+    }
 
     /**
      * @dev Delegates the current call to `implementation`.
