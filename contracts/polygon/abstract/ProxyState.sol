@@ -5,20 +5,12 @@ import "contracts/polygon/external/openzeppelin/proxy/Proxy.sol";
 
 import "contracts/polygon/abstract/State.sol";
 
-abstract contract Proxy is State, Proxy {
-
-    /** State Variable. */
-
     /**
-    * @dev $ bytes32 with _address storage to store the address of the implementation
+     * NOTE WARNING: DO NOT MODIFY STORAGE.
+     * NOTE WARNING: DO NOT USE CONSTRUCTOR.
+     * NOTE WARNING: _address @ $ is RESERVED.
      */
-    bytes32 public constant $implementation = keccak256("$"); /** NOTE RESERVED: storage use -> _address */
-
-    /**
-    * DO NOT change storage
-    * DO NOT add new storage
-    * DO NOT use constructor
-     */
+abstract contract ProxyState is State, Proxy {
 
     /** Proxy. */
 
@@ -45,16 +37,18 @@ abstract contract Proxy is State, Proxy {
     /**
      * @dev This is a virtual function that should be overridden so it returns the address to which the fallback function
      * and {_fallback} should delegate.
-     * @dev @note This has been overriden here.
+     * @dev NOTE This has been overriden here.
      */
     function _implementation() internal view virtual override returns (address) {
-        return _address[$implementation];
+        bytes32 location = keccak256(abi.encode("$"));
+        return _address[location];
     }
 
     /** Internal. */
 
     function _upgrade(address implementation) internal virtual {
-        _address[$implementation] = implementation;
+        bytes32 location = keccak256(abi.encode("$"));
+        _address[location] = implementation;
     }
 
     /**
@@ -72,7 +66,8 @@ abstract contract Proxy is State, Proxy {
      * This function does not return to its internal call site, it will return directly to the external caller.
      */
     function _fallback() internal virtual override {
-        require(_address[$implementation] != address(0), "Terminal: can't fallback to address zero");
+        bytes32 location = keccak256(abi.encode("$"));
+        require(_address[location] != address(0), "Terminal: fallback to address zero");
         super._fallback();
     }
 
