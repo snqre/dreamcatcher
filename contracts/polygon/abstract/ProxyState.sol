@@ -5,7 +5,7 @@ import "contracts/polygon/external/openzeppelin/proxy/Proxy.sol";
 
 import "contracts/polygon/abstract/State.sol";
 
-abstract contract Implementation is State, Proxy {
+abstract contract Proxy is State, Proxy {
 
     /** State Variable. */
 
@@ -15,7 +15,9 @@ abstract contract Implementation is State, Proxy {
     bytes32 public constant $implementation = keccak256("$"); /** NOTE RESERVED: storage use -> _address */
 
     /**
-    * As long as all state and storage slots are preserved then this can be used as a framework.
+    * DO NOT change storage
+    * DO NOT add new storage
+    * DO NOT use constructor
      */
 
     /** Proxy. */
