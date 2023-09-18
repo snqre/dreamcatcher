@@ -5,12 +5,19 @@ import "contracts/polygon/external/openzeppelin/proxy/Proxy.sol";
 
 import "contracts/polygon/abstract/State.sol";
 
-    /**
-     * NOTE WARNING: DO NOT MODIFY STORAGE.
-     * NOTE WARNING: DO NOT USE CONSTRUCTOR.
-     * NOTE WARNING: _address @ $ is RESERVED.
-     */
+/**
+ * NOTE WARNING: DO NOT MODIFY STORAGE.
+ * NOTE WARNING: DO NOT USE CONSTRUCTOR.
+ * NOTE WARNING: _address @ $ is RESERVED.
+ */
 abstract contract ProxyState is State, Proxy {
+
+    /** Events. */
+
+    /**
+    * @dev Upgrade.
+     */
+    event Upgraded(address indexed implementation);
 
     /** Proxy. */
 
@@ -49,6 +56,7 @@ abstract contract ProxyState is State, Proxy {
     function _upgrade(address implementation) internal virtual {
         bytes32 location = keccak256(abi.encode("$"));
         _address[location] = implementation;
+        emit Upgraded(implementation);
     }
 
     /**

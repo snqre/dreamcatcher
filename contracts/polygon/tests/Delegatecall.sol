@@ -69,6 +69,13 @@ contract ImplementationA is State {
 }
 
 contract ImplementationB is State {
+
+    /** Here we have new events in the implementation */
+    event Sub();
+    event Add();
+    event Mul();
+    event Div();
+
     function check() external view returns (uint256) {
         bytes32 location = keccak256(abi.encode("storage"));
         return _uint256[location];
@@ -77,21 +84,25 @@ contract ImplementationB is State {
     function sub(uint256 amount) external {
         bytes32 location = keccak256(abi.encode("storage"));
         _uint256[location] -= amount;
+        emit Sub();
     }
 
     function add(uint256 amount) external {
         bytes32 location = keccak256(abi.encode("storage"));
         _uint256[location] += amount;
+        emit Add();
     }
 
     /** Here we add new functions in the implementation */
     function mul(uint256 amount) external {
         bytes32 location = keccak256(abi.encode("storage"));
         _uint256[location] *= amount;
+        emit Mul();
     }
 
     function div(uint256 amount) external {
         bytes32 location = keccak256(abi.encode("storage"));
         _uint256[location] /= amount;
+        emit Div();
     }
 }
