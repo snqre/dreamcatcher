@@ -21,112 +21,53 @@ import "contracts/polygon/ProxyStateOwnableContract.sol";
 *      upgrades to happen in a single transaction.
  */
 contract TerminalV1 is ProxyStateOwnableContract {
-    
+
     /** Events. */
 
     event ComponentDeployed(string indexed name, address indexed component);
 
     event ComponentUpgraded(string indexed name, address indexed component, address indexed implementation);
 
-    event ComponentRenamed(string indexed oldName, string indexed newName);
+    /** Internal View. */
 
-    event ComponentPaused(string indexed name, address indexed component);
-
-    event ComponentUnpaused(string indexed name, address indexed component);
-
-    event ComponentSupported(string indexed name, address indexed component);
-
-    event ComponentUnsupported(string indexed name, address indexed component);
-
-    /** Public View. */
-
-    function isSupported(string memory name) public view returns (bool) {
-        return _bool[keccak256(abi.encode("_bool", "components", name, "supported"))];
+    function _stringToAddressMapping(string memory name) internal view returns (uint256 index) {
+        bytes memory refBytes = abi.encode(name);
+        bytes32 ref = keccak256(refBytes);
+        return _address[ref];
     }
 
-    /** Public. */
+    /** Internal. */
 
-    function deployComponent(string memory name) public onlyOwner() whenNotPaused() returns (address) {
-        require(_map(name) == 0, "TerminalV1: name is already assigned");
-        EnumerableSet.AddressSet storage components = _addressSet[keccak256(abi.encode("_addressSet", "components", "deployed"))];
+    function _assignStringToAddressMapping(string memory name, address component) internal {
+        bytes memory refBytes = abi.encode(name);
+        bytes32 ref = keccak256(refBytes);
+        _address[ref] = component;
+    }
+
+    function _storeUpgrade(string memory name, address implementation) internal {
+        address component = _stringToAddressMapping(name);
+        bytes memory refBytes = abi.encode(component, "history");
+        bytes32 ref = keccak256(refBytes);
+        _addressArray[ref].push(implementation);
+    }
+
+    function _deployComponent(string memory name) internal {
+        bytes memory refBytes = abi.encode("components");
+        bytes32 ref = keccak256(refBytes);
+        EnumerableSet.AddressSet storage components = _addressSet[ref];
         components.add(new ProxyStateOwnableContract());
-        IProxyStateOwnable component = IProxyStateOwnable(components.at(components.length() - 1));
-        component.initialize();
-        _setMap(name, components.length()); /** Sub 1 to get actual index. */
-        _bool[keccak256(abi.encode("_bool", "components", name, "supported"))] = true;
-        emit ComponentDeployed(name, components.at(components.length() - 1));
-        return components.at(components.length() - 1);
+        uint256 index = components.length() - 1;
+        IProxyStateOwnable component = IProxyStateOwnable(components.at(index));
+        _assignStringToAddressMapping(name, address(component));
+        emit ComponentDeployed(name, address(component));
     }
 
-    function upgradeComponent(string memory name, address implementation, bool initializeUnpaused) public onlyOwner() whenNotPaused() {
-        require(_map(name) != 0, "TerminalV1: name is unassigned");
-        require(isSupported(name), "TerminalV1: component is unsupported");
-        EnumerableSet.AddressSet storage components = _addressSet[keccak256(abi.encode("_addressSet", "components", "deployed"))];
-        IProxyStateOwnable component = IProxyStateOwnable(components.at(_map(name) - 1));
+    function _upgradeComponent(string memory name, address implementation) internal {
+        IProxyStateOwnable component = IProxyStateOwnable(_stringToAddressMapping(name));
         component.pause();
         component.upgrade(implementation);
-        if (initializeUnpaused) { component.unpause(); }
-        _addressArray[keccak256(abi.encode("_addressArray", "components", name, "implementations"))].push(implementation);
-        emit ComponentUpgraded(name, address(component), implementation);
-    }
-
-    function pauseComponent(string memory name) public onlyOwner() whenNotPaused() {
-        require(_map(name) != 0, "TerminalV1: name is unassigned");
-        require(isSupported(name), "TerminalV1: component is unsupported");
-        EnumerableSet.AddressSet storage components = _addressSet[keccak256(abi.encode("_addressSet", "components", "deployed"))];
-        IProxyStateOwnable component = IProxyStateOwnable(components.at(_map(name) - 1));
-        component.pause();
-        emit ComponentPaused(name, address(component));
-    }
-
-    function unpauseComponent(string memory name) public onlyOwner() whenNotPaused() {
-        require(_map(name) != 0, "TerminalV1: name is unassigned");
-        require(isSupported(name), "TerminalV1: component is unsupported");
-        EnumerableSet.AddressSet storage components = _addressSet[keccak256(abi.encode("_addressSet", "components", "deployed"))];
-        IProxyStateOwnable component = IProxyStateOwnable(components.at(_map(name) - 1));
         component.unpause();
-        emit ComponentUnpaused(name, address(component));
-    }
-
-    function supportComponent(string memory name) public onlyOwner() whenNotPaused() {
-        require(_map(name) != 0, "TerminalV1: name is unassigned");
-        require(!isSupported(name), "TerminalV1: component is supported");
-        _bool[keccak256(abi.encode("_bool", "components", name, "supported"))] = true;
-        EnumerableSet.AddressSet storage components = _addressSet[keccak256(abi.encode("_addressSet", "components", "deployed"))];
-        IProxyStateOwnable component = IProxyStateOwnable(components.at(_map(name) - 1));
-        emit ComponentSupported(name, address(component));
-    }
-
-    function unsupportComponent(string memory name) public onlyOwner() whenNotPaused() {
-        require(_map(name) != 0, "TerminalV1: name is unassigned");
-        require(isSupported(name), "TerminalV1: component is unsupported");
-        _bool[keccak256(abi.encode("_bool", "components", name, "supported"))] = false;
-        EnumerableSet.AddressSet storage components = _addressSet[keccak256(abi.encode("_addressSet", "components", "deployed"))];
-        IProxyStateOwnable component = IProxyStateOwnable(components.at(_map(name) - 1));
-        emit ComponentUnsupported(name, address(component));
-    }
-
-    function renameComponent(string memory oldName, string memory newName) public onlyOwner() whenNotPaused() {
-        require(_map(oldName) != 0, "TerminalV1: name is unassigned");
-        uint index = _map(oldName);
-        _setMap(newName, index);
-        _setMap(oldName, 0);
-        _bool[keccak256(abi.encode("_bool", "components", newName, "supported"))] = _bool[keccak256(abi.encode("_bool", "components", oldName, "supported"))];
-        _bool[keccak256(abi.encode("_bool", "components", oldName, "supported"))] = false;
-        emit ComponentRenamed(oldName, newName);
-    }
-
-    /** Private View. */
-
-    function _map(string memory name) private view returns (uint256 index) {
-        bytes32 location = keccak256(abi.encode("_uint256", "components", "map", name));
-        return _uint256[location];
-    }
-
-    /** Private. */
-
-    function _setMap(string memory name, uint256 index) private {
-        bytes32 location = keccak256(abi.encode("_uint256", "components", "map", name));
-        _uint256[location] = index;
+        _storeUpgrade(name, implementation);
+        emit ComponentUpgraded(name, address(component), implementation);
     }
 }
