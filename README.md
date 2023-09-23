@@ -30,3 +30,5 @@ With Mirai, investors can create their funds, define investment strategies, and 
 - **Collaborative Investment:** Mirai fosters collaboration within the Dreamcatcher community, allowing investors to pool their resources, share investment strategies, and collectively make informed decisions.
 
 - **Accessible Investment Opportunities:** Through Mirai, individuals from all backgrounds can access investment opportunities that were previously exclusive to traditional finance. This democratization enables financial inclusion and equal participation in wealth creation.
+
+** map(string name) => address: component
