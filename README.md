@@ -32,3 +32,16 @@ With Mirai, investors can create their funds, define investment strategies, and 
 - **Accessible Investment Opportunities:** Through Mirai, individuals from all backgrounds can access investment opportunities that were previously exclusive to traditional finance. This democratization enables financial inclusion and equal participation in wealth creation.
 
 ** map(string name) => address: component
+
+** addressSet: all deployed components
+
+** string: description
+
+** implementations address[ ]
+
+** implementations string[ ]
+
+impls 
+
+- address
+- versionTag
