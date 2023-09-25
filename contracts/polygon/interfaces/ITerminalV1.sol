@@ -25,6 +25,8 @@ interface ITerminalV1 is IProxyStateOwnable {
 
     function getVersion(string calldata name) external view returns (uint256 index);
 
+    function getNames(uint256 index) external view returns (string memory);
+
     function deploy(string calldata name) external returns (address);
 
     function upgradeTo(string calldata name, address implementation) external;

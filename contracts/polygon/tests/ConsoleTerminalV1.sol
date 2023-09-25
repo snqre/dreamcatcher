@@ -57,6 +57,11 @@ contract ConsoleTerminalV1 {
         return terminal.getVersion(name);
     }
 
+    function getNames(uint256 index) external view returns (string memory) {
+
+        return terminal.getNames(index);
+    }
+
     /** External. */
 
     function initialize() external {

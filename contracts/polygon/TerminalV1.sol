@@ -98,6 +98,14 @@ contract TerminalV1 is ProxyStateOwnableContract {
         return _addressSet[keccak256(abi.encode("history", name))].length();
     }
 
+    /**
+    * @dev Get all proxy names.
+     */
+    function getNames(uint256 index) external view returns (string memory) {
+
+        return _stringArray[keccak256(abi.encode("proxies", "names"))][index];
+    }
+
     /** External. */
 
     /**
@@ -141,7 +149,7 @@ contract TerminalV1 is ProxyStateOwnableContract {
         /**
         * @dev Add used names to names array.
          */
-        
+        _stringArray[keccak256(abi.encode("proxies", "names"))].push(name);
 
         /**
         * @dev Initialize the newly deployed proxy contract to gain
