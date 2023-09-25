@@ -173,7 +173,6 @@ contract ProxyStateOwnable is ProxyState, Context {
      * @dev Throws if the sender is not the owner.
      */
     function _checkOwner() internal view {
-        bytes32 location = keccak256(abi.encode("$owner"));
         require(owner() == _msgSender(), "ProxyStateOwnable: caller is not the owner");
     }
 
@@ -200,7 +199,7 @@ contract ProxyStateOwnable is ProxyState, Context {
     function _transferOwnership(address newOwner) internal {
         bytes32 location = keccak256(abi.encode("$owner"));
         address oldOwner = _address[location];
-        _address[location] = admin;
+        _address[location] = newOwner;
         emit OwnershipTransferred(oldOwner, newOwner);
     }
 

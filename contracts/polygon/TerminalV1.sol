@@ -18,6 +18,7 @@ import "contracts/polygon/ProxyStateOwnableContract.sol";
 * addressSet    -> "history", <string/name> -> <addressSet/implementations>
  */
 contract TerminalV1 is ProxyStateOwnableContract {
+    using EnumerableSet for EnumerableSet.AddressSet;
 
     /** Events. */
 
@@ -71,7 +72,7 @@ contract TerminalV1 is ProxyStateOwnableContract {
         *      name to deployed proxy address.
          */
         require(_address[keccak256(abi.encode("map", name))] == address(0), "TerminalV1: name is already assigned");
-        _address[keccak256(abi.encode("map", name))] = new ProxyStateOwnableContract();
+        _address[keccak256(abi.encode("map", name))] = address(new ProxyStateOwnableContract());
         
         /**
         * @dev Add newly deployed proxy to deployed proxies set.
