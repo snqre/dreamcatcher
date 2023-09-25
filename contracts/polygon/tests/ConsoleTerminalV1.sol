@@ -3,6 +3,10 @@ pragma solidity 0.8.19;
 
 import "contracts/polygon/interfaces/ITerminalV1.sol";
 
+/**
+* @dev Deploy as console to Proxy -> TERMINALV1 Implementation.
+*      Used to test proxy terminal.
+ */
 contract ConsoleTerminalV1 {
     
     /** State Variables. */

@@ -53,6 +53,48 @@ contract TerminalV1 is ProxyStateOwnableContract {
      */
     event ProxyReleased(string indexed name, address indexed proxy);
 
+    /** External View. */
+
+    /**
+    * @dev Search deployed proxies.
+     */
+    function deployed(uint256 index) external view returns (address) {
+
+        return _addressSet[keccak256(abi.encode("proxies", "deployed"))].at(index);
+    }
+
+    /**
+    * @dev Search supported proxies.
+     */
+    function supported(uint256 index) external view returns (address) {
+
+        return _addressSet[keccak256(abi.encode("proxies", "supported"))].at(index);
+    }
+
+    /**
+    * @dev Get latest implementation of proxy by name.
+     */
+    function latestImplementation(string calldata name) external view returns (address) {
+
+        return _addressSet[keccak256(abi.encode("history", name))].at(version(name) - 1);
+    }
+
+    /**
+    * @dev Get history of implementations of proxy by name.
+     */
+    function implementation(string calldata name, uint256 index) external view returns (address) {
+
+        return _addressSet[keccak256(abi.encode("history", name))].at(index);
+    }
+
+    /**
+    * @dev Get latest version of a proxy.
+     */
+    function version(string calldata name) external view returns (uint256 index) {
+
+        return _addressSet[keccak256(abi.encode("history", name))].length();
+    }
+
     /** External. */
 
     /**
