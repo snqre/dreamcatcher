@@ -32,6 +32,31 @@ contract ConsoleTerminalV1 {
         return terminal.paused();
     }
 
+    function getDeployed(uint256 index) external view returns (address) {
+
+        return terminal.getDeployed(index);
+    }
+
+    function getSupported(uint256 index) external view returns (address) {
+
+        return terminal.getSupported(index);
+    }
+
+    function getLatestImplementation(string calldata name) external view returns (address) {
+
+        return terminal.getLatestImplementation(name);
+    }
+
+    function getImplementation(string calldata name, uint256 index) external view returns (address) {
+
+        return terminal.getImplementation(name, index);
+    }
+
+    function getVersion(string calldata name) external view returns (uint256 index) {
+
+        return terminal.getVersion(name);
+    }
+
     /** External. */
 
     function initialize() external {

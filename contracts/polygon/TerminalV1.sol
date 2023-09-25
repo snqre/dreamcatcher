@@ -58,7 +58,7 @@ contract TerminalV1 is ProxyStateOwnableContract {
     /**
     * @dev Search deployed proxies.
      */
-    function deployed(uint256 index) external view returns (address) {
+    function getDeployed(uint256 index) external view returns (address) {
 
         return _addressSet[keccak256(abi.encode("proxies", "deployed"))].at(index);
     }
@@ -66,7 +66,7 @@ contract TerminalV1 is ProxyStateOwnableContract {
     /**
     * @dev Search supported proxies.
      */
-    function supported(uint256 index) external view returns (address) {
+    function getSupported(uint256 index) external view returns (address) {
 
         return _addressSet[keccak256(abi.encode("proxies", "supported"))].at(index);
     }
@@ -74,15 +74,17 @@ contract TerminalV1 is ProxyStateOwnableContract {
     /**
     * @dev Get latest implementation of proxy by name.
      */
-    function latestImplementation(string calldata name) external view returns (address) {
+    function getLatestImplementation(string calldata name) external view returns (address) {
 
-        return _addressSet[keccak256(abi.encode("history", name))].at(version(name) - 1);
+        uint256 index = _addressSet[keccak256(abi.encode("history", name))].length();
+
+        return _addressSet[keccak256(abi.encode("history", name))].at(index - 1);
     }
 
     /**
     * @dev Get history of implementations of proxy by name.
      */
-    function implementation(string calldata name, uint256 index) external view returns (address) {
+    function getImplementation(string calldata name, uint256 index) external view returns (address) {
 
         return _addressSet[keccak256(abi.encode("history", name))].at(index);
     }
@@ -90,7 +92,7 @@ contract TerminalV1 is ProxyStateOwnableContract {
     /**
     * @dev Get latest version of a proxy.
      */
-    function version(string calldata name) external view returns (uint256 index) {
+    function getVersion(string calldata name) external view returns (uint256 index) {
 
         return _addressSet[keccak256(abi.encode("history", name))].length();
     }
@@ -209,7 +211,6 @@ contract TerminalV1 is ProxyStateOwnableContract {
             proxyInterface.upgrade(implementation);
         }
         
-
         /**
         * @dev Add new implementation to the proxy's implementation
         *      history.

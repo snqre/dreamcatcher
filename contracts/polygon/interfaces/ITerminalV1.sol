@@ -15,15 +15,15 @@ interface ITerminalV1 is IProxyStateOwnable {
 
     event ProxyReleased(string indexed name, address indexed proxy);
 
-    function deployed(uint256 index) external view returns (address);
+    function getDeployed(uint256 index) external view returns (address);
 
-    function supported(uint256 index) external view returns (address);
+    function getSupported(uint256 index) external view returns (address);
 
-    function latestImplementation(string calldata name) external view returns (address);
+    function getLatestImplementation(string calldata name) external view returns (address);
 
-    function implementation(string calldata name, uint256 index) external view returns (address);
+    function getImplementation(string calldata name, uint256 index) external view returns (address);
 
-    function version(string calldata name) external view returns (uint256 index);
+    function getVersion(string calldata name) external view returns (uint256 index);
 
     function deploy(string calldata name) external returns (address);
 
