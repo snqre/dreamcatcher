@@ -13,6 +13,7 @@ import "contracts/polygon/ProxyStateOwnableContract.sol";
 * version 0.5.0
 *
 * address       -> "map", <string/name>     -> <address/proxy>
+* stringArray   -> "proxies", "names"       -> <stringArray/names>
 * addressSet    -> "proxies", "deployed"    -> <addressSet/proxies>
 * addressSet    -> "proxies", "supported"   -> <addressSet/proxies>
 * addressSet    -> "history", <string/name> -> <addressSet/implementations>
@@ -136,6 +137,11 @@ contract TerminalV1 is ProxyStateOwnableContract {
         *       them.
          */
         _addressSet[keccak256(abi.encode("proxies", "supported"))].add(_address[keccak256(abi.encode("map", name))]);
+
+        /**
+        * @dev Add used names to names array.
+         */
+        
 
         /**
         * @dev Initialize the newly deployed proxy contract to gain
