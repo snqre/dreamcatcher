@@ -21,6 +21,15 @@ abstract contract ProxyState is State, Proxy {
 
     /** Proxy. */
 
+    /** External View. */
+
+    /**
+    * @dev Returns current implementation.
+     */
+    function implementation() external view returns (address) {
+        return _implementation();
+    }
+
     /** External.  */
 
     /**
