@@ -32,6 +32,11 @@ contract ConsoleTerminalV1 {
         return terminal.paused();
     }
 
+    function implementation() external view returns (address) {
+
+        return terminal.implementation();
+    }
+
     function getDeployed(uint256 index) external view returns (address) {
 
         return terminal.getDeployed(index);
@@ -69,9 +74,9 @@ contract ConsoleTerminalV1 {
         terminal.initialize();
     }
 
-    function upgrade(address implementation) external {
+    function upgrade(address implementation_) external {
 
-        terminal.upgrade(implementation);
+        terminal.upgrade(implementation_);
     }
 
     function renounceOwnership() external {
@@ -99,9 +104,9 @@ contract ConsoleTerminalV1 {
         return terminal.deploy(name);
     }
 
-    function upgradeTo(string calldata name, address implementation) external {
+    function upgradeTo(string calldata name, address implementation_) external {
 
-        terminal.upgradeTo(name, implementation);
+        terminal.upgradeTo(name, implementation_);
     }
 
     function pause_(string calldata name) external {
