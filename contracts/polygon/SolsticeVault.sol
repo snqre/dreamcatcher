@@ -91,6 +91,15 @@ contract SolsticeVault is State {
         return _address[keccak256(abi.encode("receiveOut"))];
     }
 
+    function netAssetValue() public view returns (uint256) {
+
+    }
+
+    function navps() public view returns (uint256);
+
+    /** Vault token address. */
+    function erc20() public view returns (address);
+
     /** Public. */
 
     
