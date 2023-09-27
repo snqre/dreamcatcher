@@ -153,7 +153,7 @@ contract UniswapV2PriceFeedV1 is ProxyStateOwnableContract {
             uint256 lastTimestamp
         ) = pairInterface.getReserves();
 
-        if (side == 1) {
+        if (side == 0) {
             
             uint256 rA = reserveA * (10**tokenB_.decimals());
             
@@ -166,7 +166,7 @@ contract UniswapV2PriceFeedV1 is ProxyStateOwnableContract {
             return (price, lastTimestamp);
         }
 
-        if (side == 0) {
+        if (side == 1) {
 
             uint256 rB = reserveB * (10**tokenA_.decimals());
 
