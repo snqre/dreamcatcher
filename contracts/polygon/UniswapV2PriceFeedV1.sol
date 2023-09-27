@@ -132,7 +132,7 @@ contract UniswapV2PriceFeedV1 is ProxyStateOwnableContract {
 
         uint256 side = isSameOrder(factory, tokenA, tokenB);
 
-        address pairAddress = IUniswapV2Factory(factory, tokenA, tokenB);
+        address pairAddress = IUniswapV2Factory(factory).getPair(tokenA, tokenB);
 
         /**
         * @dev Return zero if pair address is zero.
