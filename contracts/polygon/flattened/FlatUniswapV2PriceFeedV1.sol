@@ -146,10 +146,7 @@ interface IUniswapV2Pair {
 
 // File: contracts\polygon\external\openzeppelin\utils\Context.sol
 
-// SPDX-License-Identifier: MIT
 // OpenZeppelin Contracts v4.4.1 (utils/Context.sol)
-
-pragma solidity ^0.8.19;
 
 /**
  * @dev Provides information about the current execution context, including the
@@ -173,10 +170,7 @@ abstract contract Context {
 
 // File: contracts\polygon\external\openzeppelin\proxy\Proxy.sol
 
-// SPDX-License-Identifier: MIT
 // OpenZeppelin Contracts (last updated v4.6.0) (proxy/Proxy.sol)
-
-pragma solidity ^0.8.19;
 
 /**
  * @dev This abstract contract provides a fallback function that delegates all calls to another contract using the EVM
@@ -262,9 +256,7 @@ abstract contract Proxy {
 
 // File: contracts\polygon\external\openzeppelin\utils\structs\BitMaps.sol
 
-// SPDX-License-Identifier: MIT
 // OpenZeppelin Contracts (last updated v4.9.0) (utils/structs/BitMaps.sol)
-pragma solidity ^0.8.19;
 
 /**
  * @dev Library for managing uint256 to bool mapping in a compact and efficient way, providing the keys are sequential.
@@ -316,10 +308,7 @@ library BitMaps {
 
 // File: contracts\polygon\external\openzeppelin\utils\math\Math.sol
 
-// SPDX-License-Identifier: MIT
 // OpenZeppelin Contracts (last updated v4.9.0) (utils/math/Math.sol)
-
-pragma solidity ^0.8.19;
 
 /**
  * @dev Standard math utilities missing in the Solidity language.
@@ -724,11 +713,8 @@ library Math {
 
 // File: contracts\polygon\external\openzeppelin\utils\math\SafeCast.sol
 
-// SPDX-License-Identifier: MIT
 // OpenZeppelin Contracts (last updated v4.8.0) (utils/math/SafeCast.sol)
 // This file was procedurally generated from scripts/generate/templates/SafeCast.js.
-
-pragma solidity ^0.8.19;
 
 /**
  * @dev Wrappers over Solidity's uintXX/intXX casting operators with added overflow
@@ -1860,11 +1846,9 @@ library SafeCast {
 
 // File: contracts\polygon\external\openzeppelin\utils\structs\Checkpoints.sol
 
-// SPDX-License-Identifier: MIT
 // OpenZeppelin Contracts (last updated v4.9.0) (utils/structs/Checkpoints.sol)
 // This file was procedurally generated from scripts/generate/templates/Checkpoints.js.
 
-pragma solidity ^0.8.19;
 /**
  * @dev This library defines the `History` struct, for checkpointing values as they change at different points in
  * time, and later looking up past values by block number. See {Votes} as an example.
@@ -2244,9 +2228,8 @@ library Checkpoints {
 
 // File: contracts\polygon\external\openzeppelin\utils\structs\DoubleEndedQueue.sol
 
-// SPDX-License-Identifier: MIT
 // OpenZeppelin Contracts (last updated v4.9.0) (utils/structs/DoubleEndedQueue.sol)
-pragma solidity ^0.8.19;
+
 /**
  * @dev A sequence of items with the ability to efficiently push and pop items (i.e. insert and remove) on both ends of
  * the sequence (called front and back). Among other access patterns, it can be used to implement efficient LIFO and
@@ -2414,11 +2397,8 @@ library DoubleEndedQueue {
 
 // File: contracts\polygon\external\openzeppelin\utils\structs\EnumerableSet.sol
 
-// SPDX-License-Identifier: MIT
 // OpenZeppelin Contracts (last updated v4.9.0) (utils/structs/EnumerableSet.sol)
 // This file was procedurally generated from scripts/generate/templates/EnumerableSet.js.
-
-pragma solidity ^0.8.19;
 
 /**
  * @dev Library for managing
@@ -2795,11 +2775,9 @@ library EnumerableSet {
 
 // File: contracts\polygon\external\openzeppelin\utils\structs\EnumerableMap.sol
 
-// SPDX-License-Identifier: MIT
 // OpenZeppelin Contracts (last updated v4.9.0) (utils/structs/EnumerableMap.sol)
 // This file was procedurally generated from scripts/generate/templates/EnumerableMap.js.
 
-pragma solidity ^0.8.19;
 /**
  * @dev Library for managing an enumerable variant of Solidity's
  * https://solidity.readthedocs.io/en/latest/types.html#mapping-types[`mapping`]
@@ -3325,8 +3303,6 @@ library EnumerableMap {
 
 // File: contracts\polygon\abstract\State.sol
 
-// SPDX-License-Identifier: MIT
-pragma solidity 0.8.19;
 abstract contract State {
 
     /** Imports */
@@ -3614,8 +3590,6 @@ abstract contract State {
 
 // File: contracts\polygon\abstract\ProxyState.sol
 
-// SPDX-License-Identifier: MIT
-pragma solidity 0.8.19;
 /**
  * NOTE WARNING: DO NOT MODIFY STORAGE.
  * NOTE WARNING: DO NOT USE CONSTRUCTOR.
@@ -3712,8 +3686,6 @@ abstract contract ProxyState is State, Proxy {
 
 // File: contracts\polygon\abstract\ProxyStateOwnable.sol
 
-// SPDX-License-Identifier: MIT
-pragma solidity 0.8.19;
 /** Proxy compatible version of Ownable.
  * @dev Contract module which provides a basic access control mechanism, where
  * there is an account (an owner) that can be granted exclusive access to
@@ -3939,16 +3911,11 @@ contract ProxyStateOwnable is ProxyState, Context {
 
 // File: contracts\polygon\ProxyStateOwnableContract.sol
 
-// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.9;
 contract ProxyStateOwnableContract is ProxyStateOwnable {}
 
 // File: contracts\polygon\external\openzeppelin\token\ERC20\IERC20.sol
 
-// SPDX-License-Identifier: MIT
 // OpenZeppelin Contracts (last updated v4.9.0) (token/ERC20/IERC20.sol)
-
-pragma solidity ^0.8.19;
 
 /**
  * @dev Interface of the ERC20 standard as defined in the EIP.
@@ -4026,10 +3993,8 @@ interface IERC20 {
 
 // File: contracts\polygon\external\openzeppelin\token\ERC20\extensions\IERC20Metadata.sol
 
-// SPDX-License-Identifier: MIT
 // OpenZeppelin Contracts v4.4.1 (token/ERC20/extensions/IERC20Metadata.sol)
 
-pragma solidity ^0.8.19;
 /**
  * @dev Interface for the optional metadata functions from the ERC20 standard.
  *
@@ -4123,6 +4088,7 @@ contract UniswapV2PriceFeedV1 is ProxyStateOwnableContract {
      */
     function isSameOrder(address factory, address tokenA, address tokenB) public view returns (uint256) {
         (
+            ,
             address addressA,
             address addressB,
             string memory nameA,
@@ -4177,7 +4143,7 @@ contract UniswapV2PriceFeedV1 is ProxyStateOwnableContract {
 
         uint256 side = isSameOrder(factory, tokenA, tokenB);
 
-        address pairAddress = IUniswapV2Factory(factory, tokenA, tokenB);
+        address pairAddress = IUniswapV2Factory(factory).getPair(tokenA, tokenB);
 
         /**
         * @dev Return zero if pair address is zero.
@@ -4198,7 +4164,7 @@ contract UniswapV2PriceFeedV1 is ProxyStateOwnableContract {
             uint256 lastTimestamp
         ) = pairInterface.getReserves();
 
-        if (side == 0) {
+        if (side == 1) {
             
             uint256 rA = reserveA * (10**tokenB_.decimals());
             
@@ -4211,7 +4177,7 @@ contract UniswapV2PriceFeedV1 is ProxyStateOwnableContract {
             return (price, lastTimestamp);
         }
 
-        if (side == 1) {
+        if (side == 0) {
 
             uint256 rB = reserveB * (10**tokenA_.decimals());
 
@@ -4238,7 +4204,7 @@ contract UniswapV2PriceFeedV1 is ProxyStateOwnableContract {
     /**
     * @dev Return true if stringA is the same as stringB.
      */
-    function _isSameString(string calldata stringA, string calldata stringB) internal view returns (bool) {
+    function _isSameString(string memory stringA, string memory stringB) internal pure returns (bool) {
 
         return keccak256(abi.encode(stringA)) == keccak256(abi.encode(stringB));
     }

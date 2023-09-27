@@ -78,6 +78,7 @@ contract UniswapV2PriceFeedV1 is ProxyStateOwnableContract {
      */
     function isSameOrder(address factory, address tokenA, address tokenB) public view returns (uint256) {
         (
+            ,
             address addressA,
             address addressB,
             string memory nameA,
@@ -153,7 +154,7 @@ contract UniswapV2PriceFeedV1 is ProxyStateOwnableContract {
             uint256 lastTimestamp
         ) = pairInterface.getReserves();
 
-        if (side == 0) {
+        if (side == 1) {
             
             uint256 rA = reserveA * (10**tokenB_.decimals());
             
@@ -166,7 +167,7 @@ contract UniswapV2PriceFeedV1 is ProxyStateOwnableContract {
             return (price, lastTimestamp);
         }
 
-        if (side == 1) {
+        if (side == 0) {
 
             uint256 rB = reserveB * (10**tokenA_.decimals());
 
@@ -193,7 +194,7 @@ contract UniswapV2PriceFeedV1 is ProxyStateOwnableContract {
     /**
     * @dev Return true if stringA is the same as stringB.
      */
-    function _isSameString(string calldata stringA, string calldata stringB) internal view returns (bool) {
+    function _isSameString(string memory stringA, string memory stringB) internal pure returns (bool) {
 
         return keccak256(abi.encode(stringA)) == keccak256(abi.encode(stringB));
     }
