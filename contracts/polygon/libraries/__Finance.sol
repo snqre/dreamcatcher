@@ -34,6 +34,9 @@ library __Finance {
     * @param v value
     * @param s totalSupply
     * @param b balance
+    *
+    * @dev We use this to determine how much of a pool's tokens to
+    *      mint for the depositor when new tokens enter a vault.
      */
     function amountToMint(uint256 v, uint256 s, uint256 b) public pure returns (uint256) {
 
@@ -51,6 +54,9 @@ library __Finance {
     * @param a amount
     * @param s totalSupply
     * @param b balance
+    *
+    * @dev We use this to determine how much value to send to a
+    *      depositor when they want to withdraw from a vault.
      */
     function amountToSend(uint256 a, uint256 s, uint256 b) public pure returns (uint256) {
 
@@ -66,6 +72,15 @@ library __Finance {
 
     /** Public View. */
 
+    /**
+    * @notice Calculates the price of a given amount in one token in terms of another token in a UniswapV2 pair.
+    * @param factory The address of the UniswapV2 factory contract.
+    * @param tokenA The address of the first token in the pair.
+    * @param tokenB The address of the second token in the pair.
+    * @param amount The amount of tokenA or tokenB for which to calculate the price.
+    * @return uint256 Returns the calculated price, denominated in the other token, for the specified amount.
+    *         If the pair does not exist, or if there is an issue with determining the order of tokens, returns 0.
+    */
     function price(address factory, address tokenA, address tokenB, uint256 amount) public view returns (uint256) {
 
         uint256 side = _isSameOrder(factory, tokenA, tokenB);
@@ -114,6 +129,14 @@ library __Finance {
         }
     }
 
+    /**
+    * @notice Retrieves the timestamp of the last update for the reserves of a UniswapV2 pair.
+    * @param factory The address of the UniswapV2 factory contract.
+    * @param tokenA The address of the first token in the pair.
+    * @param tokenB The address of the second token in the pair.
+    * @return uint256 Returns the timestamp of the last update for the reserves of the specified UniswapV2 pair.
+    *         If the pair does not exist, returns 0.
+    */
     function lastTimestamp(address factory, address tokenA, address tokenB) public view returns (uint256) {
 
         address pair = IUniswapV2Factory(factory).getPair(tokenA, tokenB);
@@ -127,6 +150,15 @@ library __Finance {
         return lastTimestamp;
     }
 
+    /**
+    * @notice Calculates the mean price of a given amount in one token in terms of another token across multiple UniswapV2 factories.
+    * @param factories An array of addresses representing the UniswapV2 factory contracts to consider.
+    * @param tokenA The address of the first token in the pair.
+    * @param tokenB The address of the second token in the pair.
+    * @param amount The amount of tokenA or tokenB for which to calculate the mean price.
+    * @return uint256 Returns the mean price of the specified amount across the provided UniswapV2 factories.
+    *         If no valid prices are obtained from any factory, returns 0.
+    */
     function meanPrice(address[] memory factories, address tokenA, address tokenB, uint256 amount) public view returns (uint256) {
 
         uint256 validOutputs;
@@ -150,6 +182,14 @@ library __Finance {
         return meanPrice;
     }
 
+    /**
+    * @notice Calculates the mean timestamp of the last update for the reserves of a UniswapV2 pair across multiple factories.
+    * @param factories An array of addresses representing the UniswapV2 factory contracts to consider.
+    * @param tokenA The address of the first token in the pair.
+    * @param tokenB The address of the second token in the pair.
+    * @return uint256 Returns the mean timestamp of the last update for the reserves of the specified UniswapV2 pair across the provided factories.
+    *         If no valid timestamps are obtained from any factory, returns 0.
+    */
     function meanLastTimestamp(address[] memory factories, address tokenA, address tokenB) public view returns (uint256) {
 
         uint256 validOutputs;
@@ -173,6 +213,17 @@ library __Finance {
         return meanLastTimestamp;
     }
 
+    /**
+    * @return The total valuation of ie. a pool of assets.
+    *
+    * WARNING: This may return zero or fall short if one or all
+    *          of the factories either do not have a pair or
+    *          there was an issue getting the valuation. This
+    *          is also applied to each token, it is important to
+    *          make sure input is correct and that at least one or more
+    *          factories have the pair and price that is being searched
+    *          for.
+     */
     function netAssetValue(address[] memory factories, address[] memory tokens, address denominator) public view returns (uint256) {
 
         uint256 netAssetValue;
@@ -189,6 +240,21 @@ library __Finance {
         return netAssetValue;
     }
 
+    /**
+    * @return The total valuation of ie. a pool of assets divided
+    *         by its total supply of pool tokens. This can
+    *         can get the "share price" of a pool in terms of
+    *         the assets that its holding. This is used to calculate
+    *         how much to mint or send through deposits or withdrawals.
+    *
+    * WARNING: This may return zero or fall short if one or all
+    *          of the factories either do no not have a pair
+    *          or there was an issue getting the valuation.
+    *          This is also applied to each token, it is important
+    *          to make sure input is correct and that at least 
+    *          one or more factories have the pair and price 
+    *          that is being searched for.
+     */
     function netAssetValuePerToken(address[] memory factories, address token, address[] memory tokens, address denominator) public view returns (uint256) {
 
         return netAssetValue(factories, tokens, denominator) /= IERC20Metadata(token).totalSupply();
@@ -203,6 +269,8 @@ library __Finance {
     *         that if all factories are giving the price of zero
     *         the best factory will be the first therefore further
     *         checks are required when using this function.
+    *
+    * WARNING: Best factory may return best amount out of zero.
      */
     function checkBestFactory(address[] memory factories, address tokenIn, address tokenOut, uint256 amountIn) public view returns (address) {
 
@@ -225,6 +293,16 @@ library __Finance {
         return bestFactory;
     }
 
+    /**
+    * @return The best amount of from the best factory. Just like the above function
+    *         this is useful for various math. Again just like the above
+    *         if the best factory returns zero then this will also return
+    *         zero. This may happen because the pair was not found
+    *         or because it is genuinly zero either way it is
+    *         important to do further checks when using this function.
+    *
+    * WARNING: Best amount out may be zero.
+     */
     function checkBestAmountOut(address[] memory factories, address tokenIn, address tokenOut, uint256 amountIn) public view returns (uint256) {
 
         uint256 bestAmountOut;
@@ -251,6 +329,16 @@ library __Finance {
 
     /** Internal View. */
 
+    /**
+    * @notice Checks if two tokens have the same order in terms of their metadata on a given factory.
+    * @param factory The address of the factory contract.
+    * @param tokenA The address of the first token.
+    * @param tokenB The address of the second token.
+    * @return uint256 Returns:
+    *         - 0 if tokens are in the same order as stored in metadata.
+    *         - 1 if tokens are in the reverse order as stored in metadata.
+    *         - 2 if tokens have different metadata.
+    */
     function _isSameOrder(address factory, address tokenA, address tokenB) internal view returns (uint256) {
 
         Metadata memory metadata = _getMetadata(factory, tokenA, tokenB);
@@ -293,6 +381,22 @@ library __Finance {
         }
     }
 
+    /**
+    * @notice Retrieves metadata for a token pair on a UniswapV2 factory.
+    * @param factory The address of the UniswapV2 factory contract.
+    * @param tokenA The address of the first token in the pair.
+    * @param tokenB The address of the second token in the pair.
+    * @return Metadata Returns a structure containing metadata for the specified token pair:
+    *         - pair: The address of the UniswapV2 pair contract.
+    *         - tokenA: The address of the first token in the pair.
+    *         - tokenB: The address of the second token in the pair.
+    *         - nameA: The name of the first token.
+    *         - nameB: The name of the second token.
+    *         - symbolA: The symbol of the first token.
+    *         - symbolB: The symbol of the second token.
+    *         - decimalsA: The number of decimals for the first token.
+    *         - decimalsB: The number of decimals for the second token.
+    */
     function _getMetadata(address factory, address tokenA, address tokenB) internal view returns (Metadata memory) {
 
         Metadata memory metadata;
