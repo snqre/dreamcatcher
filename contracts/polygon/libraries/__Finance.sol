@@ -7,6 +7,8 @@ import "contracts/polygon/interfaces/IUniswapV2Pair.sol";
 
 import "contracts/polygon/external/openzeppelin/token/ERC20/extensions/IERC20Metadata.sol";
 
+import "contracts/polygon/interfaces/IUniswapV2Router02.sol";
+
 /**
 * @dev Finance libary has the functionality of UniswapV2PriceFeedV1
 *      and MarketV1. It also has some more functionality that can be
@@ -318,6 +320,67 @@ library __Finance {
         }
 
         return bestAmountOut;
+    }
+
+    /** Public. */
+
+    /**
+    * @notice Executes a simple token swap on a UniswapV2 router with specified parameters.
+    * @param router The address of the UniswapV2 router contract.
+    * @param tokenIn The address of the input token to be swapped.
+    * @param tokenOut The address of the output token to receive in the swap.
+    * @param amountIn The amount of input token to be swapped.
+    * @param amountOutMin The minimum acceptable amount of output tokens to receive in the swap.
+    * @param denominator The address of an intermediary token used in the swap path.
+    * @dev Transforms the amountIn to match token decimals, approves the router, constructs the swap path, and executes the swap using the UniswapV2 router with the specified parameters.
+    */
+    function swapTokens(address router, address tokenIn, address tokenOut, uint256 amountIn, uint256 amountOutMin, address denominator) public {
+
+        amountIn *= 10**IERC20Metadata(tokenIn).decimals();
+        amountIn /= 10**18;
+
+        IERC20Metadata(tokenIn).approve(router, amountIn);
+
+        address[] memory path;
+        path = new address[](3);
+        path[0] = tokenIn;
+        path[1] = denominator;
+        path[2] = tokenOut;
+
+        IUniswapV2Router02(router).swapExactTokensForTokens(amountIn, amountOutMin, path, address(this), block.timestamp);
+    }
+
+    /**
+    * @notice Executes a token swap with slippage tolerance on a UniswapV2 router using the mean price and mean last timestamp across multiple factories.
+    * @param router The address of the UniswapV2 router contract.
+    * @param factories An array of addresses representing the UniswapV2 factory contracts to consider.
+    * @param tokenIn The address of the input token to be swapped.
+    * @param tokenOut The address of the output token to receive in the swap.
+    * @param amountIn The amount of input token to be swapped.
+    * @param slippage The acceptable slippage percentage for the swap.
+    * @param denominator The address of an intermediary token used in the swap path.
+    * @dev Transforms the amountIn to match token decimals, approves the router, calculates minimum output amount considering slippage, constructs the swap path, and executes the swap using the UniswapV2 router.
+    */
+    function swapTokensSlippage(address router, address[] memory factories, address tokenIn, address tokenOut, uint256 amountIn, uint256 slippage, address denominator) public {
+        
+        amountIn *= 10**IERC20Metadata(tokenIn).decimals();
+        amountIn /= 10**18;
+
+        IERC20Metadata(tokenIn).approve(router, amountIn);
+
+        uint256 amountOutMin = meanPrice(factories, tokenIn, tokenOut, amountIn);
+
+        uint256 lastTimestamp = meanLastTimestamp(factories, tokenIn, tokenOut);
+
+        amountOutMin = (amountOutMin * (10000 - slippage)) / 10000;
+
+        address[] memory path;
+        path = new address[](3);
+        path[0] = tokenIn;
+        path[1] = denominator;
+        path[2] = tokenOut;
+
+        IUniswapV2Router02(router).swapExactTokensForTokens(amountIn, amountOutMin, path, address(this), block.timestamp);
     }
 
     /** Internal Pure. */
