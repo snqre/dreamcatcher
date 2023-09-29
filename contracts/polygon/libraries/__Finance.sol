@@ -194,6 +194,54 @@ library __Finance {
         return netAssetValue(factories, tokens, denominator) /= IERC20Metadata(token).totalSupply();
     }
 
+    /**
+    * @return The factory with the best price. This is useful because
+    *         using the factory we can set a mapping for the
+    *         corresponding router contract and use that to
+    *         swap using the better router. The price will return zero
+    *         if the pair does not exist for that pair. Meaning
+    *         that if all factories are giving the price of zero
+    *         the best factory will be the first therefore further
+    *         checks are required when using this function.
+     */
+    function checkBestFactory(address[] memory factories, address tokenIn, address tokenOut, uint256 amountIn) public view returns (address) {
+
+        uint256 bestAmountOut;
+
+        address bestFactory;
+
+        for (uint256[] i = 0; i < factories.length; i++) {
+
+            uint256 amountOut = price(factories[i], tokenIn, tokenOut, amountIn);
+
+            if (amountOut >= bestAmountOut) {
+
+                bestFactory = factories[i];
+
+                bestAmountOut = amountOut;
+            }
+        }
+
+        return bestFactory;
+    }
+
+    function checkBestAmountOut(address[] memory factories, address tokenIn, address tokenOut, uint256 amountIn) public view returns (uint256) {
+
+        uint256 bestAmountOut;
+
+        for (uint256[] i = 0; i < factories.length; i++) {
+
+            uint256 amountOut = price(factories[i], tokenIn, tokenOut, amountIn);
+
+            if (amountOut >= bestAmountOut) {
+
+                bestAmountOut = amountOut;
+            }
+        }
+
+        return bestAmountOut;
+    }
+
     /** Internal Pure. */
 
     function _isSameString(string memory stringA, string memory stringB) internal pure returns (bool) {
@@ -290,31 +338,5 @@ library __Finance {
         }
 
         return metadata;
-    }
-
-    /**
-    * @return The factory with the best price.
-     */
-    function _checkBestRoute(address[] memory factories, address tokenIn, address tokenOut, uint256 amountIn) internal view returns (address) {
-
-        uint256 amountOutBest;
-
-        address factoryBest;
-
-        uint256[] memory amountsOut = new uint256[](factories.length);
-
-        for (uint256 i = 0; i < factories.length; i++) {
-
-            amountsOut[i] = price(factories[i], tokenIn, tokenOut, amountIn);
-
-            if (amountsOut[i] > amountOutBest) {
-
-                amountOutBest = amountsOut[i];
-
-                factoryBest = factories[i];
-            }
-        }
-
-        return factoryBest;
     }
 }
