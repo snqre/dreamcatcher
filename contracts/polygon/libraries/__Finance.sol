@@ -291,4 +291,30 @@ library __Finance {
 
         return metadata;
     }
+
+    /**
+    * @return The factory with the best price.
+     */
+    function _checkBestRoute(address[] memory factories, address tokenIn, address tokenOut, uint256 amountIn) internal view returns (address) {
+
+        uint256 amountOutBest;
+
+        address factoryBest;
+
+        uint256[] memory amountsOut = new uint256[](factories.length);
+
+        for (uint256 i = 0; i < factories.length; i++) {
+
+            amountsOut[i] = price(factories[i], tokenIn, tokenOut, amountIn);
+
+            if (amountsOut[i] > amountOutBest) {
+
+                amountOutBest = amountsOut[i];
+
+                factoryBest = factories[i];
+            }
+        }
+
+        return factoryBest;
+    }
 }
