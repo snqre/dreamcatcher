@@ -46,7 +46,7 @@ library __Finance {
             v != 0 &&
             s != 0 &&
             b != 0,
-            "Finance: zero value"
+            "__Finance: zero value"
         );
     
         return ((v * s) / b);
@@ -66,7 +66,7 @@ library __Finance {
             a != 0 &&
             s != 0 &&
             b != 0,
-            "Finance: zero value"
+            "__Finance: zero value"
         );
 
         return ((a * b) / s);
@@ -259,7 +259,7 @@ library __Finance {
      */
     function netAssetValuePerToken(address[] memory factories, address token, address[] memory tokens, address denominator) public view returns (uint256) {
 
-        return netAssetValue(factories, tokens, denominator) /= IERC20Metadata(token).totalSupply();
+        return netAssetValue(factories, tokens, denominator) / IERC20Metadata(token).totalSupply();
     }
 
     /**
@@ -280,7 +280,7 @@ library __Finance {
 
         address bestFactory;
 
-        for (uint256[] i = 0; i < factories.length; i++) {
+        for (uint256 i = 0; i < factories.length; i++) {
 
             uint256 amountOut = price(factories[i], tokenIn, tokenOut, amountIn);
 
@@ -309,7 +309,7 @@ library __Finance {
 
         uint256 bestAmountOut;
 
-        for (uint256[] i = 0; i < factories.length; i++) {
+        for (uint256 i = 0; i < factories.length; i++) {
 
             uint256 amountOut = price(factories[i], tokenIn, tokenOut, amountIn);
 
@@ -406,9 +406,9 @@ library __Finance {
 
         Metadata memory metadata = _getMetadata(factory, tokenA, tokenB);
 
-        IERC20Metadata(tokenA_) = IERC20Metadata(tokenA);
+        IERC20Metadata tokenA_ = IERC20Metadata(tokenA);
 
-        IERC20Metadata(tokenB_) = IERC20Metadata(tokenB);
+        IERC20Metadata tokenB_ = IERC20Metadata(tokenB);
 
         if (
             tokenA == metadata.tokenA &&
