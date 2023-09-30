@@ -5,12 +5,19 @@ import "contracts/polygon/libraries/__Finance.sol";
 
 import "contracts/polygon/external/openzeppelin/utils/structs/EnumerableSet.sol";
 
-/**
-* => Depsit => Management => Withdrawal
-*
-*
- */
-contract SolsticeVault {
+import "contracts/polygon/interfaces/IERC20Mintable.sol";
+
+import "contracts/polygon/ERC20Mintable.sol";
+
+import "contracts/polygon/external/openzeppelin/access/Ownable.sol";
+
+import "contracts/polygon/external/openzeppelin/security/Pausable.sol";
+
+import "contracts/polygon/external/openzeppelin/security/ReentrancyGuard.sol";
+
+import "contracts/polygon/external/openzeppelin/token/ERC20/extensions/IERC20Metadata.sol";
+
+contract SolsticeVault is Ownable, Pausable, ReentrancyGuard {
 
     using EnumerableSet for EnumerableSet.AddressSet;
 
@@ -20,68 +27,88 @@ contract SolsticeVault {
         string name;
     }
 
-    uint256 public minDeposit;
-
-    uint256 public maxDeposit;
-
-    uint256 public minWithdrawal;
-
-    uint256 public maxWithdrawal;
-
-    bool public live;
-
     UniswapV2[] private _uniswapV2s;
+
+    IERC20Mintable private _shares;
 
     EnumerableSet.AddressSet private _allowedIn;
 
     EnumerableSet.AddressSet private _allowedOut;
 
-    constructor() {
+    EnumerableSet.AddressSet private _interactedWith;
 
-        _uniswapV2s.push(
-            UniswapV2({
-                router: 0xa5E0829CaCEd8fFDD4De3c43696c57F7D7A678ff,
-                factory: 0x5757371414417b8C6CAad45bAeF941aBc7d3Ab32,
-                name: "quickswap"
-            })
-        );
+    /** Constructor. */
 
-        _uniswapV2s.push(
-            UniswapV2({
-                router: 0x1b02dA8Cb0d097eB8D57A175b88c7D8b47997506,
-                factory: 0xc35DADB65012eC5796536bD9864eD8773aBc74C4,
-                name: "sushiswap"
-            })
-        );
+    constructor(string memory name, string memory symbol) {
 
-        _uniswapV2s.push(
-            UniswapV2({
-                router: 0x10f4A785F458Bc144e3706575924889954946639,
-                factory: 0x9F3044f7F9FC8bC9eD615d54845b4577B833282d,
-                name: "meshswap"
-            })
-        );
+        _shares = IERC20Mintable(address(new ERC20Mintable({name: name, symbol: symbol, vault: address(this)})));
+    }
+
+    /** Public View. */
+
+    function name() public view returns (string memory) {
+
+        return _shares.name();
+    }
+
+    function symbol() public view returns (string memory) {
+
+        return _shares.symbol();
+    }
+
+    function decimals() public view returns (uint8) {
+
+        return _shares.decimals();
+    }
+
+    function totalSupply() public view returns (uint256) {
+
+        return _shares.totalSupply();
+    }
+
+    function totalValue() public view returns (uint256) {
+
+        uint256 totalValue;
+
+        for (uint256 i = 0; i < _interactedWith.length; i++) {
+
+            
+        }
+
+        __Finance.netAssetValue(factories(), tokens, denominator);
     }
 
     function factories() public view returns (address[] memory) {
 
+        uint256 len = _uniswapV2s.length;
+
+        require(len >= 1, "len == 0");
+
         address[] memory factories;
 
-        factories = new address[](_uniswapV2s.length);
+        factories = new address[](len);
 
+        for (uint256 i = 0; i < len; i++) {
+
+            factories[i] = _uniswapV2s[i].factory;
+        }
+
+        return factories;
+    }
+
+    function value(address token, uint256 amount) public view returns (uint256) {
+
+        __Finance.meanPrice(factories, tokenA, tokenB, amount);
+    }
+
+    /** Public. */
+
+    function importUniswapV2(string memory name, address router, address factory) public onlyOwner() whenNotPaused() returns (bool) {
         
-    }
-
-    function deposit(address tokenIn, uint256 amountIn) public {
-
-        _onlyAllowedIn({tokenIn: tokenIn});
-
+        UniswapV2 uniswapV2 = UniswapV2({router: router, factory: factory, name: name});
         
+        _uniswapV2s.push(uniswapV2);
+        
+        return true;
     }
-    
-    function _onlyAllowedIn(address tokenIn) internal view {
-
-        require(_allowedIn.contains(tokenIn), "SolsticeVault: !allowedIn");
-    }
-
 }
