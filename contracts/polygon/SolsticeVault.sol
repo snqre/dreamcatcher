@@ -37,6 +37,12 @@ contract SolsticeVault is Ownable, Pausable, ReentrancyGuard {
         address router;
     }
 
+    event Swap(address indexed router, address indexed tokenIn, address indexed tokenOut, uint256 amountIn, uint256 slippage);
+
+    event Withdrawal(address indexed account, uint256 indexed amountIn);
+
+    event Deposit(address indexed account, address indexed tokenIn, uint256 indexed amountIn);
+
     /**
     * @notice Constructs a new SolsticeVault instance with the specified name and symbol.
     * @dev This constructor initializes the SolsticeVault by creating a new mintable ERC20 token with the provided name and symbol. It also configures the vault by adding information about three Uniswap V2 instances, namely "quickswap," "sushiswap," and "meshswap," with their respective factory and router addresses.
@@ -180,6 +186,7 @@ contract SolsticeVault is Ownable, Pausable, ReentrancyGuard {
         */
         _beforeDeposit(tokenIn, amountIn);
         _afterDeposit(tokenIn, amountIn);
+        emit Deposit(msg.sender, tokenIn, amountIn);
     }
 
     /**
@@ -202,6 +209,22 @@ contract SolsticeVault is Ownable, Pausable, ReentrancyGuard {
         */
         _beforeWithdraw(amountIn);
         _afterWithdraw(amountIn);
+        emit Withdrawal(msg.sender, amountIn);
+    }
+
+    /**
+    * @notice Allows the owner to initiate a token swap using a specified Uniswap V2 router.
+    * @param router The index of the Uniswap V2 router from the list of registered routers.
+    * @param tokenIn The address of the token to be swapped.
+    * @param tokenOut The address of the desired output token.
+    * @param amountIn The amount of tokens to be swapped.
+    * @param slippage The allowable slippage percentage for the swap.
+    * @dev This function ensures that the contract is not in a paused state and is only callable by the owner. It performs actions before the swap using the internal `_beforeSwap` function, which includes validations and initiates the token swap using the Finance library's `swapTokensSlippage` function. After a successful swap, it calls the internal `_afterSwap` function to handle post-swap actions.
+    */
+    function swap(uint256 router, address tokenIn, address tokenOut, uint256 amountIn, uint256 slippage) public onlyOwner() whenNotPaused() {
+        _beforeSwap(router, tokenIn, tokenOut, amountIn, slippage);
+        _afterSwap(router, tokenIn, tokenOut, amountIn, slippage);
+        emit Swap(_uniswapV2s[router].router, tokenIn, tokenOut, amountIn, slippage);
     }
 
     /**
@@ -479,4 +502,23 @@ contract SolsticeVault is Ownable, Pausable, ReentrancyGuard {
     function _pushUniswapV2(string memory name, address factory, address router) internal {
         _uniswapV2s.push(UniswapV2({name: name, factory: factory, router: router}));
     }
+
+    /**
+    * @notice Performs checks and actions before executing a token swap on a specified Uniswap V2 router.
+    * @dev This internal function ensures that the specified Uniswap V2 router exists, then uses the Finance library to perform token swapping with slippage control. It verifies that the swap operation meets specified slippage requirements.
+    * @param router The index of the Uniswap V2 router in the vault's array of routers.
+    * @param tokenIn The address of the token to be swapped.
+    * @param tokenOut The address of the token to receive from the swap.
+    * @param amountIn The amount of the token to be swapped.
+    * @param slippage The allowable slippage percentage for the swap operation.
+    */
+    function _beforeSwap(uint256 router, address tokenIn, address tokenOut, uint256 amountIn, uint256 slippage) internal {
+        __Finance.swapTokensSlippage(_uniswapV2s[router].router, factories(), tokenIn, tokenOut, amountIn, slippage, denominator());
+    }
+
+    /**
+    * @notice Performs actions after a successful token swap.
+    * @dev This internal function can be extended to include any necessary actions that need to be taken after a successful token swap. It is left empty for customization based on specific requirements.
+    */
+    function _afterSwap(uint256 router, address tokenIn, address tokenOut, uint256 amountIn, uint256 slippage) internal {}
 }
