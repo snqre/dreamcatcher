@@ -269,6 +269,22 @@ contract SolsticeVault is Ownable, Pausable, ReentrancyGuard {
     }
 
     /**
+    * @notice Pauses the SolsticeVault contract, preventing certain functions from being executed.
+    * @dev Only the owner of the contract can pause it.
+    */
+    function pause() public onlyOwner() {
+        _pause();
+    }
+
+    /**
+    * @notice Unpauses the SolsticeVault contract, allowing execution of previously restricted functions.
+    * @dev Only the owner of the contract can unpause it.
+    */
+    function unpause() public onlyOwner() {
+        _unpause();
+    }
+
+    /**
     * @notice Calculates the basis points of a given value relative to the total.
     * @param value The value for which the basis points are calculated.
     * @param total The total value against which the basis points are determined.
