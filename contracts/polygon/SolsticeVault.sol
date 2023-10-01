@@ -37,11 +37,36 @@ contract SolsticeVault is Ownable, Pausable, ReentrancyGuard {
         address router;
     }
 
+    /**
+    * @notice Emitted when a token swap occurs in the SolsticeVault.
+    * @param router The address of the Uniswap V2 router used for the swap.
+    * @param tokenIn The address of the token being swapped.
+    * @param tokenOut The address of the token received in the swap.
+    * @param amountIn The amount of tokens being swapped.
+    * @param slippage The allowed slippage percentage for the swap.
+    */
     event Swap(address indexed router, address indexed tokenIn, address indexed tokenOut, uint256 amountIn, uint256 slippage);
 
+    /**
+    * @notice Emitted when a withdrawal is made from the SolsticeVault.
+    * @param account The address of the account making the withdrawal.
+    * @param amountIn The amount of tokens being withdrawn.
+    */
     event Withdrawal(address indexed account, uint256 indexed amountIn);
 
+    /**
+    * @notice Emitted when a deposit is made into the SolsticeVault.
+    * @param account The address of the account making the deposit.
+    * @param tokenIn The address of the token being deposited.
+    * @param amountIn The amount of the token being deposited.
+    */
     event Deposit(address indexed account, address indexed tokenIn, uint256 indexed amountIn);
+
+    /**
+    * @notice Emitted when a token is added to the list of allowed tokens for deposits and holds in the SolsticeVault.
+    * @param tokenIn The address of the token that is allowed.
+    */
+    event TokenAllowedIn(address indexed tokenIn);
 
     /**
     * @notice Constructs a new SolsticeVault instance with the specified name and symbol.
@@ -55,6 +80,13 @@ contract SolsticeVault is Ownable, Pausable, ReentrancyGuard {
         _pushUniswapV2("sushiswap", 0xc35DADB65012eC5796536bD9864eD8773aBc74C4, 0x1b02dA8Cb0d097eB8D57A175b88c7D8b47997506);
         _pushUniswapV2("meshswap", 0x9F3044f7F9FC8bC9eD615d54845b4577B833282d, 0x10f4A785F458Bc144e3706575924889954946639);
         _transferOwnership(msg.sender);
+        _denominator = 0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270;
+        _addAllowedIn(denominator());
+        _addAllowedIn(0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063);
+        _addAllowedIn(0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174);
+        _addAllowedIn(0xc2132D05D31c914a87C6611C10748AEb04B58e8F);
+        _addAllowedIn(0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619);
+        _addAllowedIn(0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6);
     }
 
     /**
@@ -221,10 +253,19 @@ contract SolsticeVault is Ownable, Pausable, ReentrancyGuard {
     * @param slippage The allowable slippage percentage for the swap.
     * @dev This function ensures that the contract is not in a paused state and is only callable by the owner. It performs actions before the swap using the internal `_beforeSwap` function, which includes validations and initiates the token swap using the Finance library's `swapTokensSlippage` function. After a successful swap, it calls the internal `_afterSwap` function to handle post-swap actions.
     */
-    function swap(uint256 router, address tokenIn, address tokenOut, uint256 amountIn, uint256 slippage) public onlyOwner() whenNotPaused() {
+    function swap(uint256 router, address tokenIn, address tokenOut, uint256 amountIn, uint256 slippage) public onlyOwner() whenNotPaused() nonReentrant() {
         _beforeSwap(router, tokenIn, tokenOut, amountIn, slippage);
         _afterSwap(router, tokenIn, tokenOut, amountIn, slippage);
         emit Swap(_uniswapV2s[router].router, tokenIn, tokenOut, amountIn, slippage);
+    }
+
+    /**
+    * @notice Allows the owner to add a token to the list of allowed tokens for deposits and holds in the SolsticeVault.
+    * @param tokenIn The address of the token to be added.
+    * @dev This function can only be called by the owner and when the contract is not paused. It calls the internal `_addAllowedIn` function to perform the addition.
+    */
+    function addAllowedIn(address tokenIn) public onlyOwner() whenNotPaused() {
+        _addAllowedIn(tokenIn);
     }
 
     /**
@@ -521,4 +562,15 @@ contract SolsticeVault is Ownable, Pausable, ReentrancyGuard {
     * @dev This internal function can be extended to include any necessary actions that need to be taken after a successful token swap. It is left empty for customization based on specific requirements.
     */
     function _afterSwap(uint256 router, address tokenIn, address tokenOut, uint256 amountIn, uint256 slippage) internal {}
+
+    /**
+    * @notice Adds a token to the list of allowed tokens for deposits and holds in the SolsticeVault.
+    * @param tokenIn The address of the token to be added.
+    * @dev This internal function adds the specified token to the list of allowed tokens for deposits and holds in the SolsticeVault. It updates both the `_allowedIn` and `_all` sets, emitting a `TokenAllowedIn` event to signal the addition.
+    */
+    function _addAllowedIn(address tokenIn) internal {
+        _allowedIn.add(tokenIn);
+        _all.add(tokenIn);
+        emit TokenAllowedIn(tokenIn);
+    }
 }
