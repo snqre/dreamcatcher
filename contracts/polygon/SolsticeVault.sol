@@ -298,7 +298,7 @@ contract SolsticeVault is Ownable, Pausable, ReentrancyGuard {
         * The calculated value is based on the mean price and the balance of the token
         * held within the SolsticeVault.
         */
-        return __Finance.meanPrice(factories(), token, denominator(), balanceOf(token));
+        return __Finance.meanPrice(factories(), token, denominator(), _balanceOf(token));
     }
 
     /**
@@ -317,7 +317,7 @@ contract SolsticeVault is Ownable, Pausable, ReentrancyGuard {
         * obtain the required amount.
         */
         uint256 unitValue = __Finance.meanPrice(factories(), token, denominator(), 1);
-        uint256 amount = value / uintValue;
+        uint256 amount = value / unitValue;
         return amount;
     }
 
@@ -413,7 +413,7 @@ contract SolsticeVault is Ownable, Pausable, ReentrancyGuard {
         * the total holdings, and transfers the corresponding amount of each
         * token to the sender.
         */
-        for (uint256 i = 0; i < _all.length; i++) {
+        for (uint256 i = 0; i < _all.length(); i++) {
             uint256 basis = _basisOfHoldings(_all.at(i));
             uint256 valueFrom = (required / 10000) * basis;
             _transferValue(msg.sender, _all.at(i), valueFrom);

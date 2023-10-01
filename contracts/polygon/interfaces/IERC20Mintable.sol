@@ -3,7 +3,7 @@ pragma solidity 0.8.19;
 
 import "contracts/polygon/external/openzeppelin/token/ERC20/extensions/IERC20Metadata.sol";
 
-contract IERC20Mintable is IERC20Metadata {
+interface IERC20Mintable is IERC20Metadata {
 
     function mint(address account, uint256 amount) external;
 
