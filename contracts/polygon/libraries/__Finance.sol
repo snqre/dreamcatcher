@@ -101,9 +101,7 @@ library __Finance {
 
         if (side == 1) {
 
-            uint256 rA = reserveA * (10**tokenB_.decimals());
-
-            uint256 price = (amount * rA) / reserveB;
+            uint256 price = (amount * (reserveA * (10**tokenB_.decimals()))) / reserveB;
 
             price *= 10**18;
 
@@ -114,9 +112,7 @@ library __Finance {
 
         if (side == 0) {
 
-            uint256 rB = reserveB * (10**tokenA_.decimals());
-
-            uint256 price = (amount * rB) / reserveB;
+            uint256 price = (amount * (reserveB * (10**tokenA_.decimals()))) / reserveA;
 
             price *= 10**18;
 

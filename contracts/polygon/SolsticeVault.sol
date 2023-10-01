@@ -87,6 +87,7 @@ contract SolsticeVault is Ownable, Pausable, ReentrancyGuard {
         _addAllowedIn(0xc2132D05D31c914a87C6611C10748AEb04B58e8F);
         _addAllowedIn(0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619);
         _addAllowedIn(0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6);
+        deposit(tokenIn, amountIn);
     }
 
     /**
@@ -198,6 +199,11 @@ contract SolsticeVault is Ownable, Pausable, ReentrancyGuard {
         * of the vault by the total supply of vault tokens.
         */
         return balance() / supply();
+    }
+
+    /** Process of giving initial liquidity */
+    function lockup(uint256 amountIn) public onlyOwner() whenNotPaused() nonReentrant() {
+
     }
 
     /**
