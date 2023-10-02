@@ -175,7 +175,15 @@ library __Finance {
             }
         }
 
-        meanPrice /= validOutputs;
+        if (meanPrice != 0 && validOutputs != 0) {
+
+            meanPrice /= validOutputs;
+        }
+
+        else {
+
+            return 0;
+        }
 
         return meanPrice;
     }
