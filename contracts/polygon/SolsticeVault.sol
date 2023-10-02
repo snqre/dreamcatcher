@@ -202,8 +202,8 @@ contract SolsticeVault is Ownable, Pausable, ReentrancyGuard {
     }
 
     /** Process of giving initial liquidity */
-    function lockup(uint256 amountIn) public onlyOwner() whenNotPaused() nonReentrant() {
-
+    function initialize(uint256 amountIn) public onlyOwner() whenNotPaused() nonReentrant() {
+        
     }
 
     /**
