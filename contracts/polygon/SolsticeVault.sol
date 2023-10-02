@@ -394,7 +394,7 @@ contract SolsticeVault is Ownable, Pausable, ReentrancyGuard {
         */
         return __Finance.meanPrice(factories(), token, denominator(), _balanceOf(token));
     }
-
+    /** NOTE MODIFIED DURING TESTING NOT YET UPDATED => FLAT SOLSTICE */
     /**
     * @notice Calculates the amount of a token required to match the given value.
     * @param token The address of the token for which to calculate the amount.
@@ -411,7 +411,8 @@ contract SolsticeVault is Ownable, Pausable, ReentrancyGuard {
         * obtain the required amount.
         */
         uint256 unitValue = __Finance.meanPrice(factories(), token, denominator(), 1);
-        uint256 amount = value / unitValue;
+        uint256 amount;
+        if (value != 0 && unitValue != 0) { amount = value / unitValue; }
         return amount;
     }
 
