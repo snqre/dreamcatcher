@@ -114,10 +114,10 @@ contract SolsticeVault is Ownable, Pausable, ReentrancyGuard {
             (uint256 reserveA, uint256 reserveB, uint256 lastTimestamp) = interface_.getReserves();
             pair.reserveA = reserveA;
             pair.reserveB = reserveB;
-            pair.valueA = (amount * (reserveA * (10**tokenB_.decimals()))) / reserveB;
+            pair.valueA = (1 * (reserveA * (10**tokenB_.decimals()))) / reserveB;
             pair.valueA *= 10**18;
             pair.valueA /= 10**tokenA_.decimals();
-            pair.valueB = (amount * (reserveB * (10**tokenA_.decimals()))) / reserveA;
+            pair.valueB = (1 * (reserveB * (10**tokenA_.decimals()))) / reserveA;
             pair.valueB *= 10**18;
             pair.valueB /= 10**tokenB_.decimals();
             pair.lastTimestamp = lastTimestamp;
