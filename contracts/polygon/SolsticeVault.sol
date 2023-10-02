@@ -126,7 +126,7 @@ contract SolsticeVault is Ownable, Pausable, ReentrancyGuard {
     *      The contract owner is set to the deployer, and the denominator token is added to the allowed tokens.
     *      Other tokens are added based on the provided addresses, and the contract is marked as not initialized.
     */
-    constructor(string memory name, string memory symbol) Ownable(msg.sender) {
+    constructor(string memory name, string memory symbol, address tokenIn, uint256 amountIn, uint256 initialSupply) Ownable(msg.sender) {
         _erc20 = new ERC20Mintable(name, symbol, address(this));
         _pushUniswapV2("quickswap", 0x5757371414417b8C6CAad45bAeF941aBc7d3Ab32, 0xa5E0829CaCEd8fFDD4De3c43696c57F7D7A678ff);
         _pushUniswapV2("sushiswap", 0xc35DADB65012eC5796536bD9864eD8773aBc74C4, 0x1b02dA8Cb0d097eB8D57A175b88c7D8b47997506);
@@ -139,7 +139,7 @@ contract SolsticeVault is Ownable, Pausable, ReentrancyGuard {
         _addAllowedIn(0xc2132D05D31c914a87C6611C10748AEb04B58e8F);
         _addAllowedIn(0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619);
         _addAllowedIn(0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6);
-        _initialized = false;
+        initialize(tokenIn, amountIn, initialSupply);
     }
 
     /**
