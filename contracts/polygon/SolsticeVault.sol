@@ -112,10 +112,19 @@ contract SolsticeVault is Ownable, Pausable, ReentrancyGuard {
     event TokenAllowedIn(address indexed tokenIn);
 
     /**
-    * @notice Constructs a new SolsticeVault instance with the specified name and symbol.
-    * @dev This constructor initializes the SolsticeVault by creating a new mintable ERC20 token with the provided name and symbol. It also configures the vault by adding information about three Uniswap V2 instances, namely "quickswap," "sushiswap," and "meshswap," with their respective factory and router addresses.
-    * @param name The name of the ERC20 token associated with the SolsticeVault.
-    * @param symbol The symbol of the ERC20 token associated with the SolsticeVault.
+    * @notice Emitted when the SolsticeVault contract is initialized by providing initial liquidity.
+    * @param account The address of the account that triggered the initialization.
+    * @dev Use this event to track the initialization of the SolsticeVault contract.
+    */
+    event Initialized(address indexed account);
+
+    /**
+    * @notice Constructor for initializing the SolsticeVault contract.
+    * @param name The name of the ERC20 token to be created by the SolsticeVault.
+    * @param symbol The symbol of the ERC20 token to be created by the SolsticeVault.
+    * @dev Initializes the contract by creating an ERC20 token, configuring UniswapV2 pairs, and adding allowed tokens.
+    *      The contract owner is set to the deployer, and the denominator token is added to the allowed tokens.
+    *      Other tokens are added based on the provided addresses, and the contract is marked as not initialized.
     */
     constructor(string memory name, string memory symbol) Ownable(msg.sender) {
         _erc20 = new ERC20Mintable(name, symbol, address(this));
@@ -130,7 +139,7 @@ contract SolsticeVault is Ownable, Pausable, ReentrancyGuard {
         _addAllowedIn(0xc2132D05D31c914a87C6611C10748AEb04B58e8F);
         _addAllowedIn(0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619);
         _addAllowedIn(0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6);
-        deposit(tokenIn, amountIn);
+        _initialized = false;
     }
 
     /**
@@ -257,6 +266,7 @@ contract SolsticeVault is Ownable, Pausable, ReentrancyGuard {
         IERC20Metadata(tokenIn).transferFrom(msg.sender, address(this), amountIn);
         _erc20.mint(msg.sender, _convertToWei(initialSupply));
         _initialized = true;
+        emit Initialized(msg.sender);
     }
 
     /**
