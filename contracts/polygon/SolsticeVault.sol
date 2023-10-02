@@ -16,6 +16,7 @@ contract SolsticeVault is Ownable, Pausable, ReentrancyGuard {
     /**
     * @notice Private state variables used in the SolsticeVault contract.
     */
+    bool private _initialized;
     address private _denominator;
     UniswapV2[] private _uniswapV2s;
     ERC20Mintable private _erc20;
@@ -35,6 +36,48 @@ contract SolsticeVault is Ownable, Pausable, ReentrancyGuard {
         string name;
         address factory;
         address router;
+    }
+
+    /**
+    * @notice Modifier to ensure that a function can only be called when the mean price of a specified token is not zero.
+    * @dev This modifier checks the mean price of the token using the Finance contract and ensures it's not zero before proceeding.
+    * @param tokenIn The address of the token for which the mean price is checked.
+    * @dev Use this modifier to restrict functions to be called only when the mean price of a specified token is non-zero.
+    */
+    modifier onlyNotZeroValue(address tokenIn) {
+        _onlyNotZeroValue(tokenIn);
+        _;
+    }
+
+    /**
+    * @notice Modifier to enforce that a function can only be called when the contract is already initialized.
+    * @dev This modifier checks whether the contract is in the initialized state before allowing the function to proceed.
+    * @dev Use this modifier to restrict certain functions to be called only after the contract has been initialized.
+    */
+    modifier whenInitialized() {
+        _whenInitialized();
+        _;
+    }
+
+    /**
+    * @notice Modifier to enforce that a function can only be called when the contract is not yet initialized.
+    * @dev This modifier checks whether the contract is in the uninitialized state before allowing the function to proceed.
+    * @dev Use this modifier to restrict certain functions from being called after the contract has been initialized.
+    */
+    modifier whenNotInitialized() {
+        _whenNotInitialized();
+        _;
+    }
+
+    /**
+    * @notice Modifier to log and allow a specific token before executing a function.
+    * @dev This modifier adds the specified token to the set of allowed tokens and then allows the function to proceed.
+    * @param tokenIn The address of the token to be logged and allowed.
+    * @dev This modifier is typically used to ensure that the specified token is allowed before executing the function.
+    */
+    modifier log(address tokenIn) {
+        _addAllowedIn(tokenIn);
+        _;
     }
 
     /**
@@ -201,9 +244,19 @@ contract SolsticeVault is Ownable, Pausable, ReentrancyGuard {
         return balance() / supply();
     }
 
-    /** Process of giving initial liquidity */
-    function initialize(uint256 amountIn) public onlyOwner() whenNotPaused() nonReentrant() {
-        
+    /**
+    * @notice Process of giving initial liquidity
+    * @param tokenIn The address of the token to be used for providing liquidity.
+    * @param amountIn The amount of the token to be provided as liquidity.
+    * @param initialSupply The initial supply of your ERC-20 token.
+    *
+    * WARNING: This should be a very small amount as it is locked
+    *          within the contract.
+    */
+    function initialize(address tokenIn, uint256 amountIn, uint256 initialSupply) public onlyOwner() whenNotPaused() nonReentrant() whenNotInitialized() onlyNotZeroValue(tokenIn) log(tokenIn) {
+        IERC20Metadata(tokenIn).transferFrom(msg.sender, address(this), amountIn);
+        _erc20.mint(msg.sender, _convertToWei(initialSupply));
+        _initialized = true;
     }
 
     /**
@@ -212,7 +265,7 @@ contract SolsticeVault is Ownable, Pausable, ReentrancyGuard {
     * @param amountIn The amount of the token to be deposited.
     * @dev This function ensures that the contract is not in a paused state and guards against reentrancy attacks. It first checks and performs actions before the deposit using the internal `_beforeDeposit` function, which includes validations, value calculations, and token transfers. After a successful deposit, it calls the internal `_afterDeposit` function to handle post-deposit actions, such as calculating minting amounts and minting tokens to the depositor's address.
     */
-    function deposit(address tokenIn, uint256 amountIn) public whenNotPaused() nonReentrant() {
+    function deposit(address tokenIn, uint256 amountIn) public whenNotPaused() nonReentrant() whenInitialized() onlyNotZeroValue(tokenIn) {
         /**
         * Allows users to deposit a specified amount of tokens into the SolsticeVault.
         * This function ensures that the contract is not in a paused state and guards
@@ -232,7 +285,7 @@ contract SolsticeVault is Ownable, Pausable, ReentrancyGuard {
     * @param amountIn The amount of tokens to be withdrawn.
     * @dev This function ensures that the contract is not in a paused state and guards against reentrancy attacks. It first checks and performs actions before the withdrawal using the internal `_beforeWithdraw` function, which includes validations, token transfers, and burning of vault tokens. After a successful withdrawal, it calls the internal `_afterWithdraw` function to handle post-withdrawal actions, such as calculating repayment values and initiating repayments in the denominator or in kind. In case of a deficit, emergency withdrawals are enabled to allow depositors to withdraw the owed value in any token or tokens directly from the vault.
     */
-    function withdraw(uint256 amountIn) public nonReentrant() nonReentrant() {
+    function withdraw(uint256 amountIn) public nonReentrant() nonReentrant() whenInitialized() {
         /**
         * Allows users to withdraw a specified amount of tokens from the SolsticeVault.
         * This function ensures that the contract is not in a paused state and guards
@@ -259,7 +312,7 @@ contract SolsticeVault is Ownable, Pausable, ReentrancyGuard {
     * @param slippage The allowable slippage percentage for the swap.
     * @dev This function ensures that the contract is not in a paused state and is only callable by the owner. It performs actions before the swap using the internal `_beforeSwap` function, which includes validations and initiates the token swap using the Finance library's `swapTokensSlippage` function. After a successful swap, it calls the internal `_afterSwap` function to handle post-swap actions.
     */
-    function swap(uint256 router, address tokenIn, address tokenOut, uint256 amountIn, uint256 slippage) public onlyOwner() whenNotPaused() nonReentrant() {
+    function swap(uint256 router, address tokenIn, address tokenOut, uint256 amountIn, uint256 slippage) public onlyOwner() whenNotPaused() nonReentrant() whenInitialized() onlyNotZeroValue(tokenIn) {
         _beforeSwap(router, tokenIn, tokenOut, amountIn, slippage);
         _afterSwap(router, tokenIn, tokenOut, amountIn, slippage);
         emit Swap(_uniswapV2s[router].router, tokenIn, tokenOut, amountIn, slippage);
@@ -270,7 +323,7 @@ contract SolsticeVault is Ownable, Pausable, ReentrancyGuard {
     * @param tokenIn The address of the token to be added.
     * @dev This function can only be called by the owner and when the contract is not paused. It calls the internal `_addAllowedIn` function to perform the addition.
     */
-    function addAllowedIn(address tokenIn) public onlyOwner() whenNotPaused() {
+    function addAllowedIn(address tokenIn) public onlyOwner() whenNotPaused() whenInitialized() onlyNotZeroValue(tokenIn) {
         _addAllowedIn(tokenIn);
     }
 
@@ -304,6 +357,15 @@ contract SolsticeVault is Ownable, Pausable, ReentrancyGuard {
         * value by the total and then multiplying the result by 10,000.
         */
         return (value * 10000) / total;
+    }
+
+    /**
+    * @notice Convert a value to its equivalent amount in wei.
+    * @param value The value to be converted.
+    * @return uint256 The equivalent amount of wei.
+    */
+    function _convertToWei(uint256 value) internal pure returns (uint256) {
+        return value * (10**18);
     }
 
     /**
@@ -373,8 +435,35 @@ contract SolsticeVault is Ownable, Pausable, ReentrancyGuard {
         return IERC20Metadata(token).balanceOf(address(this));
     }
 
+    /**
+    * @notice View function to ensure that a given token is in the set of allowed tokens.
+    * @param tokenIn The address of the token to check for permission.
+    */
     function _onlyAllowedIn(address tokenIn) internal view {
         require(_allowedIn.contains(tokenIn), "SolsticeVault: !allowedIn");
+    }
+
+    /**
+    * @notice View function to ensure that the mean price of a given token is not zero.
+    * @param tokenIn The address of the token for which to check the mean price.
+    */
+    function _onlyNotZeroValue(address tokenIn) internal view {
+        uint256 value = __Finance.meanPrice(factories(), tokenIn, denominator(), 1);
+        require(value != 0, "SolsticeVault: value is zero");
+    }
+
+    /**
+    * @notice Modifier-like function to ensure that the contract is already initialized.
+    */
+    function _whenInitialized() internal view {
+        require(_initialized, "SolsticeVault: !_initialized");
+    }
+
+    /**
+    * @notice Modifier-like function to ensure that the contract is not already initialized.
+    */
+    function _whenNotInitialized() internal view {
+        require(!_initialized, "SolsticeVault: _initialized");
     }
 
     /**
