@@ -12,15 +12,49 @@ import "contracts/polygon/external/openzeppelin/utils/structs/EnumerableSet.sol"
 contract UniswapV2PriceFeedV2 is ProxyStateOwnableContract {
     using EnumerableSet for EnumerableSet.AddressSet;
 
+    /**
+    * @notice Modifier to check the validity of input addresses.
+    * @param factory The address of the UniswapV2 factory contract.
+    * @param tokenA The address of the first token in the pair.
+    * @param tokenB The address of the second token in the pair.
+    * @dev Requires that none of the input addresses are zero.
+    */
     modifier check(address factory, address tokenA, address tokenB) {
         _check(factory, tokenA, tokenB);
         _;
     }
 
+    /**
+    * @notice Compares two strings for equality.
+    * @param stringA The first string for comparison.
+    * @param stringB The second string for comparison.
+    * @return bool Returns true if the strings are equal, false otherwise.
+    */
     function isSameString(string memory stringA, string memory stringB) public pure returns (bool) {
         return keccak256(abi.encode(stringA)) == keccak256(abi.encode(stringB));
     }
 
+    /**
+    * @notice Retrieves metadata information for a given pair of tokens in a UniswapV2 pair.
+    * @param factory The address of the UniswapV2 factory contract.
+    * @param tokenA The address of the first token in the pair.
+    * @param tokenB The address of the second token in the pair.
+    * @return pair The address of the UniswapV2 pair.
+    * @return addressA The address of the first token in the pair.
+    * @return addressB The address of the second token in the pair.
+    * @return nameA The name of the first token in the pair.
+    * @return nameB The name of the second token in the pair.
+    * @return symbolA The symbol of the first token in the pair.
+    * @return symbolB The symbol of the second token in the pair.
+    * @return decimalsA The decimal precision of the first token in the pair.
+    * @return decimalsB The decimal precision of the second token in the pair.
+    * Requirements:
+    * - The provided factory address must not be zero.
+    * - The provided token addresses must not be zero.
+    * - The UniswapV2 pair must exist for the given tokens.
+    * - Token names and symbols must not be empty strings.
+    * - Decimal precision must be within the valid range [0, 18].
+    */
     function metadata(address factory, address tokenA, address tokenB) public view check(factory, tokenA, tokenB) returns (address pair, address addressA, address addressB, string memory nameA, string memory nameB, string memory symbolA, string memory symbolB, uint8 decimalsA, uint8 decimalsB) {
         IUniswapV2Factory factory = IUniswapV2Factory(factory);
         address pair = factory.getPair(tokenA, tokenB);
@@ -40,6 +74,20 @@ contract UniswapV2PriceFeedV2 is ProxyStateOwnableContract {
         return(pair, pairInterface.token0(), pairInterface.token1(), tokenA_.name(), tokenB_.name(), tokenA_.symbol(), tokenB_.symbol(), tokenA_.decimals(), tokenB_.decimals());
     }
 
+    /**
+    * @notice Checks the order of tokens in a UniswapV2 pair.
+    * @param factory The address of the UniswapV2 factory contract.
+    * @param tokenA The address of the first token in the pair.
+    * @param tokenB The address of the second token in the pair.
+    * @return 0 if the order of tokens in the pair is as expected.
+    * @return 1 if the order of tokens in the pair is reversed.
+    * Requirements:
+    * - The provided factory address must not be zero.
+    * - The provided token addresses must not be zero.
+    * - The UniswapV2 pair must exist for the given tokens.
+    * - Token names, symbols, and decimals must match the expected values.
+    * - Reverts with an error message if the order is unknown.
+    */
     function isSameOrder(address factory, address tokenA, address tokenB) public view check(factory, tokenA, tokenB) returns (uint8) {
         (, address addressA, address addressB, string memory nameA, string memory nameB, string memory symbolA, string memory symbolB, uint8 decimalsA, uint8 deecimalsB) = metadata(factory, tokenA, tokenB);
         IERC20Metadata tokenA_ = IERC20Metadata(tokenA);
@@ -73,6 +121,20 @@ contract UniswapV2PriceFeedV2 is ProxyStateOwnableContract {
         }
     }
 
+    /**
+    * @notice Calculates the price of a given amount in one token in terms of another token in a UniswapV2 pair.
+    * @param factory The address of the UniswapV2 factory contract.
+    * @param tokenA The address of the first token in the pair.
+    * @param tokenB The address of the second token in the pair.
+    * @param amount The amount of tokenA or tokenB for which to calculate the price.
+    * @return Returns the calculated price, denominated in the other token, for the specified amount.
+    * Requirements:
+    * - The provided factory address must not be zero.
+    * - The provided token addresses must not be zero.
+    * - The UniswapV2 pair must exist for the given tokens.
+    * - Token names, symbols, and decimals must match the expected values.
+    * - Reverts with an error message if the order is unknown.
+    */
     function price(address factory, address tokenA, address tokenB, uint256 amount) public view check(factory, tokenA, tokenB) returns (uint256) {
         (address pair, , , , , , , uint8 decimalsA, uint8 decimalsB) = metadata(factory, tokenA, tokenB);
         IUniswapV2Pair pairInterface = IUniswapV2Pair(pair);
@@ -97,6 +159,16 @@ contract UniswapV2PriceFeedV2 is ProxyStateOwnableContract {
         }
     }
 
+    /**
+    * @notice Internal function to check input addresses in the UniswapV2PriceFeedV2 contract.
+    * @param factory The address of the UniswapV2 factory contract.
+    * @param tokenA The address of the first token.
+    * @param tokenB The address of the second token.
+    * Requirements:
+    * - Token A address must not be zero.
+    * - Token B address must not be zero.
+    * - Factory address must not be zero.
+    */
     function _check(address factory, address tokenA, address tokenB) internal view {
         require(tokenA != address(0x0), "UniswapV2PriceFeedV2: input token A address is zero");
         require(tokenB != address(0x0), "UniswapV2PriceFeedV2: input token B address is zero");
