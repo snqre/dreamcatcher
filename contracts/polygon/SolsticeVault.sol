@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import "contracts/polygon/libraries/__Finance.sol";
 import "contracts/polygon/external/openzeppelin/utils/structs/EnumerableSet.sol";
 import "contracts/polygon/interfaces/IERC20Mintable.sol";
 import "contracts/polygon/ERC20Mintable.sol";
@@ -54,6 +53,7 @@ contract SolsticeVault is Ownable, Pausable, ReentrancyGuard {
         string description;
         address denominator;
         ERC20Mintable erc20;
+        EnumerableSet.AddressSet supported;
     }
 
     constructor(string memory name, string memory symbol) Ownable(msg.sender) {
@@ -72,10 +72,24 @@ contract SolsticeVault is Ownable, Pausable, ReentrancyGuard {
         });
     }
 
+    /**
+    * @notice Check if two strings are identical.
+    * @param stringA The first string.
+    * @param stringB The second string.
+    * @return Whether the two strings are identical.
+    */
     function isSameString(string memory stringA, string memory stringB) public pure returns (bool) {
         return keccak256(abi.encode(stringA)) == keccak256(abi.encode(stringB));
     }
 
+    /**
+    * @notice Get information about a UniswapV2 pair on a specific exchange.
+    * @param exchange The UniswapV2 exchange (e.g., MESHSWAP, SUSHISWAP, QUICKSWAP).
+    * @param tokenA The address of the first token in the pair.
+    * @param tokenB The address of the second token in the pair.
+    * @return pair Information about the UniswapV2 pair, including token details, reserves, values, and order.
+    * @dev If the pair does not exist, the returned pair will have default values and an order of UNRECOGNIZED.
+    */
     function pair(Exchange exchange, address tokenA, address tokenB) public view returns (Pair memory pair) {
         address factory;
         if (exchange == Exchange.MESHSWAP) { factory = meshswap.factory; }
@@ -147,6 +161,29 @@ contract SolsticeVault is Ownable, Pausable, ReentrancyGuard {
             }
         }
         return pair;
+    }
+
+    /**
+    * @notice Calculate the total value of assets in the vault, denominated in a specified token.
+    * @param exchange The Uniswap exchange to use for price information.
+    * @param denominator The token in which the total value is denominated.
+    * @return uint256 The total value of assets in the vault denominated in the specified token.
+    */
+    function sum(Exchange exchange, address denominator) public view returns (uint256) {
+        uint256 sum;
+        uint256 balance;
+        uint256 price;
+        for (uint256 i = 0; i < vault.supported.length(); i++) {
+            balance = 0;
+            price = 0;
+            Pair memory pair = pair(exchange, vault.supported.at(i), denominator);
+            if (pair.order == Order.SAME) { price = pair.valueA; }
+            else if (pair.order ==  Order.REVERSE) { price = pair.valueB; }
+            else {}
+            balance = IERC20Metadata(vault.supported.at(i)).balanceOf(address(this));
+            sum += (balance * price);
+        }
+        return sum;
     }
 
 }
