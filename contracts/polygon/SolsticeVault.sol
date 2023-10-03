@@ -128,12 +128,6 @@ contract SolsticeVault is Ownable, Pausable, ReentrancyGuard {
             (uint256 reserveA, uint256 reserveB, uint256 lastTimestamp) = interface_.getReserves();
             pair.reserveA = reserveA;
             pair.reserveB = reserveB;
-            pair.valueA = (1 * (reserveA * (10**tokenB_.decimals()))) / reserveB;
-            pair.valueA *= 10**18;
-            pair.valueA /= 10**tokenA_.decimals();
-            pair.valueB = (1 * (reserveB * (10**tokenA_.decimals()))) / reserveA;
-            pair.valueB *= 10**18;
-            pair.valueB /= 10**tokenB_.decimals();
             pair.lastTimestamp = lastTimestamp;
             if (
                 tokenA == pair.tokenA &&
@@ -146,6 +140,12 @@ contract SolsticeVault is Ownable, Pausable, ReentrancyGuard {
                 tokenB_.decimals() == pair.decimalsB
             ) {
                 pair.order = Order.SAME;
+                pair.valueA = (1 * (reserveB * (10**tokenA_.decimals()))) / reserveA;
+                pair.valueA *= 10**18;
+                pair.valueA /= 10**tokenB_.decimals();
+                pair.valueB = (1 * (reserveA * (10**tokenB_.decimals()))) / reserveB;
+                pair.valueB *= 10**18;
+                pair.valueB /= 10**tokenA_.decimals();
             }
             else if (
                 tokenA == pair.tokenB &&
@@ -158,6 +158,22 @@ contract SolsticeVault is Ownable, Pausable, ReentrancyGuard {
                 tokenB_.decimals() == pair.decimalsA
             ) {
                 pair.order = Order.REVERSE;
+                pair.valueB = (1 * (reserveB * (10**tokenA_.decimals()))) / reserveA;
+                pair.valueB *= 10**18;
+                pair.valueB /= 10**tokenB_.decimals();
+                pair.valueA = (1 * (reserveA * (10**tokenB_.decimals()))) / reserveB;
+                pair.valueA *= 10**18;
+                pair.valueA /= 10**tokenA_.decimals();
+                pair.reserveA = reserveB;
+                pair.reserveB = reserveA;
+                pair.tokenA = interface_.token1();
+                pair.tokenB = interface_.token0();
+                pair.nameA = tokenB_.name();
+                pair.nameB = tokenA_.name();
+                pair.symbolA = tokenB_.symbol();
+                pair.symbolB = tokenA_.symbol();
+                pair.decimalsA = tokenB_.decimals();
+                pair.decimalsB = tokenA_.decimals();
             }
         }
         return pair;
@@ -187,7 +203,7 @@ contract SolsticeVault is Ownable, Pausable, ReentrancyGuard {
     }
 
     function addSupported(address erc20) onlyOwner() public returns (bool) {
-        Vault.supported.add(erc20);
+        _vault.supported.add(erc20);
         return true;
     }
 
