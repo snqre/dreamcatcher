@@ -25,6 +25,13 @@ contract SolsticeVault is Ownable, Pausable, ReentrancyGuard {
 
     Vault private _vault;
 
+    modifier onlySupported(address tokenIn) {
+        bool success;
+        success = isSupported(tokenIn);
+        require(success, "!supported");
+        _;
+    }
+
     struct Pair {
         address pair;
         address tokenA;
@@ -49,7 +56,6 @@ contract SolsticeVault is Ownable, Pausable, ReentrancyGuard {
     }
 
     struct Vault {
-        string name;
         string description;
         address denominator;
         ERC20Mintable erc20;
@@ -81,130 +87,211 @@ contract SolsticeVault is Ownable, Pausable, ReentrancyGuard {
     function isSameString(string memory stringA, string memory stringB) public pure returns (bool) {
         return keccak256(abi.encode(stringA)) == keccak256(abi.encode(stringB));
     }
+    
+    function token() public view returns (address) {
+        return address(_vault.erc20);
+    }
 
-    /**
-    * @notice Get information about a UniswapV2 pair on a specific exchange.
-    * @param exchange The UniswapV2 exchange (e.g., MESHSWAP, SUSHISWAP, QUICKSWAP).
-    * @param tokenA The address of the first token in the pair.
-    * @param tokenB The address of the second token in the pair.
-    * @return pair Information about the UniswapV2 pair, including token details, reserves, values, and order.
-    * @dev If the pair does not exist, the returned pair will have default values and an order of UNRECOGNIZED.
-    */
-    function pair(Exchange exchange, address tokenA, address tokenB) public view returns (Pair memory pair) {
+    function name() public view returns (string memory) {
+        return _vault.erc20.name();
+    }
+
+    function symbol() public view returns (string memory) {
+        return _vault.erc20.symbol();
+    }
+
+    function decimals() public view returns (uint8) {
+        return _vault.erc20.decimals();
+    }
+
+    function supply() public view returns (uint256) {
+        return _vault.erc20.totalSupply();
+    }
+
+    function description() public view returns (string memory) {
+        return _vault.erc20.description();
+    }
+
+    function denominator() public view returns (address) {
+        return _vault.denominator;
+    }
+
+    function isSupported(address tokenIn) public view returns (bool) {
+        (uint256 priceA, uint256 priceB, uint256 priceC) = prices(tokenIn, denominator());
+        if (
+            priceA != 0 ||
+            priceB != 0 ||
+            priceC != 0
+        ) { return true; }
+        else { return false; }
+    }
+
+    function prices(address tokenA, address tokenB) public view returns (uint256, uint256, uint256) {
+        uint256 priceA;
+        uint256 priceB;
+        uint256 priceC;
+        uint256 a;
+        uint256 b;
+        uint256 o;
+        Order oo;
+        (, , , , , , , , , , , a, b, , , o) = pair(Exchange.MESHSWAP);
+        oo = Order(o);
+        if (oo.SAME) { priceA = a; } else if (oo.REVERSE) { priceA = b; }
+        else { priceA = 0; }
+        (, , , , , , , , , , , a, b, , , o) = pair(Exchange.QUICKSWAP);
+        oo = Order(o);
+        if (oo.SAME) { priceB = a; } else if (oo.REVERSE) { priceB = b; }
+        else { priceB = 0; }
+        (, , , , , , , , , , , a, b, , , o) = pair(Exchange.SUSHISWAP);
+        oo = Order(o);
+        if (oo.SAME) { priceC = a; } else if (oo.REVERSE) { priceC = b; }
+        else { priceC = 0; }
+        return (priceA, priceB, priceC);
+    }
+
+    function pair(Exchange exchange, address tokenA, address tokenB) public view returns (address, address, address, string memory, string memory, string memory, string memory, uint8, uint8, uint256, uint256, uint256, uint256, uint256, uint256) {
         address factory;
         if (exchange == Exchange.MESHSWAP) { factory = meshswap.factory; }
         else if (exchange == Exchange.SUSHISWAP) { factory = sushiswap.factory; }
         else if (exchange == Exchange.QUICKSWAP) { factory = quickswap.factory; }
+        Pair memory pair;
         pair.pair = IUniswapV2Factory(factory).getPair(tokenA, tokenB);
         if (pair.pair == address(0x0)) {
             string memory emptyString;
-            pair.tokenA = address(0x0);
-            pair.tokenB = address(0x0);
-            pair.nameA = emptyString;
-            pair.nameB = emptyString;
-            pair.symbolA = emptyString;
-            pair.symbolB = emptyString;
-            pair.decimalsA = 0;
-            pair.decimalsB = 0;
-            pair.reserveA = 0;
-            pair.reserveB = 0;
-            pair.valueA = 0;
-            pair.valueB = 0;
-            pair.lastTimestamp = 0;
-            pair.order = Order.UNRECOGNIZED;
+            pair = Pair({
+                pair: address(0x0),
+                tokenA: address(0x0),
+                tokenB: address(0x0),
+                nameA: emptyString,
+                nameB: emptyString,
+                symbolA: emptyString,
+                symbolB: emptyString,
+                decimalsA: 0,
+                decimalsB: 0,
+                reserveA: 0,
+                reserveB: 0,
+                valueA: 0,
+                valueB: 0,
+                lastTimestamp: 0,
+                order: Order.UNRECOGNIZED
+            });
+            return (
+                pair.pair,
+                pair.tokenA,
+                pair.tokenB,
+                pair.nameA,
+                pair.nameB,
+                pair.symbolA,
+                pair.symbolB,
+                pair.decimalsA,
+                pair.decimalsB,
+                pair.reserveA,
+                pair.reserveB,
+                pair.valueA,
+                pair.valueB,
+                pair.lastTimestamp,
+                uint256(pair.order)
+            );
         }
         else {
-            IUniswapV2Pair interface_ = IUniswapV2Pair(pair.pair);
-            IERC20Metadata tokenA_ = IERC20Metadata(interface_.token0());
-            IERC20Metadata tokenB_ = IERC20Metadata(interface_.token1());
-            pair.tokenA = interface_.token0();
-            pair.tokenB = interface_.token1();
-            pair.nameA = tokenA_.name();
-            pair.nameB = tokenB_.name();
-            pair.symbolA = tokenA_.symbol();
-            pair.symbolB = tokenB_.symbol();
-            pair.decimalsA = tokenA_.decimals();
-            pair.decimalsB = tokenB_.decimals();
-            (uint256 reserveA, uint256 reserveB, uint256 lastTimestamp) = interface_.getReserves();
+            IUniswapV2Pair interfacePair = IUniswapV2Pair(pair.pair);
+            IERC20Metadata interfaceTokenA = IERC20Metadata(interfacePair.token0());
+            IERC20Metadata interfaceTokenB = IERC20Metadata(interfacePair.token1());
+            pair.tokenA = interfacePair.token0();
+            pair.tokenB = interfacePair.token1();
+            pair.nameA = interfaceTokenA.name();
+            pair.nameB = interfaceTokenB.name();
+            pair.symbolA = interfaceTokenA.symbol();
+            pair.symbolB = interfaceTokenB.symbol();
+            pair.decimalsA = interfaceTokenA.decimals();
+            pair.decimalsB = interfaceTokenB.decimals();
+            (
+                uint256 reserveA,
+                uint256 reserveB,
+                uint256 lastTimestamp
+            )
+            = interfacePair.getReserves();
             pair.reserveA = reserveA;
             pair.reserveB = reserveB;
+            pair.valueA = (1 * (reserveB * (10**tokenA_.decimals()))) / reserveA;
+            pair.valueA *= 10**18;
+            pair.valueA /= 10**tokenB_.decimals();
+            pair.valueB = (1 * (reserveA * (10**tokenB_.decimals()))) / reserveB;
+            pair.valueB *= 10**18;
+            pair.valueB /= 10**tokenA_.decimals();
             pair.lastTimestamp = lastTimestamp;
             if (
                 tokenA == pair.tokenA &&
                 tokenB == pair.tokenB &&
-                isSameString(tokenA_.name(), pair.nameA) &&
-                isSameString(tokenB_.name(), pair.nameB) &&
-                isSameString(tokenA_.symbol(), pair.symbolA) &&
-                isSameString(tokenB_.symbol(), pair.symbolB) &&
-                tokenA_.decimals() == pair.decimalsA &&
-                tokenB_.decimals() == pair.decimalsB
+                isSameString(interfaceTokenA.name(), pair.nameA) &&
+                isSameString(interfaceTokenB.name(), pair.nameB) &&
+                isSameString(interfaceTokenA.symbol(), pair.symbolA) &&
+                isSameString(interfaceTokenB.symbol(), pair.symbolB) &&
+                interfaceTokenA.decimals() == pair.decimalsA &&
+                interfaceTokenB.decimals() == pair.decimalsB
             ) {
                 pair.order = Order.SAME;
-                pair.valueA = (1 * (reserveB * (10**tokenA_.decimals()))) / reserveA;
-                pair.valueA *= 10**18;
-                pair.valueA /= 10**tokenB_.decimals();
-                pair.valueB = (1 * (reserveA * (10**tokenB_.decimals()))) / reserveB;
-                pair.valueB *= 10**18;
-                pair.valueB /= 10**tokenA_.decimals();
             }
             else if (
                 tokenA == pair.tokenB &&
                 tokenB == pair.tokenA &&
-                isSameString(tokenA_.name(), pair.nameB) &&
-                isSameString(tokenB_.name(), pair.nameA) &&
-                isSameString(tokenA_.symbol(), pair.symbolB) &&
-                isSameString(tokenB_.symbol(), pair.symbolA) &&
-                tokenA_.decimals() == pair.decimalsB &&
-                tokenB_.decimals() == pair.decimalsA
+                isSameString(interfaceTokenA.name(), pair.nameB) &&
+                isSameString(interfaceTokenB.name(), pair.nameA) &&
+                isSameString(interfaceTokenA.symbol(), pair.symbolB) &&
+                isSameString(interfaceTokenB.symbol(), pair.symbolA) &&
+                interfaceTokenA.decimals() == pair.decimalsB &&
+                interfaceTokenB.decimals() == pair.decimalsA
             ) {
                 pair.order = Order.REVERSE;
-                pair.valueB = (1 * (reserveB * (10**tokenA_.decimals()))) / reserveA;
-                pair.valueB *= 10**18;
-                pair.valueB /= 10**tokenB_.decimals();
-                pair.valueA = (1 * (reserveA * (10**tokenB_.decimals()))) / reserveB;
-                pair.valueA *= 10**18;
-                pair.valueA /= 10**tokenA_.decimals();
-                pair.reserveA = reserveB;
-                pair.reserveB = reserveA;
-                pair.tokenA = interface_.token1();
-                pair.tokenB = interface_.token0();
-                pair.nameA = tokenB_.name();
-                pair.nameB = tokenA_.name();
-                pair.symbolA = tokenB_.symbol();
-                pair.symbolB = tokenA_.symbol();
-                pair.decimalsA = tokenB_.decimals();
-                pair.decimalsB = tokenA_.decimals();
             }
+            else {
+                pair.order = Order.UNRECOGNIZED;
+            }
+            return (
+                pair.pair,
+                pair.tokenA,
+                pair.tokenB,
+                pair.nameA,
+                pair.nameB,
+                pair.symbolA,
+                pair.symbolB,
+                pair.decimalsA,
+                pair.decimalsB,
+                pair.reserveA,
+                pair.reserveB,
+                pair.valueA,
+                pair.valueB,
+                pair.lastTimestamp,
+                uint256(pair.order)
+            );
         }
-        return pair;
     }
 
-    /**
-    * @notice Calculate the total value of assets in the vault, denominated in a specified token.
-    * @param exchange The Uniswap exchange to use for price information.
-    * @param denominator The token in which the total value is denominated.
-    * @return uint256 The total value of assets in the vault denominated in the specified token.
-    */
-    function sum(Exchange exchange, address denominator) public view returns (uint256) {
-        uint256 sum;
+    function sum() public view returns (uint256, uint256, uint256) {
+        uint256 priceA;
+        uint256 priceB;
+        uint256 priceC;
         uint256 balance;
-        uint256 price;
+        uint256 sumA;
+        uint256 sumB;
+        uint256 sumC;
         for (uint256 i = 0; i < _vault.supported.length(); i++) {
-            balance = 0;
-            price = 0;
-            Pair memory pair = pair(exchange, _vault.supported.at(i), denominator);
-            if (pair.order == Order.SAME) { price = pair.valueA; }
-            else if (pair.order ==  Order.REVERSE) { price = pair.valueB; }
-            else {}
-            balance = IERC20Metadata(_vault.supported.at(i)).balanceOf(address(this));
-            sum += (balance * price);
+            delete priceA;
+            delete priceB;
+            delete priceC;
+            delete balance;
+            (priceA, priceB, priceC) = prices(_vault.supported.at(i), denominator());
+            //balance = IERC20Metadata(_vault.supported.at(i)).balanceOf(address(this));
+            balance += 1;
+            sumA += (balance * priceA);
+            sumB += (balance * priceB);
+            sumC += (balance * priceC);
         }
-        return sum;
+        return (sumA, sumB, sumC);
     }
 
-    function addSupported(address erc20) onlyOwner() public returns (bool) {
-        _vault.supported.add(erc20);
+    function addSupported(address tokenIn) public onlyOwner() onlySupported(tokenIn) whenNotPaused() returns (bool) {
+        _vault.supported.add(tokenIn);
         return true;
     }
-
 }
