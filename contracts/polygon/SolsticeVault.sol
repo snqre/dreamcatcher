@@ -23,7 +23,7 @@ contract SolsticeVault is Ownable, Pausable, ReentrancyGuard {
     Market public sushiswap;
     Market public meshswap;
 
-    Vault public vault;
+    Vault private _vault;
 
     struct Pair {
         address pair;
@@ -57,7 +57,7 @@ contract SolsticeVault is Ownable, Pausable, ReentrancyGuard {
     }
 
     constructor(string memory name, string memory symbol) Ownable(msg.sender) {
-        vault.erc20 = new ERC20Mintable(name, symbol, address(this));
+        _vault.erc20 = new ERC20Mintable(name, symbol, address(this));
         quickswap = Market({
             factory: 0x5757371414417b8C6CAad45bAeF941aBc7d3Ab32,
             router: 0xa5E0829CaCEd8fFDD4De3c43696c57F7D7A678ff
@@ -173,17 +173,22 @@ contract SolsticeVault is Ownable, Pausable, ReentrancyGuard {
         uint256 sum;
         uint256 balance;
         uint256 price;
-        for (uint256 i = 0; i < vault.supported.length(); i++) {
+        for (uint256 i = 0; i < _vault.supported.length(); i++) {
             balance = 0;
             price = 0;
-            Pair memory pair = pair(exchange, vault.supported.at(i), denominator);
+            Pair memory pair = pair(exchange, _vault.supported.at(i), denominator);
             if (pair.order == Order.SAME) { price = pair.valueA; }
             else if (pair.order ==  Order.REVERSE) { price = pair.valueB; }
             else {}
-            balance = IERC20Metadata(vault.supported.at(i)).balanceOf(address(this));
+            balance = IERC20Metadata(_vault.supported.at(i)).balanceOf(address(this));
             sum += (balance * price);
         }
         return sum;
+    }
+
+    function addSupported(address erc20) onlyOwner() public returns (bool) {
+        Vault.supported.add(erc20);
+        return true;
     }
 
 }
