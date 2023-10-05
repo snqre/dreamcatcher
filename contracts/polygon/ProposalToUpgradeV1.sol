@@ -281,28 +281,6 @@ contract ProposalToUpgradeV1 is Ownable {
     }
 
     /**
-    * @dev Contract constructor to initialize the proposal with essential parameters.
-    * @param caption The caption associated with the proposal.
-    * @param message The message associated with the proposal.
-    * @param creator The address of the creator/initiator of the proposal.
-    * @param proxyName The name of the proxy associated with this proposal.
-    * @param proposedImplementation The proposed implementation address associated with this proposal.
-    */
-    constructor(string memory caption, string memory message, address creator, string memory proxyName, address proposedImplementation) {
-        _phase = Phase.PRIVATE;
-        _state = State.QUEUED;
-        _snapshotId = IDream(governanceERC20()).snapshot();
-        _snapshotIdTimestamp = block.timestamp;
-        _governanceERC20 = 0xC5C23B6c3B8A15340d9BB99F07a1190f16Ebb125;
-        _caption = caption;
-        _message = message;
-        _creator = creator;
-        _startTimestamp = block.timestamp;
-        _proxyName = proxyName;
-        _proposedImplementation = proposedImplementation;
-    }
-
-    /**
     * @dev Emitted when a signer successfully adds their signature to the proposal.
     * @param signer The address of the account that signed the proposal.
     */
@@ -322,6 +300,33 @@ contract ProposalToUpgradeV1 is Ownable {
     * - `proposedImplementation`: The address of the proposed implementation contract that was executed.
     */
     event ProposalExecuted(string indexed proxyName, address proposedImplementation);
+
+    event SignerAdded(address indexed signer);
+
+    /**
+    * @dev Contract constructor to initialize the proposal with essential parameters.
+    * @param caption The caption associated with the proposal.
+    * @param message The message associated with the proposal.
+    * @param creator The address of the creator/initiator of the proposal.
+    * @param proxyName The name of the proxy associated with this proposal.
+    * @param proposedImplementation The proposed implementation address associated with this proposal.
+    */
+    constructor(string memory caption, string memory message, address creator, string memory proxyName, address proposedImplementation, address[] memory signers) Ownable(msg.sender) {
+        _phase = Phase.PRIVATE;
+        _state = State.QUEUED;
+        _governanceERC20 = 0xC5C23B6c3B8A15340d9BB99F07a1190f16Ebb125;
+        _snapshotId = IDream(governanceERC20()).snapshot();
+        _snapshotIdTimestamp = block.timestamp;
+        _caption = caption;
+        _message = message;
+        _creator = creator;
+        _startTimestamp = block.timestamp;
+        _proxyName = proxyName;
+        _proposedImplementation = proposedImplementation;
+        for (uint256 i = 0; i < signers.length; i++) {
+            _addSigner(signers[i]);
+        }
+    }
 
     /**
     * @dev Retrieves the address of the governance ERC-20 token.
@@ -615,6 +620,38 @@ contract ProposalToUpgradeV1 is Ownable {
         return _initialized;
     }
 
+    /**
+    * @dev Retrieves the duration of the timelock phase.
+    * @return uint256 Duration of the timelock phase.
+    */
+    function durationTimelock() public view returns (uint256) {
+        return _durationTimelock();
+    }
+
+    /**
+    * @dev Calculates the remaining seconds until the signature timeout.
+    * @return uint256 Remaining seconds until signature timeout.
+    */
+    function secondsUntilSignatureTimeout() public view returns (uint256) {
+        return (startTimestamp() + durationSignatureTimeout()) - block.timestamp;
+    }
+
+    /**
+    * @dev Calculates the remaining seconds until the timeout.
+    * @return uint256 Remaining seconds until timeout.
+    */
+    function secondsUntilTimeout() public view returns (uint256) {
+        return (startPhasePublic() + durationTimeout()) - block.timestamp;
+    }
+
+    /**
+    * @dev Calculates the remaining seconds until the end of the timelock phase.
+    * @return uint256 Remaining seconds until the end of the timelock phase.
+    */
+    function secondsUntilEndTimelock() public view returns (uint256) {
+        return (startPhaseTimelock() + durationTimelock()) - block.timestamp;
+    }
+
     /** Initialize */
 
     /**
@@ -683,6 +720,7 @@ contract ProposalToUpgradeV1 is Ownable {
         IDream dream = IDream(governanceERC20());
         uint256 balance
         = dream.balanceOfAt(msg.sender, snapshotId());
+        require(balance >= 1, "ProposalToUpgradeV1: insufficient balance at snapshot");
         _quorum += balance;
         if (side == Side.FOR) { _for += balance; }
         else if (side == Side.AGAINST) { _against += balance; }
@@ -907,7 +945,7 @@ contract ProposalToUpgradeV1 is Ownable {
     * - The caller must not have voted before in the current voting phase.
     */
     function _onlynotVoted() internal view {
-        require(hasVoted(msg.sender), "ProposalToUpgradeV1: msg.sender hasVoted()");
+        require(!hasVoted(msg.sender), "ProposalToUpgradeV1: msg.sender hasVoted()");
     }
 
     /**
@@ -915,7 +953,7 @@ contract ProposalToUpgradeV1 is Ownable {
     * Throws an error if the proposal has already been initialized.
     */
     function _onlynotInitialized() internal view {
-        require(initialize(), "ProposalToUpgradeV1: !initialized()");
+        require(!initialized(), "ProposalToUpgradeV1: !initialized()");
     }
 
     /**
@@ -923,6 +961,19 @@ contract ProposalToUpgradeV1 is Ownable {
     * Throws an error if the proposal has not been initialized.
     */
     function _onlyWhenInitialized() internal view {
-        require(!initialized(), "ProposalToUpgradeV1: initialized()");
+        require(initialized(), "ProposalToUpgradeV1: initialized()");
+    }
+
+    /** Internal. */
+
+    /**
+    * @dev Adds a new signer to the proposal.
+    * @param account The address of the signer to be added.
+    * @dev Throws an error if the signer is already added.
+    */
+    function _addSigner(address account) internal {
+        require(!isSigner(account), "ProposalToUpgradeV1: duplicate signer");
+        _signers.add(account);
+        emit SignerAdded(account);
     }
 }
