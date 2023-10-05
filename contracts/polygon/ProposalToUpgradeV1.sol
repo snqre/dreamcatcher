@@ -1,20 +1,29 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.9;
 import "contracts/polygon/external/openzeppelin/utils/structs/EnumerableSet.sol";
+import "contracts/polygon/external/openzeppelin/access/Ownable.sol";
 import "contracts/polygon/interfaces/IDream.sol";
 import "contracts/polygon/interfaces/ITerminalV1.sol";
 
-contract ProposalToUpgradeV1 {
+contract ProposalToUpgradeV1 is Ownable {
     using EnumerableSet for EnumerableSet.AddressSet;
 
+    /**
+    * @dev Metadata strings for the proposal.
+    */
     string private _name;
     string private _caption;
     string private _message;
-    string private _proxyName;
 
+    /**
+    * @dev Addresses related to the creator and governance ERC-20 token.
+    */
     address private _creator;
     address private _governanceERC20;
 
+    /**
+    * @dev Parameters and metadata to govern the behavior of the upgrade proposal.
+    */
     uint256 private _version;
     uint256 private _startTimestamp;
     uint256 private _endTimestamp;
@@ -28,16 +37,34 @@ contract ProposalToUpgradeV1 {
     uint256 private _requiredQuorum;
     uint256 private _basisToPass;
 
+    /**
+    * @dev Sets to manage the addresses of signers and collected signatures for the proposal.
+    */
     EnumerableSet.AddressSet private _signers;
     EnumerableSet.AddressSet private _signatures;
 
+    /**
+    * @dev Private variables tracking the voting statistics for the proposal.
+    */
     uint256 private _quorum;
     uint256 private _for;
     uint256 private _against;
     uint256 private _abstain;
 
+    /**
+    * @dev Private state variable storing the name of the proxy associated with the proposal.
+    */
     string private _proxyName;
+
+    /**
+    * @dev Private state variable representing the Ethereum address of the proposed implementation contract.
+    */
     address private _proposedImplementation;
+
+    /**
+    * @dev Private state variable indicating whether the contract has been initialized.
+    */
+    bool private _initialized;
 
     /**
     * @dev The unique identifier associated with the snapshot, allowing retrieval of historical balances at the time of the snapshot.
@@ -235,7 +262,33 @@ contract ProposalToUpgradeV1 {
         _;
     }
 
-    constructor(string memory caption, string memory message, address creator, uint256 durationSignatureTimeout, uint256 durationTimeout, uint256 durationPublicSigVote, uint256 durationTimelock, uint256 requiredSignatureQuorum, uint256 requiredQuorum, uint256 basisToPass, string memory proxyName, address proposedImplementation) {
+    /**
+    * @dev Modifier to ensure that the function can only be called when the contract is not yet initialized.
+    * @notice Reverts if the contract is already initialized.
+    */
+    modifier onlynotInitialized() {
+        _onlynotInitialized();
+        _;
+    }
+
+    /**
+    * @dev Modifier to ensure that the function can only be called when the contract is already initialized.
+    * @notice Reverts if the contract is not yet initialized.
+    */
+    modifier onlyWhenInitialized() {
+        _onlyWhenInitialized();
+        _;
+    }
+
+    /**
+    * @dev Contract constructor to initialize the proposal with essential parameters.
+    * @param caption The caption associated with the proposal.
+    * @param message The message associated with the proposal.
+    * @param creator The address of the creator/initiator of the proposal.
+    * @param proxyName The name of the proxy associated with this proposal.
+    * @param proposedImplementation The proposed implementation address associated with this proposal.
+    */
+    constructor(string memory caption, string memory message, address creator, string memory proxyName, address proposedImplementation) {
         _phase = Phase.PRIVATE;
         _state = State.QUEUED;
         _snapshotId = IDream(governanceERC20()).snapshot();
@@ -245,13 +298,8 @@ contract ProposalToUpgradeV1 {
         _message = message;
         _creator = creator;
         _startTimestamp = block.timestamp;
-        _durationSignatureTimeout = durationSignatureTimeout;
-        _durationTimeout = durationTimeout;
-        _durationPublicSigVote = durationPublicSigVote;
-        _durationTimelock = durationTimelock;
-        _requiredSignatureQuorum = requiredSignatureQuorum;
-        _requiredQuorum = requiredQuorum;
-        _basisToPass = basisToPass;
+        _proxyName = proxyName;
+        _proposedImplementation = proposedImplementation;
     }
 
     /**
@@ -540,12 +588,69 @@ contract ProposalToUpgradeV1 {
         return _snapshotIdTimestamp;
     }
 
+    /**
+    * @notice Retrieves the addresses of all accounts that have voted in the current proposal.
+    * @return An array of addresses representing accounts that have participated in the voting.
+    */
     function voted() public view returns (address[] memory) {
         return _voted.values();
     }
 
+    /**
+    * @notice Checks whether a specific account has already voted in the current proposal.
+    * @param account The address of the account to check for voting status.
+    * @return A boolean indicating whether the account has voted in the current proposal.
+    */
     function hasVoted(address account) public view returns (bool) {
         return _voted.contains(account);
+    }
+
+    /**
+    * @notice Checks whether the upgrade proposal has been initialized.
+    * @return A boolean indicating whether the proposal has been initialized.
+    * @dev Once the proposal is initialized, certain configuration parameters are set,
+    *      and further initialization attempts will be rejected.
+    */
+    function initialized() public view returns (bool) {
+        return _initialized;
+    }
+
+    /** Initialize */
+
+    /**
+    * @notice Initializes the upgrade proposal with specified parameters.
+    * @dev This function is restricted to the contract owner and can only be called once during the contract's initialization.
+    * @param durationSignatureTimeout The duration, in seconds, allowed for collecting required signatures.
+    * @param durationTimeout The overall duration, in seconds, for the entire proposal process.
+    * @param durationPublicSigVote The duration, in seconds, for the public voting phase.
+    * @param durationTimelock The duration, in seconds, for the timelock phase after successful execution.
+    * @param requiredSignatureQuorum The minimum percentage of required signatures for the proposal to be valid (<= 10000).
+    * @param requiredQuorum The minimum percentage of total votes needed to pass the proposal (<= 10000).
+    * @param basisToPass The percentage basis required for the proposal to pass (<= 10000).
+    * @dev The sum of requiredSignatureQuorum, requiredQuorum, and basisToPass should not exceed 10000.
+    * @dev After initialization, this function cannot be called again.
+    */
+    function initialize(uint256 durationSignatureTimeout, uint256 durationTimeout, uint256 durationPublicSigVote, uint256 durationTimelock, uint256 requiredSignatureQuorum, uint256 requiredQuorum, uint256 basisToPass) public onlyOwner() onlynotInitialized() {
+        require(
+            requiredSignatureQuorum <= 10000,
+            "ProposalToUpgradeV1: requiredSignatureQuorum > 10000"
+        );
+        require(
+            requiredQuorum <= 10000,
+            "ProposalToUpgradeV1: requiredQuorum > 10000"
+        );
+        require(
+            basisToPass <= 10000,
+            "ProposalToUpgradeV1: basisToPass > 10000"
+        );
+        _durationSignatureTimeout = durationSignatureTimeout;
+        _durationTimeout = durationTimeout;
+        _durationPublicSigVote = durationPublicSigVote;
+        _durationTimelock = durationTimelock;
+        _requiredSignatureQuorum = requiredSignatureQuorum;
+        _requiredQuorum = requiredQuorum;
+        _basisToPass = basisToPass;
+        _initialized = true;
     }
 
     /** Multi Sig Interactions. */
@@ -558,10 +663,12 @@ contract ProposalToUpgradeV1 {
     * - Sender must not have already signed the proposal.
     * - Proposal must be in the "Queued" and "Private" phase.
     */
-    function sign() public onlySigner() onlynotSigned() onlyWhenQueued() onlyWhenPrivate() {
+    function sign() public onlySigner() onlynotSigned() onlyWhenQueued() onlyWhenPrivate() onlyWhenInitialized() {
         _signatures.add(msg.sender);
         emit Signed(msg.sender);
     }
+
+    /** Public Sig Interactions. */
 
     /**
     * @dev Allows a token holder to cast their vote on the proposal during the public voting phase.
@@ -571,7 +678,7 @@ contract ProposalToUpgradeV1 {
     * - The public voting phase must not have timed out.
     * - The voter has not voted before.
     */
-    function vote(Side side) public onlyWhenQueued() onlyWhenPublic() onlynotTimedout() onlynotVoted() {
+    function vote(Side side) public onlyWhenQueued() onlyWhenPublic() onlynotTimedout() onlynotVoted() onlyWhenInitialized() {
         _voted.add(msg.sender);
         IDream dream = IDream(governanceERC20());
         uint256 balance
@@ -583,6 +690,8 @@ contract ProposalToUpgradeV1 {
         else { revert("ProposalToUpgradeV1: invalid input"); }
     }
 
+    /** Executions. */
+
     /**
     * @dev Public function to initialize the transition from the private phase to the public phase of the proposal.
     * It checks the necessary conditions for the transition, including the minimum signature quorum and the absence
@@ -590,7 +699,7 @@ contract ProposalToUpgradeV1 {
     * start timestamp for the public phase.
     * Emits a `PhaseUpdated` event to signal the state change and a `PhaseInitialized` event with the updated phase.
     */
-    function initializePhasePublic() public onlyWhenQueued() onlyWhenPrivate() onlyWhenEnoughSignatureQuorum() onlynotSignatureTimedout() {
+    function initializePhasePublic() public onlyWhenQueued() onlyWhenPrivate() onlyWhenEnoughSignatureQuorum() onlynotSignatureTimedout() onlyWhenInitialized() {
         _phase = Phase.PUBLIC;
         _startPhasePublic = block.timestamp;
         emit PhaseInitialized(phase());
@@ -602,7 +711,7 @@ contract ProposalToUpgradeV1 {
     * it sets the proposal state to APPROVED, the phase to LOCKED, and records the start timestamp for the timelock phase.
     * Emits a `PhaseUpdated` event to signal the state change and a `PhaseInitialized` event with the updated phase.
     */
-    function initializePhaseTimelock() public onlyWhenQueued() onlyWhenPublic() onlyWhenEnoughQuorum() onlyWhenEnoughVotes() onlynotTimedout() {
+    function initializePhaseTimelock() public onlyWhenQueued() onlyWhenPublic() onlyWhenEnoughQuorum() onlyWhenEnoughVotes() onlynotTimedout() onlyWhenInitialized() {
         _state = State.APPROVED;
         _phase = Phase.LOCKED;
         _startPhaseTimelock = block.timestamp;
@@ -616,7 +725,7 @@ contract ProposalToUpgradeV1 {
     * Additionally, it triggers the upgrade of the associated proxy to the proposed implementation.
     * Emits a `ProposalExecuted` event with details about the executed proposal.
     */
-    function initializePhaseExecuted() public onlyWhenPassed() onlyWhenLocked() onlyAfterTimelock() {
+    function initializePhaseExecuted() public onlyWhenPassed() onlyWhenLocked() onlyAfterTimelock() onlyWhenInitialized() {
         _state = State.EXECUTED;
         _phase = Phase.EXECUTED;
         _endTimestamp = block.timestamp;
@@ -699,7 +808,7 @@ contract ProposalToUpgradeV1 {
     function _onlyWhenEnoughSignatureQuorum() internal view {
         require(requiredSignatureQuorum() <= 10000, "ProposalToUpgradeV1: _requiredSignatureQuorum > 10000");
         uint256 required
-        = (signersLength() * requireSignatureQuorum()) / 10000;
+        = (signersLength() * requiredSignatureQuorum()) / 10000;
         require(
             signaturesLength() >= required,
             "ProposalToUpgradeV1: signaturesLength() insufficient"
@@ -799,5 +908,21 @@ contract ProposalToUpgradeV1 {
     */
     function _onlynotVoted() internal view {
         require(hasVoted(msg.sender), "ProposalToUpgradeV1: msg.sender hasVoted()");
+    }
+
+    /**
+    * @dev Internal function modifier to ensure that the proposal has not been initialized yet.
+    * Throws an error if the proposal has already been initialized.
+    */
+    function _onlynotInitialized() internal view {
+        require(initialize(), "ProposalToUpgradeV1: !initialized()");
+    }
+
+    /**
+    * @dev Internal function modifier to ensure that the proposal has been initialized.
+    * Throws an error if the proposal has not been initialized.
+    */
+    function _onlyWhenInitialized() internal view {
+        require(!initialized(), "ProposalToUpgradeV1: initialized()");
     }
 }
