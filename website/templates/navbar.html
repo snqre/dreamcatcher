@@ -1,0 +1,38 @@
+<style>
+    :root {
+        --main--height: 100%;
+    }
+
+    .navbar-container {
+        display: flex;
+        justify-content: space-between; /* Align items with space between them */
+        align-items: center; /* Align items vertically at the center */
+        width: 100%;
+        height: var(--main--height);
+        background-image: url("static/jpg/chromatic.jpg");
+        background-color: transparent;
+        background-position: 5%;
+        color: white;
+        padding: 0.5%;
+        text-align: center;
+        animation: smoothChromatic 5s infinite ease-in-out alternate-reverse;
+        filter: brightness(1.5);
+        filter:blur(100);
+    }
+
+    @keyframes smoothChromatic {
+        0% {
+            background-position-y: 0%;
+            background-position-x: 0%;
+        }
+        100% {
+            background-position-y: 100%;
+            background-position-x: 100%;
+        }
+    }
+
+</style>
+
+<nav class="navbar-container">
+
+</nav>

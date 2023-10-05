@@ -301,7 +301,29 @@ contract ProposalToUpgradeV1 is Ownable {
     */
     event ProposalExecuted(string indexed proxyName, address proposedImplementation);
 
+    /**
+    * @notice Emitted when a new signer is added to the list of signers.
+    * @dev This event is emitted when the `_addSigner` function successfully adds a signer.
+    * @param signer The address of the added signer.
+    * @dev Example usage:
+    * ```
+    * emit SignerAdded(signerAddress);
+    * ```
+    */
     event SignerAdded(address indexed signer);
+
+    /**
+    * @notice Emitted when a voter casts their votes on a proposal.
+    * @dev This event is emitted when the `_vote` function is successfully executed.
+    * @param voter The address of the voter.
+    * @param votes The number of votes cast by the voter.
+    * @param side The side of the vote (e.g., For, Against).
+    * @dev Example usage:
+    * ```
+    * emit Voted(voterAddress, numberOfVotes, Side.For);
+    * ```
+    */
+    event Voted(address indexed voter, uint256 indexed votes, Side indexed side);
 
     /**
     * @dev Contract constructor to initialize the proposal with essential parameters.
@@ -320,7 +342,6 @@ contract ProposalToUpgradeV1 is Ownable {
         _caption = caption;
         _message = message;
         _creator = creator;
-        _startTimestamp = block.timestamp;
         _proxyName = proxyName;
         _proposedImplementation = proposedImplementation;
         for (uint256 i = 0; i < signers.length; i++) {
@@ -687,6 +708,7 @@ contract ProposalToUpgradeV1 is Ownable {
         _requiredSignatureQuorum = requiredSignatureQuorum;
         _requiredQuorum = requiredQuorum;
         _basisToPass = basisToPass;
+        _startTimestamp = block.timestamp;
         _initialized = true;
     }
 
@@ -726,6 +748,7 @@ contract ProposalToUpgradeV1 is Ownable {
         else if (side == Side.AGAINST) { _against += balance; }
         else if (side == Side.ABSTAIN) { _abstain += balance; }
         else { revert("ProposalToUpgradeV1: invalid input"); }
+        emit Voted(msg.sender, balance, side);
     }
 
     /** Executions. */
