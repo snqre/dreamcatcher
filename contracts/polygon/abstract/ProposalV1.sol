@@ -3,6 +3,7 @@ pragma solidity ^0.8.9;
 import "contracts/polygon/external/openzeppelin/utils/structs/EnumerableSet.sol";
 import "contracts/polygon/external/openzeppelin/access/Ownable.sol";
 import "contracts/polygon/interfaces/IDream.sol";
+import "contracts/polygon/interfaces/ITerminalV2.sol";
 
 /**
 * @dev Override _execute function to perform action after the proposal
@@ -101,6 +102,7 @@ abstract contract ProposalV1 is Ownable {
         string message;
         address creator;
         address votingERC20;
+        address terminalV2;
     }
 
     /**
@@ -570,6 +572,16 @@ abstract contract ProposalV1 is Ownable {
     event Executed();
 
     /**
+    * @dev Emitted when the TerminalV2 address in the metadata of a proposal is successfully set to a new value.
+    *
+    * This event provides a record of changes to the TerminalV2 address associated with a proposal. It is emitted
+    * when the `_setTerminalV2` function is called, signifying that the TerminalV2 address in the metadata has been updated.
+    *
+    * @param account The new TerminalV2 address that has been set in the metadata.
+    */
+    event TerminalV2SetTo(address indexed account);
+
+    /**
     * @dev Error indicating an attempt to add a duplicate signer.
     * @param account The address of the signer that already exists.
     * 
@@ -716,6 +728,7 @@ abstract contract ProposalV1 is Ownable {
     constructor(string memory caption, string memory message, address creator, uint64 mSigDuration, uint64 pSigDuration, uint64 timelockDuration, address[] memory signers, uint256 mSigRequiredQuorum, uint256 pSigRequiredQuorum, uint256 threshold) {
         _setPhaseToMSig();
         _setVotingERC20(0xC5C23B6c3B8A15340d9BB99F07a1190f16Ebb125);
+        _setTerminalV2(0xd59431E364531e9f627c4B8065Ed13b62326810b);
         _snapshot();
         for (uint256 i = 0; i < signers.length; i++) {
             _addSigner(signers[i]);
@@ -732,6 +745,12 @@ abstract contract ProposalV1 is Ownable {
         _initMSigTimer();
     }
 
+    /**
+    * @notice Retrieves the address of the ERC20 token used for voting in the proposal.
+    * @dev This function returns the address stored in the metadata of the proposal,
+    * representing the ERC20 token used for voting.
+    * @return The address of the ERC20 token used for voting in the proposal.
+    */
     function votingERC20() public view returns (address) {
         return _proposal.metadata.votingERC20;
     }
@@ -900,6 +919,13 @@ abstract contract ProposalV1 is Ownable {
         return support() + against() + abstain();
     }
 
+    /**
+    * @notice Calculates and retrieves the required voting quorum for a proposal.
+    * @dev This function calculates the required quorum by multiplying the total supply of the
+    * voting ERC20 token at the snapshot index with the percentage quorum required for the proposal.
+    * The result is divided by 10000 to obtain the quorum percentage as a fraction of the total supply.
+    * @return The calculated required quorum for the proposal.
+    */
     function requiredQuorum() public view returns (uint256) {
         return (IDream(votingERC20()).totalSupplyAt(snapshotIndex()) * pSigRequiredQuorum()) / 10000;
     }
@@ -1087,6 +1113,19 @@ abstract contract ProposalV1 is Ownable {
     }
 
     /**
+    * @notice Checks if the current voting threshold is sufficient for the proposal.
+    * @dev This function calculates the required quorum based on the minimum signature
+    * quorum specified for the proposal. It then compares the current threshold with
+    * the required quorum and returns true if the current threshold is equal to or
+    * greater than the required quorum.
+    * @return A boolean indicating whether the current voting threshold is sufficient.
+    */
+    function sufficientThreshold() public view returns (bool) {
+        uint256 currThreshold = (support() / quorum()) * 10000;
+        return currThreshold >= threshold();
+    }
+
+    /**
     * @dev Retrieves the index of the snapshot associated with the proposal.
     * @return The index of the snapshot as a uint256.
     */
@@ -1100,6 +1139,15 @@ abstract contract ProposalV1 is Ownable {
     */
     function snapshotTimestamp() public view returns (uint64) {
         return _proposal.snapshot.timestamp;
+    }
+
+    /**
+    * @notice Retrieves the current TerminalV2 address stored in the metadata of the proposal.
+    * @dev This function provides read-only access to the TerminalV2 address associated with the proposal.
+    * @return The current TerminalV2 address stored in the metadata.
+    */
+    function terminalV2() public view returns (address) {
+        return _proposal.metadata.terminalV2;
     }
 
     /** Multi Sig Control. */
@@ -1153,6 +1201,7 @@ abstract contract ProposalV1 is Ownable {
         }
         if (phase() == Phase.PUBLIC) {
             if (!sufficientPSigQuorum()) { revert InsufficientPSigQuorum(quorum(), requiredQuorum()); }
+            if (!sufficientThreshold()) { revert InsufficientThreshold(); }
             if (pSigSecondsLeft() == 0 && pSigTimerSet()) { revert PSigTimedout(pSigSecondsLeft()); }
             if (pSigTimerSet()) {
                 _setPhaseToTimelock();
@@ -1286,6 +1335,7 @@ abstract contract ProposalV1 is Ownable {
         * @dev Any thing that happens after proposal has passed and
         *      timelock is over.
          */
+        ITerminalV2(terminalV2()).renounce();
         emit Executed();
     }
 
@@ -1468,6 +1518,28 @@ abstract contract ProposalV1 is Ownable {
     function _setVotingERC20(address account) internal {
         _proposal.metadata.votingERC20 = account;
         emit VotingERC20SetTo(account);
+    }
+
+    /**
+    * @dev Sets the TerminalV2 address in the metadata of the proposal.
+    * @param account The new TerminalV2 address to be set.
+    *
+    * This internal function updates the TerminalV2 address within the metadata
+    * of a proposal. It is intended for internal use within the contract and is typically
+    * called in response to certain events or conditions.
+    *
+    * Emits a {TerminalV2SetTo} event to signal the change in the TerminalV2 address.
+    * This event can be useful for tracking and logging purposes.
+    *
+    * Requirements:
+    * - This function should only be called from within the contract or contracts that inherit from it.
+    *
+    * @param account The new TerminalV2 address to set in the proposal's metadata.
+    * @emit TerminalV2SetTo The event emitted when the TerminalV2 address is successfully set.
+    */
+    function _setTerminalV2(address account) internal {
+        _proposal.metadata.terminalV2 = account;
+        emit TerminalV2SetTo(account);
     }
 
     /**
