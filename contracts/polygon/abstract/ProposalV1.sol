@@ -1150,6 +1150,14 @@ abstract contract ProposalV1 is Ownable {
         return _proposal.metadata.terminalV2;
     }
 
+    /**
+    * @dev Calculates the current approval threshold percentage based on the support and quorum.
+    * @return The current approval threshold as a percentage multiplied by 10000.
+    */
+    function currThreshold() public view returns (uint256) {
+        return (support() / quorum()) * 10000;
+    }
+
     /** Multi Sig Control. */
 
     /**
@@ -1201,7 +1209,7 @@ abstract contract ProposalV1 is Ownable {
         }
         if (phase() == Phase.PUBLIC) {
             if (!sufficientPSigQuorum()) { revert InsufficientPSigQuorum(quorum(), requiredQuorum()); }
-            if (!sufficientThreshold()) { revert InsufficientThreshold(); }
+            if (!sufficientThreshold()) { revert InsufficientThreshold(threshold(), currThreshold()); }
             if (pSigSecondsLeft() == 0 && pSigTimerSet()) { revert PSigTimedout(pSigSecondsLeft()); }
             if (pSigTimerSet()) {
                 _setPhaseToTimelock();

@@ -746,6 +746,12 @@ abstract interface IProposalV1 {
     function terminalV2() external view returns (address);
 
     /**
+    * @dev Calculates the current approval threshold percentage based on the support and quorum.
+    * @return The current approval threshold as a percentage multiplied by 10000.
+    */
+    function currThreshold() external view returns (uint256);
+
+    /**
     * @dev Allows a designated signer to add their signature during the Multi-Signature (MSig) phase.
     * 
     * This function can only be called by an authorized signer (`onlySigner`) and is only executable during the MSig phase (`onlyWhenMSig`).
