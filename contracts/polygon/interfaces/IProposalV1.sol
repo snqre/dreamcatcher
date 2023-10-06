@@ -453,97 +453,325 @@ abstract interface IProposalV1 {
     */
     error Timelock(uint256 secondsLeft);
 
+    /**
+    * @notice Retrieves the address of the ERC20 token used for voting in the proposal.
+    * @dev This function returns the address stored in the metadata of the proposal,
+    * representing the ERC20 token used for voting.
+    * @return The address of the ERC20 token used for voting in the proposal.
+    */
     function votingERC20() external view returns (address);
 
+    /**
+    * @dev Retrieves the current phase of the proposal.
+    * @return The current phase of the proposal, represented as a {Phase} enum.
+    */
     function phase() external view returns (Phase);
 
+    /**
+    * @dev Retrieves the caption associated with the proposal.
+    * @return The caption of the proposal as a string.
+    */
     function caption() external view returns (string memory);
 
+    /**
+    * @dev Retrieves the message associated with the proposal.
+    * @return The message of the proposal as a string.
+    */
     function message() external view returns (string memory);
 
+    /**
+    * @dev Retrieves the address of the creator of the proposal.
+    * @return The address of the creator.
+    */
     function creator() external view returns (address);
 
+    /**
+    * @dev Retrieves the addresses of signers who have participated in the multi-signature of the proposal.
+    * @return An array containing the addresses of the signers.
+    */
     function signers() external view returns (address[] memory);
 
+    /**
+    * @dev Retrieves the total number of signers who have participated in the multi-signature of the proposal.
+    * @return The number of signers.
+    */
     function signersLength() external view returns (uint256);
 
+    /**
+    * @dev Checks if a given address is a signer who has participated in the multi-signature of the proposal.
+    * @param account The address to be checked.
+    * @return True if the address is a signer, otherwise false.
+    */
     function isSigner(address account) external view returns (bool);
 
+    /**
+    * @dev Retrieves the addresses of accounts that have provided signatures for the proposal.
+    * @return An array containing the addresses of the signatories.
+    */
     function signatures() external view returns (address[] memory);
 
+    /**
+    * @dev Retrieves the total number of signatures provided for the proposal.
+    * @return The number of signatures.
+    */
     function signaturesLength() external view returns (uint256);
 
+    /**
+    * @dev Calculates the number of required signatures for the multi-signature process.
+    * 
+    * This function computes the required number of signatures based on the length of signers
+    * and the specified multi-signature required quorum percentage. The result represents the
+    * minimum number of signatures needed for the proposal to proceed in the multi-signature phase.
+    * 
+    * @return The calculated number of required signatures.
+    */
     function requiredSignaturesLength() external view returns (uint256);
 
+    /**
+    * @dev Checks if the multi-signature quorum has been met.
+    * 
+    * This function determines whether the number of collected signatures
+    * in the multi-signature process is sufficient to meet the required quorum.
+    * 
+    * @return True if the multi-signature quorum is met, false otherwise.
+    */
     function sufficientMSigQuorum() external view returns (bool);
 
+    /**
+    * @dev Checks if a given address has provided a signature for the proposal.
+    * @param account The address to be checked.
+    * @return True if the address has signed the proposal, otherwise false.
+    */
     function hasSigned(address account) external view returns (bool);
 
+    /**
+    * @dev Retrieves the addresses of voters who have participated in the proposal signature.
+    * @return An array containing the addresses of the voters.
+    */
     function voters() external view returns (address[] memory);
 
+    /**
+    * @dev Retrieves the total number of voters who have participated in the proposal signature.
+    * @return The number of voters.
+    */
     function votersLength() external view returns (uint256);
 
+    /**
+    * @dev Checks if a given address has participated in voting for the proposal.
+    * @param account The address to be checked.
+    * @return True if the address has voted, otherwise false.
+    */
     function hasVoted(address account) external view returns (bool);
 
+    /**
+    * @dev Retrieves the total level of support for the proposal.
+    * @return The total support for the proposal, represented as a uint256.
+    */
     function support() external view returns (uint256);
 
+    /**
+    * @dev Retrieves the total level of opposition against the proposal.
+    * @return The total opposition against the proposal, represented as a uint256.
+    */
     function against() external view returns (uint256);
 
+    /**
+    * @dev Retrieves the total number of abstentions for the proposal.
+    * @return The total number of abstentions, represented as a uint256.
+    */
     function abstain() external view returns (uint256);
 
+    /**
+    * @dev Retrieves the total number of participants considered for the quorum calculation.
+    * @return The sum of supporters, opponents, and abstentions, representing the total participants.
+    */
     function quorum() external view returns (uint256);
 
+    /**
+    * @notice Calculates and retrieves the required voting quorum for a proposal.
+    * @dev This function calculates the required quorum by multiplying the total supply of the
+    * voting ERC20 token at the snapshot index with the percentage quorum required for the proposal.
+    * The result is divided by 10000 to obtain the quorum percentage as a fraction of the total supply.
+    * @return The calculated required quorum for the proposal.
+    */
     function requiredQuorum() external view returns (uint256);
 
+    /**
+    * @dev Checks if the public signature quorum has been met.
+    * 
+    * This function determines whether the total support, against, and abstain votes
+    * collectively reach or exceed the required quorum for the public signature phase.
+    * 
+    * @return True if the public signature quorum is met, false otherwise.
+    */
     function sufficientPSigQuorum() external view returns (bool);
 
+    /**
+    * @dev Retrieves the timestamp when the multi-signature process for the proposal started.
+    * @return The start timestamp of the multi-signature process, represented as a uint64.
+    */
     function mSigStartTimestamp() external view returns (uint64);
 
+    /**
+    * @dev Retrieves the timestamp when the multi-signature process for the proposal ended.
+    * @return The end timestamp of the multi-signature process, represented as a uint64.
+    */
     function mSigEndTimestamp() external view returns (uint64);
 
+    /**
+    * @dev Retrieves the duration of the multi-signature process for the proposal.
+    * @return The duration of the multi-signature process, represented as a uint64.
+    */
     function mSigDuration() external view returns (uint64);
 
+    /**
+    * @dev Checks if the timer for the multi-signature process is set.
+    * @return True if the timer is set, otherwise false.
+    */
     function mSigTimerSet() external view returns (uint64);
 
+    /**
+    * @dev Retrieves the remaining seconds left for the multi-signature process, if the timer is set.
+    * @return The remaining seconds as a uint64. Returns 0 if the timer is not set.
+    */
     function mSigSecondsLeft() external view returns (uint64);
 
+    /**
+    * @dev Retrieves the timestamp when the proposal signature process started.
+    * @return The start timestamp of the proposal signature process, represented as a uint64.
+    */
     function pSigStartTimestamp() external view returns (uint64);
 
+    /**
+    * @dev Retrieves the timestamp when the proposal signature process ended.
+    * @return The end timestamp of the proposal signature process, represented as a uint64.
+    */
     function pSigEndTimestamp() external view returns (uint64);
 
+    /**
+    * @dev Retrieves the duration of the proposal signature process.
+    * @return The duration of the proposal signature process, represented as a uint64.
+    */
     function pSigDuration() external view returns (uint64);
 
+    /**
+    * @dev Checks if the timer for the proposal signature process is set.
+    * @return True if the timer is set, otherwise false.
+    */
     function pSigTimerSet() external view returns (bool);
 
+    /**
+    * @dev Retrieves the remaining seconds left for the proposal signature process, if the timer is set.
+    * @return The remaining seconds as a uint64. Returns 0 if the timer is not set.
+    */
     function pSigSecondsLeft() external view returns (uint64);
 
+    /**
+    * @dev Retrieves the timestamp when the timelock period for the proposal started.
+    * @return The start timestamp of the timelock period, represented as a uint64.
+    */
     function timelockStartTimestamp() external view returns (uint64);
 
+    /**
+    * @dev Retrieves the timestamp when the timelock period for the proposal ended.
+    * @return The end timestamp of the timelock period, represented as a uint64.
+    */
     function timelockEndTimestamp() external view returns (uint64);
 
+    /**
+    * @dev Retrieves the duration of the timelock period for the proposal.
+    * @return The duration of the timelock period, represented as a uint64.
+    */
     function timelockDuration() external view returns (uint64);
 
+    /**
+    * @dev Checks if the timer for the timelock period is set.
+    * @return True if the timer is set, otherwise false.
+    */
     function timelockTimerSet() external view returns (bool);
 
+    /**
+    * @dev Retrieves the remaining seconds left for the timelock period, if the timer is set.
+    * @return The remaining seconds as a uint64. Returns 0 if the timer is not set.
+    */
     function timelockSecondsLeft() external view returns (uint64);
 
+    /**
+    * @dev Retrieves the required quorum percentage for the multi-signature process.
+    * @return The required quorum percentage as a uint256.
+    */
     function mSigRequiredQuorum() external view returns (uint256);
 
+    /**
+    * @dev Retrieves the required quorum percentage for the proposal signature process.
+    * @return The required quorum percentage as a uint256.
+    */
     function pSigRequiredQuorum() external view returns (uint256);
 
+    /**
+    * @dev Retrieves the threshold percentage for the proposal.
+    * @return The threshold percentage as a uint16.
+    * 
+    * Note: The threshold is represented as a percentage with 100% equivalent to 10000.
+    */
     function threshold() external view returns (uint256);
 
+    /**
+    * @notice Checks if the current voting threshold is sufficient for the proposal.
+    * @dev This function calculates the required quorum based on the minimum signature
+    * quorum specified for the proposal. It then compares the current threshold with
+    * the required quorum and returns true if the current threshold is equal to or
+    * greater than the required quorum.
+    * @return A boolean indicating whether the current voting threshold is sufficient.
+    */
     function sufficientThreshold() external view returns (bool);
 
+    /**
+    * @dev Retrieves the index of the snapshot associated with the proposal.
+    * @return The index of the snapshot as a uint256.
+    */
     function snapshotIndex() external view returns (uint256);
 
+    /**
+    * @dev Retrieves the timestamp of the snapshot associated with the proposal.
+    * @return The timestamp of the snapshot as a uint64.
+    */
     function snapshotTimestamp() external view returns (uint64);
 
+    /**
+    * @notice Retrieves the current TerminalV2 address stored in the metadata of the proposal.
+    * @dev This function provides read-only access to the TerminalV2 address associated with the proposal.
+    * @return The current TerminalV2 address stored in the metadata.
+    */
     function terminalV2() external view returns (address);
 
+    /**
+    * @dev Allows a designated signer to add their signature during the Multi-Signature (MSig) phase.
+    * 
+    * This function can only be called by an authorized signer (`onlySigner`) and is only executable during the MSig phase (`onlyWhenMSig`).
+    * The signer's address is added to the list of signatures for the proposal.
+    */
     function sign() external;
 
+    /**
+    * @dev Allows a token holder to cast their vote during the Public Signature (PSig) phase.
+    * @param side The side of the vote (Support, Against, Abstain).
+    * 
+    * This function can only be called by an account with a positive balance (`onlyPositiveBalance`) and is only executable during the PSig phase (`onlyWhenPSig`).
+    * The voter's address is added to the list of voters, and the vote is categorized based on the specified side (Support, Against, Abstain).
+    */
     function vote(Side side) external;
 
+    /**
+    * @dev Progresses the proposal through its lifecycle based on the current phase.
+    * 
+    * During the Private Signature (MSig) phase, this function checks if the required MSig quorum is met (`sufficientMSigQuorum`),
+    * if the MSig timer has expired (`MSigTimedout`), and transitions to the Public Signature (PSig) phase if the timer is set.
+    * 
+    * During the Public Signature (PSig) phase, this function checks if the required PSig quorum is met (`sufficientPSigQuorum`),
+    * if the PSig timer has expired (`PSigTimedout`), and transitions to the Timelock phase if the timer is set.
+    * 
+    * During the Timelock phase, this function checks if the timelock timer has expired (`Timelock`) and performs any necessary actions.
+    */
     function forward() external;
 }
