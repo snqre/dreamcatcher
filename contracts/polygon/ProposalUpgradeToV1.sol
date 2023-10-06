@@ -139,7 +139,7 @@ contract ProposalUpgradeToV1 is ProposalV1 {
     * NOTE The upgrade does not directly upgrade the Terminal. Only proxies the Terminal controls.
     */
     function _execute() internal override {
-        ITerminalV1(_terminalV2).upgradeTo(proxyAddress(), proposedImplementation());
+        ITerminalV2(_terminalV2).upgradeTo(proxyAddress(), proposedImplementation());
         super._execute();
     }
 
