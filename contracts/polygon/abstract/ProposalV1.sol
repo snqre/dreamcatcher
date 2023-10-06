@@ -2,6 +2,7 @@
 pragma solidity ^0.8.9;
 import "contracts/polygon/external/openzeppelin/utils/structs/EnumerableSet.sol";
 import "contracts/polygon/external/openzeppelin/access/Ownable.sol";
+import "contracts/polygon/interfaces/IDream.sol";
 
 abstract contract ProposalV1 is Ownable {
 
@@ -300,11 +301,25 @@ abstract contract ProposalV1 is Ownable {
 
     event Abstained(uint256 indexed oldAbstain, uint256 indexed newAbstain);
 
+    event MSigRequiredQuorumSetTo(uint256 indexed value);
+
+    event PSigRequiredQuorumSetTo(uint256 indexed value);
+
+    event ThresholdSetTo(uint256 indexed value);
+
+    event SnapshotIndexSetTo(uint256 indexed value);
+
+    event SnapshotTimestampSetTo(uint64 indexed timestamp);
+
+    event Snapshot(address indexed votingERC20, uint256 indexed index, uint64 indexed timestamp);
+
     error DuplicateSigner(address account);
 
     error DuplicateSignature(address account);
 
     error DuplicateVoter(address account);
+
+    error OutOfBounds(uint256 min, uint256 max, uint256 value);
 
     /**
     * @notice Initializes a new Proposal with provided metadata and phase durations.
@@ -318,19 +333,26 @@ abstract contract ProposalV1 is Ownable {
     * @param pSigDuration Duration of the Public Signature phase in seconds.
     * @param timelockDuration Duration of the Timelock phase in seconds.
     */
-    constructor(string memory caption, string memory message, address creator, uint64 mSigDuration, uint64 pSigDuration, uint64 timelockDuration) {
+    constructor(string memory caption, string memory message, address creator, uint64 mSigDuration, uint64 pSigDuration, uint64 timelockDuration, address[] memory signers, uint256 mSigRequiredQuorum, uint256 pSigRequiredQuorum, uint256 threshold) {
         _setPhaseToMSig();
+        _setVotingERC20(0xC5C23B6c3B8A15340d9BB99F07a1190f16Ebb125);
+        _snapshot();
+        for (uint256 i = 0; i < signers.length; i++) {
+            _addSigner(signers[i]);
+        }
+        _setMSigRequiredQuorum(mSigRequiredQuorum);
+        _setPSigRequiredQuorum(pSigRequiredQuorum);
+        _setThreshold(threshold);
         _setCaption(caption);
         _setMessage(message);
         _setCreator(creator);
-        _setVotingERC20(0xC5C23B6c3B8A15340d9BB99F07a1190f16Ebb125);
         _setMSigDuration(mSigDuration);
         _setPSigDuration(pSigDuration);
         _setTimelockDuration(timelockDuration);
         _initMSigTimer();
     }
 
-    function votingERC20() public pure returns (address) {
+    function votingERC20() public view returns (address) {
         return _proposal.metadata.votingERC20;
     }
 
@@ -511,7 +533,7 @@ abstract contract ProposalV1 is Ownable {
     */
     function mSigSecondsLeft() public view returns (uint64) {
         if (mSigTimerSet()) {
-            return mSigEndTimestamp() - block.timestamp;
+            return uint64(mSigEndTimestamp() - block.timestamp);
         }
         else {
             return 0;
@@ -556,7 +578,7 @@ abstract contract ProposalV1 is Ownable {
     */
     function pSigSecondsLeft() public view returns (uint64) {
         if (pSigTimerSet()) {
-            return pSigEndTimestamp() - block.timestamp;
+            return uint64(pSigEndTimestamp() - block.timestamp);
         }
         else {
             return 0;
@@ -601,7 +623,7 @@ abstract contract ProposalV1 is Ownable {
     */
     function timelockSecondsLeft() public view returns (uint64) {
         if (timelockTimerSet()) {
-            return timelockEndTimestamp() - block.timestamp;
+            return uint64(timelockEndTimestamp() - block.timestamp);
         }
         else {
             return 0;
@@ -636,7 +658,7 @@ abstract contract ProposalV1 is Ownable {
     * 
     * Note: The threshold is represented as a percentage with 100% equivalent to 10000.
     */
-    function threshold() public view returns (uint16) {
+    function threshold() public view returns (uint256) {
         /**
         * 100% => 10000.
          */
@@ -681,6 +703,10 @@ abstract contract ProposalV1 is Ownable {
         require(phase() == Phase.PUBLIC, "ProposalV1: phase() != Phase.PUBLIC");
     }
 
+    function _onlyBetween(uint256 min, uint256 max, uint25 value) internal view {
+        if (value < min || value > max) { revert OutOfBounds(min, max, value); }
+    }
+
     /** Internal. */
 
     /**
@@ -722,6 +748,12 @@ abstract contract ProposalV1 is Ownable {
         emit TimelockTimerInitialized(timelockStartTimestamp(), timelockEndTimestamp(), timelockDuration());
     }
 
+    function _snapshot() internal {
+        _setSnapshotIndex(IDream(votingERC20()).snapshot());
+        _setSnapshotTimestamp(block.timestamp);
+        emit Snapshot(votingERC20(), snapshotIndex(), snapshotTimestamp());
+    }
+
     /** Internal Setters. */
 
     /**
@@ -743,7 +775,7 @@ abstract contract ProposalV1 is Ownable {
     */
     function _setMSigEndTimestamp(uint64 value) internal {
         _proposal.mSigTimestamps.endTimestamp = value;
-        emit MSigEndTimestampSetTo(value)
+        emit MSigEndTimestampSetTo(value);
     }
 
     /**
@@ -888,7 +920,7 @@ abstract contract ProposalV1 is Ownable {
     */
     function _setCreator(address account) internal {
         _proposal.metadata.creator = account;
-        emit CreatorSetTo(text);
+        emit CreatorSetTo(account);
     }
 
     /**
@@ -1016,4 +1048,72 @@ abstract contract ProposalV1 is Ownable {
         _proposal.pSig.abstain += value;
         emit Abstained(oldAbstain, oldAbstain + value);
     }
+
+    /**
+    * @dev Sets the required quorum percentage for the multi-signature process.
+    * @param value The new required quorum percentage to be set (scaled from 0 to 10000).
+    * 
+    * This internal function checks that the provided value is within the valid range of 0 to 10000,
+    * then updates the proposal's multi-signature settings with the specified required quorum percentage.
+    * It emits an event to signal the change in the required quorum percentage.
+    */
+    function _setMSigRequiredQuorum(uint256 value) internal {
+        _onlyBetween(0, 10000, value);
+        _proposal.mSigSettings.requiredQuorum = value;
+        emit MSigRequiredQuorumSetTo(value);
+    }
+
+    /**
+    * @dev Sets the required quorum percentage for the public signature process.
+    * @param value The new required quorum percentage to be set (scaled from 0 to 10000).
+    * 
+    * This internal function checks that the provided value is within the valid range of 0 to 10000,
+    * then updates the proposal's public signature settings with the specified required quorum percentage.
+    * It emits an event to signal the change in the required quorum percentage.
+    */
+    function _setPSigRequiredQuorum(uint256 value) internal {
+        _onlyBetween(0, 10000, value);
+        _proposal.pSigSettings.requiredQuorum = value;
+        emit PSigRequiredQuorumSetTo(value);
+    }
+
+    /**
+    * @dev Sets the voting threshold for the proposal.
+    * @param value The new threshold percentage to be set (scaled from 0 to 10000).
+    * 
+    * This internal function checks that the provided value is within the valid range of 5100 to 10000,
+    * then updates the proposal's settings with the specified voting threshold percentage.
+    * It emits an event to signal the change in the threshold percentage.
+    */
+    function _setThreshold(uint256 value) internal {
+        _onlyBetween(5100, 10000, value);
+        _proposal.settings.threshold = value;
+        emit ThresholdSetTo(value);
+    }
+
+    /**
+    * @dev Sets the snapshot index for the proposal.
+    * @param value The new snapshot index to be set.
+    * 
+    * This internal function updates the proposal's snapshot index with the specified value
+    * and emits an event to signal the change in the snapshot index.
+    */
+    function _setSnapshotIndex(uint256 value) internal {
+        _proposal.snapshot.index = value;
+        emit SnapshotIndexSetTo(value);
+    }
+
+    /**
+    * @dev Sets the snapshot timestamp for the proposal.
+    * @param timestamp The new snapshot timestamp to be set.
+    * 
+    * This internal function updates the proposal's snapshot timestamp with the specified value
+    * and emits an event to signal the change in the snapshot timestamp.
+    */
+    function _setSnapshotTimestamp(uint64 timestamp) internal {
+        _proposal.snapshot.timestamp = timestamp;
+        emit SnapshotTimestampSetTo(uint64 indexed timestamp);
+    }
+
+
 }
