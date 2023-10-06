@@ -4,6 +4,11 @@ import "contracts/polygon/external/openzeppelin/utils/structs/EnumerableSet.sol"
 import "contracts/polygon/external/openzeppelin/access/Ownable.sol";
 import "contracts/polygon/interfaces/IDream.sol";
 
+/**
+* @dev Override _execute function to perform action after the proposal
+*      has finished and successfully passed its lifecyle.
+*      Modify as required.
+ */
 abstract contract ProposalV1 is Ownable {
 
     /**
@@ -249,89 +254,456 @@ abstract contract ProposalV1 is Ownable {
         uint64 timestamp;
     }
 
+    /**
+    * @dev Modifier that checks if the function is called during the Multi-Signature (MSig) phase.
+    * 
+    * This modifier ensures that the function can only be executed when the proposal is in the MSig phase.
+    */
+    modifier onlyWhenMSig() {
+        _onlyWhenMSig();
+        _;
+    }
+
+    /**
+    * @dev Modifier that checks if the function is called during the Public Signature (PSig) phase.
+    * 
+    * This modifier ensures that the function can only be executed when the proposal is in the PSig phase.
+    */
+    modifier onlyWhenPSig() {
+        _onlyWhenPSig();
+        _;
+    }
+
+    /**
+    * @dev Modifier that checks if the caller is a signer.
+    * 
+    * This modifier ensures that the function can only be executed by an account designated as a signer.
+    */
+    modifier onlySigner() {
+        _onlySigner();
+        _;
+    }
+
+    /**
+    * @dev Modifier that checks if the caller has a positive balance.
+    * 
+    * This modifier ensures that the function can only be executed by an account with a positive balance.
+    */
+    modifier onlyPositiveBalance() {
+        _onlyPositiveBalance();
+        _;
+    }
+
+    /**
+    * @dev Emitted when the start timestamp of the Multi-Signature (MSig) period is set to a new value.
+    * @param value The new start timestamp of the MSig period.
+    * 
+    * This event signals that the start timestamp of the MSig period for the proposal has been updated to a new value.
+    */
     event MSigStartTimestampSetTo(uint64 indexed value);
 
+    /**
+    * @dev Emitted when the end timestamp of the Multi-Signature (MSig) period is set to a new value.
+    * @param value The new end timestamp of the MSig period.
+    * 
+    * This event signals that the end timestamp of the MSig period for the proposal has been updated to a new value.
+    */
     event MSigEndTimestampSetTo(uint64 indexed value);
 
+    /**
+    * @dev Emitted when the duration of the Multi-Signature (MSig) period is set to a new value.
+    * @param value The new duration of the MSig period.
+    * 
+    * This event signals that the duration of the MSig period for the proposal has been updated to a new value.
+    */
     event MSigDurationSetTo(uint64 indexed value);
 
+    /**
+    * @dev Emitted when the Multi-Signature (MSig) timer has been set.
+    * 
+    * This event signals that the MSig timer for the proposal has been successfully toggled, indicating that it has been set.
+    */
     event MSigTimerHasBeenSetToggled();
 
+    /**
+    * @dev Emitted when the Multi-Signature (MSig) timer is initialized.
+    * @param startTimestamp The start timestamp of the MSig period.
+    * @param endTimestamp The end timestamp of the MSig period.
+    * @param duration The duration of the MSig period.
+    * 
+    * This event signals that the MSig timer for the proposal has been successfully initialized.
+    */
     event MSigTimerInitialized(uint64 indexed startTimestamp, uint64 indexed endTimestamp, uint64 indexed duration);
 
+    /**
+    * @dev Emitted when the start timestamp of the Public Signature (PSig) period is set to a new value.
+    * @param value The new start timestamp of the PSig period.
+    * 
+    * This event signals that the start timestamp of the PSig period for the proposal has been updated to a new value.
+    */
     event PSigStartTimestampSetTo(uint64 indexed value);
 
+    /**
+    * @dev Emitted when the end timestamp of the Public Signature (PSig) period is set to a new value.
+    * @param value The new end timestamp of the PSig period.
+    * 
+    * This event signals that the end timestamp of the PSig period for the proposal has been updated to a new value.
+    */
     event PSigEndTimestampSetTo(uint64 indexed value);
 
+    /**
+    * @dev Emitted when the duration of the Public Signature (PSig) period is set to a new value.
+    * @param value The new duration of the PSig period.
+    * 
+    * This event signals that the duration of the PSig period for the proposal has been updated to a new value.
+    */
     event PSigDurationSetTo(uint64 indexed value);
 
+    /**
+    * @dev Emitted when the Public Signature (PSig) timer has been set.
+    * 
+    * This event signals that the PSig timer for the proposal has been successfully toggled, indicating that it has been set.
+    */
     event PSigTimerHasBeenSetToggled();
 
+    /**
+    * @dev Emitted when the Public Signature (PSig) timer is initialized.
+    * @param startTimestamp The start timestamp of the PSig period.
+    * @param endTimestamp The end timestamp of the PSig period.
+    * @param duration The duration of the PSig period.
+    * 
+    * This event signals that the PSig timer for the proposal has been successfully initialized.
+    */
     event PSigTimerInitialized(uint64 indexed startTimestamp, uint64 indexed endTimestamp, uint64 indexed duration);
 
+    /**
+    * @dev Emitted when the start timestamp of the timelock period is set to a new value.
+    * @param value The new start timestamp of the timelock period.
+    * 
+    * This event signals that the start timestamp of the timelock period for the proposal has been updated to a new value.
+    */
     event TimelockStartTimestampSetTo(uint64 indexed value);
 
+    /**
+    * @dev Emitted when the end timestamp of the timelock period is set to a new value.
+    * @param value The new end timestamp of the timelock period.
+    * 
+    * This event signals that the end timestamp of the timelock period for the proposal has been updated to a new value.
+    */
     event TimelockEndTimestampSetTo(uint64 indexed value);
 
+    /**
+    * @dev Emitted when the timelock duration is set to a new value.
+    * @param value The new duration of the timelock period.
+    * 
+    * This event signals that the duration of the timelock period for the proposal has been updated to a new value.
+    */
     event TimelockDurationSetTo(uint64 indexed value);
 
+    /**
+    * @dev Emitted when the timelock timer has been set.
+    * 
+    * This event signals that the timelock timer for the proposal has been successfully toggled, indicating that it has been set.
+    */
     event TimelockTimerHasBeenSetToggled();
 
+    /**
+    * @dev Emitted when the timelock timer is initialized.
+    * @param startTimestamp The start timestamp of the timelock period.
+    * @param endTimestamp The end timestamp of the timelock period.
+    * @param duration The duration of the timelock period.
+    * 
+    * This event signals that the timelock timer for the proposal has been successfully initialized.
+    */
     event TimelockTimerInitialized(uint64 indexed startTimestamp, uint64 indexed endTimestamp, uint64 indexed duration);
 
+    /**
+    * @dev Emitted when the caption text is set to a new value.
+    * @param text The new caption text.
+    * 
+    * This event signals that the caption text for the proposal has been updated to a new value.
+    */
     event CaptionSetTo(string indexed text);
 
+    /**
+    * @dev Emitted when the message text is set to a new value.
+    * @param text The new message text.
+    * 
+    * This event signals that the message text for the proposal has been updated to a new value.
+    */
     event MessageSetTo(string indexed text);
 
+    /**
+    * @dev Emitted when the creator address is set to a new value.
+    * @param account The new address of the creator.
+    * 
+    * This event signals that the creator address for the proposal has been updated to a new value.
+    */
     event CreatorSetTo(address indexed account);
 
+    /**
+    * @dev Emitted when the voting ERC20 token address is set to a new value.
+    * @param account The new address of the voting ERC20 token.
+    * 
+    * This event signals that the voting ERC20 token for the proposal has been updated to a new address.
+    */
     event VotingERC20SetTo(address indexed account);
 
+    /**
+    * @dev Emitted when a new signer is added to the multi-signature process.
+    * @param account The address of the new signer added to the process.
+    * 
+    * This event signals that a new signer has been included in the multi-signature process for the proposal.
+    */
     event SignerAdded(address indexed account);
 
+    /**
+    * @dev Emitted when a signer adds their signature to the proposal.
+    * @param account The address of the signer who added their signature.
+    * 
+    * This event signals that a signer has participated in the signature process for the proposal.
+    */
     event Signed(address indexed account);
 
+    /**
+    * @dev Emitted when a voter casts a vote in the proposal.
+    * @param account The address of the voter who cast a vote.
+    * 
+    * This event signals that a voter has participated in the voting process for the proposal.
+    */
     event Voted(address indexed account);
 
+    /**
+    * @dev Emitted when the phase of the proposal is set to a new value.
+    * @param phase The new phase of the proposal (Private, Public, Passed).
+    * 
+    * This event signals a change in the phase of the proposal.
+    */
     event PhaseSetTo(Phase indexed phase);
 
+    /**
+    * @dev Emitted when the number of support votes changes.
+    * @param oldSupport The previous number of support votes.
+    * @param newSupport The updated number of support votes.
+    * 
+    * This event signals a change in the count of support votes for the proposal.
+    */
     event Supported(uint256 indexed oldSupport, uint256 indexed newSupport);
 
+    /**
+    * @dev Emitted when the number of against votes changes.
+    * @param oldAgainst The previous number of against votes.
+    * @param newAgainst The updated number of against votes.
+    * 
+    * This event signals a change in the count of against votes for the proposal.
+    */
     event Rejected(uint256 indexed oldAgainst, uint256 indexed newAgainst);
 
+    /**
+    * @dev Emitted when the number of abstain votes changes.
+    * @param oldAbstain The previous number of abstain votes.
+    * @param newAbstain The updated number of abstain votes.
+    * 
+    * This event signals a change in the count of abstain votes for the proposal.
+    */
     event Abstained(uint256 indexed oldAbstain, uint256 indexed newAbstain);
 
+    /**
+    * @dev Emitted when the required quorum for the multi-signature process is set to a new value.
+    * @param value The new required quorum percentage for the multi-signature process.
+    * 
+    * This event signals that the required quorum percentage for the multi-signature process
+    * in the proposal has been updated to a new value.
+    */
     event MSigRequiredQuorumSetTo(uint256 indexed value);
 
+    /**
+    * @dev Emitted when the required quorum for the public signature process is set to a new value.
+    * @param value The new required quorum percentage for the public signature process.
+    * 
+    * This event signals that the required quorum percentage for the public signature process
+    * in the proposal has been updated to a new value.
+    */
     event PSigRequiredQuorumSetTo(uint256 indexed value);
 
+    /**
+    * @dev Emitted when the voting threshold is set to a new value.
+    * @param value The new voting threshold.
+    * 
+    * This event signals that the voting threshold for the proposal has been updated to a new value.
+    */
     event ThresholdSetTo(uint256 indexed value);
 
+    /**
+    * @dev Emitted when the snapshot index is set to a new value.
+    * @param value The new snapshot index.
+    * 
+    * This event signals that the snapshot index for the proposal has been updated to a new value.
+    */
     event SnapshotIndexSetTo(uint256 indexed value);
 
+    /**
+    * @dev Emitted when the snapshot timestamp is set to a new value.
+    * @param timestamp The new snapshot timestamp.
+    * 
+    * This event signals that the snapshot timestamp for the proposal has been updated to a new value.
+    */
     event SnapshotTimestampSetTo(uint64 indexed timestamp);
 
-    event Snapshot(address indexed votingERC20, uint256 indexed index, uint64 indexed timestamp);
+    /**
+    * @dev Emitted when a snapshot of the voting parameters is taken.
+    * @param votingERC20 The address of the ERC20 token used for voting.
+    * @param index The snapshot index.
+    * @param timestamp The timestamp at which the snapshot is taken.
+    * 
+    * This event signals that a snapshot of the voting parameters, including the ERC20 token,
+    * snapshot index, and timestamp, has been successfully taken for the proposal.
+    */
+    event Snapshotted(address indexed votingERC20, uint256 indexed index, uint64 indexed timestamp);
 
+    /**
+    * @dev Error indicating an attempt to add a duplicate signer.
+    * @param account The address of the signer that already exists.
+    * 
+    * This error is raised when there is an attempt to add a signer that is already part of the multi-signature process.
+    */
     error DuplicateSigner(address account);
 
+    /**
+    * @dev Error indicating an attempt to add a duplicate signature.
+    * @param account The address of the signer whose signature already exists.
+    * 
+    * This error is raised when there is an attempt to add a signature from a signer who has already signed the proposal.
+    */
     error DuplicateSignature(address account);
 
+    /**
+    * @dev Error indicating an attempt to add a duplicate voter.
+    * @param account The address of the voter that already exists.
+    * 
+    * This error is raised when there is an attempt to add a voter that has already voted in the proposal.
+    */
     error DuplicateVoter(address account);
 
+    /**
+    * @dev Error indicating that a value is outside the allowed bounds.
+    * @param min The minimum allowed value.
+    * @param max The maximum allowed value.
+    * @param value The actual value that caused the error.
+    * 
+    * This error is typically raised when a value falls outside the acceptable range.
+    */
     error OutOfBounds(uint256 min, uint256 max, uint256 value);
 
     /**
-    * @notice Initializes a new Proposal with provided metadata and phase durations.
-    * @dev This constructor sets up a Proposal with a specified caption, message, and creator address.
-    * It also configures the durations for the MultiSig, Public Signature, and Timelock phases.
-    * The initial phase is set to PRIVATE.
-    * @param caption The caption associated with the Proposal.
-    * @param message The detailed message or description of the Proposal.
-    * @param creator The address of the Proposal creator.
-    * @param mSigDuration Duration of the MultiSig phase in seconds.
-    * @param pSigDuration Duration of the Public Signature phase in seconds.
-    * @param timelockDuration Duration of the Timelock phase in seconds.
+    * @dev Error indicating that the multi-signature quorum is insufficient.
+    * @param signaturesLength The number of collected signatures.
+    * @param requiredSignaturesLength The required number of signatures.
+    * 
+    * This error is raised when attempting to proceed with the proposal in the multi-signature phase
+    * without meeting the required number of signatures.
+    */
+    error InsufficientMSigQuorum(uint256 signaturesLength, uint256 requiredSignaturesLength);
+
+    /**
+    * @dev Error indicating that the public signature quorum is insufficient.
+    * @param quorum The total support, against, and abstain votes.
+    * @param requiredQuorum The required quorum for the public signature phase.
+    * 
+    * This error is raised when attempting to proceed with the proposal in the public signature phase
+    * without meeting the required quorum.
+    */
+    error InsufficientPSigQuorum(uint256 quorum, uint256 requiredQuorum);
+
+    /**
+    * @dev Error indicating that the voting threshold is not met.
+    * @param requiredThreshold The required voting threshold.
+    * @param threshold The actual voting threshold.
+    * 
+    * This error is raised when attempting to proceed with the proposal without meeting the required voting threshold.
+    */
+    error InsufficientThreshold(uint256 requiredThreshold, uint256 threshold);
+
+    /**
+    * @dev Error indicating unauthorized access or action.
+    * @param account The address of the unauthorized account.
+    * 
+    * This error is raised when an account attempts an action or access that is not permitted.
+    */
+    error Unauthorized(address indexed account);
+
+    /**
+    * @dev Error indicating that the action is only allowed during the Public Signature (PSig) phase.
+    * @param phase The current phase of the proposal.
+    * 
+    * This error is raised when attempting an action that is restricted to the Public Signature (PSig) phase.
+    */
+    error OnlyDuringPSigPhase(Phase phase);
+
+    /**
+    * @dev Error indicating that the action is only allowed during the Multi-Signature (MSig) phase.
+    * @param phase The current phase of the proposal.
+    * 
+    * This error is raised when attempting an action that is restricted to the Multi-Signature (MSig) phase.
+    */
+    error OnlyDuringMSigPhase(Phase phase);
+
+    /**
+    * @dev Error indicating that the account's balance must be positive for the action.
+    * @param account The address of the account with the non-positive balance.
+    * @param balanceOf The current balance of the account.
+    * 
+    * This error is raised when attempting an action that requires a positive balance, and the account's balance is non-positive.
+    */
+    error OnlyPositiveBalance(address account, uint256 balanceOf);
+
+    /**
+    * @dev Error thrown when an invalid voting side is provided.
+    * 
+    * This error is used when attempting to vote with an unsupported or undefined side,
+    * such as a side other than Support, Against, or Abstain.
+    */
+    error InvalidSide(Side side);
+
+    /**
+    * @dev Error thrown when the Multi-Signature (MSig) phase timer has expired.
+    * 
+    * This error is used when attempting to transition from the MSig phase to the PSig phase,
+    * but the MSig timer has already reached zero, indicating that the MSig phase has timed out.
+    * @param secondsLeft The number of seconds remaining on the MSig timer at the time of the error.
+    */
+    error MSigTimedout(uint256 secondsLeft);
+
+    /**
+    * @dev Error thrown when the Public Signature (PSig) phase timer has expired.
+    * 
+    * This error is used when attempting to transition from the PSig phase to the Timelock phase,
+    * but the PSig timer has already reached zero, indicating that the PSig phase has timed out.
+    * @param secondsLeft The number of seconds remaining on the PSig timer at the time of the error.
+    */
+    error PSigTimedout(uint256 secondsLeft);
+
+    /**
+    * @dev Error thrown when the Timelock phase timer has not yet expired.
+    * 
+    * This error is used when attempting to progress to the next phase after the Timelock phase,
+    * but the Timelock timer still has seconds remaining, indicating that the Timelock phase is not yet completed.
+    * @param secondsLeft The number of seconds remaining on the Timelock timer at the time of the error.
+    */
+    error Timelock(uint256 secondsLeft);
+
+    /**
+    * @dev Constructor for initializing a new proposal.
+    * @param caption The caption for the proposal.
+    * @param message The message associated with the proposal.
+    * @param creator The address of the proposal creator.
+    * @param mSigDuration The duration for the multi-signature phase.
+    * @param pSigDuration The duration for the public signature phase.
+    * @param timelockDuration The duration for the timelock phase.
+    * @param signers The initial array of signers for the multi-signature process.
+    * @param mSigRequiredQuorum The required quorum percentage for the multi-signature process.
+    * @param pSigRequiredQuorum The required quorum percentage for the public signature process.
+    * @param threshold The voting threshold percentage for the proposal.
     */
     constructor(string memory caption, string memory message, address creator, uint64 mSigDuration, uint64 pSigDuration, uint64 timelockDuration, address[] memory signers, uint256 mSigRequiredQuorum, uint256 pSigRequiredQuorum, uint256 threshold) {
         _setPhaseToMSig();
@@ -430,6 +802,31 @@ abstract contract ProposalV1 is Ownable {
     }
 
     /**
+    * @dev Calculates the number of required signatures for the multi-signature process.
+    * 
+    * This function computes the required number of signatures based on the length of signers
+    * and the specified multi-signature required quorum percentage. The result represents the
+    * minimum number of signatures needed for the proposal to proceed in the multi-signature phase.
+    * 
+    * @return The calculated number of required signatures.
+    */
+    function requiredSignaturesLength() public view returns (uint256) {
+        return (signersLength() * mSigRequiredQuorum()) / 10000;
+    }
+
+    /**
+    * @dev Checks if the multi-signature quorum has been met.
+    * 
+    * This function determines whether the number of collected signatures
+    * in the multi-signature process is sufficient to meet the required quorum.
+    * 
+    * @return True if the multi-signature quorum is met, false otherwise.
+    */
+    function sufficientMSigQuorum() public view returns (bool) {
+        return signaturesLength() >= requiredSignaturesLength();
+    }
+
+    /**
     * @dev Checks if a given address has provided a signature for the proposal.
     * @param account The address to be checked.
     * @return True if the address has signed the proposal, otherwise false.
@@ -493,6 +890,22 @@ abstract contract ProposalV1 is Ownable {
     */
     function quorum() public view returns (uint256) {
         return support() + against() + abstain();
+    }
+
+    function requiredQuorum() public view returns (uint256) {
+        return (IDream(votingERC20()).totalSupplyAt(snapshotIndex()) * pSigRequiredQuorum()) / 10000;
+    }
+
+    /**
+    * @dev Checks if the public signature quorum has been met.
+    * 
+    * This function determines whether the total support, against, and abstain votes
+    * collectively reach or exceed the required quorum for the public signature phase.
+    * 
+    * @return True if the public signature quorum is met, false otherwise.
+    */
+    function sufficientPSigQuorum() public view returns (bool) {
+        return quorum() >= requiredQuorum();
     }
 
     /**
@@ -681,7 +1094,69 @@ abstract contract ProposalV1 is Ownable {
         return _proposal.snapshot.timestamp;
     }
 
-    /** Setters. */
+    /** Multi Sig Control. */
+
+    /**
+    * @dev Allows a designated signer to add their signature during the Multi-Signature (MSig) phase.
+    * 
+    * This function can only be called by an authorized signer (`onlySigner`) and is only executable during the MSig phase (`onlyWhenMSig`).
+    * The signer's address is added to the list of signatures for the proposal.
+    */
+    function sign() public onlySigner() onlyWhenMSig() {
+        _addSignature(msg.sender);
+    }
+
+    /** Public Sig Control. */
+
+    /**
+    * @dev Allows a token holder to cast their vote during the Public Signature (PSig) phase.
+    * @param side The side of the vote (Support, Against, Abstain).
+    * 
+    * This function can only be called by an account with a positive balance (`onlyPositiveBalance`) and is only executable during the PSig phase (`onlyWhenPSig`).
+    * The voter's address is added to the list of voters, and the vote is categorized based on the specified side (Support, Against, Abstain).
+    */
+    function vote(Side side) public onlyPositiveBalance() onlyWhenPSig() {
+        uint256 balanceOf = IDREAM(votingERC20()).balanceOfAt(msg.sender, snapshotIndex());
+        if (side == Side.SUPPORT) { _addSupport(balanceOf) }
+        else if (side == Side.AGAINST) { _addAgainst(balanceOf); }
+        else if (side == Side.ABSTAIN) { _addAbstain(balanceOf); }
+        else { revert InvalidSide(side); }
+        _addVoter(msg.sender);
+    }
+
+    /**
+    * @dev Progresses the proposal through its lifecycle based on the current phase.
+    * 
+    * During the Private Signature (MSig) phase, this function checks if the required MSig quorum is met (`sufficientMSigQuorum`),
+    * if the MSig timer has expired (`MSigTimedout`), and transitions to the Public Signature (PSig) phase if the timer is set.
+    * 
+    * During the Public Signature (PSig) phase, this function checks if the required PSig quorum is met (`sufficientPSigQuorum`),
+    * if the PSig timer has expired (`PSigTimedout`), and transitions to the Timelock phase if the timer is set.
+    * 
+    * During the Timelock phase, this function checks if the timelock timer has expired (`Timelock`) and performs any necessary actions.
+    */
+    function forward() public {
+        if (phase() == Phase.PRIVATE) {
+            if (!sufficientMSigQuorum()) { revert InsufficientMSigQuorum(signaturesLength(), requiredSignaturesLength()); }
+            if (mSigSecondsLeft() == 0 && mSigTimerSet()) { revert MSigTimedout(mSigSecondsLeft()); }
+            if (mSigTimerSet()) {
+                _setPhaseToPSig();
+            }
+        }
+        if (phase() == Phase.PUBLIC) {
+            if (!sufficientPSigQuorum()) { revert InsufficientPSigQuorum(quorum(), requiredQuorum()); }
+            if (pSigSecondsLeft() == 0 && pSigTimerSet()) { revert PSigTimedout(pSigSecondsLeft()); }
+            if (pSigTimerSet()) {
+                _setPhaseToTimelock();
+            }
+        }
+        if (phase() == Phase.PASSED) {
+            if (timelockSecondsLeft() > 0 && timelockTimerSet()) { revert Timelock(timelockSecondsLeft()); }
+            if (timelockTimerSet()) {
+                _execute();
+            }
+        }
+    }
 
     /** Flags. */
 
@@ -691,7 +1166,7 @@ abstract contract ProposalV1 is Ownable {
     * and raises an error if not, preventing execution in other phases.
     */
     function _onlyWhenMSig() internal view {
-        require(phase() == Phase.PRIVATE, "ProposalV1: phase() != Phase.PRIVATE");
+        if (phase() != Phase.PRIVATE) { revert OnlyDuringMSigPhase(phase()); }
     }
 
     /**
@@ -700,11 +1175,43 @@ abstract contract ProposalV1 is Ownable {
     * and raises an error if not, preventing execution in other phases.
     */
     function _onlyWhenPSig() internal view {
-        require(phase() == Phase.PUBLIC, "ProposalV1: phase() != Phase.PUBLIC");
+        if (phase() != Phase.PUBLIC) { revert OnlyDuringPSigPhase(phase()); }
     }
 
-    function _onlyBetween(uint256 min, uint256 max, uint25 value) internal view {
+    /**
+    * @dev Internal function to ensure that a value is within a specified range.
+    * @param min The minimum allowed value.
+    * @param max The maximum allowed value.
+    * @param value The value to be checked.
+    * 
+    * This function checks if the provided value is within the specified range (inclusive).
+    * If the value is outside the range, it reverts with an `OutOfBounds` error containing details of the range and the actual value.
+    */
+    function _onlyBetween(uint256 min, uint256 max, uint256 value) internal view {
         if (value < min || value > max) { revert OutOfBounds(min, max, value); }
+    }
+
+    /**
+    * @dev Internal function to ensure that the caller is a designated signer.
+    * 
+    * This function checks if the transaction sender (msg.sender) is a designated signer.
+    * If the sender is not a signer, it reverts with an `Unauthorized` error.
+    */
+    function _onlySigner() internal view {
+        if (!isSigner(msg.sender)) { revert Unauthorized(); }
+    }
+
+    /**
+    * @dev Internal function to ensure that the caller has a positive balance at the snapshot.
+    * 
+    * This function checks if the transaction sender (msg.sender) has a positive balance
+    * of the voting ERC20 token at the specified snapshot index.
+    * If the balance is not positive, it reverts with an `OnlyPositiveBalance` error.
+    */
+    function _onlyPositiveBalance() internal view {
+        uint256 balanceOf =
+        IDream(votingERC20()).balanceOfAt(msg.sender, snapshotIndex());
+        if (balanceOf < 1) { revert OnlyPositiveBalance()}
     }
 
     /** Internal. */
@@ -748,10 +1255,29 @@ abstract contract ProposalV1 is Ownable {
         emit TimelockTimerInitialized(timelockStartTimestamp(), timelockEndTimestamp(), timelockDuration());
     }
 
+    /**
+    * @dev Internal function to capture a snapshot of the current state.
+    * 
+    * This function captures the current state by setting the snapshot index and timestamp based on the voting ERC20 token.
+    * Emits a `Snapshotted` event with details of the snapshot.
+    */
     function _snapshot() internal {
         _setSnapshotIndex(IDream(votingERC20()).snapshot());
-        _setSnapshotTimestamp(block.timestamp);
-        emit Snapshot(votingERC20(), snapshotIndex(), snapshotTimestamp());
+        _setSnapshotTimestamp(uint64(block.timestamp));
+        emit Snapshotted(votingERC20(), snapshotIndex(), snapshotTimestamp());
+    }
+
+    /**
+    * @dev Internal virtual function to execute actions after the proposal has passed and the timelock is over.
+    * 
+    * This function is meant for any actions that need to be performed once the proposal has successfully passed
+    * the Timelock phase. Override this function in derived contracts to implement specific post-proposal execution logic.
+    */
+    function _execute() internal virtual {
+        /**
+        * @dev Any thing that happens after proposal has passed and
+        *      timelock is over.
+         */
     }
 
     /** Internal Setters. */
@@ -1112,6 +1638,6 @@ abstract contract ProposalV1 is Ownable {
     */
     function _setSnapshotTimestamp(uint64 timestamp) internal {
         _proposal.snapshot.timestamp = timestamp;
-        emit SnapshotTimestampSetTo(uint64 indexed timestamp);
+        emit SnapshotTimestampSetTo(timestamp);
     }
 }
