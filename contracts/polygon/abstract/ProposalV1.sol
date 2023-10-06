@@ -1114,6 +1114,4 @@ abstract contract ProposalV1 is Ownable {
         _proposal.snapshot.timestamp = timestamp;
         emit SnapshotTimestampSetTo(uint64 indexed timestamp);
     }
-
-
 }
