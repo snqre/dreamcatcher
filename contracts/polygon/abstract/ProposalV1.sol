@@ -294,6 +294,12 @@ abstract contract ProposalV1 is Ownable {
 
     event PhaseSetTo(Phase indexed phase);
 
+    event Supported(uint256 indexed oldSupport, uint256 indexed newSupport);
+
+    event Rejected(uint256 indexed oldAgainst, uint256 indexed newAgainst);
+
+    event Abstained(uint256 indexed oldAbstain, uint256 indexed newAbstain);
+
     error DuplicateSigner(address account);
 
     error DuplicateSignature(address account);
@@ -930,21 +936,84 @@ abstract contract ProposalV1 is Ownable {
         emit PhaseSetTo(phase());
     }
 
+    /**
+    * @dev Adds a new signer to the multi-signature process.
+    * @param account The address of the signer to be added.
+    * 
+    * This internal function checks if the signer is already part of the multi-signature process.
+    * If the signer is not already a signer, it adds the signer and emits an event to signal the addition.
+    * If the signer is already a signer, it reverts with an error indicating a duplicate signer.
+    */
     function _addSigner(address account) internal {
         if (isSigner(account)) { revert DuplicateSigner(account); }
         _proposal.mSig.signers.add(account);
         emit SignerAdded(account);
     }
 
+    /**
+    * @dev Adds a new signature to the multi-signature process.
+    * @param account The address of the signer providing the signature.
+    * 
+    * This internal function checks if the signer has already provided a signature.
+    * If the signer has not already signed, it adds the signature and emits an event to signal the signing.
+    * If the signer has already signed, it reverts with an error indicating a duplicate signature.
+    */
     function _addSignature(address account) internal {
         if (hasSigned(account)) { revert DuplicateSignature(account); }
         _proposal.mSig.signatures.add(account);
         emit Signed(account);
     }
 
+    /**
+    * @dev Adds a new voter to the proposal signature process.
+    * @param account The address of the voter to be added.
+    * 
+    * This internal function checks if the voter has already voted.
+    * If the voter has not already voted, it adds the voter and emits an event to signal the voting.
+    * If the voter has already voted, it reverts with an error indicating a duplicate voter.
+    */
     function _addVoter(address account) internal {
         if (hasVoted(account)) { revert DuplicateVoter(account); }
         _proposal.pSig.voters.add(account);
         emit Voted(account);
+    }
+
+    /**
+    * @dev Adds support to the proposal.
+    * @param value The amount of support to be added.
+    * 
+    * This internal function increases the support for the proposal by the specified value
+    * and emits an event to signal the change in support.
+    */
+    function _addSupport(uint256 value) internal {
+        uint256 oldSupport = _proposal.pSig.support;
+        _proposal.pSig.support += value;
+        emit Supported(oldSupport, oldSupport + value);
+    }
+
+    /**
+    * @dev Adds opposition against the proposal.
+    * @param value The amount of opposition to be added.
+    * 
+    * This internal function increases the opposition against the proposal by the specified value
+    * and emits an event to signal the change in opposition.
+    */
+    function _addAgainst(uint256 value) internal {
+        uint256 oldAgainst = _proposal.pSig.against;
+        _proposal.pSig.against += value;
+        emit Rejected(oldAgainst, oldAgainst + value);
+    }
+
+    /**
+    * @dev Adds abstention to the proposal.
+    * @param value The amount of abstention to be added.
+    * 
+    * This internal function increases the abstention for the proposal by the specified value
+    * and emits an event to signal the change in abstention.
+    */
+    function _addAbstain(uint256 value) internal {
+        uint256 oldAbstain = _proposal.pSig.abstain;
+        _proposal.pSig.abstain += value;
+        emit Abstained(oldAbstain, oldAbstain + value);
     }
 }
