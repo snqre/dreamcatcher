@@ -562,6 +562,14 @@ abstract contract ProposalV1 is Ownable {
     event Snapshotted(address indexed votingERC20, uint256 indexed index, uint64 indexed timestamp);
 
     /**
+    * @dev Emitted when the proposal has successfully passed the Timelock phase and execution occurs.
+    * 
+    * This event indicates that the proposal has completed all necessary phases, including passing
+    * both the Private Signature (MSig) and Public Signature (PSig) phases, and any required timelock period.
+    */
+    event Executed();
+
+    /**
     * @dev Error indicating an attempt to add a duplicate signer.
     * @param account The address of the signer that already exists.
     * 
@@ -630,7 +638,7 @@ abstract contract ProposalV1 is Ownable {
     * 
     * This error is raised when an account attempts an action or access that is not permitted.
     */
-    error Unauthorized(address indexed account);
+    error Unauthorized(address account);
 
     /**
     * @dev Error indicating that the action is only allowed during the Public Signature (PSig) phase.
@@ -1116,8 +1124,8 @@ abstract contract ProposalV1 is Ownable {
     * The voter's address is added to the list of voters, and the vote is categorized based on the specified side (Support, Against, Abstain).
     */
     function vote(Side side) public onlyPositiveBalance() onlyWhenPSig() {
-        uint256 balanceOf = IDREAM(votingERC20()).balanceOfAt(msg.sender, snapshotIndex());
-        if (side == Side.SUPPORT) { _addSupport(balanceOf) }
+        uint256 balanceOf = IDream(votingERC20()).balanceOfAt(msg.sender, snapshotIndex());
+        if (side == Side.SUPPORT) { _addSupport(balanceOf); }
         else if (side == Side.AGAINST) { _addAgainst(balanceOf); }
         else if (side == Side.ABSTAIN) { _addAbstain(balanceOf); }
         else { revert InvalidSide(side); }
@@ -1187,7 +1195,7 @@ abstract contract ProposalV1 is Ownable {
     * This function checks if the provided value is within the specified range (inclusive).
     * If the value is outside the range, it reverts with an `OutOfBounds` error containing details of the range and the actual value.
     */
-    function _onlyBetween(uint256 min, uint256 max, uint256 value) internal view {
+    function _onlyBetween(uint256 min, uint256 max, uint256 value) internal pure {
         if (value < min || value > max) { revert OutOfBounds(min, max, value); }
     }
 
@@ -1198,7 +1206,7 @@ abstract contract ProposalV1 is Ownable {
     * If the sender is not a signer, it reverts with an `Unauthorized` error.
     */
     function _onlySigner() internal view {
-        if (!isSigner(msg.sender)) { revert Unauthorized(); }
+        if (!isSigner(msg.sender)) { revert Unauthorized(msg.sender); }
     }
 
     /**
@@ -1211,7 +1219,7 @@ abstract contract ProposalV1 is Ownable {
     function _onlyPositiveBalance() internal view {
         uint256 balanceOf =
         IDream(votingERC20()).balanceOfAt(msg.sender, snapshotIndex());
-        if (balanceOf < 1) { revert OnlyPositiveBalance()}
+        if (balanceOf < 1) { revert OnlyPositiveBalance(msg.sender, balanceOf); }
     }
 
     /** Internal. */
@@ -1278,6 +1286,7 @@ abstract contract ProposalV1 is Ownable {
         * @dev Any thing that happens after proposal has passed and
         *      timelock is over.
          */
+        emit Executed();
     }
 
     /** Internal Setters. */
