@@ -182,18 +182,18 @@ abstract contract StateV1 {
     using EnumerableSet for EnumerableSet.UintSet;
 
     /**
-    * @dev String Mapping
-    * @dev Represents a mapping where the keys are of type bytes32 and the values are of type string.
-    * @dev Internal visibility to restrict access to the mapping within the current contract.
-    */
-    mapping(bytes32 => string) internal _string;
-
-    /**
     * @dev Bytes Mapping
     * @dev Represents a mapping where the keys are of type bytes32 and the values are of type bytes.
     * @dev Internal visibility to restrict access to the mapping within the current contract.
     */
     mapping(bytes32 => bytes) internal _bytes;
+
+    /**
+    * @dev String Mapping
+    * @dev Represents a mapping where the keys are of type bytes32 and the values are of type string.
+    * @dev Internal visibility to restrict access to the mapping within the current contract.
+    */
+    mapping(bytes32 => string) internal _string;
 
     /**
     * @dev Uint256 Mapping

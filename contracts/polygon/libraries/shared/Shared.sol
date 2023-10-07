@@ -20,6 +20,19 @@ using EnumerableSet for EnumerableSet.AddressSet;
 error ImplementationAddressIsZero();
 
 /**
+ * @dev Error indicating that a certain operation cannot be performed on an empty index.
+ * @dev This error is typically thrown when attempting an operation that requires a non-empty index, but the index is empty.
+ */
+error HasNoEmptyIndex();
+
+/**
+ * @dev Error indicating that a value is expected to be non-zero, but it is found to be zero.
+ * @dev This error is typically used to signal that a certain value, such as an amount or an index, should be non-zero,
+ * but it is found to be zero during a function execution.
+ */
+error ValueIsZero();
+
+/**
  * @dev ProposalV1 Struct
  * @dev Represents a proposal with various parameters and configurations for voting and signature collection.
  * @param caption A string providing a brief description or title for the proposal.
@@ -80,6 +93,9 @@ struct ProposalV1 {
     uint256 requiredThreshold;
     uint256 snapshotIndex;
     uint256 snapshotTimestamp;
+    address target;
+    string signature;
+    bytes args;
     ProposalPhaseV1 phase;
 }
 
@@ -109,4 +125,28 @@ enum ProposalVoteForV1 {
     SUPPORT,
     AGAINST,
     ABSTAIN
+}
+
+/**
+ * @dev Struct representing metadata information for a liquidity pair.
+ * @param pair The address of the liquidity pair contract.
+ * @param tokenA The address of the first token in the pair.
+ * @param tokenB The address of the second token in the pair.
+ * @param nameA The name of the first token.
+ * @param nameB The name of the second token.
+ * @param symbolA The symbol of the first token.
+ * @param symbolB The symbol of the second token.
+ * @param decimalsA The decimal precision of the first token.
+ * @param decimalsB The decimal precision of the second token.
+ */
+struct PairMetadataV1 {
+    address pair;
+    address tokenA;
+    address tokenB;
+    string nameA;
+    string nameB;
+    string symbolA;
+    string symbolB;
+    uint8 decimalsA;
+    uint8 decimalsB;
 }
