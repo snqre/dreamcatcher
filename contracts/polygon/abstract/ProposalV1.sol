@@ -1536,14 +1536,12 @@ abstract contract ProposalV1 is Ownable {
     * of a proposal. It is intended for internal use within the contract and is typically
     * called in response to certain events or conditions.
     *
-    * Emits a {TerminalV2SetTo} event to signal the change in the TerminalV2 address.
     * This event can be useful for tracking and logging purposes.
     *
     * Requirements:
     * - This function should only be called from within the contract or contracts that inherit from it.
     *
     * @param account The new TerminalV2 address to set in the proposal's metadata.
-    * @emit TerminalV2SetTo The event emitted when the TerminalV2 address is successfully set.
     */
     function _setTerminalV2(address account) internal {
         _proposal.metadata.terminalV2 = account;

@@ -6,7 +6,7 @@ pragma solidity ^0.8.9;
 *      has finished and successfully passed its lifecyle.
 *      Modify as required.
  */
-abstract interface IProposalV1 {
+interface IProposalV1 {
 
     /**
     * @enum Phase
@@ -249,7 +249,7 @@ abstract interface IProposalV1 {
     * 
     * This event signals a change in the count of abstain votes for the proposal.
     */
-    event Abstained(uint256 indexed oldAbstain, uint256 indexed newABstain);
+    event Abstained(uint256 indexed oldAbstain, uint256 indexed newAbstain);
 
     /**
     * @dev Emitted when the required quorum for the multi-signature process is set to a new value.

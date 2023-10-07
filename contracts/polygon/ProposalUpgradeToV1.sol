@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.9;
 import "contracts/polygon/abstract/ProposalV1.sol";
-import "contracts/polygon/interfaces/ITerminalV1.sol";
+import "contracts/polygon/interfaces/ITerminalV2.sol";
 
 contract ProposalUpgradeToV1 is ProposalV1 {
     
@@ -21,15 +21,6 @@ contract ProposalUpgradeToV1 is ProposalV1 {
     * It is marked as private to encapsulate the upgrade-related functionality and is not directly accessible externally.
     */
     address private _proposedImplementation;
-
-    /**
-    * @dev Private variable storing the Ethereum address of the TerminalV2 contract.
-    * 
-    * This variable holds the Ethereum address of the TerminalV2 contract, which may be used for various functionalities
-    * or interactions within this contract. It is marked as private to encapsulate internal functionality and is not directly
-    * accessible externally.
-    */
-    address private _terminalV2;
     
     /**
     * @dev Emitted when the Ethereum address of the proxy contract associated with this proposal is set or updated.
@@ -44,13 +35,6 @@ contract ProposalUpgradeToV1 is ProposalV1 {
     * @param account The Ethereum address set as the new proposed implementation contract.
     */
     event ProposedImplementation(address indexed account);
-
-    /**
-    * @dev Emitted when the Ethereum address of the TerminalV2 contract associated with this proposal is set or updated.
-    * 
-    * @param account The Ethereum address set as the new TerminalV2 contract.
-    */
-    event TerminalV2(address indexed account);
 
     /**
     * @dev Constructor for initializing a new instance of the contract.
@@ -98,7 +82,6 @@ contract ProposalUpgradeToV1 is ProposalV1 {
     ) Ownable(msg.sender) {
         _setProxyAddress(proxyAddress);
         _setProposedImplementation(proposedImplementation);
-        _setTerminalV2(0xd59431E364531e9f627c4B8065Ed13b62326810b);
     }
 
     /**
@@ -120,15 +103,6 @@ contract ProposalUpgradeToV1 is ProposalV1 {
     }
 
     /**
-    * @dev Retrieves the Ethereum address of the TerminalV2 contract associated with this proposal.
-    * 
-    * @return The Ethereum address of the TerminalV2 contract.
-    */
-    function terminalV2() public view returns (address) {
-        return _terminalV2;
-    }
-
-    /**
     * @dev Internal function to execute the proposal after it has passed and the timelock is over.
     * 
     * Calls the `upgradeTo` function on TerminalV2 to upgrade the proxy contract to the proposed implementation.
@@ -139,7 +113,7 @@ contract ProposalUpgradeToV1 is ProposalV1 {
     * NOTE The upgrade does not directly upgrade the Terminal. Only proxies the Terminal controls.
     */
     function _execute() internal override {
-        ITerminalV2(_terminalV2).upgradeTo(proxyAddress(), proposedImplementation());
+        ITerminalV2(terminalV2()).upgradeTo(proxyAddress(), proposedImplementation());
         super._execute();
     }
 
