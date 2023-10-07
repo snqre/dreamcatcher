@@ -2,6 +2,7 @@
 pragma solidity ^0.8.9;
 import "contracts/polygon/abstract/ProposalV1.sol";
 import "contracts/polygon/interfaces/ITerminalV2.sol";
+import "contracts/polygon/libraries/__Shared.sol";
 
 contract ProposalUpgradeToV1 is ProposalV1 {
     
@@ -55,33 +56,20 @@ contract ProposalUpgradeToV1 is ProposalV1 {
     * @param proxyAddress The address of the proxy contract associated with this proposal.
     * @param proposedImplementation The address of the proposed implementation contract for upgrades.
     */
-    constructor(
-        string memory caption,
-        string memory message,
-        address creator,
-        uint64 mSigDuration,
-        uint64 pSigDuration,
-        uint64 timelockDuration,
-        address[] memory signers,
-        uint256 mSigRequiredQuorum,
-        uint256 pSigRequiredQuorum,
-        uint256 threshold,
-        address proxyAddress,
-        address proposedImplementation
-    ) ProposalV1(
-        caption,
-        message,
-        creator,
-        mSigDuration,
-        pSigDuration,
-        timelockDuration,
-        signers,
-        mSigRequiredQuorum,
-        pSigRequiredQuorum,
-        threshold
+    constructor(ProposalUpgradeToV1Args args) ProposalV1(
+        args.caption,
+        args.message,
+        args.creator,
+        args.mSigDuration,
+        args.pSigDuration,
+        args.timelockDuration,
+        args.signers,
+        args.mSigRequiredQuorum,
+        args.pSigRequiredQuorum,
+        args.threshold
     ) Ownable(msg.sender) {
-        _setProxyAddress(proxyAddress);
-        _setProposedImplementation(proposedImplementation);
+        _setProxyAddress(args.proxyAddress);
+        _setProposedImplementation(args.proposedImplementation);
     }
 
     /**
