@@ -2,7 +2,6 @@
 pragma solidity 0.8.19;
 import "contracts/polygon/external/openzeppelin/proxy/Proxy.sol";
 import "contracts/polygon/abstract/storage/state/StateV1.sol";
-import "contracts/polygon/libraries/shared/Shared.sol";
 
 /**
  * @title Proxy State V1
@@ -22,6 +21,16 @@ abstract contract ProxyStateV1 is StateV1, Proxy {
     * @param implementation The address of the newly upgraded implementation contract.
     */
     event Upgraded(address indexed implementation);
+
+    /**
+    * @dev Implementation Address Is Zero Error
+    * @dev Custom error indicating that the implementation address is set to zero during contract execution.
+    *
+    * This error is typically used in the context of proxy contracts to signal that the implementation address
+    * is not set before attempting to delegate to the implementation contract. It helps developers identify and
+    * handle scenarios where the implementation address is unexpectedly zero.
+    */
+    error ImplementationAddressIsZero();
 
     /**
     * @dev Fallback Function
@@ -96,6 +105,14 @@ abstract contract ProxyStateV1 is StateV1, Proxy {
     }
 
     /**
+    * @dev Internal virtual function to perform the initial upgrade of the contract to the provided implementation.
+    * @param implementation The address of the new implementation contract.
+    */
+    function _initialize(address implementation) internal virtual {
+        _upgrade(implementation);
+    }
+
+    /**
     * @dev Upgrade Function
     * @dev Updates the implementation address and emits an Upgraded event.
     * @dev Internal function that can be overridden by inheriting contracts.
@@ -106,7 +123,7 @@ abstract contract ProxyStateV1 is StateV1, Proxy {
     *
     * @param implementation The new address of the upgraded implementation contract.
     */
-    function _upgrade(address implementation) internal virtual {
+    function _upgrade(address implementation) internal  virtual {
         _address[implementationKey()] = implementation;
         emit Upgraded(implementation);
     }

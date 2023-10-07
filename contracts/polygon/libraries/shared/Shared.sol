@@ -33,6 +33,34 @@ error HasNoEmptyIndex();
 error ValueIsZero();
 
 /**
+ * @dev Error indicating that the caller is not in the role of an administrator.
+ * @dev This error is typically used to enforce access control, signaling that a certain function or operation
+ * can only be performed by an administrator role, and the caller does not have the required privileges.
+ */
+error IsNotRoleAdmin();
+
+/**
+ * @dev Error indicating that an account already has a specific role.
+ * @dev This error is typically used in role-based access control scenarios, signaling that an attempt to grant
+ * a role to an account has failed because the account already possesses the specified role.
+ */
+error AlreadyHasRole();
+
+/**
+ * @dev Error indicating that the specified account is already the admin for the role.
+ */
+error AlreadyRoleAdmin();
+
+/**
+ * @dev Error indicating that an account does not have a specific role.
+ * @dev This error is typically used in role-based access control scenarios, signaling that an attempt to revoke
+ * or check a role for an account has failed because the account does not possess the specified role.
+ */
+error DoesNotHaveRole();
+
+error Unauthorized(address account, bytes32 roleRequired);
+
+/**
  * @dev ProposalV1 Struct
  * @dev Represents a proposal with various parameters and configurations for voting and signature collection.
  * @param caption A string providing a brief description or title for the proposal.

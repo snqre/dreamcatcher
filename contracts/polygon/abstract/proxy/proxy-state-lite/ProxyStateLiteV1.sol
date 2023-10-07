@@ -2,7 +2,6 @@
 pragma solidity 0.8.19;
 import "contracts/polygon/external/openzeppelin/proxy/Proxy.sol";
 import "contracts/polygon/abstract/storage/state-lite/StateLiteV1.sol";
-import "contracts/polygon/libraries/shared/Shared.sol";
 
 /**
  * @title ProxyStateLiteV1
@@ -21,6 +20,16 @@ abstract contract ProxyStateLiteV1 is StateLiteV1, Proxy {
     * @param implementation The address of the newly upgraded implementation contract.
     */
     event Upgraded(address indexed implementation);
+
+    /**
+    * @dev Implementation Address Is Zero Error
+    * @dev Custom error indicating that the implementation address is set to zero during contract execution.
+    *
+    * This error is typically used in the context of proxy contracts to signal that the implementation address
+    * is not set before attempting to delegate to the implementation contract. It helps developers identify and
+    * handle scenarios where the implementation address is unexpectedly zero.
+    */
+    error ImplementationAddressIsZero();
 
     /**
     * @dev Fallback Function
@@ -92,6 +101,14 @@ abstract contract ProxyStateLiteV1 is StateLiteV1, Proxy {
     */
     function _implementation() internal view virtual override returns (address) {
         return abi.decode(_bytes[implementationKey()], (address));
+    }
+
+    /**
+    * @dev Internal virtual function to perform the initial upgrade of the contract to the provided implementation.
+    * @param implementation The address of the new implementation contract.
+    */
+    function _initialize(address implementation) internal virtual {
+        _upgrade(implementation);
     }
 
     /**
