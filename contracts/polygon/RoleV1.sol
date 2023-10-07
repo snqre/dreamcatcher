@@ -29,7 +29,6 @@ contract RoleV1 is ProxyStateOwnableContract {
 
     /**
     * @dev Emitted when ownership of the contract is transferred to a new account.
-    * @param account The address of the account to which ownership is transferred.
     * @param role The string representing the role associated with the new owner.
     * @dev The `indexed` keyword is used for efficient event filtering based on the specified account and role.
     */
@@ -41,7 +40,7 @@ contract RoleV1 is ProxyStateOwnableContract {
     * @param roleRequired The string representing the role that was required for the action.
     * @dev The `indexed` keyword is used for efficient error tracking based on the specified account and required role.
     */
-    error Unauthorized(address indexed account, string indexed roleRequired);
+    error Unauthorized(address account, string roleRequired);
 
     /**
     * @dev Error event indicating that a duplicate assignment of a role to an account was attempted.
@@ -49,7 +48,7 @@ contract RoleV1 is ProxyStateOwnableContract {
     * @param role The string representing the role that was attempted to be assigned.
     * @dev The `indexed` keyword is used for efficient error tracking based on the specified account and role.
     */
-    error DuplicateAssignment(address indexed account, string indexed role);
+    error DuplicateAssignment(address account, string role);
 
     /**
     * @dev Error event indicating that a duplicate unassignment of a role from an account was attempted.
@@ -57,7 +56,7 @@ contract RoleV1 is ProxyStateOwnableContract {
     * @param role The string representing the role that was attempted to be unassigned.
     * @dev The `indexed` keyword is used for efficient error tracking based on the specified account and role.
     */
-    error DuplicateUnassignment(address indexed account, string indexed role);
+    error DuplicateUnassignment(address account, string role);
 
     /**
     * @dev Error event indicating that an update or modification was attempted, but the action has already been performed.
@@ -100,7 +99,7 @@ contract RoleV1 is ProxyStateOwnableContract {
     * @dev Throws an `Unauthorized` error if the account does not have the specified role.
     */
     function requireRole(address account, string memory role) public view {
-        if (!isRole(account)) { revert Unauthorized(account, role); }
+        if (!isRole(account, role)) { revert Unauthorized(account, role); }
     }
 
     /**
@@ -141,25 +140,6 @@ contract RoleV1 is ProxyStateOwnableContract {
     function revoke(address account, string memory role) public {
         requireRole(msg.sender, "REVOKER_ROLE");
         _revoke(account, role);
-    }
-
-    /**
-    * @dev Public function to transfer ownership by revoking and granting a specified role.
-    * @param to The address to which ownership is transferred.
-    * @param role The string representing the role associated with ownership.
-    * @dev Revokes the sender's ownership role and grants the ownership role to the specified address.
-    * @dev Emits an `OwnershipTransferred` event upon successful ownership transfer.
-    * @dev Throws a `DuplicateUnassignment` error if the sender's ownership role is not assigned.
-    * @dev Throws a `DuplicateAssignment` error if the ownership role is already assigned to the specified address.
-    */
-    function transferRole(address to, string memory role) public {
-        /**
-        * FOR DEMO
-         */
-        revert();
-        _revoke(msg.sender, role);
-        _grant(to, role);
-        emit OwnershipTransferred(msg.sender, to, role);
     }
 
     /**

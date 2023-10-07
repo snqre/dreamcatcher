@@ -34,7 +34,7 @@ interface IRole is IProxyStateOwnable {
     * @param roleRequired The string representing the role that was required for the action.
     * @dev The `indexed` keyword is used for efficient error tracking based on the specified account and required role.
     */
-    error Unauthorized(address indexed account, string indexed roleRequired);
+    error Unauthorized(address account, string roleRequired);
 
     /**
     * @dev Error event indicating that a duplicate assignment of a role to an account was attempted.
@@ -42,7 +42,7 @@ interface IRole is IProxyStateOwnable {
     * @param role The string representing the role that was attempted to be assigned.
     * @dev The `indexed` keyword is used for efficient error tracking based on the specified account and role.
     */
-    error DuplicateAssignment(address indexed account, string indexed role);
+    error DuplicateAssignment(address account, string role);
 
     /**
     * @dev Error event indicating that a duplicate unassignment of a role from an account was attempted.
@@ -50,7 +50,7 @@ interface IRole is IProxyStateOwnable {
     * @param role The string representing the role that was attempted to be unassigned.
     * @dev The `indexed` keyword is used for efficient error tracking based on the specified account and role.
     */
-    error DuplicateUnassignment(address indexed account, string indexed role);
+    error DuplicateUnassignment(address account, string role);
 
     /**
     * @dev Error event indicating that an update or modification was attempted, but the action has already been performed.
@@ -116,17 +116,6 @@ interface IRole is IProxyStateOwnable {
     * @dev Throws a `Unauthorized` error if the sender lacks the necessary role for the action.
     */
     function revoke(address account, string memory role) external;
-
-    /**
-    * @dev Public function to transfer ownership by revoking and granting a specified role.
-    * @param to The address to which ownership is transferred.
-    * @param role The string representing the role associated with ownership.
-    * @dev Revokes the sender's ownership role and grants the ownership role to the specified address.
-    * @dev Emits an `OwnershipTransferred` event upon successful ownership transfer.
-    * @dev Throws a `DuplicateUnassignment` error if the sender's ownership role is not assigned.
-    * @dev Throws a `DuplicateAssignment` error if the ownership role is already assigned to the specified address.
-    */
-    function transferRole(address to, string memory role) external;
 
     /**
     * @dev Public function to renounce a specified role, effectively relinquishing ownership.
