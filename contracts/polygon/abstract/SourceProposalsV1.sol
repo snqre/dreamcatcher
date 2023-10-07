@@ -4,6 +4,8 @@ import "contracts/polygon/external/openzeppelin/utils/structs/EnumerableSet.sol"
 import "contracts/polygon/libraries/__Shared.sol";
 import "contracts/polygon/ProxyStateOwnableContract.sol";
 
-contract AuthenticatorV1 {
-    function wipe();
+abstract contract SourceProposalsV1 is ProxyStateOwnableContract {
+    using EnumerableSet for EnumerableSet.AddressSet;
+
+    
 }

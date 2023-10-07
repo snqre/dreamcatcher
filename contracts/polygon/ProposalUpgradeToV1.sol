@@ -35,28 +35,26 @@ contract ProposalUpgradeToV1 is ProposalV1 {
     * 
     * @param account The Ethereum address set as the new proposed implementation contract.
     */
-    event ProposedImplementation(address indexed account);
+    event ProposedImplementationSetTo(address indexed account);
 
     /**
-    * @dev Constructor for initializing a new instance of the contract.
-    * 
-    * Initializes the ProposalV2 contract with the provided parameters and sets additional attributes,
-    * such as the proxy address, proposed implementation, and the TerminalV2 contract address.
-    * 
-    * @param caption The caption for the proposal metadata.
-    * @param message The message for the proposal metadata.
-    * @param creator The address of the creator of the proposal.
-    * @param mSigDuration The duration of the Multi-Signature (MSig) phase.
-    * @param pSigDuration The duration of the Public Signature (PSig) phase.
-    * @param timelockDuration The duration of the Timelock phase.
-    * @param signers An array of addresses representing signers for the proposal.
-    * @param mSigRequiredQuorum The required quorum percentage for the MSig phase.
-    * @param pSigRequiredQuorum The required quorum percentage for the PSig phase.
-    * @param threshold The threshold for passing the proposal.
-    * @param proxyAddress The address of the proxy contract associated with this proposal.
-    * @param proposedImplementation The address of the proposed implementation contract for upgrades.
+    * @dev Initializes a new ProposalV1 contract with the specified parameters.
+    * @param args The ProposalUpgradeToV1Args struct containing the necessary parameters:
+    *   - caption: A brief description or title for the proposal.
+    *   - message: The detailed content or purpose of the proposal.
+    *   - creator: The address of the creator/initiator of the proposal.
+    *   - mSigDuration: Duration (in seconds) for the Meta Signature (mSig) phase of the proposal.
+    *   - pSigDuration: Duration (in seconds) for the Proxy Signature (pSig) phase of the proposal.
+    *   - timelockDuration: Duration (in seconds) for the overall timelock period of the proposal.
+    *   - signers: An array of addresses representing the signers involved in the proposal.
+    *   - mSigRequiredQuorum: The minimum Meta Signature quorum required for approval.
+    *   - pSigRequiredQuorum: The minimum Proxy Signature quorum required for approval.
+    *   - threshold: The overall approval threshold for the proposal.
+    * @dev Inherits from ProposalV1 and Ownable contracts.
+    * @dev Sets the initial proxy address and proposed implementation for the proposal.
     */
-    constructor(ProposalUpgradeToV1Args args) ProposalV1(
+    constructor(ProposalUpgradeToV1Args memory args) 
+    ProposalV1(
         args.caption,
         args.message,
         args.creator,
@@ -67,7 +65,7 @@ contract ProposalUpgradeToV1 is ProposalV1 {
         args.mSigRequiredQuorum,
         args.pSigRequiredQuorum,
         args.threshold
-    ) Ownable(msg.sender) {
+    ) Ownable(terminalV2()) {
         _setProxyAddress(args.proxyAddress);
         _setProposedImplementation(args.proposedImplementation);
     }
@@ -91,14 +89,10 @@ contract ProposalUpgradeToV1 is ProposalV1 {
     }
 
     /**
-    * @dev Internal function to execute the proposal after it has passed and the timelock is over.
-    * 
-    * Calls the `upgradeTo` function on TerminalV2 to upgrade the proxy contract to the proposed implementation.
-    * Additionally, it invokes the superclass's `_execute` function to handle any additional execution logic.
-    * 
-    * @override Must be implemented by subclasses to define the specific actions to be taken upon execution.
-    *
-    * NOTE The upgrade does not directly upgrade the Terminal. Only proxies the Terminal controls.
+    * @dev Internal function to execute the proposal, upgrading the TerminalV2 to the proposed implementation.
+    * @dev It calls the `upgradeTo` function on the TerminalV2 contract with the specified proxy address and proposed implementation.
+    * @dev Overrides the base implementation in the ProposalV1 contract.
+    * @dev Calls the parent _execute function to handle additional execution steps.
     */
     function _execute() internal override {
         ITerminalV2(terminalV2()).upgradeTo(proxyAddress(), proposedImplementation());
@@ -112,6 +106,7 @@ contract ProposalUpgradeToV1 is ProposalV1 {
     */
     function _setProxyAddress(address account) internal {
         _proxyAddress = account;
+        emit ProxyAddressSetTo(account);
     }
 
     /**
@@ -121,14 +116,6 @@ contract ProposalUpgradeToV1 is ProposalV1 {
     */
     function _setProposedImplementation(address account) internal {
         _proposedImplementation = account;
-    }
-
-    /**
-    * @dev Internal function to set the Ethereum address of the TerminalV2 contract associated with this proposal.
-    * 
-    * @param account The Ethereum address to set as the new TerminalV2 contract.
-    */
-    function _setTerminalV2(address account) internal {
-        _terminalV2 = account;
+        emit ProposedImplementationSetTo(account);
     }
 }

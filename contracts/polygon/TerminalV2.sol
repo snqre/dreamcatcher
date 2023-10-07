@@ -289,6 +289,7 @@ contract TerminalV2 is ProxyStateOwnableContract {
             _deploy(oldDeployedProxies.at(i));
         }
         _bool[keccak256(abi.encode("updated"))] = true;
+        
         emit Reinitialized();
     }
     

@@ -1,15 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.9;
-import "contracts/polygon/external/openzeppelin/utils/structs/EnumerableSet.sol";
-import "contracts/polygon/ProxyStateOwnableContract.sol";
+import "contracts/polygon/interfaces/IProxyStateOwnable.sol";
 
-contract RoleV1 is ProxyStateOwnableContract {
-
-    /**
-    * @dev Importing and enabling the use of the EnumerableSet library for the AddressSet type.
-    * @dev Allows the AddressSet type to benefit from the functionalities provided by the EnumerableSet library.
-    */
-    using EnumerableSet for EnumerableSet.AddressSet;
+interface IRole is IProxyStateOwnable {
 
     /**
     * @dev Emitted when a role is granted to an account.
@@ -70,18 +63,14 @@ contract RoleV1 is ProxyStateOwnableContract {
     * @param role The string representing the role for which members' addresses are queried.
     * @return An array of addresses representing the members associated with the specified role.
     */
-    function members(string memory role) public view returns (address[] memory) {
-        return _addressSet[keccak256(abi.encode("members", role))].values();
-    }
+    function members(string memory role) external view returns (address[] memory);
 
     /**
     * @dev Public function to retrieve the number of members belonging to a specific role.
     * @param role The string representing the role for which the number of members is queried.
     * @return The total number of members associated with the specified role.
     */
-    function membersLength(string memory role) public view returns (uint256) {
-        return _addressSet[keccak256(abi.encode("members", role))].length();
-    }
+    function membersLength(string memory role) external view returns (uint256);
 
     /**
     * @dev Public function to check if an account belongs to a specific role.
@@ -89,9 +78,7 @@ contract RoleV1 is ProxyStateOwnableContract {
     * @param role The string representing the role for which membership is checked.
     * @return A boolean indicating whether the account is a member of the specified role.
     */
-    function isRole(address account, string memory role) public view returns (bool) {
-        return _addressSet[keccak256(abi.encode("members", role))].contains(account);
-    }
+    function isRole(address account, string memory role) external view returns (bool);
 
     /**
     * @dev Public function to require that an account belongs to a specific role.
@@ -99,9 +86,7 @@ contract RoleV1 is ProxyStateOwnableContract {
     * @param role The string representing the role that the account is required to have.
     * @dev Throws an `Unauthorized` error if the account does not have the specified role.
     */
-    function requireRole(address account, string memory role) public view {
-        if (!isRole(account)) { revert Unauthorized(account, role); }
-    }
+    function requireRole(address account, string memory role) external view;
 
     /**
     * @dev Public function to perform an update, granting additional roles to the sender.
@@ -109,12 +94,7 @@ contract RoleV1 is ProxyStateOwnableContract {
     * @dev Grants the "GRANTER_ROLE" and "REVOKER_ROLE" roles to the sender.
     * @dev Throws an `AlreadyUpdated` error if the update has already been performed.
     */
-    function update() public {
-        if (_bool[keccak256(abi.encode("update", "V1"))]) { revert AlreadyUpdated(); }
-        _grant(msg.sender, "GRANTER_ROLE");
-        _grant(msg.sender, "REVOKER_ROLE");
-        _bool[keccak256(abi.encode("update", "V1"))] = true;
-    }
+    function update() external;
 
     /**
     * @dev Public function to grant a role to a specified account.
@@ -125,10 +105,7 @@ contract RoleV1 is ProxyStateOwnableContract {
     * @dev Throws a `Unauthorized` error if the sender lacks the necessary role for the action.
     * @dev Throws a `DuplicateAssignment` error if the role is already assigned to the specified account.
     */
-    function grant(address account, string memory role) public {
-        requireRole(msg.sender, "GRANTER_ROLE");
-        _grant(account, role);
-    }
+    function grant(address account, string memory role) external;
 
     /**
     * @dev Public function to revoke a role from a specified account.
@@ -138,10 +115,7 @@ contract RoleV1 is ProxyStateOwnableContract {
     * @dev Emits a `Revoked` event upon successful revocation of the role.
     * @dev Throws a `Unauthorized` error if the sender lacks the necessary role for the action.
     */
-    function revoke(address account, string memory role) public {
-        requireRole(msg.sender, "REVOKER_ROLE");
-        _revoke(account, role);
-    }
+    function revoke(address account, string memory role) external;
 
     /**
     * @dev Public function to transfer ownership by revoking and granting a specified role.
@@ -152,15 +126,7 @@ contract RoleV1 is ProxyStateOwnableContract {
     * @dev Throws a `DuplicateUnassignment` error if the sender's ownership role is not assigned.
     * @dev Throws a `DuplicateAssignment` error if the ownership role is already assigned to the specified address.
     */
-    function transferRole(address to, string memory role) public {
-        /**
-        * FOR DEMO
-         */
-        revert();
-        _revoke(msg.sender, role);
-        _grant(to, role);
-        emit OwnershipTransferred(msg.sender, to, role);
-    }
+    function transferRole(address to, string memory role) external;
 
     /**
     * @dev Public function to renounce a specified role, effectively relinquishing ownership.
@@ -169,34 +135,5 @@ contract RoleV1 is ProxyStateOwnableContract {
     * @dev Emits an `OwnershipTransferred` event upon successful ownership renouncement.
     * @dev Throws a `DuplicateUnassignment` error if the sender's ownership role is not assigned.
     */
-    function renounceRole(string memory role) public {
-        _revoke(msg.sender, role);
-        emit OwnershipTransferred(msg.sender, address(0), role);
-    }
-
-    /**
-    * @dev Internal function to grant a role to a specified account.
-    * @param account The address of the account to which the role is granted.
-    * @param role The string representing the role to be granted.
-    * @dev Throws a `DuplicateAssignment` error if the role is already assigned to the specified account.
-    * @dev Emits a `Granted` event upon successful granting of the role.
-    */
-    function _grant(address account, string memory role) internal {
-        if (isRole(account, role)) { revert DuplicateAssignment(account, role); }
-        _addressSet[keccak256(abi.encode("members", role))].add(account);
-        emit Granted(account, role);
-    }
-
-    /**
-    * @dev Internal function to revoke a role from a specified account.
-    * @param account The address of the account from which the role is revoked.
-    * @param role The string representing the role to be revoked.
-    * @dev Throws a `DuplicateUnassignment` error if the role is not assigned to the specified account.
-    * @dev Emits a `Revoked` event upon successful revocation of the role.
-    */
-    function _revoke(address account, string memory role) internal {
-        if (!isRole(account, role)) { revert DuplicateUnassignment(account, role); }
-        _addressSet[keccak256(abi.encode("members", role))].remove(account);
-        emit Revoked(account, role);
-    }
+    function renounceRole(string memory role) external;
 }

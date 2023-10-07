@@ -18,3 +18,19 @@ struct ProposalUpgradeToV1Args {
     address proxyAddress;
     address proposedImplementation;
 }
+
+struct ProposalCallV1Args {
+    string caption;
+    string message;
+    address creator;
+    uint64 mSigDuration;
+    uint64 pSigDuration;
+    uint64 timelockDuration;
+    address[] signers;
+    uint256 mSigRequiredQuorum;
+    uint256 pSigRequiredQuorum;
+    uint256 threshold;
+    address target;
+    string signature;
+    bytes args;
+}
