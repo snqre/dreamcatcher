@@ -22,6 +22,12 @@ abstract contract RoleStateV1 is StateV1 {
     using EnumerableSet for EnumerableSet.AddressSet;
 
     /**
+    * @dev Importing the EnumerableSet library for managing sets of bytes32 values.
+    * @dev EnumerableSet allows for efficient handling of unique bytes32 values in sets.
+    */
+    using EnumerableSet for EnumerableSet.Bytes32Set;
+
+    /**
     * @dev Emitted when the admin role of a role is changed.
     * @param role The role for which the admin role is changed.
     * @param previousAdminRole The previous admin role of the specified role.
@@ -74,6 +80,12 @@ abstract contract RoleStateV1 is StateV1 {
     error AlreadyRoleAdmin(bytes32 role, bytes32 roleAdmin);
 
     /**
+    * @dev Reverts with "IsNotRoleAdmin" error to indicate that the sender lacks the role admin privilege.
+    * @dev This error is typically used in role-related functions to ensure that only role admins can perform certain actions.
+    */
+    error IsNotRoleAdmin();
+
+    /**
     * @dev Public pure function to generate a unique key for the set of available roles.
     * @return bytes32 representing the unique key for the set of available roles.
     */
@@ -106,17 +118,27 @@ abstract contract RoleStateV1 is StateV1 {
     * @return bool indicating whether the account has the specified role.
     */
     function hasRole(bytes32 role, address account) public view  virtual returns (bool) {
-        return _addressSet[roleKey()].contains(account);
+        return _addressSet[roleKey(role)].contains(account);
     }
 
     /**
-    * @dev Public view function to retrieve the list of members for a specified role.
-    * @param role The role for which to retrieve the members.
-    * @return address[] memory representing the array of addresses that have the specified role.
-    * @dev This function returns the addresses that have the specified role in the order they were added.
+    * @dev Public view function to retrieve the member address at a specified index within a role.
+    * @param role The role for which to retrieve the member.
+    * @param id The index of the member in the role set.
+    * @return address representing the member address at the specified index within the specified role.
     */
-    function members(bytes32 role) public view virtual returns (address[] memory) {
-        return _addressSet[roleKey(role)].values();
+    function members(bytes32 role, uint256 id) public view virtual returns (address) {
+        return _addressSet[roleKey(role)].at(id);
+    }
+
+    /**
+    * @dev Public view function to retrieve the member address at a specified index within a role.
+    * @param role The role for which to retrieve the member.
+    * @param id The index of the member in the role set.
+    * @return address representing the member address at the specified index within the specified role.
+    */
+    function membersLength(bytes32 role) public view virtual returns (uint256) {
+        return _addressSet[roleKey(role)].length();
     }
 
     /**
@@ -124,7 +146,7 @@ abstract contract RoleStateV1 is StateV1 {
     * @return bytes32[] memory representing the array of roles.
     * @dev This function returns the roles in the order they were added.
     */
-    function roles() public view virtual returns (bytes32[] memory) {
+    function roles(uint256 id) public view virtual returns (bytes32[] memory) {
         return _bytes32Set[rolesKey()].values();
     }
 
@@ -135,7 +157,7 @@ abstract contract RoleStateV1 is StateV1 {
     * @dev If the account does not have the required role, it reverts with the "Unauthorized" error.
     */
     function requireRole(bytes32 role, address account) public view virtual {
-        if (!hasRole("DEFAULT_ADMIN_ROLE")) {
+        if (!hasRole("DEFAULT_ADMIN_ROLE", msg.sender)) {
             if (!hasRole(role, account)) {
                 revert Unauthorized(account, role);
             }
@@ -194,7 +216,7 @@ abstract contract RoleStateV1 is StateV1 {
     * @dev If the sender does not have the role admin privilege, it reverts with the IsNotRoleAdmin error.
     */
     function _onlyRoleAdmin(bytes32 role) internal view virtual {
-        if (!hasRole(roleKey("DEFAULT_ADMIN_ROLE"))) {
+        if (!hasRole(roleKey("DEFAULT_ADMIN_ROLE"), msg.sender)) {
             if (!hasRole(getRoleAdmin(role), msg.sender)) {
                 revert IsNotRoleAdmin();
             }
@@ -206,7 +228,7 @@ abstract contract RoleStateV1 is StateV1 {
     * @dev If the sender does not have the DEFAULT_ADMIN_ROLE, it reverts with the Unauthorized error.
     */
     function _onlyDefaultAdminRole() internal view virtual {
-        if (!hasRole(roleKey("DEFAULT_ADMIN_ROLE"))) {
+        if (!hasRole(roleKey("DEFAULT_ADMIN_ROLE"), msg.sender)) {
             revert Unauthorized(msg.sender, roleKey("DEFAULT_ADMIN_ROLE"));
         }
     }
@@ -242,7 +264,7 @@ abstract contract RoleStateV1 is StateV1 {
     * @dev It adds the account to the role set in storage and emits the `RoleGranted` event.
     */
     function _grantRole(bytes32 role, address account) internal virtual {
-        if (hasRole(role, account)) { revert AlreadyHasRole(); }
+        if (hasRole(role, account)) { revert AlreadyHasRole(account, role); }
         _addressSet[roleKey(role)].add(account);
         _addRole(role);
         emit RoleGranted(role, account, msg.sender);
@@ -256,7 +278,7 @@ abstract contract RoleStateV1 is StateV1 {
     * @dev It removes the account from the role set in storage and emits the `RoleRevoked` event.
     */
     function _revokeRole(bytes32 role, address account) internal virtual {
-        if (!hasRole(role, account)) { revert DoesNotHaveRoleYet(); }
+        if (!hasRole(role, account)) { revert DoesNotHaveRoleYet(account, role); }
         _addressSet[roleKey(role)].remove(account);
         _subRole(role);
         emit RoleRevoked(role, account, msg.sender);
@@ -268,7 +290,7 @@ abstract contract RoleStateV1 is StateV1 {
     * @dev This function checks if the role has at least one member and adds it to the roles set.
     */
     function _addRole(bytes32 role) internal virtual {
-        if (members(role) >= 1) {
+        if (membersLength(role) >= 1) {
             _bytes32Set[rolesKey()].add(role);
         }
     }
@@ -279,7 +301,7 @@ abstract contract RoleStateV1 is StateV1 {
     * @dev This function checks if the role has no members and removes it from the roles set.
     */
     function _subRole(bytes32 role) internal virtual {
-        if (members(role) == 0) {
+        if (membersLength(role) == 0) {
             _bytes32Set[rolesKey()].remove(role);
         }
     }
