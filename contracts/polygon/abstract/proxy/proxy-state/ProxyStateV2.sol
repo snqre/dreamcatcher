@@ -27,7 +27,7 @@ abstract contract ProxyStateV2 is ProxyStateV1 {
             return defaultImplementation();
         }
         else {
-            super._implementation();
+            return super._implementation();
         }
     }
 }
