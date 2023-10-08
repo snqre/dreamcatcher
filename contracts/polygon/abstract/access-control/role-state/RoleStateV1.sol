@@ -80,7 +80,6 @@ abstract contract RoleStateV1 is StateV1 {
 
     /**
     * @dev Reverts with "IsNotRoleAdmin" error if the sender lacks the required role admin privilege.
-    * @param role The role for which the admin privilege is being checked.
     * @dev If the sender does not have the DEFAULT_ADMIN_ROLE, it checks if the sender has the role admin privilege.
     * @dev If the sender does not have the role admin privilege, it reverts with the IsNotRoleAdmin error.
     */

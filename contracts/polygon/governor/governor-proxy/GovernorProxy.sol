@@ -11,6 +11,14 @@ import "contracts/polygon/abstract/access-control/role-state/RoleStateV1.sol";
 contract GovernorProxy is ProxyStateRouterV1, ProxyStateHistoryV1, RoleStateV1 {
 
     /**
+    * @dev Emitted when a contract function is called.
+    * @param target The address of the contract account.
+    * @param signature The function signature.
+    * @param args The function arguments.
+    */
+    event Called(address indexed target, string indexed signature, bytes indexed args);
+
+    /**
     * @dev Error indicating that the contract has already been initialized.
     */
     error AlreadyInitialized();
@@ -19,6 +27,16 @@ contract GovernorProxy is ProxyStateRouterV1, ProxyStateHistoryV1, RoleStateV1 {
     * @dev Error indicating that the contract has not been initialized yet.
     */
     error HasNotBeenInitializedYet();
+
+    /**
+    * @dev Error indicating that a low-level call to another contract has failed.
+    *
+    * Emits a {FailedCallTo} event with details about the failed call.
+    *
+    * Requirements:
+    * - The call to the external contract must not be successful.
+    */
+    error FailedCallTo(address target, string signature, bytes args);
 
     /**
     * @dev Public pure virtual function to generate a unique key for tracking initialization status.
@@ -42,8 +60,10 @@ contract GovernorProxy is ProxyStateRouterV1, ProxyStateHistoryV1, RoleStateV1 {
     * @dev Public function to initialize the contract.
     * @dev It can only be called once, ensuring that the contract has not been initialized before.
     */
-    function initialize() public virtual {
+    function initialize(address implementation) public virtual {
         _onlynotInitialized();
+        _initialize(implementation);
+
     }
 
     /**
@@ -55,6 +75,27 @@ contract GovernorProxy is ProxyStateRouterV1, ProxyStateHistoryV1, RoleStateV1 {
     function setRoute(address sender, address implementation) public virtual {
         requireRole(roleKey("ROUTER_ROLE"), msg.sender);
         _setRoute(sender, implementation);
+    }
+
+    /**
+    * @dev Public function to upgrade the contract to a new implementation.
+    * @param implementation The address of the new implementation to upgrade to.
+    * @dev It requires the sender to have the "UPGRADER_ROLE" and then upgrades using the internal function `_upgrade`.
+    */
+    function upgrade(address implementation) public virtual {
+        requireRole(roleKey(hash("UPGRADER_ROLE")), msg.sender);
+        _upgrade(implementation);
+    }
+
+    /**
+    * @dev Public function to call a function on a target contract.
+    * @param target The address of the target contract.
+    * @param signature The function signature.
+    * @param args The function arguments.
+    * @return bytes representing the result of the function call.
+    */
+    function call(address target, string memory signature, bytes memory args) public virtual returns (bytes memory) {
+        return _call(target, signature, args);
     }
 
     /**
@@ -72,7 +113,7 @@ contract GovernorProxy is ProxyStateRouterV1, ProxyStateHistoryV1, RoleStateV1 {
     * @param implementation The address of the implementation to set as the current implementation.
     * @dev This function overrides the parent implementation and ensures that the base contracts are also initialized.
     */
-    function _initialize(implementation) internal virtual override {
+    function _initialize(address implementation) internal virtual override(ProxyStateRouterV1, ProxyStateV1) {
         ProxyStateRouterV1._initialize(implementation);
         RoleStateV1._initialize();
         _bool[initializedKey()] = true;
@@ -84,7 +125,32 @@ contract GovernorProxy is ProxyStateRouterV1, ProxyStateHistoryV1, RoleStateV1 {
     * @dev This function overrides the parent implementation and ensures that the base contract is upgraded.
     * @dev After upgrading the base contract, it logs the upgrade in history using the `_logUpgrade` function.
     */
-    function _upgrade(address implementation) internal virtual override {
+    function _upgrade(address implementation) internal virtual override(ProxyStateHistoryV1, ProxyStateV1) {
         ProxyStateHistoryV1._upgrade(implementation);
     }
+
+    /**
+    * @dev Internal function to call a specific function on a contract.
+    * @param account The address of the contract to call.
+    * @param signature The function signature.
+    * @param args The function arguments.
+    * @return bytes representing the result of the function call.
+    * @dev It encodes the function signature and arguments, then calls the specified contract.
+    * @dev If the call is not successful, it reverts with the "FailedCallTo" error.
+    * @dev It emits a "Called" event after a successful call.
+    */
+    function _call(address target, string memory signature, bytes memory args) internal returns (bytes memory) {
+        bytes4 selector = bytes4(keccak256(bytes(signature)));
+        (bool success, bytes memory result) = target.call(abi.encodePacked(selector, args));
+        if (!success) { revert FailedCallTo(target, signature, args); }
+        emit Called(target, signature, args);
+        return result;
+    }
+
+    /**
+    * @dev Internal virtual function to handle the fallback function.
+    * @dev If the sender has a specific route set, it delegates the call to that implementation.
+    * @dev Otherwise, it calls the fallback function of the parent contract.
+    */
+    function _fallback() internal virtual override(ProxyStateRouterV1, ProxyStateV1) {}
 }
