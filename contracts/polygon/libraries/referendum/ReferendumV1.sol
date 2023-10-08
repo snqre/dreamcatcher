@@ -322,7 +322,7 @@ library ReferendumV1 {
         }
         self.voters.push(msg.sender);
         IDream token = IDream(votingERC20(self));
-        balance = token.balanceOfAt(msg.sender, snapshotId(self));
+        uint256 balance = token.balanceOfAt(msg.sender, snapshotId(self));
         if (side == 0) {
             self.abstain += balance;
         }
