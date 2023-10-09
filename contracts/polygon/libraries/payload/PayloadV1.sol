@@ -20,13 +20,13 @@ library PayloadV1 {
     * @dev A struct representing a payload with target, data, value, gas, and execution status information.
     */
     struct Payload {
-        address target;
-        bytes data;
-        uint256 value;
-        uint256 gas;
-        bool requireSuccess;
-        bool lastSuccess;
-        bytes lastResponse;
+        address _target;
+        bytes _dat;
+        bytes _lastResponse;
+        uint256 _value;
+        uint256 _gas;
+        bool _requireSuccess;
+        bool _lastSuccess;
     }
 
     /**
@@ -34,8 +34,8 @@ library PayloadV1 {
     * @param self The Payload struct.
     * @return address representing the target address of the payload.
     */
-    function target(Payload memory self) public view returns (address) {
-        return self.target;
+    function target(Payload memory self) public pure returns (address) {
+        return self._target;
     }
 
     /**
@@ -43,8 +43,8 @@ library PayloadV1 {
     * @param self The Payload struct.
     * @return bytes memory representing the data of the payload.
     */
-    function data(Payload memory self) public pure returns (bytes memory) {
-        return self.data;
+    function dat(Payload memory self) public pure returns (bytes memory) {
+        return self._dat;
     }
 
     /**
@@ -53,7 +53,7 @@ library PayloadV1 {
     * @return uint256 representing the value of the payload.
     */
     function value(Payload memory self) public pure returns (uint256) {
-        return self.value;
+        return self._value;
     }
 
     /**
@@ -62,7 +62,7 @@ library PayloadV1 {
     * @return uint256 representing the gas limit of the payload.
     */
     function gas(Payload memory self) public pure returns (uint256) {
-        return self.gas;
+        return self._gas;
     }
 
     /**
@@ -71,7 +71,7 @@ library PayloadV1 {
     * @return bool indicating whether success is required for the next execution.
     */
     function requireSuccess(Payload memory self) public pure returns (bool) {
-        return self.requireSuccess;
+        return self._requireSuccess;
     }
 
     /**
@@ -80,7 +80,7 @@ library PayloadV1 {
     * @return bool representing whether the last execution was successful.
     */
     function lastSuccess(Payload memory self) public pure returns (bool) {
-        return self.lastSuccess;
+        return self._lastSuccess;
     }
 
     /**
@@ -89,7 +89,7 @@ library PayloadV1 {
     * @return bytes memory representing the last response data of the payload.
     */
     function lastResponse(Payload memory self) public pure returns (bytes memory) {
-        return self.lastResponse;
+        return self._lastResponse;
     }
 
     /**
@@ -98,9 +98,6 @@ library PayloadV1 {
     * @return bytes4 representing the encoded signature of the payload.
     */
     function encodeSignature(Payload memory self, string memory signature) public pure returns (bytes4) {
-        /**
-        * data = abi.encodeWithSelector(functionSignature, , , , ...)
-         */
         return bytes4(keccak256(bytes(signature)));
     }
 
@@ -110,15 +107,9 @@ library PayloadV1 {
     * @param self The storage reference to the Payload struct.
     */
     function execute(Payload storage self) public {
-        (
-            bool success,
-            bytes memory response
-        )
-        = address(target(self)).call{gas: gas(self), value: value(self)}(data(self));
-        if (requireSuccess(self)) {
-            if (!success) {
-                revert FailedToExecute(target(self), data(self), gas(self), value(self));
-            }
+        (bool success, bytes memory response) = address(target(self)).call{gas: gas(self), value: value(self)}(dat(self));
+        if (requireSuccess(self) && !success) {
+            revert FailedToExecute(target(self), dat(self), gas(self), value(self));
         }
         _setLastSuccess(self, success);
         _setLastResponse(self, response);
@@ -130,16 +121,16 @@ library PayloadV1 {
     * @param target The new target address to set.
     */
     function setTarget(Payload storage self, address target) public {
-        self.target = target;
+        self._target = target;
     }
 
     /**
     * @dev Public function to set the data of the payload.
     * @param self The storage reference to the Payload struct.
-    * @param data The new data to set.
+    * @param dat The new data to set.
     */
-    function setData(Payload storage self, bytes memory data) public {
-        self.data = data;
+    function setDat(Payload storage self, bytes memory dat) public {
+        self._dat = dat;
     }
 
     /**
@@ -148,7 +139,7 @@ library PayloadV1 {
     * @param value The new value to set.
     */
     function setValue(Payload storage self, uint256 value) public {
-        self.value = value;
+        self._value = value;
     }
 
     /**
@@ -157,7 +148,7 @@ library PayloadV1 {
     * @param gas The new gas limit to set.
     */
     function setGas(Payload storage self, uint256 gas) public {
-        self.gas = gas;
+        self._gas = gas;
     }
 
     /**
@@ -166,7 +157,7 @@ library PayloadV1 {
     * @param requireSuccess Boolean indicating whether success is required.
     */
     function setRequireSuccess(Payload storage self, bool requireSuccess) public {
-        self.requireSuccess = requireSuccess;
+        self._requireSuccess = requireSuccess;
     }
 
     /**
@@ -174,8 +165,8 @@ library PayloadV1 {
     * @param self The storage reference to the Payload struct.
     * @param success The new success status to set.
     */
-    function _setLastSuccess(Payload storage self, bool success) internal {
-        self.lastSuccess = success;
+    function _setLastSuccess(Payload storage self, bool success) private {
+        self._lastSuccess = success;
     }
 
     /**
@@ -184,6 +175,8 @@ library PayloadV1 {
     * @param response The new response to set.
     */
     function _setLastResponse(Payload storage self, bytes memory response) internal {
-        self.lastResponse = response;
+        self._lastResponse = response;
     }
+
+
 }

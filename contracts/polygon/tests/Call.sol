@@ -21,8 +21,14 @@ contract Caller {
 
     PayloadV1.Payload private _payload;
 
-    function call(address target) external returns (bytes memory) {
-        _payload.setData(
+    address private _called;
+
+    constructor() {
+        _called = address(new Called());
+    }
+    
+    function call() external returns (uint256) {
+        _payload.setDat(
             abi.encode(
                 _payload.encodeSignature("helloWorld(uint256,uint256,uint256)"),
                 100,
@@ -30,11 +36,15 @@ contract Caller {
                 100
             )
         );
-        _payload.setTarget(target);
+        _payload.setTarget(called());
         _payload.setGas(3000000_000000000000000000);
         _payload.setRequireSuccess(true);
         _payload.setValue(20_000000000000000000);
         _payload.execute();
-        return _payload.target();
+        return abi.decode(_payload.lastResponse(), (uint256));
+    }
+
+    function called() public view returns (address) {
+        return _called;
     }
 }
