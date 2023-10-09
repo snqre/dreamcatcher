@@ -11,7 +11,6 @@ contract Called {
     }
 
     function helloWorld(uint256 numA, uint256 numB, uint256 numC) external returns (uint256) {
-        _storage_ += 1;
         return numA + numB + numC;
     }
 }
@@ -21,30 +20,46 @@ contract Caller {
 
     PayloadV1.Payload private _payload;
 
-    address private _called;
+    Called private _called;
 
     constructor() {
-        _called = address(new Called());
+        _called = new Called();  // Create an instance of Called
     }
     
-    function call() external returns (uint256) {
-        _payload.setDat(
-            abi.encode(
-                _payload.encodeSignature("helloWorld(uint256,uint256,uint256)"),
-                100,
-                100,
-                100
-            )
-        );
-        _payload.setTarget(called());
+    function callHelloWorld(uint256 numA, uint256 numB, uint256 numC) external returns (uint256) {
+        _payload.setTarget(address(_called));
+        _payload.setDat(abi.encodeWithSelector(bytes4(keccak256("helloWorld(uint256,uint256,uint256)")), numA, numB, numC));
         _payload.setGas(3000000_000000000000000000);
-        _payload.setRequireSuccess(true);
         _payload.setValue(20_000000000000000000);
+        _payload.setRequireSuccess(true);
         _payload.execute();
-        return abi.decode(_payload.lastResponse(), (uint256));
+        return abi.decode(_payload.response(), (uint256));
     }
 
-    function called() public view returns (address) {
-        return _called;
+    function callHelloWorld2() external returns (uint256) {
+        bytes memory data = abi.encodeWithSelector(
+                bytes4(keccak256("helloWorld(uint256,uint256,uint256)")), 
+                15000, 10000, 5000
+            );
+        (bool success, bytes memory response) 
+        = address(_called).call(
+            data
+        );
+        
+        /**
+        (bool success, bytes memory response) 
+        = address(_called).call(
+            abi.encodeWithSignature(
+                "helloWorld(uint256,uint256,uint256)", 
+                abi.encode(1000, 500, 5000)
+            )
+        );
+        */
+
+        return abi.decode(response, (uint256));
+    }
+
+    function getCalledStorage() external view returns (uint256) {
+        return _called.storage_();
     }
 }
