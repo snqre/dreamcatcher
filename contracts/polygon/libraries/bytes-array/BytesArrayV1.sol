@@ -48,7 +48,7 @@ library BytesArrayV1 {
     * @param self The storage reference to the array of bytes.
     * @param dat The bytes data to add.
     */
-    function pushToEmpty(bytes[] storage self, bytes memory dat) public {
+    function tryPushToEmptyFirst(bytes[] storage self, bytes memory dat) public {
         if (hasEmptyIndex(self)) {
             self[firstEmptyIndex(self)] = dat;
         }

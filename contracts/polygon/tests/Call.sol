@@ -2,62 +2,96 @@
 pragma solidity ^0.8.9;
 import "contracts/polygon/libraries/payload/PayloadV1.sol";
 
+/**
+ * @dev Contract `Called` with a private uint256 state variable and functions to retrieve and increase the stored number.
+ */
 contract Called {
 
-    uint256 private _storage_;
+    /**
+    * @dev Private state variable to store a uint256 number.
+    */
+    uint256 private _number;
 
-    function storage_() external view returns (uint256) {
-        return _storage_;
+    /**
+    * @dev Public function to retrieve the stored uint256 number.
+    * @return uint256 representing the stored number.
+    */
+    function number() public view returns (uint256) {
+        return _number;
     }
 
-    function helloWorld(uint256 numA, uint256 numB, uint256 numC) external returns (uint256) {
-        return numA + numB + numC;
+    /**
+    * @dev Public function to increase the stored uint256 number by a specified value.
+    * @param value The value to increase the number by.
+    */
+    function increaseNumber(uint256 value) public returns (uint256) {
+        _increaseNumber(value);
+        return _number;
+    }
+
+    /**
+    * @dev Internal function to increase the stored uint256 number by a specified value.
+    * @param value The value to increase the number by.
+    */
+    function _increaseNumber(uint256 value) internal {
+        _number += value;
     }
 }
 
+/**
+ * @dev Contract `Caller` interacts with another contract `Called` using the PayloadV1 library.
+ */
 contract Caller {
+
+    /**
+    * @dev Import and use the PayloadV1 library for the Payload struct.
+    */
     using PayloadV1 for PayloadV1.Payload;
 
+    /**
+    * @dev Private instance of the Payload struct from the PayloadV1 library.
+    */
     PayloadV1.Payload private _payload;
 
-    Called private _called;
+    /**
+    * @dev Private variable to store the address of the `Called` contract.
+    */
+    address private _called;
 
+    /**
+    * @dev Constructor to initialize the contract. It sets the `_called` address to a new instance of the `Called` contract.
+    */
     constructor() {
-        _called = new Called();  // Create an instance of Called
+        _called = address(new Called());
     }
-    
-    function callHelloWorld(bytes memory dat) external returns (uint256) {
-        _payload.setTarget(address(_called));
-        _payload.setDat(abi.encodeWithSelector(_payload.encodeSignature("helloWorld(uint256,uint256,uint256)"), 100, 100, 100));
+
+    /**
+    * @dev Public function to get the address of the `Called` contract.
+    * @return address representing the address of the `Called` contract.
+    */
+    function called() public view returns (address) {
+        return _called;
+    }
+
+    /**
+    * @dev Public function to increase the number in the `Called` contract by a specified value.
+    * @param value The value by which to increase the number.
+    * @return uint256 representing the updated number in the `Called` contract.
+    */
+    function increaseNumberOfCalledBy(uint256 value) public returns (uint256) {
+        return _call(abi.encodeWithSelector(_payload.encodeSignature("increaseNumber(uint256))"), value));
+    }
+
+    /**
+    * @dev Internal function to call a target address with the specified data using the internal payload.
+    * @param dat The data to be used in the call.
+    * @return uint256 representing the response from the target address.
+    */
+    function _call(bytes memory dat) internal returns (uint256) {
+        _payload.setTarget(_called);
+        _payload.setDat(dat);
         _payload.setRequireSuccess(true);
         _payload.execute();
         return abi.decode(_payload.response(), (uint256));
-    }
-
-    function callHelloWorld2() external returns (uint256) {
-        bytes memory data = abi.encodeWithSelector(
-                bytes4(keccak256("helloWorld(uint256,uint256,uint256)")), 
-                15000, 10000, 5000
-            );
-        (bool success, bytes memory response) 
-        = address(_called).call(
-            data
-        );
-        
-        /**
-        (bool success, bytes memory response) 
-        = address(_called).call(
-            abi.encodeWithSignature(
-                "helloWorld(uint256,uint256,uint256)", 
-                abi.encode(1000, 500, 5000)
-            )
-        );
-        */
-
-        return abi.decode(response, (uint256));
-    }
-
-    function getCalledStorage() external view returns (uint256) {
-        return _called.storage_();
     }
 }
