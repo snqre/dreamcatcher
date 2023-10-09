@@ -26,11 +26,9 @@ contract Caller {
         _called = new Called();  // Create an instance of Called
     }
     
-    function callHelloWorld(uint256 numA, uint256 numB, uint256 numC) external returns (uint256) {
+    function callHelloWorld(bytes memory dat) external returns (uint256) {
         _payload.setTarget(address(_called));
-        _payload.setDat(abi.encodeWithSelector(bytes4(keccak256("helloWorld(uint256,uint256,uint256)")), numA, numB, numC));
-        _payload.setGas(3000000_000000000000000000);
-        _payload.setValue(20_000000000000000000);
+        _payload.setDat(abi.encodeWithSelector(_payload.encodeSignature("helloWorld(uint256,uint256,uint256)"), 100, 100, 100));
         _payload.setRequireSuccess(true);
         _payload.execute();
         return abi.decode(_payload.response(), (uint256));
