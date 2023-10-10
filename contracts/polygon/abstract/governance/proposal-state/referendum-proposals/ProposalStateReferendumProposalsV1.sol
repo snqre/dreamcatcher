@@ -4,6 +4,9 @@ import "contracts/polygon/abstract/storage/state/StateV1.sol";
 import "contracts/polygon/external/openzeppelin/utils/structs/EnumerableSet.sol";
 import "contracts/polygon/interfaces/token/dream/IDream.sol";
 
+/**
+ * @title ProposalStateReferendumProposalsV1
+ */
 abstract contract ProposalStateReferendumProposalsV1 is StateV1 {
 
     /**
@@ -718,11 +721,26 @@ abstract contract ProposalStateReferendumProposalsV1 is StateV1 {
     */
     function _setReferendumProposalRequiredThreshold(uint256 id, uint256 bp) internal virtual {
         require(
-            bp < 10000,
+            bp <= 10000,
             "ProposalStateReferendumProposalsV1: value is out of bounds | max: 10000"
         );
         _uint256[referendumProposalRequiredThresholdKey(id)] = bp;
         emit ReferendumProposalRequiredThresholdSetTo(id, bp);
+    }
+
+    /**
+    * @dev Internal function to set the required quorum for a specific referendum proposal.
+    * 
+    * @param id The unique identifier of the referendum proposal.
+    * @param bp The new value for the required quorum in basis points.
+    */
+    function _setReferendumProposalRequiredQuorum(uint256 id, uint256 bp) internal virtual {
+        require(
+            bp <= 10000,
+            "ProposalStateReferendumProposalsV1: value is out of bounds | max: 10000"
+        );
+        _uint256[referendumProposalRequiredQuorumKey(id)] = bp;
+        emit ReferendumProposalRequiredQuorumSetTo(id, bp);
     }
 
     /**
@@ -769,36 +787,77 @@ abstract contract ProposalStateReferendumProposalsV1 is StateV1 {
         emit ReferendumProposalStartTimestampSetTo(id, timestamp);
     }
 
+    /**
+    * @dev Internal function to set the duration for a specific referendum proposal.
+    * 
+    * @param id The unique identifier of the referendum proposal.
+    * @param seconds_ The new duration for the proposal in seconds.
+    */
     function _setReferendumProposalDuration(uint256 id, uint256 seconds_) internal virtual {
         _uint256[referendumProposalDurationKey(id)] = seconds_;
         emit ReferendumProposalDurationSetTo(id, seconds_);
     }
 
+    /**
+    * @dev Internal function to set the minimum balance required to vote for a specific referendum proposal.
+    * 
+    * @param id The unique identifier of the referendum proposal.
+    * @param minBalance The new minimum balance required for voting on the proposal.
+    */
     function _setReferendumProposalMinBalanceToVote(uint256 id, uint256 minBalance) internal virtual {
         _uint256[referendumProposalMinBalanceToVoteKey(id)] = minBalance;
         emit ReferendumProposalMinBalanceToVoteSetTo(id, minBalance);
     }
 
+    /**
+    * @dev Internal function to set the ERC-20 token for voting on a specific referendum proposal.
+    * 
+    * @param id The unique identifier of the referendum proposal.
+    * @param erc20 The new address of the ERC-20 token for voting on the proposal.
+    */
     function _setReferendumProposalVotingERC20(uint256 id, address erc20) internal virtual {
         _address[referendumProposalVotingERC20Key(id)] = erc20;
         emit ReferendumProposalVotingERC20SetTo(id, erc20);
     }
 
+    /**
+    * @dev Internal function to set the snapshot ID for a specific referendum proposal.
+    * 
+    * @param id The unique identifier of the referendum proposal.
+    * @param snapshotId The new snapshot ID for the proposal.
+    */
     function _setReferendumProposalSnapshotId(uint256 id, uint256 snapshotId) internal virtual {
         _uint256[referendumProposalSnapshotIdKey(id)] = snapshotId;
         emit ReferendumProposalSnapshotIdSetTo(id, snapshotId);
     }
 
+    /**
+    * @dev Internal function to set the target address for a specific referendum proposal.
+    * 
+    * @param id The unique identifier of the referendum proposal.
+    * @param target The new target address for the proposal.
+    */
     function _setReferendumProposalTarget(uint256 id, address target) internal virtual {
         _address[referendumProposalTargetKey(id)] = target;
         emit ReferendumProposalTargetSetTo(id, target);
     }
 
+    /**
+    * @dev Internal function to set the data for a specific referendum proposal.
+    * 
+    * @param id The unique identifier of the referendum proposal.
+    * @param data The new data for the proposal.
+    */
     function _setReferendumProposalData(uint256 id, bytes memory data) internal virtual {
         _bytes[referendumProposalDataKey(id)] = data;
         emit ReferendumProposalDataSetTo(id, data);
     }
 
+    /**
+    * @dev Internal function to increment the count of referendum proposals.
+    * 
+    * @return uint256 The updated count of referendum proposals.
+    */
     function _incrementReferendumProposalsCount() internal virtual returns (uint256) {
         _uint256[referendumProposalCountKey()] += 1;
         emit ReferendumProposalIncremented(_uint256[referendumProposalCountKey()]);
