@@ -30,7 +30,7 @@ abstract contract ProposalStateMultiSigProposalsV2 is
     * @param id The ID of the multi-signature proposal.
     * @return bytes32 The storage key for the target.
     */
-    function multiSigProposalTargetKey(uint256 id) public pure returns (bytes32) {
+    function multiSigProposalTargetKey(uint256 id) public pure virtual returns (bytes32) {
         return keccak256(abi.encode("MULTI_SIG_PROPOSAL_TARGET", id));
     }
 
@@ -39,7 +39,7 @@ abstract contract ProposalStateMultiSigProposalsV2 is
     * @param id The ID of the multi-signature proposal.
     * @return bytes32 The storage key for the data.
     */
-    function multiSigProposalDataKey(uint256 id) public pure returns (bytes32) {
+    function multiSigProposalDataKey(uint256 id) public pure virtual returns (bytes32) {
         return keccak256(abi.encode("MULTI_SIG_PROPOSAL_DATA", id));
     }
 
@@ -48,7 +48,7 @@ abstract contract ProposalStateMultiSigProposalsV2 is
     * @param id The ID of the multi-signature proposal.
     * @return address The target address.
     */
-    function multiSigProposalTarget(uint256 id) public view returns (address) {
+    function multiSigProposalTarget(uint256 id) public view virtual returns (address) {
         return _address[multiSigProposalTargetKey(id)];
     }
 
@@ -57,7 +57,7 @@ abstract contract ProposalStateMultiSigProposalsV2 is
     * @param id The ID of the multi-signature proposal.
     * @return bytes32 The proposal data.
     */
-    function multiSigProposalData(uint256 id) public view returns (bytes memory) {
+    function multiSigProposalData(uint256 id) public view virtual returns (bytes memory) {
         return _bytes[multiSigProposalDataKey(id)];
     }
 

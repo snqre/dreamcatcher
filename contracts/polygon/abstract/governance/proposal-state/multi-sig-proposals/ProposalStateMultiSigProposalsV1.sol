@@ -115,6 +115,8 @@ abstract contract ProposalStateMultiSigProposalsV1 is StateV1 {
     */
     event MultiSigProposalCountIncremented(uint256 indexed id);
 
+    event MultiSigProposalHasPassed(uint256 indexed id);
+
     /**
     * @dev Error indicating that an account is not a signer for a specific multi-signature proposal.
     * @param id The unique identifier of the proposal.
@@ -599,10 +601,21 @@ abstract contract ProposalStateMultiSigProposalsV1 is StateV1 {
     * @param id The ID of the multi-signature proposal.
     */
     function _signMultiSigProposal(uint256 id) internal virtual {
+        require(
+            multiSigProposalHasStarted(id),
+            "ProposalStateMultiSigProposalsV1: cannot sign because proposal has not started"
+        );
+        require(
+            !multiSigProposalHasEnded(id),
+            "ProposalStateMultiSigProposalsV1: cannot sign because proposal has ended"
+        );
         _onlySigner(id);
         _onlynotSigned(id);
         _addressSet[multiSigProposalSignaturesKey(id)].add(msg.sender);
-        if (multiSigProposalHasSufficientSignatures(id)) { _bool[multiSigProposalHasPassedKey(id)] = true; }
+        if (multiSigProposalHasSufficientSignatures(id)) { 
+            _bool[multiSigProposalHasPassedKey(id)] = true;
+            emit MultiSigProposalHasPassed();
+        }
         emit MultiSigProposalSigned(id, msg.sender);
     }
 
@@ -611,6 +624,14 @@ abstract contract ProposalStateMultiSigProposalsV1 is StateV1 {
     * @param id The ID of the multi-signature proposal.
     */
     function _executeMultiSigProposal(uint256 id) internal virtual {
+        require(
+            multiSigProposalHasStarted(id),
+            "ProposalStateMultiSigProposalsV1: cannot execute because proposal has not started"
+        );
+        require(
+            !multiSigProposalHasEnded(id),
+            "ProposalStateMultiSigProposalsV1: cannot execute because proposal has ended"
+        );
         if (multiSigProposalExecuted(id)) { revert MultiSigProposalHasAlreadyBeenExecuted(id); }
         if (!multiSigProposalHasPassed(id)) { revert MultiSigProposalHasNotPassed(id); }
         _bool[multiSigProposalExecutedKey(id)] = true;
