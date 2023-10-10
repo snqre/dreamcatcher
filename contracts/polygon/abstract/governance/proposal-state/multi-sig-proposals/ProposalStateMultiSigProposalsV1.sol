@@ -462,7 +462,7 @@ abstract contract ProposalStateMultiSigProposalsV1 is StateV1 {
     * @param id The unique identifier of the proposal.
     * @notice Emits a `MultiSigProposalSigned` event.
     */
-    function _signMultiSigProposal(uint256 id) internal {
+    function _signMultiSigProposal(uint256 id) internal virtual {
         MultiSigV1.MultiSig storage proposal = _multiSigProposals(id);
         proposal.sign(self);
         emit MultiSigProposalSigned(id, msg.sender);
@@ -473,7 +473,7 @@ abstract contract ProposalStateMultiSigProposalsV1 is StateV1 {
     * @param id The unique identifier of the proposal.
     * @notice Emits a `MultiSigProposalExecuted` event.
     */
-    function _executeMultiSigProposal(uint256 id) internal {
+    function _executeMultiSigProposal(uint256 id) internal virtual {
         MultiSigV1.MultiSig storage proposal = _multiSigProposals(id);
         proposal.execute(self);
         emit MultiSigProposalExecuted(id);
@@ -484,7 +484,7 @@ abstract contract ProposalStateMultiSigProposalsV1 is StateV1 {
     * @param id The unique identifier of the proposal.
     * @notice Emits a `MultiSigProposalReset` event.
     */
-    function _resetMultiSigProposal(uint256 id) internal {
+    function _resetMultiSigProposal(uint256 id) internal virtual {
         MultiSigV1.MultiSig storage proposal = _multiSigProposals(id);
         proposal.reset(self);
         emit MultiSigProposalReset(id);
@@ -495,7 +495,7 @@ abstract contract ProposalStateMultiSigProposalsV1 is StateV1 {
     * @param id The unique identifier of the proposal.
     * @notice Emits a `MultiSigProposalTimerReset` event.
     */
-    function _resetTimerMultiSigProposal(uint256 id) internal {
+    function _resetTimerMultiSigProposal(uint256 id) internal virtual {
         MultiSigV1.MultiSig storage proposal = _multiSigProposals(id);
         proposal.onlyResetTimer(self);
         emit MultiSigProposalTimerReset(id);
