@@ -2,7 +2,7 @@
 pragma solidity ^0.8.19;
 import "contracts/polygon/abstract/storage/state/StateV1.sol";
 
-abstract contract ProposalStateReferendumProposalsV1 is StateV1 {
+abstract contract ProposalStateReferendumSettingsV1 is StateV1 {
     
     /** Default Required Threshold */
 

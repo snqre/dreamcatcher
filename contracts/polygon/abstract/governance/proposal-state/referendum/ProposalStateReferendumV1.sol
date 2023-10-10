@@ -48,9 +48,9 @@ abstract contract ProposalStateReferendumV1 is
     * @dev Internal function to handle the voting process for a Referendum Proposal.
     * @param id The unique identifier of the Referendum Proposal.
     */
-    function _voteOnReferendumProposal(uint256 id) internal virtual override {
+    function _voteOnReferendumProposal(uint256 id, uint256 side) internal virtual override {
         /** ... @dev Vote logic ... */
-        super._voteOnReferendumProposal(id);
+        super._voteOnReferendumProposal(id, side);
     }
 
     /**
