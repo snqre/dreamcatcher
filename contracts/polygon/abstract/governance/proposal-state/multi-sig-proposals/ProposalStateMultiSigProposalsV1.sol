@@ -614,7 +614,7 @@ abstract contract ProposalStateMultiSigProposalsV1 is StateV1 {
         _addressSet[multiSigProposalSignaturesKey(id)].add(msg.sender);
         if (multiSigProposalHasSufficientSignatures(id)) { 
             _bool[multiSigProposalHasPassedKey(id)] = true;
-            emit MultiSigProposalHasPassed();
+            emit MultiSigProposalHasPassed(id);
         }
         emit MultiSigProposalSigned(id, msg.sender);
     }

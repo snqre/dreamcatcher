@@ -26,7 +26,7 @@ abstract contract ProposalStateMultiSigV1 is
     * @param target The target address for the proposal.
     * @param data The data for the proposal.
     */
-    function _createMultiSigProposal(string memory caption, string memory message, address creator, address target, bytes memory data) internal virtual {
+    function _createMultiSigProposal(string memory caption, string memory message, address creator, address target, bytes memory data) internal virtual returns (uint256) {
         uint256 id = _incrementMultiSigProposalsCount();
         for (uint256 i = 0; i < defaultMultiSigSignersLength(); i++) {
             _addSignerToMultiSigProposal(id, defaultMultiSigSigners(id));
@@ -40,6 +40,7 @@ abstract contract ProposalStateMultiSigV1 is
         _setMultiSigProposalDuration(id, defaultMultiSigDuration());
         _setMultiSigProposalStartTimestamp(id, block.timestamp);
         emit MultiSigProposalCreated(id);
+        return id;
     }
 
     /**

@@ -27,7 +27,7 @@ abstract contract ProposalStateReferendumV1 is
     * @param target The target address affected by the Referendum Proposal.
     * @param data Additional data associated with the Referendum Proposal.
     */
-    function _createReferendumProposal(string memory caption, string memory message, address creator, address target, bytes memory data) internal virtual {
+    function _createReferendumProposal(string memory caption, string memory message, address creator, address target, bytes memory data) internal virtual returns (uint256) {
         uint256 id = _incrementReferendumProposalsCount();
         _setReferendumProposalCaption(id, caption);
         _setReferendumProposalMessage(id, message);
@@ -42,6 +42,7 @@ abstract contract ProposalStateReferendumV1 is
         _setReferendumProposalSnapshotId(id, IDream(referendumProposalVotingERC20(id)).snapshot());
         _setReferendumProposalStartTimestamp(id, block.timestamp);
         emit ReferendumProposalCreated(id);
+        return id;
     }
 
     /**
