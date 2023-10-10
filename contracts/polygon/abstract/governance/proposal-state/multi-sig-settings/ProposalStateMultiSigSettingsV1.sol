@@ -153,7 +153,7 @@ abstract contract ProposalStateMultiSigSettingsV1 is StateV1 {
     */
     function _removeDefaultMultiSigSigner(address account) internal virtual {
         if (!isDefaultMultiSigSigner(account)) { revert NotDefaultMultiSigSigner(account); }
-        _addressSet[defaultMultiSigSignerskey()].remove(account);
+        _addressSet[defaultMultiSigSignersKey()].remove(account);
         emit DefaultMultiSigSignerRemoved(account);
     }
 

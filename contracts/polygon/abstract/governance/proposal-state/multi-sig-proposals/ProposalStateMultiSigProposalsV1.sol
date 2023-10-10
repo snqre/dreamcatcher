@@ -141,7 +141,7 @@ abstract contract ProposalStateMultiSigProposalsV1 is StateV1 {
     * @param max The maximum allowed value (inclusive).
     * @param value The value that is out of bounds.
     */
-    error OutOfBounds(uint256 min, uint256 max, uint256 value);
+    error ProposalStateMultiSigProposalsOutOfBounds(uint256 min, uint256 max, uint256 value);
 
     /**
     * @dev Error indicating that an account has already signed a multi-signature proposal.
@@ -252,7 +252,7 @@ abstract contract ProposalStateMultiSigProposalsV1 is StateV1 {
     * @dev Get the storage key for the count of multi-signature proposals.
     * @return The keccak256 hash of the string "MULTI_SIG_PROPOSALS_COUNT".
     */
-    function multiSigProposalsCountKey() public pure virtual returns (uint256) {
+    function multiSigProposalsCountKey() public pure virtual returns (bytes32) {
         return keccak256(abi.encode("MULTI_SIG_PROPOSALS_COUNT"));
     }
 
@@ -499,7 +499,7 @@ abstract contract ProposalStateMultiSigProposalsV1 is StateV1 {
     * @notice Reverts if the bp value is not within the valid range [0, 10000].
     */
     function _setMultiSigProposalRequiredQuorum(uint256 id, uint256 bp) internal virtual {
-        if (bp > 10000) { revert OutOfBounds(0, 10000, bp); }
+        if (bp > 10000) { revert ProposalStateMultiSigProposalsOutOfBounds(0, 10000, bp); }
         _uint256[multiSigProposalRequiredQuorumKey(id)] = bp;
         emit MultiSigProposalRequiredQuorumSetTo(id, bp);
     }
@@ -602,7 +602,7 @@ abstract contract ProposalStateMultiSigProposalsV1 is StateV1 {
         _onlySigner(id);
         _onlynotSigned(id);
         _addressSet[multiSigProposalSignaturesKey(id)].add(msg.sender);
-        if (multiSigProposalHasSufficientSignatures(id)) { _bool[multiSigProposalHasPassedKey()] = true; }
+        if (multiSigProposalHasSufficientSignatures(id)) { _bool[multiSigProposalHasPassedKey(id)] = true; }
         emit MultiSigProposalSigned(id, msg.sender);
     }
 

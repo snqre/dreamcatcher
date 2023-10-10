@@ -16,14 +16,14 @@ abstract contract ProposalStateMultiSigProposalsV2 is
     * @param id The ID of the multi-signature proposal.
     * @param target The address of the target contract or account.
     */
-    event MultiSigProposalTargetSetTo(address indexed target);
+    event MultiSigProposalTargetSetTo(uint256 indexed id, address indexed target);
 
     /**
     * @dev Emitted when the data of a multi-signature proposal is set.
     * @param id The ID of the multi-signature proposal.
     * @param data The data associated with the proposal.
     */
-    event MultiSigProposalDataSetTo(bytes indexed data);
+    event MultiSigProposalDataSetTo(uint256 indexed id, bytes indexed data);
 
     /**
     * @dev Returns the storage key for the target of a multi-signature proposal.
@@ -31,7 +31,7 @@ abstract contract ProposalStateMultiSigProposalsV2 is
     * @return bytes32 The storage key for the target.
     */
     function multiSigProposalTargetKey(uint256 id) public pure returns (bytes32) {
-        return keccak256(abi.encode("MULTI_SIG_PROPOSAL_TARGET"));
+        return keccak256(abi.encode("MULTI_SIG_PROPOSAL_TARGET", id));
     }
 
     /**
@@ -40,7 +40,7 @@ abstract contract ProposalStateMultiSigProposalsV2 is
     * @return bytes32 The storage key for the data.
     */
     function multiSigProposalDataKey(uint256 id) public pure returns (bytes32) {
-        return keccak256(abi.encode("MULTI_SIG_PROPOSAL_DATA"));
+        return keccak256(abi.encode("MULTI_SIG_PROPOSAL_DATA", id));
     }
 
     /**
@@ -57,7 +57,7 @@ abstract contract ProposalStateMultiSigProposalsV2 is
     * @param id The ID of the multi-signature proposal.
     * @return bytes32 The proposal data.
     */
-    function multiSigProposalData(uint256 id) public view returns (bytes32) {
+    function multiSigProposalData(uint256 id) public view returns (bytes memory) {
         return _bytes[multiSigProposalDataKey(id)];
     }
 
@@ -68,7 +68,7 @@ abstract contract ProposalStateMultiSigProposalsV2 is
     */
     function _setMultiSigProposalTarget(uint256 id, address target) internal virtual {
         _address[multiSigProposalTargetKey(id)] = target;
-        emit MultiSigProposalTargetSetTo(target);
+        emit MultiSigProposalTargetSetTo(id, target);
     }
 
     /**
@@ -78,6 +78,6 @@ abstract contract ProposalStateMultiSigProposalsV2 is
     */
     function _setMultiSigProposalData(uint256 id, bytes memory data) internal virtual {
         _bytes[multiSigProposalDataKey(id)] = data;
-        emit MultiSigProposalDataSetTo(data);
+        emit MultiSigProposalDataSetTo(id, data);
     }
 }

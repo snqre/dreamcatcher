@@ -53,8 +53,8 @@ abstract contract ProposalStateMultiSigV1 is ProposalStateMultiSigSettingsV1, Pr
     * @dev Executes a multi-signature proposal with the given ID.
     * @param id The ID of the multi-signature proposal.
     */
-    function _excuteMultiSigProposal(uint256 id) internal virtual override {
+    function _executeMultiSigProposal(uint256 id) internal virtual override {
         /** ... @dev Add execution logic ... */
-        super._excuteMultiSigProposal(id);
+        super._executeMultiSigProposal(id);
     }
 }
