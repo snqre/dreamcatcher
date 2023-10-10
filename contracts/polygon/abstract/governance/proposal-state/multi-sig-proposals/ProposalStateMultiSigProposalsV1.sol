@@ -119,6 +119,8 @@ abstract contract ProposalStateMultiSigProposalsV1 is StateV1 {
 
     /** @dev Keys. */
 
+    
+
     /**
     * @dev Get the storage key for multi-signature proposals.
     * @return The keccak256 hash of the string "MULTI_SIG_PROPOSALS".

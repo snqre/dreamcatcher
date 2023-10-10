@@ -1,12 +1,21 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.9;
 import "contracts/polygon/abstract/storage/state/StateV1.sol";
+import "contracts/polygon/external/openzeppelin/utils/structs/EnumerableSet.sol";
 
 /**
  * @title ProposalStateMultiSigSettingsV1
  * @dev Abstract contract defining the state and settings for multi-signature proposals.
  */
 abstract contract ProposalStateMultiSigSettingsV1 is StateV1 {
+
+    /**
+    * @dev Add a signer to the default list for multi-signature proposals.
+    * @param account The address of the signer to be added.
+    * @notice Reverts if the signer is already in the default list.
+    * @notice Emits a `DefaultMultiSigProposalsSignerAdded` event.
+    */
+    using EnumerableSet for EnumerableSet.AddressSet;
 
     /**
     * @dev Emitted when the default duration for multi-signature proposals is set to a new value.
@@ -53,7 +62,7 @@ abstract contract ProposalStateMultiSigSettingsV1 is StateV1 {
     * @dev Get the storage key for the default duration of multi-signature proposals.
     * @return The keccak256 hash of the string "DEFAULT_MULTI_SIG_PROPOSALS_DURATION".
     */
-    function defaultMultiSigProposalsDurationKey() public pure virtual returns (uint256) {
+    function defaultMultiSigProposalsDurationKey() public pure virtual returns (bytes32) {
         return keccak256(abi.encode("DEFAULT_MULTI_SIG_PROPOSALS_DURATION"));
     }
 
@@ -121,6 +130,7 @@ abstract contract ProposalStateMultiSigSettingsV1 is StateV1 {
                 break;
             }
         }
+        return isDefaultSigner;
     }
 
     /** @dev Flags. */
