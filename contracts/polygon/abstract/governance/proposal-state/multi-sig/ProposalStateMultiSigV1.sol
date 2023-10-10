@@ -8,7 +8,9 @@ import "contracts/polygon/abstract/governance/proposal-state/multi-sig-proposals
  * @dev This abstract contract extends ProposalStateMultiSigSettingsV1 and ProposalStateMultiSigProposalsV2,
  * providing functionality for creating, signing, and executing multi-signature proposals.
  */
-abstract contract ProposalStateMultiSigV1 is ProposalStateMultiSigSettingsV1, ProposalStateMultiSigProposalsV2 {
+abstract contract ProposalStateMultiSigV1 is 
+    ProposalStateMultiSigSettingsV1, 
+    ProposalStateMultiSigProposalsV2 {
 
     /**
     * @dev Emits an event indicating the creation of a multi-signature proposal.

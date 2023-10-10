@@ -132,6 +132,13 @@ abstract contract ProposalStateReferendumProposalsV1 is StateV1 {
     */
     event ReferendumProposalIncremented(uint256 indexed id);
 
+    /**
+    * @notice Emits when the quorum set for a Referendum Proposal is required to be set to a specific value.
+    * @param id The unique identifier of the Referendum Proposal.
+    * @param bp The new quorum set value, represented as a percentage with 18 decimals.
+    */
+    event ReferendumProposalRequiredQuorumSetTo(uint256 indexed id, uint256 indexed bp);
+
     /** Keys. */
 
     /**
@@ -405,7 +412,7 @@ abstract contract ProposalStateReferendumProposalsV1 is StateV1 {
     * @param id The unique identifier of the referendum proposal.
     * @return uint256 The required voting threshold for the proposal.
     */
-    function referendumProposalRequiredThreshold(uint256 id) public view returns (uint256) {
+    function referendumProposalRequiredThreshold(uint256 id) public view virtual returns (uint256) {
         return _uint256[referendumProposalRequiredThresholdKey(id)];
     }
 
@@ -415,7 +422,7 @@ abstract contract ProposalStateReferendumProposalsV1 is StateV1 {
     * @param id The unique identifier of the referendum proposal.
     * @return uint256 The current voting threshold for the proposal.
     */
-    function referendumProposalThreshold(uint256 id) public view returns (uint256) {
+    function referendumProposalThreshold(uint256 id) public view virtual returns (uint256) {
         return (referendumProposalSupport(id) * 10000) / referendumProposalQuorum(id);
     }
 
@@ -425,7 +432,7 @@ abstract contract ProposalStateReferendumProposalsV1 is StateV1 {
     * @param id The unique identifier of the referendum proposal.
     * @return bool True if the proposal has sufficient voting threshold, otherwise false.
     */
-    function referendumProposalHasSufficientThreshold(uint256 id) public view returns (bool) {
+    function referendumProposalHasSufficientThreshold(uint256 id) public view virtual returns (bool) {
         return referendumProposalThreshold(id) >= referendumProposalRequiredThreshold(id);
     }
 
@@ -457,7 +464,7 @@ abstract contract ProposalStateReferendumProposalsV1 is StateV1 {
     * @param account The address of the account to check.
     * @return bool True if the account is a voter, otherwise false.
     */
-    function isReferendumProposalVoter(uint256 id, address account) public view returns (bool) {
+    function isReferendumProposalVoter(uint256 id, address account) public view virtual returns (bool) {
         return _addressSet[referendumProposalVotersKey(id)].contains(account);
     }
 

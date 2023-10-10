@@ -199,7 +199,7 @@ abstract contract ProposalStateReferendumProposalsV1 is StateV1 {
     * @param max The maximum value allowed.
     * @param value The value to check.
     */
-    function _onlyBetween(uint256 min, uint256 max, uint256 value) private view {
+    function _onlyBetween(uint256 min, uint256 max, uint256 value) private pure {
         require(value >= min && value <= max, "ProposalStateReferendumSettingsV1: value out of bounds");
     }
 }
