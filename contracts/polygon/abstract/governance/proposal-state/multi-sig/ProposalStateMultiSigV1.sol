@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.9;
+pragma solidity ^0.8.19;
 import "contracts/polygon/abstract/governance/proposal-state/multi-sig-settings/ProposalStateMultiSigSettingsV1.sol";
 import "contracts/polygon/abstract/governance/proposal-state/multi-sig-proposals/ProposalStateMultiSigProposalsV2.sol";
 
