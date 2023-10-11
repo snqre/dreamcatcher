@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
+import "contracts/polygon/libraries/errors/ErrorsV1.sol";
 
 library Uint256FlagsV1 {
 
@@ -11,15 +12,13 @@ library Uint256FlagsV1 {
     */
     error OutOfBounds(uint256 min, uint256 max, uint256 value);
 
-    error IsMatchingValue();
-
     function onlyBetween(uint256 self, uint256 min, uint256 max) public pure returns (uint256) {
         if (self < min || self > max) { revert OutOfBounds(min, max, self); }
         return self;
     }
 
     function onlynotMatchingValue(uint256 self, uint256 value) public pure returns (uint256) {
-        if (self == value) { revert IsMatchingValue(); }
+        if (self == value) { revert ErrorsV1.IsMatchingValue(); }
         return self;
     }
 }

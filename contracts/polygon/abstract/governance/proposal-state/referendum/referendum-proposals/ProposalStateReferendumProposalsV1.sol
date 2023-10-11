@@ -4,11 +4,328 @@ import "contracts/polygon/abstract/storage/state/StateV1.sol";
 import "contracts/polygon/external/openzeppelin/utils/structs/EnumerableSet.sol";
 import "contracts/polygon/interfaces/token/dream/IDream.sol";
 import "contracts/polygon/libraries/flags/uint256/Uint256FlagsV1.sol";
+import "contracts/polygon/libraries/flags/address/AddressFlagsV1.sol";
+import "contracts/polygon/libraries/flags/string/StringFlagsV1.sol";
 
 /**
  * @title ProposalStateReferendumProposalsV1
  */
 abstract contract ProposalStateReferendumProposalsV1 is StateV1 {
+    using EnumerableSet for EnumerableSet.AddressSet;
+
+    using Uint256FlagsV1 for uint256;
+
+    using AddressFlagsV1 for address;
+
+    using StringFlagsV1 for string;
+
+    /** Conditions */
+
+    function hasSufficientBalanceAtSnapshotToVote(uint256 id, address account) public view virtual returns (bool) {
+        accountBalance = IDream(referendumProposalVotingERC20(id)).balanceOfAt(account, referendumProposalSnapshotId(id));
+        if (accountBalance >= referendumProposalMinBalanceToVote(id)) { return true; }
+        else { return false; }
+    }
+
+    /** Voters */
+
+    event ReferendumProposalNewVote(uint256 indexed id, address indexed account);
+
+    function hasVotedForReferendumProposalKey(uint256 id, address account) public pure virtual returns (bytes32) {
+        return keccak256(abi.encode("REFERENDUM_PROPOSAL_VOTERS", id, account));
+    }
+
+    function hasVotedForReferendumProposal(uint256 id, address account) public view virtual returns (bool) {
+        _bool[referendumProposalHasVotedKey(id, account)];
+    }
+
+    function _toggleHasVotedForReferendumProposal(uint256 id, address account) internal virtual {
+        _bool[referendumProposalHasVotedKey(id, account)] = true;
+        emit ReferendumProposalNewVote(id, account);
+    }
+
+    /** Caption */
+
+    event ReferendumProposalCaptionSetTo(uint256 indexed id, string indexed caption);
+
+    function referendumProposalCaptionKey(uint256 id) public pure virtual returns (bytes32) {
+        return keccak256(abi.encode("REFERENDUM_PROPOSAL_CAPTION", id));
+    }
+
+    function referendumProposalCaption(uint256 id) public view virtual returns (string memory) {
+        return _string[referendumProposalCaptionKey(id)];
+    }
+
+    function _setReferendumProposalCaption(uint256 id, string memory caption) internal virtual {
+        string memory emptyString;
+        caption.onlynotMatchingValue(emptyString);
+        _string[referendumProposalCaptionKey(id)].onlynotMatchingValue(caption);
+        _string[referendumProposalCaptionKey(id)] = caption;
+        emit ReferendumProposalCaptionSetTo(id, caption);
+    }
+
+    /** Message */
+
+    event ReferendumProposalMessageSetTo(uint256 indexed id, string indexed message);
+
+    function referendumProposalMessageKey(uint256 id) public pure virtual returns (bytes32) {
+        return keccak256(abi.encode("REFERENDUM_PROPOSAL_MESSAGE", id));
+    }
+
+    function referendumProposalMessage(uint256 id) public view virtual returns (string memory) {
+        return _string[referendumProposalMessageKey(id)];
+    }
+
+    function _setReferendumProposalMessage(uint256 id, string memory message) internal virtual {
+        string memory emptyString;
+        message.onlynotMatchingValue(emptyString);
+        _string[referendumProposalMessageKey(id)].onlynotMatchingValue(message);
+        _string[referendumProposalMessageKey(id)] = message;
+        emit ReferendumProposalMessageSetTo(id, message);
+    }
+
+    /** Creator */
+
+    event ReferendumProposalCreatorSetTo(uint256 indexed id, address indexed creator);
+
+    function referendumProposalCreatorKey(uint256 id) public pure virtual returns (bytes32) {
+        return keccak256(abi.encode("REFERENDUM_PROPOSAL_CREATOR", id));
+    }
+
+    function referendumProposalCreator(uint256 id) public view virtual returns (address) {
+        return _address[referendumProposalCreatorKey(id)];
+    }
+
+    function _setReferendumProposalCreator(uint256 id, address creator) internal virtual {
+        _address[referendumProposalCreatorKey(id)].onlynotAddress(creator);
+        _address[referendumProposalCreatorKey(id)] = creator;
+        emit ReferendumProposalCreatorSetTo(id, creator);
+    }
+
+    /** Start Timestamp */
+
+    event ReferendumProposalStartTimestampSetTo(uint256 indexed id, uint256 indexed timestamp);
+
+    function referendumProposalStartTimestampKey(uint256 id) public pure virtual returns (bytes32) {
+        return keccak256(abi.encode("REFERENDUM_PROPOSAL_START_TIMESTAMP", id));
+    }
+
+    function referendumProposalStartTimestamp(uint256 id) public view virtual returns (uint256) {
+        return _uint256[referendumProposalStartTimestampKey(id)];
+    }
+
+    function _setReferendumProposalStartTimestamp(uint256 id, uint256 timestamp) internal virtual {
+        _uint256[referendumProposalStartTimestampKey(id)].onlynotMatchingValue(timestamp);
+        _uint256[referendumProposalStartTimestampKey(id)] = timestamp;
+        emit ReferendumProposalStartTimestampSetTo(id, timestamp);
+    } 
+
+    /** Duration */
+
+    event ReferendumProposalDurationSetTo(uint256 indexed id, uint256 indexed seconds_);
+
+    function referendumProposalDurationKey(uint256 id) public pure virtual returns (bytes32) {
+        return keccak256(abi.encode("REFERENDUM_PROPOSAL_DURATION", id));
+    }
+
+    function referendumProposalDuration(uint256 id) public view virtual returns (uint256) {
+        return _uint256[referendumProposalDurationKey(id)];
+    }
+
+    function _setReferendumProposalDuration(uint256 id, uint256 seconds_) internal virtual {
+        _uint256[referendumProposalDurationKey(id)].onlynotMatchingValue(seconds_);
+        _uint256[referendumProposalDurationKey(id)] = seconds_;
+        emit ReferendumProposalDurationSetTo(id, seconds_);
+    }
+
+    /** Timestamp */
+
+    /** Required Quorum */
+
+    event ReferendumProposalRequiredQuorumSetTo(uint256 indexed id, uint256 indexed bp);
+
+    function referendumProposalRequiredQuorumKey(uint256 id) public pure virtual returns (bytes32) {
+        return keccak256(abi.encode("REFERENDUM_PROPOSAL_REQUIRED_QUORUM", id));
+    }
+
+    function referendumProposalRequiredQuorum(uint256 id) public view virtual returns (uint256) {
+        return _uint256[referendumProposalRequiredQuorumKey(id)];
+    }
+
+    function _setReferendumProposalRequiredQuorum(uint256 id, uint256 bp) internal virtual {
+        bp.onlyBetween(0, 10000);
+        _uint256[referendumProposalRequiredQuorumKey(id)].onlynotMatchingValue(bp);
+        _uint256[referendumProposalRequiredQuorumKey(id)] = bp;
+        emit ReferendumProposalRequiredQuorumSetTo(id, bp);
+    }
+
+    /** Required Threshold */
+    
+    event ReferendumProposalRequiredThresholdSetTo(uint256 indexed id, uint256 indexed bp);
+
+    function referendumProposalRequiredThresholdKey(uint256 id) public pure virtual returns (bytes32) {
+        return keccak256(abi.encode("REFERENDUM_PROPOSAL_REQUIRED_THRESHOLD", id));
+    }
+
+    function referendumProposalRequiredThreshold(uint256 id) public view virtual returns (uint256) {
+        return _uint256[referendumProposalRequiredThresholdKey(id)];
+    }
+
+    function _setReferendumProposalRequiredThreshold(uint256 id, uint256 bp) internal virtual {
+        bp.onlyBetween(0, 10000);
+        _uint256[referendumProposalRequiredThresholdKey(id)].onlynotMatchingValue(bp);
+        _uint256[referendumProposalRequiredThresholdKey(id)] = bp;
+        emit ReferendumProposalRequiredThresholdSetTo(id, bp);
+    }
+
+    /** Has Passed */
+
+    event ReferendumProposalHasPassed(uint256 indexed id);
+    
+    function referendumProposalHasPassedKey(uint256 id) public pure virtual returns (bytes32) {
+        return keccak256(abi.encode("REFERENDUM_PROPOSAL_HAS_PASSED", id));
+    }
+
+    function referendumProposalHasPassed(uint256 id) public view virtual returns (bool) {
+        return _bool[referendumProposalHasPassedKey(id)];
+    }
+
+    function _toggleReferendumProposalHasPassed(uint256 id) internal virtual {
+        _bool[referendumProposalHasPassedKey(id)] = true;
+        emit ReferendumProposalHasPassed(id);
+    }
+
+    /** Is Executed */
+
+    event ReferendumProposalHasBeenExecuted(uint256 indexed id);
+
+    function referendumProposalIsExecutedKey(uint256 id) public pure virtual returns (bytes32) {
+        return keccak256(abi.encode("REFERENDUM_PROPOSAL_IS_EXECUTED", id));
+    }
+
+    function referendumProposalIsExecuted(uint256 id) public view virtual returns (bool) {
+        _bool[referendumProposalIsExecutedKey(id)];
+    }
+
+    function _toggleReferendumProposalHasBeenExecuted(uint256 id) internal virtual {
+        _bool[referendumProposalIsExecutedKey(id)] = true;
+        emit ReferendumProposalHasBeenExecuted(id);
+    }
+
+    /** Min Balance To Vote */
+
+    event ReferendumProposalMinBalanceToVoteSetTo(uint256 indexed id, uint256 indexed amount);
+
+    function referendumProposalMinBalanceToVoteKey(uint256 id) public pure virtual returns (bytes32) {
+        return keccak256(abi.encode("REFERENDUM_PROPOSAL_MIN_BALANCE_TO_VOTE", id));
+    }
+
+    function referendumProposalMinBalanceToVote(uint256 id) public view virtual returns (uint256) {
+        return _uint256[referendumProposalMinBalanceToVoteKey(id)];
+    }
+
+    function _setReferendumProposalMinBalanceToVote(uint256 id, uint256 amount) internal virtual {
+        uint256 totalSupplyAt = IDream(referendumProposalVotingERC20(id)).totalSupplyAt(referendumProposalSnapshotId(id));
+        amount.onlyBetween(0, totalSupplyAt);
+        _uint256[referendumProposalMinBalanceToVoteKey(id)].onlynotMatchingValue(amount);
+        _uint256[referendumProposalMinBalanceToVoteKey(id)] = amount;
+        emit ReferendumProposalMinBalanceToVoteSetTo(id, amount);
+    }
+
+    /** Support */
+
+    event ReferendumProposalSupportVoteGained(uint256 indexed id, uint256 indexed amount);
+
+    function referendumProposalSupportVoteKey(uint256 id) public pure virtual returns (bytes32) {
+        return keccak256(abi.encode("REFERENDUM_PROPOSAL_SUPPORT_VOTE", id));
+    }
+
+    function referendumProposalSupportVote(uint256 id) public view virtual returns (uint256) {
+        return _uint256[referendumProposalSupportVoteKey(id)];
+    }
+
+    function _increaseReferendumProposalSupportVote(uint256 id, uint256 amount) internal virtual {
+        _uint256[referendumProposalSupportVoteKey(id)] += amount;
+        emit ReferendumProposalSupportVoteGained(id, amount);
+    }
+
+    /** Against */
+
+    event ReferendumProposalAgainstVoteGained(uint256 indexed id, uint256 indexed amount);
+
+    function referendumProposalAgainstVoteKey(uint256 id) public pure virtual returns (bytes32) {
+        return keccak256(abi.encode("REFERENDUM_PROPOSAL_AGAINST_VOTE", id));
+    }
+
+    function referendumProposalAgainstVote(uint256 id) public view virtual returns (uint256) {
+        return _uint256[referendumProposalAgainstVoteKey(id)];
+    }
+
+    function _increaseReferendumProposalAgainstVote(uint256 id, uint256 amount) internal virtual {
+        _uint256[referendumProposalAgainstVoteKey(id)] += amount;
+        emit ReferendumProposalAgainstVoteGained(id, amount);
+    }
+
+    /** Abstain */
+
+    event ReferendumProposalAbstainVoteGained(uint256 indexed id, uint256 indexed amount);
+
+    function referendumProposalAbstainVoteKey(uint256 id) public pure virtual returns (bytes32) {
+        return keccak256(abi.encode("REFERENDUM_PROPOSAL_ABSTAIN_VOTE", id));
+    }
+
+    function referendumProposalAbstainVote(uint256 id) public view virtual returns (uint256) {
+        return _uint256[referendumProposalAbstainVoteKey(id)];
+    }
+
+    function _increaseReferendumProposalAbstainVote(uint256 id, uint256 amount) internal virtual {
+        _uint256[referendumProposalAbstainVoteKey(id)] += amount;
+        emit ReferendumProposalAbstainVoteGained(id, amount);
+    }
+
+    /** Snapshot ID */
+
+    event ReferendumProposalSnapshotIdSetTo(uint256 indexed id, uint256 indexed snapshotId);
+
+    function referendumProposalSnapshotIdKey(uint256 id) public pure virtual returns (bytes32) {
+        return keccak256(abi.encode("REFERENDUM_PROPOSAL_SNAPSHOT_ID, id"));
+    }
+
+    function referendumProposalSnapshotId(uint256 id) public view virtual returns (uint256) {
+        return _uint256[referendumProposalSnapshotIdKey(id)];
+    }
+
+    function _setReferendumProposalSnapshotId(uint256 id, uint256 snapshotId) internal virtual {
+        _uint256[referendumProposalSnapshotIdKey(id)].onlynotMatchingValue(snapshotid);
+        _uint256[referendumProposalSnapshotIdKey(id)] = snapshotId;
+    }
+
+    /** Voting ERC20 */
+
+    event ReferendumProposalVotingERC20SetTo(uint256 indexed id, address indexed erc20);
+
+    function referendumProposalVotingERC20Key(uint256 id) public pure virtual returns (bytes32) {
+        return keccak256(abi.encode("REFERENDUM_PROPOSAL_VOTING_ERC20", id));
+    }
+
+    function referendumProposalVotingERC20(uint256 id) public view virtual returns (address) {
+        return _address[referendumProposalVotingERC20Key(id)];
+    }
+
+    function _setReferendumProposalVotingERC20(uint256 id, address erc20) internal virtual {
+        erc20.onlyGovernanceERC20();
+        _address[referendumProposalVotingERC20Key(id)].onlynotAddress(erc20);
+        _address[referendumProposalVotingERC20Key(id)] = erc20;
+        emit ReferendumProposalVotingERC20SetTo(id, erc20);
+    }
+
+    /** Count */
+
+
+}
+
+
+abstract contract ProposalStateReferendumProposalsV1s is StateV1 {
 
     /**
     * @dev Use the `EnumerableSet` library to provide additional functionality for handling sets of addresses.
@@ -16,6 +333,8 @@ abstract contract ProposalStateReferendumProposalsV1 is StateV1 {
     using EnumerableSet for EnumerableSet.AddressSet;
 
     using Uint256FlagsV1 for uint256;
+
+    using AddressFlagsV1 for address;
 
     /**
     * @dev Emitted when a referendum proposal is successfully executed.

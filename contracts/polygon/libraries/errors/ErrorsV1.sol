@@ -5,4 +5,6 @@ library ErrorsV1 {
     error IsAlreadyInSet(address account);
 
     error IsNotInSet(address account);
+
+    error IsMatchingValue();
 }

@@ -73,7 +73,8 @@ abstract contract ProposalStateMultiSigProposalsV1 is StateV1 {
     */
     function _incrementMultiSigProposalsCount() internal virtual returns (uint256) {
         _uint256[multiSigProposalsCountKey()] += 1;
-        emit MultiSigProposalsCountIncremented(id);
+        emit MultiSigProposalsCountIncremented(_uint256[multiSigProposalsCountKey()]);
+        return _uint256[multiSigProposalsCountKey()];
     }
 
     /** Conditions */
@@ -238,7 +239,7 @@ abstract contract ProposalStateMultiSigProposalsV1 is StateV1 {
     * @param id The unique identifier of the multi-signature proposal.
     * @return The target address of the proposal.
     */
-    function multiSigProposalTarget(uint256 id) public pure virtual returns (bytes32) {
+    function multiSigProposalTarget(uint256 id) public view virtual returns (address) {
         return _address[multiSigProposalTargetKey(id)];
     }
 
@@ -279,7 +280,7 @@ abstract contract ProposalStateMultiSigProposalsV1 is StateV1 {
     * @param id The unique identifier of the multi-signature proposal.
     * @return The additional data associated with the proposal.
     */
-    function multiSigProposalData(uint256 id) public view virtual returns (bytes) {
+    function multiSigProposalData(uint256 id) public view virtual returns (bytes memory) {
         return _bytes[multiSigProposalDataKey(id)];
     }
 
@@ -449,13 +450,8 @@ abstract contract ProposalStateMultiSigProposalsV1 is StateV1 {
     */
     event MultiSigProposalStartTimestampSetTo(uint256 indexed id, uint256 indexed timestamp);
 
-    /**
-    * @dev Emitted when the start timestamp of a multi-signature proposal is set to a new value.
-    * @param id The unique identifier of the multi-signature proposal.
-    * @param timestamp The new start timestamp for the proposal.
-    */
     function multiSigProposalStartTimestampKey(uint256 id) public pure virtual returns (bytes32) {
-        return keccak256(abi.encode("MULTI_SIG_PROPOSAL_START_TIMESTAMP"));
+        return keccak256(abi.encode("MULTI_SIG_PROPOSAL_START_TIMESTAMP", id));
     }
 
     /**
@@ -463,7 +459,7 @@ abstract contract ProposalStateMultiSigProposalsV1 is StateV1 {
     * @param id The unique identifier of the multi-signature proposal.
     * @return The start timestamp of the proposal as stored in the contract state.
     */
-    function multiSigProposalStartTimestamp(uint256 id) public pure virtual returns (uint256) {
+    function multiSigProposalStartTimestamp(uint256 id) public view virtual returns (uint256) {
         return _uint256[multiSigProposalStartTimestampKey(id)];
     }
 
@@ -497,7 +493,7 @@ abstract contract ProposalStateMultiSigProposalsV1 is StateV1 {
     * @return The keccak256 hash of the string "MULTI_SIG_PROPOSAL_DURATION".
     */
     function multiSigProposalDurationKey(uint256 id) public pure virtual returns (bytes32) {
-        return keccak256(abi.encode("MULTI_SIG_PROPOSAL_DURATION"));
+        return keccak256(abi.encode("MULTI_SIG_PROPOSAL_DURATION", id));
     }
 
     /**

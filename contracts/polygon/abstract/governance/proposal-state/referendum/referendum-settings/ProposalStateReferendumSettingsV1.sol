@@ -1,8 +1,21 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 import "contracts/polygon/abstract/storage/state/StateV1.sol";
+import "contracts/polygon/libraries/flags/uint256/Uint256FlagsV1.sol";
+import "contracts/polygon/libraries/flags/address/AddressFlagsV1.sol";
+import "contracts/polygon/interfaces/token/dream/IDream.sol";
 
 abstract contract ProposalStateReferendumSettingsV1 is StateV1 {
+
+    /**
+    * @dev Imports and extends the functionality of the `Uint256FlagsV1` library for the `uint256` type.
+    */
+    using Uint256FlagsV1 for uint256;
+
+    /**
+    * @dev Imports and extends the functionality of the `AddressFlagsV1` library for the `address` type.
+    */
+    using AddressFlagsV1 for address;
     
     /** Default Required Threshold */
 
@@ -28,7 +41,7 @@ abstract contract ProposalStateReferendumSettingsV1 is StateV1 {
     * @return uint256 The default required threshold for referendum proposals in basis points.
     */
     function defaultReferendumProposalRequiredThreshold() public view virtual returns (uint256) {
-        return _uint256[defaultReferendumProposalRequiredThresholdKey()];
+        return _uint256[defaultReferendumProposalRequiredThresholdKey()].onlyBetween(0, 10000);
     }
 
     /**
@@ -37,7 +50,8 @@ abstract contract ProposalStateReferendumSettingsV1 is StateV1 {
     * @param bp The new default value for the required threshold in basis points.
     */
     function _setDefaultReferendumProposalRequiredThreshold(uint256 bp) internal virtual {
-        _onlyBetween(0, 10000, bp);
+        bp.onlyBetween(0, 10000);
+        _uint256[defaultReferendumProposalRequiredThresholdKey()].onlynotMatchingValue(bp);
         _uint256[defaultReferendumProposalRequiredThresholdKey()] = bp;
         emit DefaultReferendumProposalRequiredThresholdSetTo(bp);
     }
@@ -66,7 +80,7 @@ abstract contract ProposalStateReferendumSettingsV1 is StateV1 {
     * @return uint256 The default required quorum for referendum proposals in basis points.
     */
     function defaultReferendumProposalRequiredQuorum() public view virtual returns (uint256) {
-        return _uint256[defaultReferendumProposalRequiredQuorumKey()];
+        return _uint256[defaultReferendumProposalRequiredQuorumKey()].onlyBetween(0, 10000);
     }
 
     /**
@@ -75,7 +89,9 @@ abstract contract ProposalStateReferendumSettingsV1 is StateV1 {
     * @param bp The new default value for the required quorum in basis points.
     */
     function _setDefaultReferendumProposalRequiredQuorum(uint256 bp) internal virtual {
-        _onlyBetween(0, 10000, bp);
+        bp.onlyBetween(0, 10000);
+        _uint256[defaultReferendumProposalRequiredQuorumKey()].onlynotMatchingValue(bp);
+        _uint256[defaultReferendumProposalRequiredQuorumKey()] = bp;
         emit DefaultReferendumProposalRequiredQuorumSetTo(bp);
     }
 
@@ -112,6 +128,7 @@ abstract contract ProposalStateReferendumSettingsV1 is StateV1 {
     * @param seconds_ The new default duration for referendum proposals in seconds.
     */
     function _setDefaultReferendumProposalDuration(uint256 seconds_) internal virtual {
+        _uint256[defaultReferendumProposalDurationKey()].onlynotMatchingValue(seconds_);
         _uint256[defaultReferendumProposalDurationKey()] = seconds_;
         emit DefaultReferendumProposalDurationSetTo(seconds_);
     }
@@ -149,6 +166,9 @@ abstract contract ProposalStateReferendumSettingsV1 is StateV1 {
     * @param amount The new default minimum balance required for voting.
     */
     function _setDefaultReferendumProposalMinBalanceToVote(uint256 amount) internal virtual {
+        IDream votingERC20 = IDream(defaultReferendumProposalVotingERC20());
+        amount.onlyBetween(0, votingERC20.totalSupply());
+        _uint256[defaultReferendumProposalMinBalanceToVoteKey()].onlynotMatchingValue(amount);
         _uint256[defaultReferendumProposalMinBalanceToVoteKey()] = amount;
         emit DefaultReferendumProposalMinBalanceToVote(amount);
     }
@@ -186,20 +206,9 @@ abstract contract ProposalStateReferendumSettingsV1 is StateV1 {
     * @param erc20 The new address of the default ERC-20 token for voting.
     */
     function _setDefaultReferendumProposalVotingERC20(address erc20) internal virtual {
+        erc20.onlyGovernanceERC20();
+        _address[defaultReferendumProposalVotingERC20Key()].onlynotAddress(erc20);
         _address[defaultReferendumProposalVotingERC20Key()] = erc20;
         emit DefaultReferendumProposalVotingERC20SetTo(erc20);
-    }
-
-    /** Flags. */
-
-    /**
-    * @dev Private function to ensure a value is within a specified range.
-    * 
-    * @param min The minimum value allowed.
-    * @param max The maximum value allowed.
-    * @param value The value to check.
-    */
-    function _onlyBetween(uint256 min, uint256 max, uint256 value) private pure {
-        require(value >= min && value <= max, "ProposalStateReferendumSettingsV1: value out of bounds");
     }
 }
