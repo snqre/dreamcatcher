@@ -3,6 +3,7 @@ pragma solidity ^0.8.19;
 import "contracts/polygon/abstract/storage/state/StateV1.sol";
 import "contracts/polygon/external/openzeppelin/utils/structs/EnumerableSet.sol";
 import "contracts/polygon/interfaces/token/dream/IDream.sol";
+import "contracts/polygon/libraries/flags/uint256/Uint256FlagsV1.sol";
 
 /**
  * @title ProposalStateReferendumProposalsV1
@@ -13,6 +14,8 @@ abstract contract ProposalStateReferendumProposalsV1 is StateV1 {
     * @dev Use the `EnumerableSet` library to provide additional functionality for handling sets of addresses.
     */
     using EnumerableSet for EnumerableSet.AddressSet;
+
+    using Uint256FlagsV1 for uint256;
 
     /**
     * @dev Emitted when a referendum proposal is successfully executed.
@@ -382,7 +385,7 @@ abstract contract ProposalStateReferendumProposalsV1 is StateV1 {
     * @return uint256 The required quorum for the proposal.
     */
     function referendumProposalRequiredQuorum(uint256 id) public view virtual returns (uint256) {
-        return _uint256[referendumProposalRequiredQuorumKey(id)];
+        return _uint256[referendumProposalRequiredQuorumKey(id)].onlyBetween(0, 10000);
     }
 
     /**

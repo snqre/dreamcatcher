@@ -59,8 +59,7 @@ abstract contract ProxyStateBaseV2 is ProxyStateBaseV1, ProposalStateMultiSigV1,
     * @param role The identifier of the role to be granted.
     * @param account The address to be granted the role.
     */
-    function _grantRole(bytes32 role, address account) 
-        internal virtual override {
+    function _grantRole(bytes32 role, address account) internal virtual override {
         if (role == hash("PROPOSER_ROLE")) {
             _addDefaultMultiSigSigner(account);
             super._grantRole(role, account);
@@ -75,8 +74,7 @@ abstract contract ProxyStateBaseV2 is ProxyStateBaseV1, ProposalStateMultiSigV1,
     * @param role The identifier of the role to be revoked.
     * @param account The address from which the role is to be revoked.
     */
-    function _revokeRole(bytes32 role, address account) 
-        internal virtual {
+    function _revokeRole(bytes32 role, address account) internal virtual override {
         if (role == hash("PROPOSER_ROLE")) {
             _removeDefaultMultiSigSigner(account);
             super._revokeRole(role, account);
