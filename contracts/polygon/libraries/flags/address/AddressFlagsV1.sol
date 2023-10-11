@@ -115,6 +115,7 @@ library AddressFlagsV1 {
         IDream erc20 = IDream(self);
         onlyERC20(self);
         erc20.getCurrentSnapshotId();
+        return self;
     }
 
     /**
