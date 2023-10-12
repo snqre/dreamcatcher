@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
-import "contracts/polygon/abstract/governance/proposal-state/referendum-settings/ProposalStateReferendumSettingsV1.sol";
-import "contracts/polygon/abstract/governance/proposal-state/referendum-proposals/ProposalStateReferendumProposalsV1.sol";
+import "contracts/polygon/abstract/governance/proposal-state/referendum/referendum-settings/ProposalStateReferendumSettingsV1.sol";
+import "contracts/polygon/abstract/governance/proposal-state/referendum/referendum-proposals/ProposalStateReferendumProposalsV1.sol";
 import "contracts/polygon/interfaces/token/dream/IDream.sol";
 
 /**
@@ -9,23 +9,28 @@ import "contracts/polygon/interfaces/token/dream/IDream.sol";
  * @dev This contract combines functionality related to Referendum Proposals, including creation, voting, and execution.
  *      It inherits from ProposalStateReferendumSettingsV1 and ProposalStateReferendumProposalsV1 for modular functionality.
  */
-abstract contract ProposalStateReferendumV1 is 
-    ProposalStateReferendumSettingsV1, 
-    ProposalStateReferendumProposalsV1 {
+abstract contract ProposalStateReferendumV1 is ProposalStateReferendumSettingsV1, ProposalStateReferendumProposalsV1 {
 
     /**
-    * @notice Emits when a new Referendum Proposal is successfully created.
-    * @param id The unique identifier of the created Referendum Proposal.
+    * @notice Emitted when a new Referendum Proposal is created.
+    * @dev This event provides information about the newly created proposal.
+    * @param id The unique identifier assigned to the referendum proposal.
+    * @param caption The caption or title of the proposal.
+    * @param message The detailed message or description of the proposal.
+    * @param creator The address of the creator or proposer of the referendum proposal.
+    * @param target The address of the target contract or entity affected by the proposal.
+    * @param data The data associated with the proposal, usually containing encoded instructions.
     */
-    event ReferendumProposalCreated(uint256 indexed id);
+    event ReferendumProposalCreated(uint256 indexed id, string caption, string messaeg, address creator, address indexed target, bytes indexed data);
 
     /**
-    * @dev Internal function to create a new Referendum Proposal.
-    * @param caption The caption or title of the Referendum Proposal.
-    * @param message The detailed message or description of the Referendum Proposal.
-    * @param creator The address of the creator initiating the Referendum Proposal.
-    * @param target The target address affected by the Referendum Proposal.
-    * @param data Additional data associated with the Referendum Proposal.
+    * @dev Creates a new referendum proposal.
+    * @param caption The caption or title of the proposal.
+    * @param message The detailed message or description of the proposal.
+    * @param creator The address of the creator/initiator of the proposal.
+    * @param target The address representing the target of the proposal.
+    * @param data Additional data attached to the proposal.
+    * @return The unique identifier (ID) assigned to the newly created proposal.
     */
     function _createReferendumProposal(string memory caption, string memory message, address creator, address target, bytes memory data) internal virtual returns (uint256) {
         uint256 id = _incrementReferendumProposalsCount();
@@ -41,25 +46,26 @@ abstract contract ProposalStateReferendumV1 is
         _setReferendumProposalVotingERC20(id, defaultReferendumProposalVotingERC20());
         _setReferendumProposalSnapshotId(id, IDream(referendumProposalVotingERC20(id)).snapshot());
         _setReferendumProposalStartTimestamp(id, block.timestamp);
-        emit ReferendumProposalCreated(id);
+        emit ReferendumProposalCreated(id, caption, message, creator, target, data);
         return id;
     }
 
     /**
-    * @dev Internal function to handle the voting process for a Referendum Proposal.
-    * @param id The unique identifier of the Referendum Proposal.
+    * @dev Handles the voting process for a user on a referendum proposal.
+    * @param id The unique identifier of the referendum proposal.
+    * @param side The chosen side to vote on (0 for abstain, 1 for against, 2 for support).
     */
     function _voteOnReferendumProposal(uint256 id, uint256 side) internal virtual override {
-        /** ... @dev Vote logic ... */
+        /** ... @dev Additional vote logic */
         super._voteOnReferendumProposal(id, side);
     }
 
     /**
-    * @dev Internal function to execute the actions specified in a passed Referendum Proposal.
-    * @param id The unique identifier of the Referendum Proposal to be executed.
+    * @dev Executes the actions specified in a successful referendum proposal.
+    * @param id The unique identifier of the successful referendum proposal.
     */
     function _executeReferendumProposal(uint256 id) internal virtual override {
-        /** ... @dev Add execution logic ... */
-        super._executeReferendumProposal(id);
+        /** ... @dev Additional execution logic */
+        super._executeMultiSigProposal(id);
     }
 }
