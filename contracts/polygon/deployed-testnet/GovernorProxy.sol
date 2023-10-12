@@ -3805,6 +3805,6 @@ contract GovernorProxy is ProxyStateV2 {
 
     function defaultImplementation() public view virtual override returns (address) {
         /** ... @dev Link to first implementation */
-        return address(0);
+        return 0x213B5c75aeB85Ec0f7974918a4f0B387ea385FcA;
     }
 }
