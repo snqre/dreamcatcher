@@ -893,9 +893,10 @@ abstract contract ProposalStateReferendumProposalsV1 is StateV1 {
     /**
     * @notice Increments the count of Referendum Proposals and emits an event.
     */
-    function _incrementReferendumProposalsCount() internal virtual {
+    function _incrementReferendumProposalsCount() internal virtual returns (uint256) {
         _uint256[referendumProposalsCountKey()] += 1;
         emit ReferendumProposalsCountIncremented(_uint256[referendumProposalsCountKey()]);
+        return _uint256[referendumProposalsCountKey()];
     }
 
     /** Math */

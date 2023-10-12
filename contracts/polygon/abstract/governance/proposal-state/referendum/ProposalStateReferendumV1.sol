@@ -21,7 +21,7 @@ abstract contract ProposalStateReferendumV1 is ProposalStateReferendumSettingsV1
     * @param target The address of the target contract or entity affected by the proposal.
     * @param data The data associated with the proposal, usually containing encoded instructions.
     */
-    event ReferendumProposalCreated(uint256 indexed id, string caption, string messaeg, address creator, address indexed target, bytes indexed data);
+    event ReferendumProposalCreated(uint256 indexed id, string caption, string message, address creator, address indexed target, bytes indexed data);
 
     /**
     * @dev Creates a new referendum proposal.
@@ -66,6 +66,6 @@ abstract contract ProposalStateReferendumV1 is ProposalStateReferendumSettingsV1
     */
     function _executeReferendumProposal(uint256 id) internal virtual override {
         /** ... @dev Additional execution logic */
-        super._executeMultiSigProposal(id);
+        super._executeReferendumProposal(id);
     }
 }
