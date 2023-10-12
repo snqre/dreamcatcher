@@ -7,7 +7,7 @@ contract GovernorProxy is ProxyStateV2 {
     /** ProxyStateV2 */
 
     function defaultImplementation() public view virtual override returns (address) {
-        /** ... @dev Hardcoded first implementation because the proxy lacks upgrade feature ... */
-        return ;
+        /** ... @dev Link to first implementation */
+        return address(0);
     }
 }
