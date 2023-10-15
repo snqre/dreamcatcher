@@ -1,36 +1,44 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
-import "contracts/polygon/external/openzeppelin/proxy/Proxy.sol";
-import "contracts/polygon/abstract/storage/Storage.sol";
+import "contracts/polygon/abstract/proxy/Base.sol";
+import "contracts/polygon/abstract/access-control/Ownable.sol";
 
 /**
-* STORAGE =>
-*            _address: owner
-*            _address: implementation
-
+* initializedKey => bool
  */
-abstract contract DefaultImplementation is Storage, Proxy {
-    event Upgraded(address indexed oldImplementation, address indexed newImplementation);
+abstract contract DefaultImplementation is Base, Ownable {
 
-    function owner() public view virtual returns (address) {
-        return _address[_ownerKey()];
+    /**
+    * @dev Returns the key used to store the initialization status.
+    */
+    function initializedKey() public pure virtual returns (bytes32) {
+        return keccak256(abi.encode("INITIALIZED"));
     }
 
-    function implementation() public view virtual returns (address) {
-        return _implementation();
+    /**
+    * @dev Returns whether the contract has been initialized.
+    */
+    function initialized() public view virtual returns (bool) {
+        return _bool[initializedKey()];
     }
 
-    function _ownerKey() internal pure virtual returns (bytes32) {
-        return keccak256(abi.enocode("owner"));
+    /**
+    * @dev Upgrades the contract to a new implementation.
+    * Can only be called by the owner.
+    * @param implementation The address of the new implementation.
+    */
+    function upgrade(address implementation) public virtual {
+        _onlyOwner();
+        _upgrade(implementation);
     }
 
-    function _implementationKey() internal pure virtual returns (bytes32) {
-        return keccak256(abi.encode("implementation"));
+    /**
+    * @dev Initializes the contract. 
+    * Can only be called if the contract has not been initialized yet.
+    */
+    function initialize() public virtual {
+        require(!initialized(), "DefaultImplementation: initialized()");
+        _initialize();
+        _bool[initializedKey()] = true;
     }
-
-    function _implementation() internal view virtual returns (address) {
-        _address[_implementationKey()];
-    }
-
-        
 }
