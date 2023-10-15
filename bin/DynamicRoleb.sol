@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity 0.8.19;
-import "contracts/polygon/libraries/shared/errors/ErrorsV1.sol";
+import "contracts/polygon/libraries/shared/errors/Errors.sol";
 
-library RoleV1 {
+library DynamicRole {
 
     /**
     * @title Role
@@ -20,6 +20,7 @@ library RoleV1 {
         bytes32 _admin;
         bool _isDefaultAdmin;
         bool _isTimed;
+        bool _resetOnExpiration;
     }
 
     /**
@@ -27,7 +28,7 @@ library RoleV1 {
     * @dev Provides the current version number of the smart contract.
     * @return The version number.
     */
-    function version() public pure returns (uint256) {
+    function version(Role storage self) public pure returns (uint256) {
         return 1;
     }
 
@@ -129,6 +130,16 @@ library RoleV1 {
     }
 
     /**
+    * @notice Checks if the role resets on expiration.
+    * @dev Returns true if the role is configured to reset on expiration, otherwise returns false.
+    * @param self The Role struct to query.
+    * @return True if the role resets on expiration, false otherwise.
+    */
+    function resetOnExpiration(Role storage self) public view returns (bool) {
+        return self._resetOnExpiration;
+    }
+
+    /**
     * @notice Sets the name of the role.
     * @dev Allows updating the name of the role.
     * @param self The Role struct to update.
@@ -168,10 +179,10 @@ library RoleV1 {
     */
     function grant(Role storage self, address account) public {
         if (isAtLimit({self: self})) {
-            revert ErrorsV1.TooManyRoleMembers();
+            revert Errors.TooManyRoleMembers();
         }
         if (hasRole({self: self, account: account})) {
-            revert ErrorsV1.AlreadyHasRole({account: account});
+            revert Errors.AlreadyHasRole({account: account});
         }
         bool success;
         for (uint256 i = 0; i < membersLength({self: self}); i++) {
@@ -195,7 +206,7 @@ library RoleV1 {
     */
     function revoke(Role storage self, address account) public {
         if (!hasRole({self: self, account: account})) {
-            revert ErrorsV1.DoesNotHaveRole({account: account});
+            revert Errors.DoesNotHaveRole({account: account});
         }
         for (uint256 i = 0; i < membersLength({self: self}); i++) {
             if (members({self: self, memberId: i}) == account) {
@@ -233,6 +244,29 @@ library RoleV1 {
     */
     function setTimed(Role storage self, bool boolean) public {
         self._isTimed = boolean;
+    }
+
+    /**
+    * @notice Sets the reset on expiration flag for the role.
+    * @dev Allows updating the flag indicating whether the role should reset on expiration.
+    * @param self The Role struct to update.
+    * @param boolean The boolean value to set for the reset on expiration flag.
+    */
+    function setResetOnExpiration(Role storage self, bool boolean) public {
+        self._resetOnExpiration = boolean;
+    }
+
+    /**
+    * @notice Updates the role, resetting it if it is timed, has expired, and is configured to reset on expiration.
+    * @dev Checks if the role is timed, has expired, and is configured to reset on expiration.
+    *      If all conditions are met, it resets the timer and clears the members.
+    * @param self The Role struct to update.
+    */
+    function update(Role storage self) public {
+        if (isTimed({self: self}) && hasExpired({self: self}) && resetOnExpiration({self: self})) {
+            resetTimer({self: self});
+            delete self._members;
+        }
     }
 
     /** Timer */
@@ -417,7 +451,6 @@ library RoleV1 {
     * @param self The Role struct to update.
     */
     function resetTimer(Role storage self) public {
-        delete self._startTimestamp;
-        delete self._duration;
+        self._startTimestamp = block.timestamp;
     }
 }

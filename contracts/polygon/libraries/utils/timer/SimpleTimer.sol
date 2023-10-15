@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity 0.8.19;
 
-library TimerV1 {
+library SimpleTimer {
 
     /**
     * @title Timer
@@ -9,15 +9,7 @@ library TimerV1 {
     * @dev This struct is designed to be used within a smart contract to manage time-related functionality.
     */
     struct Timer {
-
-        /**
-        * @notice The timestamp when the timer started.
-        */
         uint256 _startTimestamp;
-
-        /**
-        * @notice The duration of the timer in seconds.
-        */
         uint256 _duration;
     }
 
@@ -173,7 +165,6 @@ library TimerV1 {
     * @param self The Timer struct to reset.
     */
     function reset(Timer storage self) public {
-        delete self._startTimestamp;
-        delete self._duration;
+        self._startTimestamp = block.timestamp;
     }
 }

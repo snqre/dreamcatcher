@@ -10,7 +10,7 @@ pragma solidity 0.8.19;
  *
  * @notice Developers extending this contract can use the _bytes mapping to efficiently manage and retrieve arbitrary byte data.
  */
-abstract contract StateLiteV1 {
+abstract contract StorageLite {
 
     /**
     * @dev Bytes Mapping

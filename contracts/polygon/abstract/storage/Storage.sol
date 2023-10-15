@@ -7,7 +7,7 @@ import "contracts/polygon/external/openzeppelin/utils/structs/EnumerableMap.sol"
 import "contracts/polygon/external/openzeppelin/utils/structs/EnumerableSet.sol";
 
 /**
- * @title StateV1
+ * @title Storage
  * @dev Abstract contract utilizing OpenZeppelin libraries for efficient storage and data management.
  *
  * This contract serves as a foundation for other contracts, providing implementations for various data structures
@@ -23,7 +23,7 @@ import "contracts/polygon/external/openzeppelin/utils/structs/EnumerableSet.sol"
  * @dev Developers extending this contract can benefit from the pre-implemented and optimized storage solutions
  * provided by OpenZeppelin, enabling them to focus on higher-level contract logic.
  */
-abstract contract StateV1 {
+abstract contract Storage {
     
     /**
     * @dev Library for managing uint256 to bool mapping in a compact and efficient way, providing the keys are sequential.
