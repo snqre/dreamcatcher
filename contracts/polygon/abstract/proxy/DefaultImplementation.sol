@@ -6,7 +6,7 @@ import "contracts/polygon/abstract/access-control/Ownable.sol";
 /**
 * initializedKey => bool
  */
-abstract contract DefaultImplementation is Base, Ownable {
+abstract contract DefaultImplementation is Base, Ownable, Pausable {
 
     /**
     * @dev Returns the key used to store the initialization status.
