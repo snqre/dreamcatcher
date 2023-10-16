@@ -10,7 +10,7 @@ import "contracts/polygon/abstract/storage/Storage.sol";
 * implementationTimelineKey => addressArray
 * initialImplementationHasBeenSetKey => address
  */
-abstract contract Base is Storage, Proxy {
+contract Base is Storage, Proxy {
 
     /**
     * @dev Emitted when the contract is upgraded to a new implementation.

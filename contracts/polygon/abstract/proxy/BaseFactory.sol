@@ -4,7 +4,7 @@ import "contracts/polygon/abstract/proxy/Base.sol";
 import "contracts/polygon/interfaces/proxy/IDefaultImplementation.sol";
 import "contracts/polygon/external/openzeppelin/access/Ownable.sol";
 
-abstract contract BaseFactory is Ownable {
+contract BaseFactory is Ownable {
 
     /**
     * An array to keep track of deployed instances of the Base contract.
@@ -54,12 +54,12 @@ abstract contract BaseFactory is Ownable {
     function deploy() public virtual returns (address) {
         _checkOwner();
         _deployed.push(new Base());
-        Base storage newBase = _deployed[_deployed.length - 1];
-        newBase.setInitialImplementation(defaultImplementation());
-        IDefaultImplementation newBaseInterface = IDefaultImplementation(address(newBase));
+        uint256 id = _deployed.length - 1;
+        _deployed[id].setInitialImplementation(defaultImplementation());
+        IDefaultImplementation newBaseInterface = IDefaultImplementation(address(_deployed[id]));
         newBaseInterface.initialize();
         newBaseInterface.transferOwnership(msg.sender);
-        emit Deployed(address(newBase));
-        return address(newBase);
+        emit Deployed(address(_deployed[id]));
+        return address(_deployed[id]);
     }
 }
