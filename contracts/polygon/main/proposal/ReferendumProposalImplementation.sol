@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
-import "contracts/polygon/abstract/governance/proposal/MultiSigProposal.sol";
+import "contracts/polygon/abstract/governance/proposal/ReferendumProposal.sol";
 import "contracts/polygon/abstract/utils/AddressBook.sol";
-import "contracts/polygon/interfaces/main/proposal/IReferendumProposalFactory.sol";
+import "contracts/polygon/interfaces/main/terminal/implementation/ITerminalImplementation.sol";
 
-contract MultiSigProposalImplementation is MultiSigProposal, AddressBook {
+contract ReferendumProposalImplementation is ReferendumProposal, AddressBook {
 
     /**
     * @dev Emitted when the terminal address is set.
@@ -28,22 +28,12 @@ contract MultiSigProposalImplementation is MultiSigProposal, AddressBook {
     * @dev Executes the MultiSigProposal and triggers additional actions.
     * Calls the internal _execute function to mark the proposal as executed.
     * Emits an Executed event.
-    * TODO: Create another referendum proposal using the ReferendumProposalFactory.
+    * Calls terminal low level call and returns result.
     */
-    function execute() public virtual returns (address) {
+    function execute() public virtual returns (bytes memory) {
+        ITerminalImplementation terminal = ITerminalImplementation(terminal());
         _execute();
-        IReferendumProposalFactory factory = IReferendumProposalFactory(referendumProposalFactory());
-        return factory.createReferendumProposal(caption(), message(), target(), data());
-    }
-
-    /**
-    * @dev Sets the address of the terminal associated with the MultiSigProposalFactory.
-    * Only the owner is allowed to perform this action.
-    * @param account The address of the new terminal.
-    */
-    function setTerminal(address account) public virtual {
-        _onlyOwner();
-        _setTerminal(account);
+        return terminal.lowLevelCall(target(), data());
     }
 
     /**

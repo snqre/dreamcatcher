@@ -456,11 +456,7 @@ abstract contract MultiSigProposal is
     * @return bytes The result of the low-level call.
     */
     function _executeWithLowLevelCall() internal virtual returns (bytes memory) {
-        _onlyWhenNotTimedout();
-        _onlyWhenPassed();
-        _onlyWhenNotExecuted();
-        _bool[executedKey()] = true;
-        emit Executed();
+        _execute();
         return _lowLevelCall(target(), data());
     }
 
