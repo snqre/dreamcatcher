@@ -3,7 +3,7 @@ import telebot
 from utils import telegram
 from utils import polygon
 
-telegram.set_api_key_for_telegram("6332415222:AAFOFzFih-7cKc-M3knJfdwgBGQ38Y91bBM")
+telegram.set_api_key_for_telegram("")
 telegram.set_username_for_telegram("enigma")
 enigma = telegram.generate_interface()
 
