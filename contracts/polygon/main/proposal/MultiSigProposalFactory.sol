@@ -3,6 +3,7 @@ pragma solidity 0.8.19;
 import "contracts/polygon/abstract/proxy/BaseFactory.sol";
 import "contracts/polygon/external/openzeppelin/utils/structs/EnumerableSet.sol";
 import "contracts/polygon/interfaces/main/proposal/IMultiSigProposalImplementation.sol";
+import "contracts/polygon/interfaces/main/terminal/implementation/ITerminalImplementation.sol";
 
 /**
 * function deploy is deprecated in this factory and should not be used.
@@ -180,6 +181,8 @@ contract MultiSigProposalFactory is BaseFactory {
         proposal.setTerminal(terminal());
         proposal.setMultiSigProposalFactory(multiSigProposalFactory());
         proposal.setReferendumProposalFactory(referendumProposalFactory());
+        ITerminalImplementation terminal = ITerminalImplementation(terminal());
+        terminal.grantRole(terminal.roleKey(terminal.hash("MULTI_SIG_PROPOSAL_ROLE")), address(proposal));
         emit Deployed(address(_deployed[id]));
         return address(_deployed[id]);
     }
