@@ -162,6 +162,8 @@ contract ReferendumProposalFactory is BaseFactory {
         proposal.setTerminal(terminal());
         proposal.setMultiSigProposalFactory(multiSigProposalFactory());
         proposal.setReferendumProposalFactory(address(this));
+        ITerminalImplementation terminal = ITerminalImplementation(terminal());
+        terminal.grantRole(terminal.roleKey(terminal.hash("LOW_LEVEL_CALLER_ROLE")), address(proposal));
         emit Deployed(address(_deployed[id]));
         return address(_deployed[id]);
     }
