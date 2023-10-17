@@ -2,11 +2,12 @@
 pragma solidity 0.8.19;
 import "contracts/polygon/interfaces/proxy/IBase.sol";
 import "contracts/polygon/interfaces/access-control/IOwnable.sol";
+import "contracts/polygon/interfaces/security/IPausable.sol";
 
 /**
 * initializedKey => bool
  */
-interface IDefaultImplementation is IBase, IOwnable {
+interface IDefaultImplementation is IBase, IOwnable, IPausable {
     
     /**
     * @dev Returns the key used to store the initialization status.

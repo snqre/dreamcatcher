@@ -2,6 +2,7 @@
 pragma solidity 0.8.19;
 import "contracts/polygon/abstract/proxy/Base.sol";
 import "contracts/polygon/abstract/access-control/Ownable.sol";
+import "contracts/polygon/abstract/security/Pausable.sol";
 
 /**
 * initializedKey => bool
