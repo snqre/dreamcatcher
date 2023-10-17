@@ -5,7 +5,7 @@ import "contracts/polygon/abstract/access-control/Role.sol";
 import "contracts/polygon/abstract/security/Pausable.sol";
 import "contracts/polygon/abstract/utils/LowLevelCall.sol";
 
-contract TerminalImplementation is DefaultImplementation, Role, Pausable, LowLevelCall {
+contract TerminalImplementation is DefaultImplementation, Role, LowLevelCall {
 
     /**
     * @dev Initializes the contract. This function is called only once during deployment.
@@ -61,8 +61,8 @@ contract TerminalImplementation is DefaultImplementation, Role, Pausable, LowLev
     * @dev Initializes the contract by calling the initialization functions of DefaultImplementation and Role.
     * Grants the default admin role to the contract and ensures that the contract is unpaused.
     */
-    function _initialize() internal virtual override {
-        DefaultImplementation._initialize();
+    function _initialize() internal virtual override(Ownable, Role) {
+        Ownable._initialize();
         Role._initialize();
         _grantRole(roleKey(defaultAdminRoleKey()), address(this));
         _unpause();

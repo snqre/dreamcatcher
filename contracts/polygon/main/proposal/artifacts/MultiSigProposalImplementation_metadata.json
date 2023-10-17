@@ -1487,11 +1487,11 @@
 			]
 		},
 		"contracts/polygon/abstract/governance/proposal/MultiSigProposal.sol": {
-			"keccak256": "0xc0a6af3e5904793abcb997a9f97c47cf22b78be35bcfb332bb4410013832a0b9",
+			"keccak256": "0x7a88354d2a113ab4c9ce8f936f465327da69e98f9b5416ae9b16d7fbfcbec59a",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://ef17c6593203bce2cc7e7f06d9653fdc6d45bf0038e5d7007205030f0bc4e786",
-				"dweb:/ipfs/QmT1v4Jfd1mpEMML56HUceLhY42snJRLvrWQYpAv1jfLcL"
+				"bzz-raw://b1b9e63123758a60d05158284500123cdaac15fcc3a4d384ca44529b5f6fd2d1",
+				"dweb:/ipfs/QmagMCUxX4AsmXqt4keyPtJRhRugBxeafJ6TEYJjjFX3uz"
 			]
 		},
 		"contracts/polygon/abstract/storage/Storage.sol": {
