@@ -5,7 +5,7 @@ import "contracts/polygon/interfaces/access-control/IRole.sol";
 import "contracts/polygon/interfaces/security/IPausable.sol";
 import "contracts/polygon/interfaces/utils/ILowLevelCall.sol";
 
-interface ITerminalImplementation is IDefaultImplementation, IRole, IPausable, ILowLevelCall {
+interface ITerminalImplementation is IDefaultImplementation, IRole, ILowLevelCall {
 
     /**
     * @dev Initializes the contract. This function is called only once during deployment.

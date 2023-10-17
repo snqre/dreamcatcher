@@ -10,7 +10,6 @@ abstract contract BaseDeployer {
 
     /**
     * @dev Constructor to initialize the contract with the provided initial implementation.
-    * @param initialImplementation The address of the initial implementation.
     */
     constructor(address defaultImplementation) {
         _deployed = new Base();

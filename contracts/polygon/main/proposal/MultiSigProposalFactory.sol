@@ -87,7 +87,9 @@ contract MultiSigProposalFactory is BaseFactory {
     * Inherits from BaseFactory and Ownable, setting the deployer as the owner.
     * @param multiSigProposalImplementation The address of the MultiSigProposal implementation.
     */
-    constructor(address multiSigProposalImplementation) BaseFactory(MultiSigProposalImplementation) Ownable(msg.sender) {}
+    constructor(address multiSigProposalImplementation) BaseFactory(multiSigProposalImplementation){
+        _transferOwnership(msg.sender);
+    }
 
     /**
     * @dev Retrieves the default required quorum in basis points.
@@ -179,7 +181,7 @@ contract MultiSigProposalFactory is BaseFactory {
         proposal.setDuration(defaultDuration());
         proposal.setRequiredQuorum(defaultRequiredQuorum());
         proposal.setTerminal(terminal());
-        proposal.setMultiSigProposalFactory(multiSigProposalFactory());
+        proposal.setMultiSigProposalFactory(address(this));
         proposal.setReferendumProposalFactory(referendumProposalFactory());
         ITerminalImplementation terminal = ITerminalImplementation(terminal());
         terminal.grantRole(terminal.roleKey(terminal.hash("MULTI_SIG_PROPOSAL_ROLE")), address(proposal));

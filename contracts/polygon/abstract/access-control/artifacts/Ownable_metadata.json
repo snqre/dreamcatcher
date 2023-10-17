@@ -1,0 +1,204 @@
+{
+	"compiler": {
+		"version": "0.8.19+commit.7dd6d404"
+	},
+	"language": "Solidity",
+	"output": {
+		"abi": [
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "oldOwner",
+						"type": "address"
+					},
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "newOwner",
+						"type": "address"
+					}
+				],
+				"name": "OwnershipTransferred",
+				"type": "event"
+			},
+			{
+				"inputs": [],
+				"name": "owner",
+				"outputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "ownerKey",
+				"outputs": [
+					{
+						"internalType": "bytes32",
+						"name": "",
+						"type": "bytes32"
+					}
+				],
+				"stateMutability": "pure",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "renounceOwnership",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "newOwner",
+						"type": "address"
+					}
+				],
+				"name": "transferOwnership",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			}
+		],
+		"devdoc": {
+			"events": {
+				"OwnershipTransferred(address,address)": {
+					"details": "Emitted when ownership of the contract is transferred.",
+					"params": {
+						"newOwner": "The address of the new owner.",
+						"oldOwner": "The address of the old owner."
+					}
+				}
+			},
+			"kind": "dev",
+			"methods": {
+				"owner()": {
+					"details": "Returns the current owner of the contract.",
+					"returns": {
+						"_0": "The address of the current owner."
+					}
+				},
+				"ownerKey()": {
+					"details": "Returns the key for the owner in the storage mapping.",
+					"returns": {
+						"_0": "The key for the owner."
+					}
+				},
+				"renounceOwnership()": {
+					"details": "Renounces ownership, leaving the contract without an owner."
+				},
+				"transferOwnership(address)": {
+					"details": "Transfers ownership of the contract to a new account (`newOwner`). Can only be called by the current owner."
+				}
+			},
+			"version": 1
+		},
+		"userdoc": {
+			"kind": "user",
+			"methods": {},
+			"notice": "ownerKey => address",
+			"version": 1
+		}
+	},
+	"settings": {
+		"compilationTarget": {
+			"contracts/polygon/abstract/access-control/Ownable.sol": "Ownable"
+		},
+		"evmVersion": "paris",
+		"libraries": {},
+		"metadata": {
+			"bytecodeHash": "ipfs"
+		},
+		"optimizer": {
+			"enabled": true,
+			"runs": 200
+		},
+		"remappings": []
+	},
+	"sources": {
+		"contracts/polygon/abstract/access-control/Ownable.sol": {
+			"keccak256": "0x11db09c5965f9f3f115abbfd29256bc233af505ba2db8bae7a87f2d109c10222",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://13f258101d9e1001f8d23451ef9369ca4d531d9a3193cc8de3087b2fc86c937e",
+				"dweb:/ipfs/QmWpPbNHSoxE4zPMg9sPwZcp885QNKb7ihVtn7xCogDBFQ"
+			]
+		},
+		"contracts/polygon/abstract/storage/Storage.sol": {
+			"keccak256": "0x160a037254c401dbf5be05149b00ec79162c2b6caef09bae6d1021fb98ce1f2e",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://eb354384f7f39f0e060f457b2adb39e0a5e0256a3303ef08453b738499b9411e",
+				"dweb:/ipfs/QmRefT11g49QJoSkG11CM8uUKMTA25A5ahiHRzLwM2Qj3i"
+			]
+		},
+		"contracts/polygon/external/openzeppelin/utils/math/Math.sol": {
+			"keccak256": "0xffe8a176523d38132299bc22fd6bb138954ba3f35d41a86d004dac50dc31b615",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://67b3d7e2d3042e5061168827e518b2eb546be0f4a3f764f654c28205c5a428e5",
+				"dweb:/ipfs/Qma3d9Vim9NrzWAFASxpDppgGXo8MWZ6zorsgAYYXsbXph"
+			]
+		},
+		"contracts/polygon/external/openzeppelin/utils/math/SafeCast.sol": {
+			"keccak256": "0x57984e48977d103f341e7c64180fcd3c2e09bdd02e585318779ca43845a2adc8",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://385a907140ff953c1bbbc884661dcb9d1ad20780a105453c6d36f7ebcb78b445",
+				"dweb:/ipfs/QmRtdUhATvWu3T7fu3gEXzACQ33yZxMvkBn52yWn4B4P4D"
+			]
+		},
+		"contracts/polygon/external/openzeppelin/utils/structs/BitMaps.sol": {
+			"keccak256": "0x78dd37e219accdaa6f3d16b6a234284054a9806fa43cc732dd0aa7943b55638e",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://0089a95579a67e46ef8247306f727d47da7ba834ed68cbd60a431b48fd6027f6",
+				"dweb:/ipfs/QmRUkxxQ63qKaqkRfPJTRzM4sDLJ9nXVaTrkyn1TDdE91V"
+			]
+		},
+		"contracts/polygon/external/openzeppelin/utils/structs/Checkpoints.sol": {
+			"keccak256": "0x644db19b1e69fb99b1ffd68d8d26ca38b134c9eecf6dac51adf386829e56a0b8",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://889402f6e944638549561a37e6e42a565118ca12306abd95c1ab32a895d7c686",
+				"dweb:/ipfs/QmdXToFMLazMEtyEgCFN48Kai3anefjUzTacEaoM6Cgjzf"
+			]
+		},
+		"contracts/polygon/external/openzeppelin/utils/structs/DoubleEndedQueue.sol": {
+			"keccak256": "0x668e9e588b132e215375ae0b0233edcfb89067a5cee66ade1a6f69f7b6b4f206",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://b75421ca6bb7a37d2ac93de71b95121dcb67e920fde42dd8ddf3ac3ae89acb56",
+				"dweb:/ipfs/QmfUMDRzgzuJNh99U2B47Fjr8sYq5eMrnnrXESwAAXWveE"
+			]
+		},
+		"contracts/polygon/external/openzeppelin/utils/structs/EnumerableMap.sol": {
+			"keccak256": "0xf7d311d4bc1a611f69ea3d44893602cab5f4b0b339295e5085f4d5117614c3ff",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://19351930ede89c279228443ca9d388ca1b5060dcaf8384294f7016192bba4fee",
+				"dweb:/ipfs/QmaYDEsegdyhd4CyVv9DWQTAzCDwEzFsUhE8TXD4BTKxGy"
+			]
+		},
+		"contracts/polygon/external/openzeppelin/utils/structs/EnumerableSet.sol": {
+			"keccak256": "0xeefcbb8cb69f04a18f6dc61d4811133ce9aeff96ce60820f758abc52ef55b892",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://81c61c0dd40890f6a4b1fb792bc5b5b61e821fcafa2aae6c7eda6d4f1ece2593",
+				"dweb:/ipfs/QmRLMrq6BiPS9wGu7ZC174SFYWCu6cxbU3agDw2XgJeDpT"
+			]
+		}
+	},
+	"version": 1
+}

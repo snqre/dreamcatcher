@@ -9,12 +9,12 @@ contract BaseFactory is Ownable {
     /**
     * An array to keep track of deployed instances of the Base contract.
     */
-    Base[] private _deployed;
+    Base[] internal _deployed;
 
     /**
     * The address of the default implementation.
     */
-    address private _defaultImplementation;
+    address internal _defaultImplementation;
 
     /**
     * Emitted when a new Base contract is deployed.

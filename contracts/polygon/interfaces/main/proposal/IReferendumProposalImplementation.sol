@@ -31,6 +31,8 @@ interface IReferendumProposalImplementation is IReferendumProposal, IAddressBook
     */
     function execute() external returns (bytes memory);
 
+    function setTerminal(address account) external;
+
     /**
     * @dev Sets the address of the MultiSigProposalFactory associated with the MultiSigProposalFactory.
     * Only the owner is allowed to perform this action.

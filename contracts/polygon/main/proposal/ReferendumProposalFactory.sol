@@ -83,7 +83,7 @@ contract ReferendumProposalFactory is BaseFactory {
     * @dev Constructor for the ReferendumProposalFactory contract.
     * @param referendumProposalImplementation The address of the implementation contract for ReferendumProposal instances.
     */
-    constructor(address referendumProposalImplementation) BaseFactory(ReferendumProposalImplementation) Ownable(msg.sender) {}
+    constructor(address referendumProposalImplementation) BaseFactory(referendumProposalImplementation) {}
 
     /**
     * @dev Returns the default required quorum percentage for ReferendumProposal instances.

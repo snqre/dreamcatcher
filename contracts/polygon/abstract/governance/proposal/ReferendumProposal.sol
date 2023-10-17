@@ -74,7 +74,7 @@ abstract contract ReferendumProposal is
     * @dev Emitted when the data of a proposal is set.
     * @param data The new data for the proposal.
     */
-    event DataSet(address indexed data);
+    event DataSet(bytes indexed data);
 
     /**
     * @dev Emitted when the start timestamp of a proposal is set.
@@ -464,8 +464,9 @@ abstract contract ReferendumProposal is
     * @dev Internal function to initialize the contract.
     * It transfers ownership to the deployer and calls the base class's initialization.
     */
-    function _initialize() internal virtual override {
+    function _initialize() internal virtual override(Initializable, Ownable) {
         _transferOwnership(msg.sender);
+        Ownable._initialize();
         Initializable._initialize();
     }
 
@@ -475,7 +476,7 @@ abstract contract ReferendumProposal is
     * Increases the vote count for the specified side based on the user's balance at the snapshot.
     * Updates the proposal status after the vote.
     * @param side The side of the vote (0 for Abstain, 1 for Against, 2 for Support).
-    * @revert If the input side is unsupported.
+    * revert If the input side is unsupported.
     */
     function _vote(uint256 side) internal virtual {
         _onlyWhenNotTimedout();
@@ -561,7 +562,7 @@ abstract contract ReferendumProposal is
     */
     function _setCreator(address account) internal virtual override {
         super._setCreator(account);
-        emit CreatorSet(creator);
+        emit CreatorSet(account);
     }
 
     /**
@@ -571,7 +572,7 @@ abstract contract ReferendumProposal is
     */
     function _setTarget(address account) internal virtual override {
         super._setTarget(account);
-        emit TargetSet(target);
+        emit TargetSet(account);
     }
 
     /**
@@ -635,7 +636,7 @@ abstract contract ReferendumProposal is
     */
     function _snapshot() internal virtual {
         _uint256[snapshotIdKey()] = IDream(votingERC20()).snapshot();
-        emit SnapshotTaken(_uint256[snapshotidKey()]);
+        emit SnapshotTaken(_uint256[snapshotIdKey()]);
     }
 
     /**
@@ -644,7 +645,7 @@ abstract contract ReferendumProposal is
     * @param erc20 The address of the ERC20 token to be set for voting.
     */
     function _setVotingERC20(address erc20) internal virtual {
-        _address[votingERC20()] = erc20;
+        _address[votingERC20Key()] = erc20;
         emit VotingERC20Set(erc20);
     }
 

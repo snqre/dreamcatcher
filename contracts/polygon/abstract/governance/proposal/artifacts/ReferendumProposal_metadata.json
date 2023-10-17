@@ -1,0 +1,1612 @@
+{
+	"compiler": {
+		"version": "0.8.19+commit.7dd6d404"
+	},
+	"language": "Solidity",
+	"output": {
+		"abi": [
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "account",
+						"type": "address"
+					},
+					{
+						"indexed": true,
+						"internalType": "uint256",
+						"name": "amount",
+						"type": "uint256"
+					}
+				],
+				"name": "AbstainIncreased",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "account",
+						"type": "address"
+					},
+					{
+						"indexed": true,
+						"internalType": "uint256",
+						"name": "amount",
+						"type": "uint256"
+					}
+				],
+				"name": "AgainstIncreased",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "string",
+						"name": "caption",
+						"type": "string"
+					}
+				],
+				"name": "CaptionSet",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "creator",
+						"type": "address"
+					}
+				],
+				"name": "CreatorSet",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "bytes",
+						"name": "data",
+						"type": "bytes"
+					}
+				],
+				"name": "DataSet",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "uint256",
+						"name": "seconds_",
+						"type": "uint256"
+					}
+				],
+				"name": "DurationSet",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [],
+				"name": "Executed",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "target",
+						"type": "address"
+					},
+					{
+						"indexed": true,
+						"internalType": "bytes",
+						"name": "data",
+						"type": "bytes"
+					},
+					{
+						"indexed": true,
+						"internalType": "bytes",
+						"name": "response",
+						"type": "bytes"
+					}
+				],
+				"name": "LowLevelCall",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "string",
+						"name": "message",
+						"type": "string"
+					}
+				],
+				"name": "MessageSet",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "oldOwner",
+						"type": "address"
+					},
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "newOwner",
+						"type": "address"
+					}
+				],
+				"name": "OwnershipTransferred",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [],
+				"name": "Passed",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "uint256",
+						"name": "bp",
+						"type": "uint256"
+					}
+				],
+				"name": "RequiredQuorumSet",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "uint256",
+						"name": "bp",
+						"type": "uint256"
+					}
+				],
+				"name": "RequiredThresholdSet",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "uint256",
+						"name": "id",
+						"type": "uint256"
+					}
+				],
+				"name": "SnapshotTaken",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "uint256",
+						"name": "timestamp",
+						"type": "uint256"
+					}
+				],
+				"name": "StartTimestampSet",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "account",
+						"type": "address"
+					},
+					{
+						"indexed": true,
+						"internalType": "uint256",
+						"name": "amount",
+						"type": "uint256"
+					}
+				],
+				"name": "SupportIncreased",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "target",
+						"type": "address"
+					}
+				],
+				"name": "TargetSet",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "erc20",
+						"type": "address"
+					}
+				],
+				"name": "VotingERC20Set",
+				"type": "event"
+			},
+			{
+				"inputs": [],
+				"name": "abstain",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "abstainKey",
+				"outputs": [
+					{
+						"internalType": "bytes32",
+						"name": "",
+						"type": "bytes32"
+					}
+				],
+				"stateMutability": "pure",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "against",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "againstKey",
+				"outputs": [
+					{
+						"internalType": "bytes32",
+						"name": "",
+						"type": "bytes32"
+					}
+				],
+				"stateMutability": "pure",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "caption",
+				"outputs": [
+					{
+						"internalType": "string",
+						"name": "",
+						"type": "string"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "captionKey",
+				"outputs": [
+					{
+						"internalType": "bytes32",
+						"name": "",
+						"type": "bytes32"
+					}
+				],
+				"stateMutability": "pure",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "counting",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "",
+						"type": "bool"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "creator",
+				"outputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "creatorKey",
+				"outputs": [
+					{
+						"internalType": "bytes32",
+						"name": "",
+						"type": "bytes32"
+					}
+				],
+				"stateMutability": "pure",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "data",
+				"outputs": [
+					{
+						"internalType": "bytes",
+						"name": "",
+						"type": "bytes"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "dataKey",
+				"outputs": [
+					{
+						"internalType": "bytes32",
+						"name": "",
+						"type": "bytes32"
+					}
+				],
+				"stateMutability": "pure",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "duration",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "durationKey",
+				"outputs": [
+					{
+						"internalType": "bytes32",
+						"name": "",
+						"type": "bytes32"
+					}
+				],
+				"stateMutability": "pure",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "endTimestamp",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "ended",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "",
+						"type": "bool"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "executed",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "",
+						"type": "bool"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "executedKey",
+				"outputs": [
+					{
+						"internalType": "bytes32",
+						"name": "",
+						"type": "bytes32"
+					}
+				],
+				"stateMutability": "pure",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "initialize",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "initialized",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "",
+						"type": "bool"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "initializedKey",
+				"outputs": [
+					{
+						"internalType": "bytes32",
+						"name": "",
+						"type": "bytes32"
+					}
+				],
+				"stateMutability": "pure",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "message",
+				"outputs": [
+					{
+						"internalType": "string",
+						"name": "",
+						"type": "string"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "messageKey",
+				"outputs": [
+					{
+						"internalType": "bytes32",
+						"name": "",
+						"type": "bytes32"
+					}
+				],
+				"stateMutability": "pure",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "owner",
+				"outputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "ownerKey",
+				"outputs": [
+					{
+						"internalType": "bytes32",
+						"name": "",
+						"type": "bytes32"
+					}
+				],
+				"stateMutability": "pure",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "passed",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "",
+						"type": "bool"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "passedKey",
+				"outputs": [
+					{
+						"internalType": "bytes32",
+						"name": "",
+						"type": "bytes32"
+					}
+				],
+				"stateMutability": "pure",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "quorum",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "renounceOwnership",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "requiredQuorum",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "requiredQuorumKey",
+				"outputs": [
+					{
+						"internalType": "bytes32",
+						"name": "",
+						"type": "bytes32"
+					}
+				],
+				"stateMutability": "pure",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "requiredQuorumNumber",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "requiredThreshold",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "requiredThresholdKey",
+				"outputs": [
+					{
+						"internalType": "bytes32",
+						"name": "",
+						"type": "bytes32"
+					}
+				],
+				"stateMutability": "pure",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "secondsLeft",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "string",
+						"name": "caption",
+						"type": "string"
+					}
+				],
+				"name": "setCaption",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "account",
+						"type": "address"
+					}
+				],
+				"name": "setCreator",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "bytes",
+						"name": "data",
+						"type": "bytes"
+					}
+				],
+				"name": "setData",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "seconds_",
+						"type": "uint256"
+					}
+				],
+				"name": "setDuration",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "string",
+						"name": "message",
+						"type": "string"
+					}
+				],
+				"name": "setMessage",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "bp",
+						"type": "uint256"
+					}
+				],
+				"name": "setRequiredQuorum",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "bp",
+						"type": "uint256"
+					}
+				],
+				"name": "setRequiredThreshold",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "timestamp",
+						"type": "uint256"
+					}
+				],
+				"name": "setStartTimestamp",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "account",
+						"type": "address"
+					}
+				],
+				"name": "setTarget",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "erc20",
+						"type": "address"
+					}
+				],
+				"name": "setVotingERC20",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "snapshot",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "snapshotId",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "snapshotIdKey",
+				"outputs": [
+					{
+						"internalType": "bytes32",
+						"name": "",
+						"type": "bytes32"
+					}
+				],
+				"stateMutability": "pure",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "startTimestamp",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "startTimestampKey",
+				"outputs": [
+					{
+						"internalType": "bytes32",
+						"name": "",
+						"type": "bytes32"
+					}
+				],
+				"stateMutability": "pure",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "started",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "",
+						"type": "bool"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "sufficientQuorum",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "",
+						"type": "bool"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "sufficientThreshold",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "",
+						"type": "bool"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "support",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "supportKey",
+				"outputs": [
+					{
+						"internalType": "bytes32",
+						"name": "",
+						"type": "bytes32"
+					}
+				],
+				"stateMutability": "pure",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "target",
+				"outputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "targetKey",
+				"outputs": [
+					{
+						"internalType": "bytes32",
+						"name": "",
+						"type": "bytes32"
+					}
+				],
+				"stateMutability": "pure",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "threshold",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "newOwner",
+						"type": "address"
+					}
+				],
+				"name": "transferOwnership",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "side",
+						"type": "uint256"
+					}
+				],
+				"name": "vote",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "votingERC20",
+				"outputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "votingERC20Key",
+				"outputs": [
+					{
+						"internalType": "bytes32",
+						"name": "",
+						"type": "bytes32"
+					}
+				],
+				"stateMutability": "pure",
+				"type": "function"
+			}
+		],
+		"devdoc": {
+			"events": {
+				"AbstainIncreased(address,uint256)": {
+					"params": {
+						"account": "The address that has voted.",
+						"amount": "The amount of votes they have dedicated to this side."
+					}
+				},
+				"AgainstIncreased(address,uint256)": {
+					"params": {
+						"account": "The address that has voted.",
+						"amount": "The amount of votes they have dedicated to this side."
+					}
+				},
+				"CaptionSet(string)": {
+					"details": "Emitted when the caption of a proposal is set.",
+					"params": {
+						"caption": "The new caption for the proposal."
+					}
+				},
+				"CreatorSet(address)": {
+					"details": "Emitted when the creator of a proposal is set.",
+					"params": {
+						"creator": "The address of the new creator for the proposal."
+					}
+				},
+				"DataSet(bytes)": {
+					"details": "Emitted when the data of a proposal is set.",
+					"params": {
+						"data": "The new data for the proposal."
+					}
+				},
+				"DurationSet(uint256)": {
+					"details": "Emitted when the duration of a proposal is set.",
+					"params": {
+						"seconds_": "The new duration in seconds for the proposal."
+					}
+				},
+				"Executed()": {
+					"details": "Emitted when a proposal is marked as executed."
+				},
+				"LowLevelCall(address,bytes,bytes)": {
+					"details": "Emitted when a low-level call is executed.",
+					"params": {
+						"data": "The data passed to the call.",
+						"response": "The response received from the call.",
+						"target": "The target address of the call."
+					}
+				},
+				"MessageSet(string)": {
+					"details": "Emitted when the message of a proposal is set.",
+					"params": {
+						"message": "The new message for the proposal."
+					}
+				},
+				"OwnershipTransferred(address,address)": {
+					"details": "Emitted when ownership of the contract is transferred.",
+					"params": {
+						"newOwner": "The address of the new owner.",
+						"oldOwner": "The address of the old owner."
+					}
+				},
+				"Passed()": {
+					"details": "Emitted when a proposal is marked as passed."
+				},
+				"RequiredQuorumSet(uint256)": {
+					"details": "Emitted when the required quorum of a proposal is set.",
+					"params": {
+						"bp": "The new required quorum as a basis point for the proposal."
+					}
+				},
+				"RequiredThresholdSet(uint256)": {
+					"details": "Emitted when the required threshold of a proposal is set.",
+					"params": {
+						"bp": "The new required threshold as a basis point for the proposal."
+					}
+				},
+				"SnapshotTaken(uint256)": {
+					"details": "Emitted when a snapshot is taken for a specific ID.",
+					"params": {
+						"id": "The index or identifier of the snapshot."
+					}
+				},
+				"StartTimestampSet(uint256)": {
+					"details": "Emitted when the start timestamp of a proposal is set.",
+					"params": {
+						"timestamp": "The new start timestamp for the proposal."
+					}
+				},
+				"SupportIncreased(address,uint256)": {
+					"params": {
+						"account": "The address that has voted.",
+						"amount": "The amount of votes they have dedicated to this side."
+					}
+				},
+				"TargetSet(address)": {
+					"details": "Emitted when the target address of a proposal is set.",
+					"params": {
+						"target": "The address of the new target for the proposal."
+					}
+				},
+				"VotingERC20Set(address)": {
+					"details": "Emitted when the Voting ERC20 address is set.",
+					"params": {
+						"erc20": "The address of the new Voting ERC20 contract."
+					}
+				}
+			},
+			"kind": "dev",
+			"methods": {
+				"abstain()": {
+					"details": "Gets the current abstain votes for a proposal.",
+					"returns": {
+						"_0": "uint256 The current abstain votes value."
+					}
+				},
+				"abstainKey()": {
+					"details": "Returns the keccak256 hash key for accessing the abstain votes in storage.",
+					"returns": {
+						"_0": "bytes32 The keccak256 hash key for the abstain votes."
+					}
+				},
+				"against()": {
+					"details": "Gets the current against votes for a proposal.",
+					"returns": {
+						"_0": "uint256 The current against votes value."
+					}
+				},
+				"againstKey()": {
+					"details": "Returns the keccak256 hash key for accessing the against votes in storage.",
+					"returns": {
+						"_0": "bytes32 The keccak256 hash key for the against votes."
+					}
+				},
+				"caption()": {
+					"details": "Returns the caption associated with the proposal."
+				},
+				"captionKey()": {
+					"details": "Returns the key for storing the caption in storage."
+				},
+				"counting()": {
+					"details": "Checks if the timer is actively counting."
+				},
+				"creator()": {
+					"details": "Returns the address of the creator of the proposal."
+				},
+				"creatorKey()": {
+					"details": "Returns the key for storing the creator in storage."
+				},
+				"data()": {
+					"details": "Returns the current data bytes."
+				},
+				"dataKey()": {
+					"details": "Returns the key for storing the data."
+				},
+				"duration()": {
+					"details": "Returns the duration."
+				},
+				"durationKey()": {
+					"details": "Returns the key for the duration."
+				},
+				"endTimestamp()": {
+					"details": "Returns the end timestamp."
+				},
+				"ended()": {
+					"details": "Checks if the timer has ended."
+				},
+				"executed()": {
+					"details": "Checks if the proposal has been executed.",
+					"returns": {
+						"_0": "bool True if the proposal has been executed, false otherwise."
+					}
+				},
+				"executedKey()": {
+					"details": "Returns the keccak256 hash key for accessing the \"executed\" status in storage.",
+					"returns": {
+						"_0": "bytes32 The keccak256 hash key for the \"executed\" status."
+					}
+				},
+				"initialize()": {
+					"details": "Initializes the contract. Should be called only once during deployment."
+				},
+				"initialized()": {
+					"details": "Checks if the contract has been initialized."
+				},
+				"initializedKey()": {
+					"details": "Returns the key for checking if the contract has been initialized."
+				},
+				"message()": {
+					"details": "Returns the message associated with the proposal."
+				},
+				"messageKey()": {
+					"details": "Returns the key for storing the message in storage."
+				},
+				"owner()": {
+					"details": "Returns the current owner of the contract.",
+					"returns": {
+						"_0": "The address of the current owner."
+					}
+				},
+				"ownerKey()": {
+					"details": "Returns the key for the owner in the storage mapping.",
+					"returns": {
+						"_0": "The key for the owner."
+					}
+				},
+				"passed()": {
+					"details": "Checks if the proposal has passed.",
+					"returns": {
+						"_0": "bool True if the proposal has passed, false otherwise."
+					}
+				},
+				"passedKey()": {
+					"details": "Returns the keccak256 hash key for accessing the \"passed\" status in storage.",
+					"returns": {
+						"_0": "bytes32 The keccak256 hash key for the \"passed\" status."
+					}
+				},
+				"quorum()": {
+					"details": "Calculates the total quorum by summing up the support, against, and abstain votes.",
+					"returns": {
+						"_0": "uint256 The total quorum."
+					}
+				},
+				"renounceOwnership()": {
+					"details": "Renounces ownership, leaving the contract without an owner."
+				},
+				"requiredQuorum()": {
+					"details": "Gets the current required quorum for proposals.",
+					"returns": {
+						"_0": "uint256 The required quorum as a basis point."
+					}
+				},
+				"requiredQuorumKey()": {
+					"details": "Returns the keccak256 hash key for accessing the required quorum in storage.",
+					"returns": {
+						"_0": "bytes32 The keccak256 hash key for the required quorum."
+					}
+				},
+				"requiredQuorumNumber()": {
+					"details": "Calculates the required quorum number based on the total supply at a snapshot and the required quorum percentage.",
+					"returns": {
+						"_0": "uint256 The required quorum number."
+					}
+				},
+				"requiredThreshold()": {
+					"details": "Gets the current required threshold for proposals.",
+					"returns": {
+						"_0": "uint256 The required threshold as a basis point."
+					}
+				},
+				"requiredThresholdKey()": {
+					"details": "Returns the keccak256 hash key for accessing the required threshold in storage.",
+					"returns": {
+						"_0": "bytes32 The keccak256 hash key for the required threshold."
+					}
+				},
+				"secondsLeft()": {
+					"details": "Calculates the remaining seconds in the timer."
+				},
+				"setCaption(string)": {
+					"details": "Sets the caption of the proposal.",
+					"params": {
+						"caption": "The new caption to be set."
+					}
+				},
+				"setCreator(address)": {
+					"details": "Sets the creator of the proposal.",
+					"params": {
+						"account": "The address of the new creator."
+					}
+				},
+				"setData(bytes)": {
+					"details": "Sets the data of the proposal.",
+					"params": {
+						"data": "The new data to be set."
+					}
+				},
+				"setDuration(uint256)": {
+					"details": "Sets the duration of the proposal in seconds.",
+					"params": {
+						"seconds_": "The new duration in seconds."
+					}
+				},
+				"setMessage(string)": {
+					"details": "Sets the message of the proposal.",
+					"params": {
+						"message": "The new message to be set."
+					}
+				},
+				"setRequiredQuorum(uint256)": {
+					"details": "Sets the required quorum percentage for the proposal.",
+					"params": {
+						"bp": "The new required quorum percentage (basis points)."
+					}
+				},
+				"setRequiredThreshold(uint256)": {
+					"details": "Sets the required threshold percentage for the proposal.",
+					"params": {
+						"bp": "The new required threshold percentage (basis points)."
+					}
+				},
+				"setStartTimestamp(uint256)": {
+					"details": "Sets the start timestamp of the proposal.",
+					"params": {
+						"timestamp": "The new start timestamp."
+					}
+				},
+				"setTarget(address)": {
+					"details": "Sets the target address of the proposal.",
+					"params": {
+						"account": "The new target address."
+					}
+				},
+				"setVotingERC20(address)": {
+					"details": "Sets the ERC20 token used for voting in the proposal.",
+					"params": {
+						"erc20": "The address of the ERC20 token contract."
+					}
+				},
+				"snapshot()": {
+					"details": "Takes a snapshot of the voting ERC20 balances and supply. Only the owner can trigger a snapshot."
+				},
+				"snapshotId()": {
+					"details": "Gets the current snapshot ID.",
+					"returns": {
+						"_0": "uint256 The current snapshot ID."
+					}
+				},
+				"snapshotIdKey()": {
+					"details": "Returns the keccak256 hash key for accessing the snapshot ID in storage.",
+					"returns": {
+						"_0": "bytes32 The keccak256 hash key for the snapshot ID."
+					}
+				},
+				"startTimestamp()": {
+					"details": "Returns the start timestamp."
+				},
+				"startTimestampKey()": {
+					"details": "Returns the key for the start timestamp."
+				},
+				"started()": {
+					"details": "Checks if the timer has started."
+				},
+				"sufficientQuorum()": {
+					"details": "Checks if the current quorum is sufficient, comparing it to the required quorum number.",
+					"returns": {
+						"_0": "bool True if there is sufficient quorum, false otherwise."
+					}
+				},
+				"sufficientThreshold()": {
+					"details": "Checks if the current threshold is sufficient, comparing it to the required threshold.",
+					"returns": {
+						"_0": "bool True if there is sufficient threshold, false otherwise."
+					}
+				},
+				"support()": {
+					"details": "Gets the current support for a proposal.",
+					"returns": {
+						"_0": "uint256 The current support value."
+					}
+				},
+				"supportKey()": {
+					"details": "Returns the keccak256 hash key for accessing the support in storage.",
+					"returns": {
+						"_0": "bytes32 The keccak256 hash key for the support."
+					}
+				},
+				"target()": {
+					"details": "Returns the current target address."
+				},
+				"targetKey()": {
+					"details": "Returns the key for storing the target address."
+				},
+				"threshold()": {
+					"details": "Calculates the threshold by expressing the support as a percentage of the total quorum.",
+					"returns": {
+						"_0": "uint256 The threshold value."
+					}
+				},
+				"transferOwnership(address)": {
+					"details": "Transfers ownership of the contract to a new account (`newOwner`). Can only be called by the current owner."
+				},
+				"vote(uint256)": {
+					"details": "Casts a vote for the specified side in the proposal.",
+					"params": {
+						"side": "The side to vote for (0: Abstain, 1: Against, 2: Support)."
+					}
+				},
+				"votingERC20()": {
+					"details": "Gets the current address of the Voting ERC20 contract.",
+					"returns": {
+						"_0": "address The address of the Voting ERC20 contract."
+					}
+				},
+				"votingERC20Key()": {
+					"details": "Returns the keccak256 hash key for accessing the Voting ERC20 address in storage.",
+					"returns": {
+						"_0": "bytes32 The keccak256 hash key for the Voting ERC20 address."
+					}
+				}
+			},
+			"version": 1
+		},
+		"userdoc": {
+			"kind": "user",
+			"methods": {},
+			"version": 1
+		}
+	},
+	"settings": {
+		"compilationTarget": {
+			"contracts/polygon/abstract/governance/proposal/ReferendumProposal.sol": "ReferendumProposal"
+		},
+		"evmVersion": "paris",
+		"libraries": {},
+		"metadata": {
+			"bytecodeHash": "ipfs"
+		},
+		"optimizer": {
+			"enabled": true,
+			"runs": 200
+		},
+		"remappings": []
+	},
+	"sources": {
+		"contracts/polygon/abstract/access-control/Ownable.sol": {
+			"keccak256": "0x11db09c5965f9f3f115abbfd29256bc233af505ba2db8bae7a87f2d109c10222",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://13f258101d9e1001f8d23451ef9369ca4d531d9a3193cc8de3087b2fc86c937e",
+				"dweb:/ipfs/QmWpPbNHSoxE4zPMg9sPwZcp885QNKb7ihVtn7xCogDBFQ"
+			]
+		},
+		"contracts/polygon/abstract/governance/proposal/ReferendumProposal.sol": {
+			"keccak256": "0xd00298fe052b9bae1e137a6343eddadbf0bb648f56b6a4a33cec57ca47114f14",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://1963b9aad772583d3cf18b1ab1c5401a1fcab2dc2d53292b1562b21f040b106d",
+				"dweb:/ipfs/QmPAsHwvdZ1PcNuap6iPtnH4LVKe6LBguSYFw56z4MsDMB"
+			]
+		},
+		"contracts/polygon/abstract/storage/Storage.sol": {
+			"keccak256": "0x160a037254c401dbf5be05149b00ec79162c2b6caef09bae6d1021fb98ce1f2e",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://eb354384f7f39f0e060f457b2adb39e0a5e0256a3303ef08453b738499b9411e",
+				"dweb:/ipfs/QmRefT11g49QJoSkG11CM8uUKMTA25A5ahiHRzLwM2Qj3i"
+			]
+		},
+		"contracts/polygon/abstract/utils/Initializable.sol": {
+			"keccak256": "0xef736b7aa373ca42b32374f510b5102de360454fee21f0eeb02c273d01c25d63",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://0e521eab34a7c5464052ecaefc73275b715633054f7c54ec262a981249abdc5b",
+				"dweb:/ipfs/QmSD2jReCCV3k2EdsqtTg2U74EGwyE6uZSf7mJZKVkbwtN"
+			]
+		},
+		"contracts/polygon/abstract/utils/LowLevelCall.sol": {
+			"keccak256": "0x12ce65a6fb6cedad00999f6f9d9197998dd260b1aed3c80cc2b2157b9fd11a0f",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://81e04e8ecec37f3c55f667fb41999dcd587d7da507d7fcc918a7281c847df24a",
+				"dweb:/ipfs/QmbPsBBoqJgKHTnMezZzBABuYJHMdMh9hDfmuubFWuCFdr"
+			]
+		},
+		"contracts/polygon/abstract/utils/Payload.sol": {
+			"keccak256": "0x2cb20e2c411642c2d27dbd3adbdf4f791e9774cd9141d1eef08ca292c0fa0849",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://c4eaca512d59c935bb098dd66f898213ac1baee9d8dd449a1543d224895e36c6",
+				"dweb:/ipfs/QmT3WHzsLNZS4rwEH6DDSXrAeRKUZSdPc5FUxVwz3PVW2n"
+			]
+		},
+		"contracts/polygon/abstract/utils/Tag.sol": {
+			"keccak256": "0x52c7c7097077cc7970520d0626c9c031744f9788d041667f310246e1c9cb89f5",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://7fcff5f53e6d4b92a5378ac970f8b5da374e80fedc634a5e4dcf5625e497a341",
+				"dweb:/ipfs/QmPubrWvemDay6NcZ5Ynz5X58i3KgTSx4VytCWRoCn6Rh8"
+			]
+		},
+		"contracts/polygon/abstract/utils/Timer.sol": {
+			"keccak256": "0x18636881018f78e46953d0204235f371e3ed5730dc9f7751d4013559baaa5865",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://21cc986c31c72ee0204944821ff288bea11b52a4b535659bac0f4351a9a0651e",
+				"dweb:/ipfs/QmdNH27jfEQ3hS4PmmqtAqHmsbth6xjhwY53A5GWN8KRWu"
+			]
+		},
+		"contracts/polygon/external/openzeppelin/token/ERC20/IERC20.sol": {
+			"keccak256": "0x25c33569824f7653c064ccac6b9c63ba19833c7818debaa3f7f7737f5175d7d7",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://6c002fe819fd2da94ef4cbcddcd4a62ba42454b000d2321314bfff73353792e7",
+				"dweb:/ipfs/QmadL9VMe3jTyf5sg8g8Y9Q4ESsyos42rZPnvJaKuhUacK"
+			]
+		},
+		"contracts/polygon/external/openzeppelin/token/ERC20/extensions/IERC20Metadata.sol": {
+			"keccak256": "0x2837661e72b15493671ff5e5099b565b626c53f4d90f347211dd78924aca24ca",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://34ced2145df7d08fbb3fba9471faf5a1609fc3def76d004c658f480e5cebb013",
+				"dweb:/ipfs/QmSJ42tRU39HdpJSLXCinUtzzxnxBFncnCbfK6juqqep7U"
+			]
+		},
+		"contracts/polygon/external/openzeppelin/utils/math/Math.sol": {
+			"keccak256": "0xffe8a176523d38132299bc22fd6bb138954ba3f35d41a86d004dac50dc31b615",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://67b3d7e2d3042e5061168827e518b2eb546be0f4a3f764f654c28205c5a428e5",
+				"dweb:/ipfs/Qma3d9Vim9NrzWAFASxpDppgGXo8MWZ6zorsgAYYXsbXph"
+			]
+		},
+		"contracts/polygon/external/openzeppelin/utils/math/SafeCast.sol": {
+			"keccak256": "0x57984e48977d103f341e7c64180fcd3c2e09bdd02e585318779ca43845a2adc8",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://385a907140ff953c1bbbc884661dcb9d1ad20780a105453c6d36f7ebcb78b445",
+				"dweb:/ipfs/QmRtdUhATvWu3T7fu3gEXzACQ33yZxMvkBn52yWn4B4P4D"
+			]
+		},
+		"contracts/polygon/external/openzeppelin/utils/structs/BitMaps.sol": {
+			"keccak256": "0x78dd37e219accdaa6f3d16b6a234284054a9806fa43cc732dd0aa7943b55638e",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://0089a95579a67e46ef8247306f727d47da7ba834ed68cbd60a431b48fd6027f6",
+				"dweb:/ipfs/QmRUkxxQ63qKaqkRfPJTRzM4sDLJ9nXVaTrkyn1TDdE91V"
+			]
+		},
+		"contracts/polygon/external/openzeppelin/utils/structs/Checkpoints.sol": {
+			"keccak256": "0x644db19b1e69fb99b1ffd68d8d26ca38b134c9eecf6dac51adf386829e56a0b8",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://889402f6e944638549561a37e6e42a565118ca12306abd95c1ab32a895d7c686",
+				"dweb:/ipfs/QmdXToFMLazMEtyEgCFN48Kai3anefjUzTacEaoM6Cgjzf"
+			]
+		},
+		"contracts/polygon/external/openzeppelin/utils/structs/DoubleEndedQueue.sol": {
+			"keccak256": "0x668e9e588b132e215375ae0b0233edcfb89067a5cee66ade1a6f69f7b6b4f206",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://b75421ca6bb7a37d2ac93de71b95121dcb67e920fde42dd8ddf3ac3ae89acb56",
+				"dweb:/ipfs/QmfUMDRzgzuJNh99U2B47Fjr8sYq5eMrnnrXESwAAXWveE"
+			]
+		},
+		"contracts/polygon/external/openzeppelin/utils/structs/EnumerableMap.sol": {
+			"keccak256": "0xf7d311d4bc1a611f69ea3d44893602cab5f4b0b339295e5085f4d5117614c3ff",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://19351930ede89c279228443ca9d388ca1b5060dcaf8384294f7016192bba4fee",
+				"dweb:/ipfs/QmaYDEsegdyhd4CyVv9DWQTAzCDwEzFsUhE8TXD4BTKxGy"
+			]
+		},
+		"contracts/polygon/external/openzeppelin/utils/structs/EnumerableSet.sol": {
+			"keccak256": "0xeefcbb8cb69f04a18f6dc61d4811133ce9aeff96ce60820f758abc52ef55b892",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://81c61c0dd40890f6a4b1fb792bc5b5b61e821fcafa2aae6c7eda6d4f1ece2593",
+				"dweb:/ipfs/QmRLMrq6BiPS9wGu7ZC174SFYWCu6cxbU3agDw2XgJeDpT"
+			]
+		},
+		"contracts/polygon/interfaces/token/dream/IDream.sol": {
+			"keccak256": "0xd35c6ca07e39cb962fef9b46e756722b86cdea912b20b696dbb5d67243f1d43a",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://2c35076b8b2bc996ed88f8f1bd8dd1f68f99b8cdb4b7b429b393e003efacd7b8",
+				"dweb:/ipfs/QmQZkg1ALNsPrspVNbpsiEMQCRZMyihEjXqRnG8gyqDQGK"
+			]
+		}
+	},
+	"version": 1
+}

@@ -27,7 +27,7 @@ abstract contract Ownable is Storage {
     * @return The address of the current owner.
     */
     function owner() public view virtual returns (address) {
-        return _address[_keyOwner()];
+        return _address[ownerKey()];
     }
 
     /**

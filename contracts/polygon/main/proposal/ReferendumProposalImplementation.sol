@@ -56,6 +56,11 @@ contract ReferendumProposalImplementation is ReferendumProposal, AddressBook {
         _setReferendumProposalFactory(account);
     }
 
+    function setTerminal(address account) public virtual {
+        _onlyOwner();
+        _setTerminal(account);
+    }
+
     /**
     * @dev Sets the address of the terminal internally, invoking the parent function and emitting a TerminalSet event.
     * @param account The address of the new terminal.

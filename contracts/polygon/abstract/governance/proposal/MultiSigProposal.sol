@@ -76,7 +76,7 @@ abstract contract MultiSigProposal is
     * @dev Emitted when a data address is set.
     * @param data The address of the newly set data. Indexed for efficient log filtering.
     */
-    event DataSet(address indexed data);
+    event DataSet(bytes indexed data);
 
     /**
     * @dev Emitted when the start timestamp is set.
@@ -402,8 +402,9 @@ abstract contract MultiSigProposal is
     * @dev Initializes the contract, transferring ownership to the deployer.
     * Calls the initializer of the parent contract.
     */
-    function _initialize() internal virtual override {
+    function _initialize() internal virtual override(Initializable, Ownable) {
         _transferOwnership(msg.sender);
+        Ownable._initialize();
         Initializable._initialize();
     }
 
@@ -498,7 +499,7 @@ abstract contract MultiSigProposal is
     */
     function _setCreator(address account) internal virtual override {
         super._setCreator(account);
-        emit CreatorSet(creator);
+        emit CreatorSet(account);
     }
 
     /**

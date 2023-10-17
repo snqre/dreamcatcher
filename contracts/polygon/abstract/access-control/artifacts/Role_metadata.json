@@ -1,0 +1,631 @@
+{
+	"compiler": {
+		"version": "0.8.19+commit.7dd6d404"
+	},
+	"language": "Solidity",
+	"output": {
+		"abi": [
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "account",
+						"type": "address"
+					},
+					{
+						"internalType": "bytes32",
+						"name": "roleRequired",
+						"type": "bytes32"
+					}
+				],
+				"name": "Unauthorized",
+				"type": "error"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "bytes32",
+						"name": "role",
+						"type": "bytes32"
+					},
+					{
+						"indexed": true,
+						"internalType": "bytes32",
+						"name": "oldAdminRole",
+						"type": "bytes32"
+					},
+					{
+						"indexed": true,
+						"internalType": "bytes32",
+						"name": "newAdminRole",
+						"type": "bytes32"
+					}
+				],
+				"name": "RoleAdminChanged",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "bytes32",
+						"name": "role",
+						"type": "bytes32"
+					},
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "account",
+						"type": "address"
+					},
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "sender",
+						"type": "address"
+					}
+				],
+				"name": "RoleGranted",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "bytes32",
+						"name": "role",
+						"type": "bytes32"
+					},
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "account",
+						"type": "address"
+					},
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "sender",
+						"type": "address"
+					}
+				],
+				"name": "RoleRevoked",
+				"type": "event"
+			},
+			{
+				"inputs": [],
+				"name": "defaultAdminRoleKey",
+				"outputs": [
+					{
+						"internalType": "bytes32",
+						"name": "",
+						"type": "bytes32"
+					}
+				],
+				"stateMutability": "pure",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "bytes32",
+						"name": "role",
+						"type": "bytes32"
+					}
+				],
+				"name": "getRoleAdmin",
+				"outputs": [
+					{
+						"internalType": "bytes32",
+						"name": "",
+						"type": "bytes32"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "bytes32",
+						"name": "role",
+						"type": "bytes32"
+					},
+					{
+						"internalType": "address",
+						"name": "account",
+						"type": "address"
+					}
+				],
+				"name": "grantRole",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "bytes32",
+						"name": "role",
+						"type": "bytes32"
+					},
+					{
+						"internalType": "address",
+						"name": "account",
+						"type": "address"
+					}
+				],
+				"name": "hasRole",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "",
+						"type": "bool"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "string",
+						"name": "dat",
+						"type": "string"
+					}
+				],
+				"name": "hash",
+				"outputs": [
+					{
+						"internalType": "bytes32",
+						"name": "",
+						"type": "bytes32"
+					}
+				],
+				"stateMutability": "pure",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "bytes32",
+						"name": "role",
+						"type": "bytes32"
+					},
+					{
+						"internalType": "uint256",
+						"name": "id",
+						"type": "uint256"
+					}
+				],
+				"name": "members",
+				"outputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "bytes32",
+						"name": "role",
+						"type": "bytes32"
+					}
+				],
+				"name": "membersLength",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "bytes32",
+						"name": "role",
+						"type": "bytes32"
+					},
+					{
+						"internalType": "address",
+						"name": "account",
+						"type": "address"
+					}
+				],
+				"name": "requireRole",
+				"outputs": [],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "bytes32",
+						"name": "role",
+						"type": "bytes32"
+					},
+					{
+						"internalType": "address",
+						"name": "account",
+						"type": "address"
+					}
+				],
+				"name": "revokeRole",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "bytes32",
+						"name": "role",
+						"type": "bytes32"
+					}
+				],
+				"name": "roleAdminKey",
+				"outputs": [
+					{
+						"internalType": "bytes32",
+						"name": "",
+						"type": "bytes32"
+					}
+				],
+				"stateMutability": "pure",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "bytes32",
+						"name": "role",
+						"type": "bytes32"
+					}
+				],
+				"name": "roleKey",
+				"outputs": [
+					{
+						"internalType": "bytes32",
+						"name": "",
+						"type": "bytes32"
+					}
+				],
+				"stateMutability": "pure",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "id",
+						"type": "uint256"
+					}
+				],
+				"name": "roles",
+				"outputs": [
+					{
+						"internalType": "bytes32",
+						"name": "",
+						"type": "bytes32"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "rolesKey",
+				"outputs": [
+					{
+						"internalType": "bytes32",
+						"name": "",
+						"type": "bytes32"
+					}
+				],
+				"stateMutability": "pure",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "rolesLength",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "bytes32",
+						"name": "role",
+						"type": "bytes32"
+					},
+					{
+						"internalType": "bytes32",
+						"name": "newRoleAdmin",
+						"type": "bytes32"
+					}
+				],
+				"name": "setRoleAdmin",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			}
+		],
+		"devdoc": {
+			"details": "Abstract contract for managing roles with state on the Polygon network.Roles are identified by unique keys, and each role has an associated admin role.The DEFAULT_ADMIN_ROLE has the highest privileges and is typically set during contract initialization.Admin roles can be changed, and additional roles can be created to grant specific permissions.The contract emits events for role admin changes, role granting, and role revocation.It also includes error codes for unauthorized access, existing role assignment, missing role, and attempts to set an existing role admin.",
+			"errors": {
+				"Unauthorized(address,bytes32)": [
+					{
+						"details": "Reverts with \"Unauthorized\" error if an account lacks the required role.",
+						"params": {
+							"account": "The address that lacks the required role.",
+							"roleRequired": "The required role that is missing."
+						}
+					}
+				]
+			},
+			"events": {
+				"RoleAdminChanged(bytes32,bytes32,bytes32)": {
+					"details": "Emitted when the admin role of a role is changed.",
+					"params": {
+						"newAdminRole": "The new admin role assigned to the specified role.",
+						"oldAdminRole": "The previous admin role of the specified role.",
+						"role": "The role for which the admin role is changed."
+					}
+				},
+				"RoleGranted(bytes32,address,address)": {
+					"details": "Emitted when an account is granted a role.",
+					"params": {
+						"account": "The address that is granted the role.",
+						"role": "The role that is granted.",
+						"sender": "The address initiating the role grant."
+					}
+				},
+				"RoleRevoked(bytes32,address,address)": {
+					"details": "Emitted when an account has a role revoked.",
+					"params": {
+						"account": "The address that has the role revoked.",
+						"role": "The role that is revoked.",
+						"sender": "The address initiating the role revocation."
+					}
+				}
+			},
+			"kind": "dev",
+			"methods": {
+				"defaultAdminRoleKey()": {
+					"details": "Public pure virtual function to generate a unique key for the default admin role.This function must be implemented in derived contracts to provide the default admin role key.",
+					"returns": {
+						"_0": "bytes32 representing the unique key for the default admin role."
+					}
+				},
+				"getRoleAdmin(bytes32)": {
+					"details": "Public view function to retrieve the admin role for a specified role.",
+					"params": {
+						"role": "The role for which to retrieve the admin role."
+					},
+					"returns": {
+						"_0": "bytes32 representing the admin role for the specified role."
+					}
+				},
+				"grantRole(bytes32,address)": {
+					"details": "Public function to grant a role to a specified account.This function can only be called by a role admin.It grants the specified role to the specified account and emits the RoleGranted event.",
+					"params": {
+						"account": "The address of the account to which the role will be granted.",
+						"role": "The role to be granted."
+					}
+				},
+				"hasRole(bytes32,address)": {
+					"details": "Public view function to check if an account has a specified role.",
+					"params": {
+						"account": "The address of the account to check for the specified role.",
+						"role": "The role for which to check."
+					},
+					"returns": {
+						"_0": "bool indicating whether the account has the specified role."
+					}
+				},
+				"hash(string)": {
+					"details": "Public pure function to compute the keccak256 hash of a given string.",
+					"params": {
+						"dat": "The input string to hash."
+					},
+					"returns": {
+						"_0": "bytes32 representing the keccak256 hash of the input string."
+					}
+				},
+				"members(bytes32,uint256)": {
+					"details": "Public view function to retrieve the list of members for a specified role.This function returns the addresses that have the specified role in the order they were added.",
+					"params": {
+						"role": "The role for which to retrieve the members."
+					},
+					"returns": {
+						"_0": "address[] memory representing the array of addresses that have the specified role."
+					}
+				},
+				"membersLength(bytes32)": {
+					"details": "Public view virtual function to retrieve the number of members in a role.",
+					"params": {
+						"role": "The role for which to retrieve the number of members."
+					},
+					"returns": {
+						"_0": "uint256 representing the number of members in the specified role."
+					}
+				},
+				"requireRole(bytes32,address)": {
+					"details": "Public function to require that the calling account has a specified role.If the account does not have the required role, it reverts with the \"Unauthorized\" error.",
+					"params": {
+						"account": "The address of the account to check for the specified role.",
+						"role": "The role that the account must have."
+					}
+				},
+				"revokeRole(bytes32,address)": {
+					"details": "Public function to revoke a role from a specified account.This function can only be called by a role admin.It revokes the specified role from the specified account and emits the RoleRevoked event.",
+					"params": {
+						"account": "The address of the account from which the role will be revoked.",
+						"role": "The role to be revoked."
+					}
+				},
+				"roleAdminKey(bytes32)": {
+					"details": "Public pure function to generate a unique key for the role admin of a specified role.",
+					"params": {
+						"role": "The role for which to generate the role admin key."
+					},
+					"returns": {
+						"_0": "bytes32 representing the unique key for the role admin of the specified role."
+					}
+				},
+				"roleKey(bytes32)": {
+					"details": "Public pure function to generate a unique key for a role in the context of storing members.",
+					"params": {
+						"role": "The role for which to generate the key."
+					},
+					"returns": {
+						"_0": "bytes32 representing the unique key for the specified role in the context of storing members."
+					}
+				},
+				"roles(uint256)": {
+					"details": "Public view function to retrieve the list of roles available.This function returns the roles in the order they were added.",
+					"returns": {
+						"_0": "bytes32[] memory representing the array of roles."
+					}
+				},
+				"rolesKey()": {
+					"details": "Public pure function to generate a unique key for the set of available roles.",
+					"returns": {
+						"_0": "bytes32 representing the unique key for the set of available roles."
+					}
+				},
+				"rolesLength()": {
+					"details": "Public view virtual function to retrieve the number of roles.",
+					"returns": {
+						"_0": "uint256 representing the number of roles."
+					}
+				},
+				"setRoleAdmin(bytes32,bytes32)": {
+					"details": "Public function to set a new role admin for a specified role.This function can only be called by the default admin role.It sets the new role admin and emits the RoleAdminChanged event.",
+					"params": {
+						"newRoleAdmin": "The new role admin address.",
+						"role": "The role for which the admin is being set."
+					}
+				}
+			},
+			"title": "Role",
+			"version": 1
+		},
+		"userdoc": {
+			"kind": "user",
+			"methods": {},
+			"notice": "This contract provides functionalities for role management, including role granting, revocation, and role admin assignment.It utilizes the EnumerableSet library to manage sets of addresses efficiently.",
+			"version": 1
+		}
+	},
+	"settings": {
+		"compilationTarget": {
+			"contracts/polygon/abstract/access-control/Role.sol": "Role"
+		},
+		"evmVersion": "paris",
+		"libraries": {},
+		"metadata": {
+			"bytecodeHash": "ipfs"
+		},
+		"optimizer": {
+			"enabled": true,
+			"runs": 200
+		},
+		"remappings": []
+	},
+	"sources": {
+		"contracts/polygon/abstract/access-control/Role.sol": {
+			"keccak256": "0x745b0640bc8ad7e0adeeea35bf5b764cf3768a8219725855460b4007050192bb",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://4c51e8a2a2c1ef98aa77fb099deeb1ad7ee219917dfbad60f8c29e7d8bb61986",
+				"dweb:/ipfs/QmPhwQ1jX8Kz52THQkPSBx17r5QsRfDMUiwGaUcvyk9pqW"
+			]
+		},
+		"contracts/polygon/abstract/storage/Storage.sol": {
+			"keccak256": "0x160a037254c401dbf5be05149b00ec79162c2b6caef09bae6d1021fb98ce1f2e",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://eb354384f7f39f0e060f457b2adb39e0a5e0256a3303ef08453b738499b9411e",
+				"dweb:/ipfs/QmRefT11g49QJoSkG11CM8uUKMTA25A5ahiHRzLwM2Qj3i"
+			]
+		},
+		"contracts/polygon/external/openzeppelin/utils/math/Math.sol": {
+			"keccak256": "0xffe8a176523d38132299bc22fd6bb138954ba3f35d41a86d004dac50dc31b615",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://67b3d7e2d3042e5061168827e518b2eb546be0f4a3f764f654c28205c5a428e5",
+				"dweb:/ipfs/Qma3d9Vim9NrzWAFASxpDppgGXo8MWZ6zorsgAYYXsbXph"
+			]
+		},
+		"contracts/polygon/external/openzeppelin/utils/math/SafeCast.sol": {
+			"keccak256": "0x57984e48977d103f341e7c64180fcd3c2e09bdd02e585318779ca43845a2adc8",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://385a907140ff953c1bbbc884661dcb9d1ad20780a105453c6d36f7ebcb78b445",
+				"dweb:/ipfs/QmRtdUhATvWu3T7fu3gEXzACQ33yZxMvkBn52yWn4B4P4D"
+			]
+		},
+		"contracts/polygon/external/openzeppelin/utils/structs/BitMaps.sol": {
+			"keccak256": "0x78dd37e219accdaa6f3d16b6a234284054a9806fa43cc732dd0aa7943b55638e",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://0089a95579a67e46ef8247306f727d47da7ba834ed68cbd60a431b48fd6027f6",
+				"dweb:/ipfs/QmRUkxxQ63qKaqkRfPJTRzM4sDLJ9nXVaTrkyn1TDdE91V"
+			]
+		},
+		"contracts/polygon/external/openzeppelin/utils/structs/Checkpoints.sol": {
+			"keccak256": "0x644db19b1e69fb99b1ffd68d8d26ca38b134c9eecf6dac51adf386829e56a0b8",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://889402f6e944638549561a37e6e42a565118ca12306abd95c1ab32a895d7c686",
+				"dweb:/ipfs/QmdXToFMLazMEtyEgCFN48Kai3anefjUzTacEaoM6Cgjzf"
+			]
+		},
+		"contracts/polygon/external/openzeppelin/utils/structs/DoubleEndedQueue.sol": {
+			"keccak256": "0x668e9e588b132e215375ae0b0233edcfb89067a5cee66ade1a6f69f7b6b4f206",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://b75421ca6bb7a37d2ac93de71b95121dcb67e920fde42dd8ddf3ac3ae89acb56",
+				"dweb:/ipfs/QmfUMDRzgzuJNh99U2B47Fjr8sYq5eMrnnrXESwAAXWveE"
+			]
+		},
+		"contracts/polygon/external/openzeppelin/utils/structs/EnumerableMap.sol": {
+			"keccak256": "0xf7d311d4bc1a611f69ea3d44893602cab5f4b0b339295e5085f4d5117614c3ff",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://19351930ede89c279228443ca9d388ca1b5060dcaf8384294f7016192bba4fee",
+				"dweb:/ipfs/QmaYDEsegdyhd4CyVv9DWQTAzCDwEzFsUhE8TXD4BTKxGy"
+			]
+		},
+		"contracts/polygon/external/openzeppelin/utils/structs/EnumerableSet.sol": {
+			"keccak256": "0xeefcbb8cb69f04a18f6dc61d4811133ce9aeff96ce60820f758abc52ef55b892",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://81c61c0dd40890f6a4b1fb792bc5b5b61e821fcafa2aae6c7eda6d4f1ece2593",
+				"dweb:/ipfs/QmRLMrq6BiPS9wGu7ZC174SFYWCu6cxbU3agDw2XgJeDpT"
+			]
+		}
+	},
+	"version": 1
+}

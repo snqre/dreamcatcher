@@ -1,0 +1,875 @@
+{
+	"compiler": {
+		"version": "0.8.19+commit.7dd6d404"
+	},
+	"language": "Solidity",
+	"output": {
+		"abi": [
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "multiSigProposalImplementation",
+						"type": "address"
+					}
+				],
+				"stateMutability": "nonpayable",
+				"type": "constructor"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "uint256",
+						"name": "seconds_",
+						"type": "uint256"
+					}
+				],
+				"name": "DefaultDurationSet",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "uint256",
+						"name": "bp",
+						"type": "uint256"
+					}
+				],
+				"name": "DefaultRequiredQuorumSet",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "signer",
+						"type": "address"
+					}
+				],
+				"name": "DefaultSignerAdded",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "signer",
+						"type": "address"
+					}
+				],
+				"name": "DefaultSignerRemoved",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "newBase",
+						"type": "address"
+					}
+				],
+				"name": "Deployed",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "previousOwner",
+						"type": "address"
+					},
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "newOwner",
+						"type": "address"
+					}
+				],
+				"name": "OwnershipTransferred",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "account",
+						"type": "address"
+					}
+				],
+				"name": "ReferendumProposalFactorySet",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "account",
+						"type": "address"
+					}
+				],
+				"name": "TerminalSet",
+				"type": "event"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "account",
+						"type": "address"
+					}
+				],
+				"name": "addDefaultSigner",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "deployedId",
+						"type": "uint256"
+					}
+				],
+				"name": "addressDeployedTo",
+				"outputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "string",
+						"name": "caption",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "message",
+						"type": "string"
+					},
+					{
+						"internalType": "address",
+						"name": "target",
+						"type": "address"
+					},
+					{
+						"internalType": "bytes",
+						"name": "data",
+						"type": "bytes"
+					}
+				],
+				"name": "createMultiSigProposal",
+				"outputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "defaultDuration",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "defaultImplementation",
+				"outputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "defaultRequiredQuorum",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "signerId",
+						"type": "uint256"
+					}
+				],
+				"name": "defaultSigners",
+				"outputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "defaultSignersLength",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "deploy",
+				"outputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "account",
+						"type": "address"
+					}
+				],
+				"name": "isDefaultSigner",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "",
+						"type": "bool"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "owner",
+				"outputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "referendumProposalFactory",
+				"outputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "account",
+						"type": "address"
+					}
+				],
+				"name": "removeDefaultSigner",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "renounceOwnership",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "seconds_",
+						"type": "uint256"
+					}
+				],
+				"name": "setDefaultDuration",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "bp",
+						"type": "uint256"
+					}
+				],
+				"name": "setDefaultRequiredQuorum",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "account",
+						"type": "address"
+					}
+				],
+				"name": "setReferendumProposalFactory",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "account",
+						"type": "address"
+					}
+				],
+				"name": "setTerminal",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "terminal",
+				"outputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "newOwner",
+						"type": "address"
+					}
+				],
+				"name": "transferOwnership",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			}
+		],
+		"devdoc": {
+			"events": {
+				"DefaultDurationSet(uint256)": {
+					"details": "Emitted when the default duration for multi-signature proposals is set.",
+					"params": {
+						"seconds_": "The new default duration in seconds."
+					}
+				},
+				"DefaultRequiredQuorumSet(uint256)": {
+					"details": "Emitted when the default required quorum is set for the contract.",
+					"params": {
+						"bp": "The new default required quorum in basis points."
+					}
+				},
+				"DefaultSignerAdded(address)": {
+					"details": "Emitted when a default signer is added to the contract.",
+					"params": {
+						"signer": "The address of the added default signer."
+					}
+				},
+				"DefaultSignerRemoved(address)": {
+					"details": "Emitted when a default signer is removed from the contract.",
+					"params": {
+						"signer": "The address of the removed default signer."
+					}
+				},
+				"Deployed(address)": {
+					"params": {
+						"newBase": "The address of the newly deployed Base contract."
+					}
+				},
+				"ReferendumProposalFactorySet(address)": {
+					"details": "Emitted when the ReferendumProposalFactory address is set.",
+					"params": {
+						"account": "The address of the new ReferendumProposalFactory."
+					}
+				},
+				"TerminalSet(address)": {
+					"details": "Emitted when the terminal address is set.",
+					"params": {
+						"account": "The address of the new terminal."
+					}
+				}
+			},
+			"kind": "dev",
+			"methods": {
+				"addDefaultSigner(address)": {
+					"details": "Adds a new address as a default signer. Only the owner is allowed to perform this action.",
+					"params": {
+						"account": "The address of the new default signer."
+					}
+				},
+				"addressDeployedTo(uint256)": {
+					"details": "Returns the address of the deployed contract at the specified index.",
+					"params": {
+						"deployedId": "The index of the deployed contract."
+					},
+					"returns": {
+						"_0": "The address of the deployed contract."
+					}
+				},
+				"constructor": {
+					"details": "Constructor for the contract. Initializes the contract with the provided MultiSigProposal implementation address. Inherits from BaseFactory and Ownable, setting the deployer as the owner.",
+					"params": {
+						"multiSigProposalImplementation": "The address of the MultiSigProposal implementation."
+					}
+				},
+				"createMultiSigProposal(string,string,address,bytes)": {
+					"details": "Creates a new multi-signature proposal. Only a default signer can initiate the creation. Deploys a new Base contract, initializes it, and converts it to the IMultiSigProposal interface. Adds default signers, sets caption, message, creator, target, data, start timestamp, duration, and required quorum. Emits a Deployed event with the address of the newly deployed proposal.",
+					"params": {
+						"caption": "The caption for the proposal.",
+						"data": "The data payload for the proposal.",
+						"message": "The message associated with the proposal.",
+						"target": "The target address of the proposal."
+					},
+					"returns": {
+						"_0": "address The address of the newly deployed multi-signature proposal."
+					}
+				},
+				"defaultDuration()": {
+					"details": "Retrieves the default duration in seconds for multi-signature proposals.",
+					"returns": {
+						"_0": "uint256 The default duration."
+					}
+				},
+				"defaultImplementation()": {
+					"details": "Returns the address of the default implementation.",
+					"returns": {
+						"_0": "The address of the default implementation."
+					}
+				},
+				"defaultRequiredQuorum()": {
+					"details": "Retrieves the default required quorum in basis points.",
+					"returns": {
+						"_0": "uint256 The default required quorum."
+					}
+				},
+				"defaultSigners(uint256)": {
+					"details": "Retrieves the address of a default signer based on the provided signer ID.",
+					"params": {
+						"signerId": "The ID of the default signer."
+					},
+					"returns": {
+						"_0": "address The address of the default signer."
+					}
+				},
+				"defaultSignersLength()": {
+					"details": "Retrieves the number of default signers.",
+					"returns": {
+						"_0": "uint256 The length of the default signers set."
+					}
+				},
+				"deploy()": {
+					"details": "Deprecated function. Use `createMultiSigProposal` for deploying multi-signature proposals. Reverts with an informative message. Calls the parent implementation of the deprecated function.",
+					"returns": {
+						"_0": "address This function always reverts and does not return an address."
+					}
+				},
+				"isDefaultSigner(address)": {
+					"details": "Checks if the provided account is a default signer.",
+					"params": {
+						"account": "The address to be checked."
+					},
+					"returns": {
+						"_0": "bool True if the account is a default signer, false otherwise."
+					}
+				},
+				"owner()": {
+					"details": "Returns the address of the current owner."
+				},
+				"referendumProposalFactory()": {
+					"details": "Retrieves the address of the ReferendumProposalFactory associated with the MultiSigProposalFactory.",
+					"returns": {
+						"_0": "address The address of the ReferendumProposalFactory."
+					}
+				},
+				"removeDefaultSigner(address)": {
+					"details": "Removes an address from the list of default signers. Only the owner is allowed to perform this action.",
+					"params": {
+						"account": "The address of the default signer to be removed."
+					}
+				},
+				"renounceOwnership()": {
+					"details": "Leaves the contract without owner. It will not be possible to call `onlyOwner` functions. Can only be called by the current owner. NOTE: Renouncing ownership will leave the contract without an owner, thereby disabling any functionality that is only available to the owner."
+				},
+				"setDefaultDuration(uint256)": {
+					"details": "Sets a new default duration for multi-signature proposals. Only the owner is allowed to perform this action.",
+					"params": {
+						"seconds_": "The new default duration in seconds."
+					}
+				},
+				"setDefaultRequiredQuorum(uint256)": {
+					"details": "Sets a new default required quorum for multi-signature proposals. Only the owner is allowed to perform this action.",
+					"params": {
+						"bp": "The new default required quorum in basis points."
+					}
+				},
+				"setReferendumProposalFactory(address)": {
+					"details": "Sets the address of the ReferendumProposalFactory. Only the owner is allowed to perform this action.",
+					"params": {
+						"account": "The address of the new ReferendumProposalFactory."
+					}
+				},
+				"setTerminal(address)": {
+					"details": "Sets the address of the terminal associated with the MultiSigProposalFactory. Only the owner is allowed to perform this action.",
+					"params": {
+						"account": "The address of the new terminal."
+					}
+				},
+				"terminal()": {
+					"details": "Retrieves the address of the terminal associated with the MultiSigProposalFactory.",
+					"returns": {
+						"_0": "address The address of the terminal."
+					}
+				},
+				"transferOwnership(address)": {
+					"details": "Transfers ownership of the contract to a new account (`newOwner`). Can only be called by the current owner."
+				}
+			},
+			"stateVariables": {
+				"_defaultDuration": {
+					"details": "Private variable storing the default duration in seconds for multi-signature proposals."
+				},
+				"_defaultRequiredQuorum": {
+					"details": "Private variable storing the default required quorum in basis points. Represents the minimum percentage of signatures required for certain actions."
+				},
+				"_referendumProposalFactory": {
+					"details": "Private variable storing the address of the ReferendumProposalFactory. Used to reference the factory for creating ReferendumProposal instances."
+				},
+				"_signers": {
+					"details": "Private set containing addresses of signers. Used for efficient membership checks and manipulation of signers."
+				},
+				"_terminal": {
+					"details": "Private variable storing the address of the terminal. Represents the terminal contract associated with the MultiSigProposalFactory."
+				}
+			},
+			"version": 1
+		},
+		"userdoc": {
+			"events": {
+				"Deployed(address)": {
+					"notice": "Emitted when a new Base contract is deployed."
+				}
+			},
+			"kind": "user",
+			"methods": {},
+			"notice": "function deploy is deprecated in this factory and should not be used.",
+			"version": 1
+		}
+	},
+	"settings": {
+		"compilationTarget": {
+			"contracts/polygon/main/proposal/MultiSigProposalFactory.sol": "MultiSigProposalFactory"
+		},
+		"evmVersion": "paris",
+		"libraries": {},
+		"metadata": {
+			"bytecodeHash": "ipfs"
+		},
+		"optimizer": {
+			"enabled": true,
+			"runs": 200
+		},
+		"remappings": []
+	},
+	"sources": {
+		"contracts/polygon/abstract/proxy/Base.sol": {
+			"keccak256": "0x75af8e361241e25d666f7ad7f93ddcebb126b5be90c46b7bc41b880908902002",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://f04a0d53fd8026ee12d24676758983f3dfbb7a6cd2c9978ff1e2d2d648387d38",
+				"dweb:/ipfs/QmYkxEnqe3kSmyrKW7Zc3Zai6e5Z6vSHpSfnnVhc6wZegx"
+			]
+		},
+		"contracts/polygon/abstract/proxy/BaseFactory.sol": {
+			"keccak256": "0xf53af56cfc57637a630779de06325323b0e97e735366b77625a698dead780207",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://e441f0ef4bb5101e8614340daca03237d0ba3ab21f4f9c0b0d4d306ddbc032c4",
+				"dweb:/ipfs/QmWiZVTg5tJUR2KLSySH13gMqRPnJu7hUruzkc3Qtd37Np"
+			]
+		},
+		"contracts/polygon/abstract/storage/Storage.sol": {
+			"keccak256": "0x160a037254c401dbf5be05149b00ec79162c2b6caef09bae6d1021fb98ce1f2e",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://eb354384f7f39f0e060f457b2adb39e0a5e0256a3303ef08453b738499b9411e",
+				"dweb:/ipfs/QmRefT11g49QJoSkG11CM8uUKMTA25A5ahiHRzLwM2Qj3i"
+			]
+		},
+		"contracts/polygon/external/openzeppelin/access/Ownable.sol": {
+			"keccak256": "0x8a19bbec220979aea9d2e8ab5420beae80d9c2e9604461fc84848f1fbb6f9431",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://1cbd99067b19556f6b07e1fa3ba26557af8f105a56c5ccfd489495c992434008",
+				"dweb:/ipfs/QmXeMpw55stUPMCjH4xZhPXbM7syYEAkwAoJroP6zg2pkn"
+			]
+		},
+		"contracts/polygon/external/openzeppelin/proxy/Proxy.sol": {
+			"keccak256": "0x8ca8cb2e4091b0dc588737442f4d30141f930430f5064c364f067f4eb3c08000",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://6c4aa8ca84cb87e5a1fbac158cfcb51ac99529ee568bd4154b6515dfb43737f6",
+				"dweb:/ipfs/QmaKpT3bduTxVSR88GUsdMW89DSxccdzpbFLHXVk2piJQd"
+			]
+		},
+		"contracts/polygon/external/openzeppelin/utils/Context.sol": {
+			"keccak256": "0x639f180f9bedd48998c68f1bf4f8d01b37a4573bc496acb04a55308c6de0045c",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://4ff2313c66e4e14d167aae923b38509ec68dcaa281d2314f45b527139d33d4af",
+				"dweb:/ipfs/QmU7aik96EmKeG8feBbQZ8BufngtYB6guGTkZoX5umP73i"
+			]
+		},
+		"contracts/polygon/external/openzeppelin/utils/math/Math.sol": {
+			"keccak256": "0xffe8a176523d38132299bc22fd6bb138954ba3f35d41a86d004dac50dc31b615",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://67b3d7e2d3042e5061168827e518b2eb546be0f4a3f764f654c28205c5a428e5",
+				"dweb:/ipfs/Qma3d9Vim9NrzWAFASxpDppgGXo8MWZ6zorsgAYYXsbXph"
+			]
+		},
+		"contracts/polygon/external/openzeppelin/utils/math/SafeCast.sol": {
+			"keccak256": "0x57984e48977d103f341e7c64180fcd3c2e09bdd02e585318779ca43845a2adc8",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://385a907140ff953c1bbbc884661dcb9d1ad20780a105453c6d36f7ebcb78b445",
+				"dweb:/ipfs/QmRtdUhATvWu3T7fu3gEXzACQ33yZxMvkBn52yWn4B4P4D"
+			]
+		},
+		"contracts/polygon/external/openzeppelin/utils/structs/BitMaps.sol": {
+			"keccak256": "0x78dd37e219accdaa6f3d16b6a234284054a9806fa43cc732dd0aa7943b55638e",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://0089a95579a67e46ef8247306f727d47da7ba834ed68cbd60a431b48fd6027f6",
+				"dweb:/ipfs/QmRUkxxQ63qKaqkRfPJTRzM4sDLJ9nXVaTrkyn1TDdE91V"
+			]
+		},
+		"contracts/polygon/external/openzeppelin/utils/structs/Checkpoints.sol": {
+			"keccak256": "0x644db19b1e69fb99b1ffd68d8d26ca38b134c9eecf6dac51adf386829e56a0b8",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://889402f6e944638549561a37e6e42a565118ca12306abd95c1ab32a895d7c686",
+				"dweb:/ipfs/QmdXToFMLazMEtyEgCFN48Kai3anefjUzTacEaoM6Cgjzf"
+			]
+		},
+		"contracts/polygon/external/openzeppelin/utils/structs/DoubleEndedQueue.sol": {
+			"keccak256": "0x668e9e588b132e215375ae0b0233edcfb89067a5cee66ade1a6f69f7b6b4f206",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://b75421ca6bb7a37d2ac93de71b95121dcb67e920fde42dd8ddf3ac3ae89acb56",
+				"dweb:/ipfs/QmfUMDRzgzuJNh99U2B47Fjr8sYq5eMrnnrXESwAAXWveE"
+			]
+		},
+		"contracts/polygon/external/openzeppelin/utils/structs/EnumerableMap.sol": {
+			"keccak256": "0xf7d311d4bc1a611f69ea3d44893602cab5f4b0b339295e5085f4d5117614c3ff",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://19351930ede89c279228443ca9d388ca1b5060dcaf8384294f7016192bba4fee",
+				"dweb:/ipfs/QmaYDEsegdyhd4CyVv9DWQTAzCDwEzFsUhE8TXD4BTKxGy"
+			]
+		},
+		"contracts/polygon/external/openzeppelin/utils/structs/EnumerableSet.sol": {
+			"keccak256": "0xeefcbb8cb69f04a18f6dc61d4811133ce9aeff96ce60820f758abc52ef55b892",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://81c61c0dd40890f6a4b1fb792bc5b5b61e821fcafa2aae6c7eda6d4f1ece2593",
+				"dweb:/ipfs/QmRLMrq6BiPS9wGu7ZC174SFYWCu6cxbU3agDw2XgJeDpT"
+			]
+		},
+		"contracts/polygon/interfaces/access-control/IOwnable.sol": {
+			"keccak256": "0x1d12c060033c0cf06f5cd380511eb0d6010576ad7a05fae23fcc3785621a3960",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://835791130f15ab2646166cc4b23fc2bbfb26cda6584c99958b2a06d8a01f34bb",
+				"dweb:/ipfs/QmdVj4kNEYQNTUeYb2ay3NXTyWYNSLWbR1JeDyfjUda23a"
+			]
+		},
+		"contracts/polygon/interfaces/access-control/IRole.sol": {
+			"keccak256": "0x24c48a41699ae384f59cc206bf97227232cc36ae1e7666c9c5c184e4f4d0a5dd",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://92da2da1d02ddac181c06b178653cd95a4fa5601b6c72b50f1d5923f1a61dde8",
+				"dweb:/ipfs/QmUhVYgULzCkAEKeRjV4qjpGQx482F6zRkwpsSyqR15cui"
+			]
+		},
+		"contracts/polygon/interfaces/governance/proposal/IMultiSigProposal.sol": {
+			"keccak256": "0xb2e19e2a9fbc4a83a2374c73d42bf1ad33a71c823d5baba8ef701d51c61a89b7",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://031df183d113a16609f82cef93139493869f32ee3b60d4238dd5a21ea3b643de",
+				"dweb:/ipfs/Qmb1nGQ6SMhuVEjXEWc9A1B6QeGDvWShmhqyccU1VYNwA2"
+			]
+		},
+		"contracts/polygon/interfaces/main/proposal/IMultiSigProposalImplementation.sol": {
+			"keccak256": "0x594e68db40bca93c97b3e35872bfbfd575fab5ad365f32df4e40c1febf88ec54",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://538f8e5fdf2aaf9598d68c914efd61b136dc82c67af6320631f30c0b01d71f25",
+				"dweb:/ipfs/QmY84gEEAAJx2Bqj6ARy4r2CbMjALYgiNk3vDhW44NCEdy"
+			]
+		},
+		"contracts/polygon/interfaces/main/terminal/implementation/ITerminalImplementation.sol": {
+			"keccak256": "0x50ce58862ae9dd06907412eead2b418b0fb4e84787961baf91a553cd4430f904",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://c43c76e006a410635e4f89a371a05b9d92847902c51e031d71382b30be3c762c",
+				"dweb:/ipfs/QmSwr5WJCqbBp6nzoHL8iHiN6rjYZkir5uB3h3rSYWb4NW"
+			]
+		},
+		"contracts/polygon/interfaces/proxy/IBase.sol": {
+			"keccak256": "0x2adbb12fb4d61cd53eabd4519619fe728650133589ca7d2226486ae72a801a43",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://7590939781664c022271a0229bace7bc63083a99647793c583eed009abda4b1a",
+				"dweb:/ipfs/QmSp3vAMos5mYFVJ6BdadXfvPqWYeXw1Uk49vJLnqWsUks"
+			]
+		},
+		"contracts/polygon/interfaces/proxy/IDefaultImplementation.sol": {
+			"keccak256": "0x702f784becc710f6a74aed7d98ff9e67e68d100e9e56e3278b765e23a8d29ad8",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://169d67119a0796420acda4c350c07fe097d94d8f1048722151015937299a624d",
+				"dweb:/ipfs/Qmdzgj8QWRadogUZNtCJVZCsVJf9wvuSVzeQPGsv4nyHvB"
+			]
+		},
+		"contracts/polygon/interfaces/security/IPausable.sol": {
+			"keccak256": "0x6559dfa291df7a5467753282ac863378c6a5c5c9079c43a1f98ac1860fdaf78e",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://1f186581d5e5b7ebf33c259aba3bbb18595610a28cd8f4b278c0b2284f5bb126",
+				"dweb:/ipfs/QmcLLLN75D1Pu9ZM7RxgtKxL242wrNe9Mqmfdhvmbb4tj3"
+			]
+		},
+		"contracts/polygon/interfaces/utils/IAddressBook.sol": {
+			"keccak256": "0x48949b286894826ceca3e10c392c89b58c9a96e53c5a9f652d23fe6b20808061",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://f0a130270d281538df250808a43ebb4e5d9bdbc82d94cd79a8a582b7c1803933",
+				"dweb:/ipfs/QmdptXfaHwTrL7wgqJMC6Xow4r65Njsyiuo1CmCZ83iXan"
+			]
+		},
+		"contracts/polygon/interfaces/utils/IInitializable.sol": {
+			"keccak256": "0xed82926c2f88f54b0b6816dab9e6f5ce04951a16b999b9c754e20c63cfd95a6d",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://99b19d82e26d62cfa81c4cae70364d0d3c0f97389b59c64a3e99744bea551512",
+				"dweb:/ipfs/QmWEqLexuEqG6mnvf8UeegLxML28vqN9Uj2kkGGTPBkFA8"
+			]
+		},
+		"contracts/polygon/interfaces/utils/ILowLevelCall.sol": {
+			"keccak256": "0x6684b4b00c87738eeace5d79fe3d7f24adcd8a4c40d37a005ccb30b233371756",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://90643fe2567c559774ae24670ad0be2a94b83e95cd2cb66a3d386f799d410a49",
+				"dweb:/ipfs/QmbYLM1e9CaE8LcWoCj18QWmNXXMuh1P31o2numJUz9iHo"
+			]
+		},
+		"contracts/polygon/interfaces/utils/IPayload.sol": {
+			"keccak256": "0x87e1549392f24937f337d19f6d907ee4a4174d6747ba3c5fd755f1829544dc0e",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://61dad97e83ab8eb2347a5dd53725e6ae4df9f8c4b9dcc2deb8bcf675d37a76a8",
+				"dweb:/ipfs/QmXV1uLdsjrQASPc3PUuMy4BVXKJ8ruvr2jM3k4STVC2mf"
+			]
+		},
+		"contracts/polygon/interfaces/utils/ITag.sol": {
+			"keccak256": "0x4f1b30e16586aa23c0c12ce3d5bdd2ed92cef4e1f52c91cabfe32449eaab1e35",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://c34e1a31840ed1f7d3a3421dbd1f71a5fb4f95bab6e866b38880a92b7478d9a4",
+				"dweb:/ipfs/Qmd4koFDeEgxPV8EPd8YMPZoiE8RoYC72JsLtTLxaJRjkM"
+			]
+		},
+		"contracts/polygon/interfaces/utils/ITimer.sol": {
+			"keccak256": "0x60eb778cca072d83836fb48afd64eef3d6d690f356c1faa076412ef2c484d563",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://1ea4985c584bf476e3943fd14438fad3b32031a67ebb0af741d850740d17b158",
+				"dweb:/ipfs/QmbwabMtAWiEaDP9sZVTfueZKPXXsCcZJkknSgoV9W9ncS"
+			]
+		},
+		"contracts/polygon/main/proposal/MultiSigProposalFactory.sol": {
+			"keccak256": "0x9143a20c4c363b0896960e8f940f374869859d85ca3deb95e45afad6c9bbaa23",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://403a87eefdb1a2a6347ff7cfc9dc8b2d9131c88c1f39eedf16e87dc767d78960",
+				"dweb:/ipfs/QmRsQZBAYaEEsKkxLZugvgCPgTNXCUJv71Pwp4mynsyExj"
+			]
+		}
+	},
+	"version": 1
+}
