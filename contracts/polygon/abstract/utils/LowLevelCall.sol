@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
-import "contracts/polygon/abstract/storage/Storage.sol";
 
-abstract contract LowLevelCall is Storage {
+abstract contract LowLevelCall {
 
     /**
     * @dev Emitted when a low-level call is executed.

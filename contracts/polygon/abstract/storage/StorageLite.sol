@@ -2,7 +2,7 @@
 pragma solidity 0.8.19;
 
 /**
- * @title StateLiteV1
+ * @title StateLite
  * @dev Abstract contract defining a bytes mapping for efficient storage of binary data.
  *
  * This contract includes a mapping where keys are of type bytes32 and values are of type bytes,
