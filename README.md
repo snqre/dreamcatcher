@@ -57,3 +57,6 @@ Checklist 2023
 - [ ] SolsticeVaultImplementationUpgradeableLite [ testnet ]
 - [ ] SimpleVaultImplementationUpgradeableLite [ mainnet ]
 - [ ] SolsticeVaultImplementationUpgradeableLite [ mainnet ]
+- [ ] Website Landing Page
+- [ ] Website Protocol Activity Dashboard
+- [ ] Website Protocol Governance Dashboard
