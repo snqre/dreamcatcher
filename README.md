@@ -10,7 +10,7 @@ Checklist 2023
 - [x] ReferendumProposalImplementationLite [ f.refactor ]
 - [x] ProxyLiteDeployer [ f.refactor ]
 - [x] TerminalImplementationUpgradeableLite [ f.refactor ]
-- [ ] proposal-toolkits [ interface ]
+- [x] proposal-toolkits [ interface ]
 - [x] access-control [ interface ]
 - [ ] security [ interface ]
 - [ ] utils [ interface ]
