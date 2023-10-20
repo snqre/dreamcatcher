@@ -15,18 +15,34 @@ abstract contract SettingsLite is StorageLite {
     event Snapped(uint indexed newSnapshotId);
 
     function requiredQuorum() public view virtual returns (uint) {
+        bytes memory emptyBytes;
+        if (keccak256(_bytes[____requiredQuorum()]) == keccak256(emptyBytes)) {
+            return 0;
+        }
         return abi.decode(_bytes[____requiredQuorum()], (uint));
     }
 
     function requiredThreshold() public view virtual returns (uint) {
+        bytes memory emptyBytes;
+        if (keccak256(_bytes[____requiredThreshold()]) == keccak256(emptyBytes)) {
+            return 0;
+        }
         return abi.decode(_bytes[____requiredThreshold()], (uint));
     }
 
     function governanceToken() public view virtual returns (address) {
+        bytes memory emptyBytes;
+        if (keccak256(_bytes[____governanceToken()]) == keccak256(emptyBytes)) {
+            return address(0);
+        }
         return abi.decode(_bytes[____governanceToken()], (address));
     }
 
     function snapshotId() public view virtual returns (uint) {
+        bytes memory emptyBytes;
+        if (keccak256(_bytes[____snapshotId()]) == keccak256(emptyBytes)) {
+            return 0;
+        }
         return abi.decode(_bytes[____snapshotId()], (uint));
     }
 
@@ -44,13 +60,6 @@ abstract contract SettingsLite is StorageLite {
 
     function ____snapshotId() internal pure virtual returns (bytes32) {
         return keccak256(abi.encode("SNAPSHOT_ID"));
-    }
-
-    function _initialize() internal virtual {
-        _bytes[____requiredQuorum()] = abi.encode(0);
-        _bytes[____requiredThreshold()] = abi.encode(0);
-        _bytes[____governanceToken()] = abi.encode(address(0));
-        _bytes[____snapshotId()] = abi.encode(0);
     }
 
     function _setRequiredQuorum(uint newRequiredQuorum) internal virtual {

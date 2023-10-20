@@ -3,7 +3,7 @@ pragma solidity 0.8.19;
 import "contracts/polygon/abstracts/storage/StorageLite.sol";
 
 /** @dev Store target, data, and last response for low level call exection. */
-abstract contract PackageLite is StorageLite {
+abstract contract PayloadLite is StorageLite {
 
     event TargetUpdated(address indexed previousTarget, address indexed newTarget);
 
@@ -12,6 +12,10 @@ abstract contract PackageLite is StorageLite {
     event LastResponseUpdated(bytes indexed previousResponse, bytes indexed newResponse);
 
     function target() public view virtual returns (address) {
+        bytes memory emptyBytes;
+        if (keccak256(_bytes[____target()]) == keccak256(emptyBytes)) {
+            return address(0);
+        }
         return abi.decode(_bytes[____target()], (address));
     }
 
@@ -33,10 +37,6 @@ abstract contract PackageLite is StorageLite {
 
     function ____lastResponse() internal pure virtual returns (bytes32) {
         return keccak256(abi.encode("LAST_RESPONSE"));
-    }
-
-    function _initialize() internal virtual {
-        _bytes[____target()] = abi.encode(address(0));
     }
 
     function _setTarget(address newTarget) internal virtual {

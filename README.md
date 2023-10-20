@@ -1,10 +1,47 @@
-Checklist:
+Checklist 2023
 
-1. proposal-toolkits
-2. MultiSigProposalLite [ f.refactor ]
-3. ReferendumProposalLite [ f.refactor ]
-4. access-control
-5. security
-6. utils
-4. Echo [ f.refactor ]
-5. Foundation [ f.refactory ]
+- [x] proposal-toolkits
+- [x] access-control
+- [x] security
+- [x] utils
+- [x] ProxyLite [ f.refactor ]
+- [x] DefaultImplementationLite [ f.refactor ]
+- [x] MultiSigProposalImplementationLite [ f.refactor ]
+- [x] ReferendumProposalImplementationLite [ f.refactor ]
+- [x] ProxyLiteDeployer [ f.refactor ]
+- [x] TerminalImplementationUpgradeableLite [ f.refactor ]
+- [ ] proposal-toolkits [ interface ]
+- [x] access-control [ interface ]
+- [ ] security [ interface ]
+- [ ] utils [ interface ]
+- [ ] ProxyLite [ interface ]
+- [ ] DefaultImplementationLite [ interface ]
+- [ ] MultiSigProposalImplementationLite [ interface ]
+- [ ] ReferendumProposalImplementationLite [ interface ]
+- [ ] ProxyLiteDeployer [ interface ]
+- [ ] TerminalImplementationUpgradeableLite [ interface ]
+- [ ] proposal-toolkits [ testing ]
+- [ ] access-control [ testing ]
+- [ ] security [ testing ]
+- [ ] utils [ testing ]
+- [ ] ProxyLite [ testing ]
+- [ ] DefaultImplementationLite [ testing ]
+- [ ] MultiSigProposalImplementationLite [ testing ]
+- [ ] ReferendumProposalImplementationLite [ testing ]
+- [ ] ProxyDeployerCore [ testing ]
+- [ ] TerminalImplementationUpgradeableLite [ testing ]
+- [ ] MultiSigProposalImplementationLite [ mumbai ]
+- [ ] ReferendumProposalImplementationLite [ mumbai ]
+- [ ] ProxyLiteDeployer [ mumbai ]
+- [ ] ProposalManagerImplementation
+- [ ] ProposalManagerImplementation [ testing ]
+- [ ] ProposalManagerImplementation [ testnet ]
+- [ ] ProxyLite [ documentation ]
+- [ ] DefaultImplementationLite [ documentation ]
+- [ ] MultiSigProposalImplementationLite [ documentation ]
+- [ ] ReferendumProposalImplementationLite [ documentation ]
+- [ ] ProxyLiteDeployer [ documentation ]
+- [ ] TerminalImplementationUpgradeableLite [ documentation ]
+- [ ] ProxyLiteDeployer [ mainnet ]
+- [ ] TerminalImplementationUpgradeableLite [ mainnet ]
+- [ ] ProposalManagerImplementation [ mainnet ]

@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 import "contracts/polygon/abstracts/storage/StorageLite.sol";
+import "contracts/polygon/external/openzeppelin/utils/Context.sol";
 
-abstract contract SignableLite is StorageLite {
+abstract contract SignableLite is StorageLite, Context {
 
     event SignerAdded(address indexed account);
 
@@ -33,10 +34,18 @@ abstract contract SignableLite is StorageLite {
     }
 
     function signersCount() public view virtual returns (uint) {
+        bytes memory emptyBytes;
+        if (keccak256(_bytes[____signersCount()]) == keccak256(emptyBytes)) {
+            return 0;
+        }
         return abi.decode(_bytes[____signersCount()], (uint));
     }
 
     function signaturesCount() public view virtual returns (uint) {
+        bytes memory emptyBytes;
+        if (keccak256(_bytes[____signaturesCount()]) == keccak256(emptyBytes)) {
+            return 0;
+        }
         return abi.decode(_bytes[____signaturesCount()], (uint));
     }
 
@@ -56,11 +65,6 @@ abstract contract SignableLite is StorageLite {
         return keccak256(abi.encode("SIGNATURES_COUNT"));
     }
 
-    function _initialize() internal virtual {
-        _bytes[____signersCount()] = abi.encode(0);
-        _bytes[____signaturesCount()] = abi.encode(0);
-    }
-
     function _addSigner(address account) internal virtual {
         require(!isSigner(account), "SignableLite: cannot add signer again");
         _raiseCount(____signersCount());
@@ -69,11 +73,11 @@ abstract contract SignableLite is StorageLite {
     }
 
     function _sign() internal virtual {
-        require(isSigner(msg.sender), "SignableLite: only signers can sign");
-        require(!hasSigned(msg.sender), "SignableLite: cannot be signed again");
+        require(isSigner(_msgSender()), "SignableLite: only signers can sign");
+        require(!hasSigned(_msgSender()), "SignableLite: cannot be signed again");
         _raiseCount(____signaturesCount());
-        _bytes[____hasSigned(msg.sender)] = abi.encode(true);
-        emit Signed(msg.sender);
+        _bytes[____hasSigned(_msgSender())] = abi.encode(true);
+        emit Signed(_msgSender());
     }
 
     function _raiseCount(bytes32 counter) internal virtual {

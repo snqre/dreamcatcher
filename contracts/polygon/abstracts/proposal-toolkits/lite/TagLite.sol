@@ -11,14 +11,28 @@ abstract contract TagLite is StorageLite {
     event CreatorUpdated(address indexed previousCreator, address indexed newCreator);
 
     function name() public view virtual returns (string memory) {
+        bytes memory emptyBytes;
+        if (keccak256(_bytes[____name()]) == keccak256(emptyBytes)) {
+            string memory emptyString;
+            return emptyString;
+        }
         return abi.decode(_bytes[____name()], (string));
     }
 
     function note() public view virtual returns (string memory) {
+        bytes memory emptyBytes;
+        if (keccak256(_bytes[____note()]) == keccak256(emptyBytes)) {
+            string memory emptyString;
+            return emptyString;
+        }
         return abi.decode(_bytes[____note()], (string));
     }
 
     function creator() public view virtual returns (address) {
+        bytes memory emptyBytes;
+        if (keccak256(_bytes[____creator()]) == keccak256(emptyBytes)) {
+            return address(0);
+        }
         return abi.decode(_bytes[____creator()], (address));
     }
 
@@ -33,13 +47,6 @@ abstract contract TagLite is StorageLite {
     function ____creator() internal pure virtual returns (bytes32) {
         /** @dev Because the deployer may not be equal to the creator. */
         return keccak256(abi.encode("CREATOR"));
-    }
-
-    function _initialize() internal virtual {
-        string memory emptyString;
-        _bytes[____name()] = abi.encode(emptyString);
-        _bytes[____note()] = abi.encode(emptyString);
-        _bytes[____creator()] = abi.encode(address(0));
     }
 
     function _setName(string memory newName) internal virtual {

@@ -15,7 +15,7 @@ import "contracts/polygon/external/openzeppelin/utils/structs/EnumerableSet.sol"
  * libraries to ensure gas-efficient and secure storage management.
  *
  * @notice This contract defines multiple mappings with different key-value types, enabling the storage and retrieval
- * of diverse data types within the Ethereum blockchain.
+ * of diverse data types within the Polygon blockchain.
  *
  * @dev The contract imports and utilizes OpenZeppelin libraries, including BitMaps, Checkpoints, DoubleEndedQueue,
  * and EnumerableMap, to enhance the functionality and efficiency of data structures.

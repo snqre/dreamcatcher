@@ -9,10 +9,18 @@ abstract contract TimerLite is StorageLite {
     event DurationUpdated(uint indexed previousSeconds, uint indexed newSeconds);
 
     function startTimestamp() public view virtual returns (uint) {
+        bytes memory emptyBytes;
+        if (keccak256(_bytes[____startTimestamp()]) == keccak256(emptyBytes)) {
+            return 0;
+        }
         return abi.decode(_bytes[____startTimestamp()], (uint));
     }
 
     function duration() public view virtual returns (uint) {
+        bytes memory emptyBytes;
+        if (keccak256(_bytes[____duration()]) == keccak256(emptyBytes)) {
+            return 0;
+        }
         return abi.decode(_bytes[____duration()], (uint));
     }
 
@@ -44,11 +52,6 @@ abstract contract TimerLite is StorageLite {
 
     function ____duration() internal pure virtual returns (bytes32) {
         return keccak256(abi.encode("DURATION"));
-    }
-
-    function _initialize() internal virtual {
-        _bytes[____startTimestamp()] = abi.encode(0);
-        _bytes[____duration()] = abi.encode(0);
     }
 
     function _setStartTimestamp(uint newTimestamp) internal virtual {
