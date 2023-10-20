@@ -16,7 +16,7 @@ contract TerminalImplementationUpgradeableLite is DefaultImplementationLite, Own
         _upgrade(newImplementation);
     }
 
-    function LowLevelCall(address target, bytes memory data) public virtual {
+    function lowLevelCall(address target, bytes memory data) public virtual {
         _onlyOwner();
         _lowLevelCall(target, data);
     }

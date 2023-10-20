@@ -8,6 +8,10 @@ contract ProxyLiteDeployer {
 
     ProxyLite[] internal _deployed;
 
+    function deploy(address newImplementation) public virtual returns (address) {
+        return _deploy(newImplementation);
+    }
+
     function _deploy(address newImplementation) internal virtual returns (address) {
         _deployed.push(new ProxyLite());
         uint i = _deployed.length - 1;
