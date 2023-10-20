@@ -1,9 +1,9 @@
 # Structure of Storage Slot Declaration
 
-`function example() public view virtual returns (datatype)`
-`perform action? public virtual`
-`function ____example() internal pure virtual returns (bytes32)`
-`function _setExample(args) internal virtual`
+1. function example() public view virtual returns (datatype)
+2. perform action? public virtual
+3. function ____example() internal pure virtual returns (bytes32)
+4. function _setExample(args) internal virtual
 
 ---
 
