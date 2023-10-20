@@ -1,0 +1,3 @@
+> Code must be flattened before deployment to allow for easy verification and more readable source code.
+
+> Deployed code must never be changed. Use ContractNameD02 -> contractNameD03 to show that it is the second or third deployment. If the contract itself already has a number ie. ContractName02 it turns into ContractName02D03. "D" stands for deployed. The first deployments do not require a number ie. ContractName or ContractName04.
