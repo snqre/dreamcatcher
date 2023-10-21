@@ -4,105 +4,75 @@ import "contracts/polygon/abstracts/storage/StorageLite.sol";
 
 abstract contract TrackedUsedLite is StorageLite {
 
-    event MaxTrackedTokensUpdated(uint indexed previousCount, uint indexed newCount);
+    event TokenTracked(address indexed token);
 
-    event TrackedTokenAdded(address indexed token);
+    event TokenUntracked(address indexed token);
 
-    event TrackedTokenRemoved(address indexed token);
-
-    function trackedToken(uint i) public view virtual returns (address) {
+    function tracked(uint i) public view virtual returns (address) {
         bytes memory emptyBytes;
-        if (keccak256(_bytes[____trackedToken(i)]) == keccak256(emptyBytes)) {
+        if (keccak256(_bytes[____tracked()]) == keccak256(emptyBytes)) {
             return address(0);
         }
-        return abi.decode(_bytes[____trackedToken(i)], (address));
+        address[] memory set = new address[](size());
+        set = abi.decode(_bytes[____tracked()], (address[]));
+        return set[i];
     }
 
-    function trackedTokenCount() public view virtual returns (uint) {
+    function size() public view virtual returns (uint) {
         bytes memory emptyBytes;
-        if (keccak256(_bytes[____trackedTokenCount()]) == keccak256(emptyBytes)) {
+        if (keccak256(_bytes[____size()]) == keccak256(emptyBytes)) {
             return 0;
         }
-        return abi.decode(_bytes[____trackedTokenCount()], (uint));
+        return abi.decode(_bytes[____size()], (uint));
     }
 
-    function maxTrackedTokens() public view virtual returns (uint) {
+    function ____tracked() internal pure virtual returns (bytes32) {
+        return keccak256(abi.encode("TRACKED"));
+    }
+
+    function ____size() internal pure virtual returns (bytes32) {
+        return keccak256(abi.encode("SIZE"));
+    }
+
+    function _addTracked(address token) internal virtual {
+        bool success;
         bytes memory emptyBytes;
-        if (keccak256(_bytes[____maxTrackedTokens()]) == keccak256(emptyBytes)) {
-            return 0;
+        address[] memory set = new address[](size());
+        if (keccak256(_bytes[____tracked()]) != keccak256(emptyBytes)) {
+            set = abi.decode(_bytes[____tracked()], (address[]));
         }
-        return abi.decode(_bytes[____maxTrackedTokens()], (uint));
-    }
-
-    function ____trackedToken(uint i) internal pure virtual returns (bytes32) {
-        return keccak256(abi.encode("TRACKED_TOKEN", i));
-    }
-
-    function ____trackedTokenCount() internal pure virtual returns (bytes32) {
-        return keccak256(abi.encode("TRACKED_TOKEN_COUNT"));
-    }
-
-    function ____maxTrackedTokens() internal pure virtual returns (bytes32) {
-        return keccak256(abi.encode("MAX_TRACKED_TOKENS"));
-    }
-
-    function _mustNotBeAboveMaxTrackedTokens() internal view virtual {
-        require(trackedTokenCount() <= maxTrackedTokens(), "TrackedUsedLite: is above limit");
-    }
-
-    function _initialize() internal virtual {
-        _setMaxTrackedTokens(50);
-    }
-
-    function _addTrackedToken(address token) internal virtual {
-        require(_index(token) > maxTrackedTokens(), "TrackedUsedLite: duplicate entry");
-        uint i = _raiseTrackedTokenCount();
-        _bytes[____trackedToken(i - 1)] = abi.encode(token);
-        _mustNotBeAboveMaxTrackedTokens();
-        emit TrackedTokenAdded(token);
-    }
-
-    function _subTrackedToken(address token) internal virtual {
-        require(_index(token) <= maxTrackedTokens(), "TrackedUsedLite: empty entry");
-        _bytes[____trackedToken(_index(token))] = abi.encode(address(0));
-        _refresh();
-        emit TrackedTokenRemoved(token);
-    }
-
-    function _raiseTrackedTokenCount() internal virtual returns (uint) {
-        uint count = trackedTokenCount();
-        count += 1;
-        _bytes[____trackedTokenCount()] = abi.encode(count);
-        return count;
-    }
-
-    function _setMaxTrackedTokens(uint newCount) internal virtual {
-        uint previousCount = maxTrackedTokens();
-        _bytes[____maxTrackedTokens()] = abi.encode(newCount);
-        emit MaxTrackedTokensUpdated(previousCount, newCount);
-    }
-
-    function _index(address token) private view returns (uint) {
-        for (uint i = 0; i < trackedTokenCount(); i++) {
-            if (trackedToken(i) == token) {
-                return i;
+        for (uint i = 0; i < size() + 1; i++) {
+            if (set[i] == address(0)) {
+                set[i] = token;
+                success = true;
+                break;
             }
         }
-        return 9000000000000000;
+        require(success, "TrackedUsedLite: size limit exceeded");
+        _bytes[____tracked()] = abi.encode(set);
+        emit TokenTracked(token);
     }
 
-    function _refresh() private {
-        address[] memory set;
-        set = new address[](trackedTokenCount());
-        uint count;
-        for (uint i = 0; i < trackedTokenCount(); i++) {
-            if (trackedToken(i) != address(0)) {
-                set[count] = trackedToken(i);
-                _bytes[____trackedToken(i)] = abi.encode(address(0));
+    function _subTracked(address token) internal virtual {
+        bool success;
+        bool empty;
+        bytes memory emptyBytes;
+        address[] memory set = new address[](size());
+        if (keccak256(_bytes[____tracked()]) != keccak256(emptyBytes)) {
+            set = abi.decode(_bytes[____tracked()], (address[]));
+        } else {
+            empty = true;
+        }
+        require(!empty, "TrackedUsedLite: is empty");
+        for (uint i = 0; i < size() + 1; i++) {
+            if (set[i] == token) {
+                set[i] = address(0);
+                success = true;
+                break;
             }
         }
-        for (uint i = 0; i < set.length; i++) {
-            _bytes[____trackedToken(i)] = abi.encode(set[i]);
-        }
+        require(success, "TrackedUsedLite: token not found");
+        _bytes[____tracked()] = abi.encode(set);
+        emit TokenUntracked(token);
     }
 }

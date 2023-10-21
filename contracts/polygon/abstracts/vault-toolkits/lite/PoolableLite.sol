@@ -32,7 +32,7 @@ abstract contract PoolableLite is StorageLite {
         return keccak256(abi.encode("BURN_FEE"));
     }
 
-    function _amountToMint(uint v, uint s, uint b) internal view virtual returns (uint) {
+    function _amountToMint(uint v, uint s, uint b) internal view virtual returns (uint, uint) {
         require(
             v != 0 &&
             s != 0 &&
@@ -41,10 +41,10 @@ abstract contract PoolableLite is StorageLite {
         );
         uint mint = ((v * s) / b);
         uint fee = (mint * mintFee()) / 10000;
-        return mint - fee;
+        return (mint - fee, fee);
     }
 
-    function _amountToSend(uint a, uint s, uint b) internal view virtual returns (uint) {
+    function _amountToSend(uint a, uint s, uint b) internal view virtual returns (uint, uint) {
         require(
             a != 0 &&
             s != 0 &&
@@ -53,7 +53,7 @@ abstract contract PoolableLite is StorageLite {
         );
         uint send = ((a * b) / s);
         uint fee = (send * burnFee()) / 10000;
-        return send - fee;
+        return (send - fee, fee);
     }
 
     function _setMintFee(uint newFee) internal virtual {
