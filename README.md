@@ -41,7 +41,7 @@ Checklist 2023
 - [ ] ProposalManagerImplementation [ mainnet ]
 - [ ] PriceFeedImplementationLite [ f.refactor ]
 - [ ] SwapperImplementationLite [ f.refactor ]
-- [ ] vault-toolkits
+- [x] vault-toolkits
 - [ ] SimpleVaultImplementationUpgradeableLite [ f.refactor ]
 - [ ] SolsticeVaultImplementationUpgradeableLite [ f.refactor ]
 - [ ] vault-toolkits [ testing ]
@@ -51,6 +51,9 @@ Checklist 2023
 - [ ] SolsticeVaultImplementationUpgradeableLite [ testnet ]
 - [ ] SimpleVaultImplementationUpgradeableLite [ mainnet ]
 - [ ] SolsticeVaultImplementationUpgradeableLite [ mainnet ]
+- [ ] GovernanceToken
+- [ ] GovernanceToken [ testing ]
+- [ ] GovernanceToken [ mainnet ]
 - [ ] Website Landing Page
 - [ ] Website Protocol Activity Dashboard
 - [ ] Website Protocol Governance Dashboard

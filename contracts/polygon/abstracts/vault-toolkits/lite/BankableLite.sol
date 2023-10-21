@@ -6,9 +6,9 @@ import "contracts/polygon/external/openzeppelin/token/ERC20/extensions/IERC20Met
 
 abstract contract BankableLite is StorageLite, Context {
 
-    event SenderDepositERC20(address indexed sender, address indexed tokenIn, uint amountIn);
+    event SenderDepositERC20(address indexed sender, address indexed tokenIn, uint indexed amountIn);
 
-    event SenderWithdrawERC20(address indexed sender, address indexed tokenOut, uint amountOut);
+    event SenderWithdrawERC20(address indexed sender, address indexed tokenOut, uint indexed amountOut);
 
     event SenderDepositMATIC(address indexed sender, uint amountIn);
 
