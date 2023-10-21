@@ -20,10 +20,6 @@ Checklist 2023
 - [x] ReferendumProposalImplementationLite [ interface ]
 - [x] ProxyLiteDeployer [ interface ]
 - [x] TerminalImplementationUpgradeableLite [ interface ]
-- [ ] proposal-toolkits [ testing ]
-- [ ] access-control [ testing ]
-- [ ] security [ testing ]
-- [ ] utils [ testing ]
 - [ ] ProxyLite [ testing ]
 - [ ] DefaultImplementationLite [ testing ]
 - [ ] MultiSigProposalImplementationLite [ testing ]
@@ -41,7 +37,7 @@ Checklist 2023
 - [ ] ProposalManagerImplementation [ mainnet ]
 - [ ] PriceFeedImplementationLite [ f.refactor ]
 - [ ] SwapperImplementationLite [ f.refactor ]
-- [x] vault-toolkits
+- [ ] vault-toolkits
 - [ ] SimpleVaultImplementationUpgradeableLite [ f.refactor ]
 - [ ] SolsticeVaultImplementationUpgradeableLite [ f.refactor ]
 - [ ] vault-toolkits [ testing ]

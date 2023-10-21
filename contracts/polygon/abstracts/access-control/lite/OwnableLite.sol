@@ -5,7 +5,7 @@ import "contracts/polygon/external/openzeppelin/utils/Context.sol";
 
 /** Adapted from openzeppelin's Ownable.sol */
 abstract contract OwnableLite is StorageLite, Context {
-    
+
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
     function owner() public view virtual returns (address) {
