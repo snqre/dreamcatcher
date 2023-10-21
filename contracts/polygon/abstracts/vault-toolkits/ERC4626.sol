@@ -1,22 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-/**
-* @title ERC-4626: Tokenized Vault.
+/** 
+* @title ERC-4626 Tokenized Vault. 
 *
-* @author Joey Santoro, t11s, Jet Jadeja, Alberto Cuesta Cañada, Señor Doggo.
+* https://eips.ethereum.org/EIPS/eip-4626.
 *
-* Created: 2021-12-22.
-*
-* Requires:
-* - EIP-20.
-* - EIP-2612.
-*
-* ABSTRACT: The following standard allows for the implementation of a
-*           standardized API for tokenized Vaults representing shares of a
-*           single underlying EIP-20 token. This standard is an extension
-*           on the EIP-20 token that provides basic functionality for
-*           depositing and withdrawing tokens and reading balances.
+* ABSTRACT The following standard allows for the implementation of a
+*          standardized API for tokenized Vaults representing shares of a
+*          single underlying EIP-20 token. This standard is an extension
+*          on the EIP-20 token that provides basic functionality for
+*          depositing and withdrawing tokens and reading balances.
  */
 abstract contract ERC4626 {
 
@@ -151,7 +145,7 @@ abstract contract ERC4626 {
     *          due to other conditions that would also cause deposit to
     *          revert.
     *
-    * @dev Note that any unfavorable discrepancy between { convertToShares }
+    * NOTE That any unfavorable discrepancy between { convertToShares }
     *      and { previewDeposit } SHOULD be considered slippage in share
     *      price or some other type of condition, meaning the depositor
     *      will lose assets by depositing.
@@ -174,7 +168,7 @@ abstract contract ERC4626 {
     *      limit being reached, slippage, the user not approving enough
     *      underlying tokens to the Vault contract, etc).
     *
-    * Note that most implementations will require pre-approval of the Vault
+    * NOTE That most implementations will require pre-approval of the Vault
     *      with the Vault's underlying { asset } token.
      */
     function deposit(uint asssets, address receiver) public virtual returns (uint);
@@ -221,7 +215,7 @@ abstract contract ERC4626 {
     *          due to other conditions that would also cause { mint } to
     *          revert.
     *
-    * Note that any unfavorable discrepancy between { convertToAssets } and
+    * NOTE That any unfavorable discrepancy between { convertToAssets } and
     *      { previewMint } SHOULD be considered slippage in share price or
     *      some other type of condition, meaning the depositor will
     *      lose assets by minting.
@@ -244,7 +238,7 @@ abstract contract ERC4626 {
     *      limit being reached, slippage, the user not approving enough 
     *      underlying tokens to the Vault contract, etc).
     *
-    * Note that most implementations will require pre-approval of the
+    * NOTE That most implementations will require pre-approval of the
     *      Vault with the Vault's underlying { asset } token.
      */
     function mint(uint shares, address receiver) public virtual returns (uint);
@@ -290,7 +284,7 @@ abstract contract ERC4626 {
     *          to other conditions that would also cause { withdraw } to
     *          revert.
     *
-    * Note that any unfavorable discrepancy between { convertToShares } and
+    * NOTE That any unfavorable discrepancy between { convertToShares } and
     *      { previewWithdraw } SHOULD be considered slippage in share price
     *      or some other type of condition, meaning the depositor will lose
     *      assets by depositing.
@@ -321,7 +315,7 @@ abstract contract ERC4626 {
     *      limit being reached, slippage, the owner not having enough shares,
     *      etc).
     *
-    * Note that some implementations will require pre-requesting to the Vault
+    * NOTE That some implementations will require pre-requesting to the Vault
     *      before a withdrawal may be performed. Those methods should be
     *      performed separately.
      */
@@ -365,7 +359,7 @@ abstract contract ERC4626 {
     *          due to other conditions that would also cause { redeem } to
     *          revert.
     *
-    * Note that any unfavorable discrepancy between { convertToAssets } and
+    * NOTE That any unfavorable discrepancy between { convertToAssets } and
     *      { previewRedeem } SHOULD be considered slippage in share price or
     *      some other type of condition, meaning the depositor will lose
     *      assets by redeeming.
@@ -395,7 +389,7 @@ abstract contract ERC4626 {
     *      limit being reached, slippage, the owner not having enough 
     *       shares, etc).
     *
-    * Note that some implementations will require pre-requresting to the
+    * NOTE That some implementations will require pre-requresting to the
     *      Vault before a withdrawal may be performed. Those methods should
     *      be performed separately.
      */
