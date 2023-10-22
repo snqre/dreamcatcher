@@ -15,22 +15,27 @@ contract UniswapV2PriceFeed {
         return _price(tokenA, tokenB);
     }
 
+    function _calculate(uint reserveA, uint reserveB, uint8 decimalsA, uint8 decimalsB) internal pure returns (uint) {
+        uint price = (reserveB * 10**decimalsA) / reserveA;
+        price *= 10**18;
+        price /= 10**decimalsB;
+        return price;
+    }
+
     function _price(address tokenA, address tokenB) internal view virtual returns (uint) {
         uint side = _isSameOrder(tokenA, tokenB);
         IUniswapV2Pair pair = IUniswapV2Pair(_factory.getPair(tokenA, tokenB));
-        if (address(pair) == address(0)) { return 0; }
+        if (address(pair) == address(0)) { 
+            return 0; 
+        }
         (uint reserveA, uint reserveB,) = pair.getReserves();
         uint8 decimalsA = IERC20Metadata(tokenA).decimals();
         uint8 decimalsB = IERC20Metadata(tokenB).decimals();
-        if (side == 0) {
-            uint price = (1 * (reserveB * (10**decimalsA))) / reserveA;
-            price *= 10**18;
-            price /= 10**decimalsB;
-            return price;
-        } else if (side == 1) {
-            uint price = (1 * (reserveA * (10**decimalsB))) / reserveB;
-            price *= 10**18;
-            price /= 10**decimalsA;
+        (address tknA, address tknB) = _metadata(tokenA, tokenB);
+        if (tokenA == tknA) {
+            return _calculate(reserveB, reserveA, decimalsB, decimalsA);
+        } else if (tokenA == tknB) {
+            return _calculate(reserveA, reserveB, decimalsA, decimalsB);
         } else {
             return 0;
         }
@@ -40,16 +45,5 @@ contract UniswapV2PriceFeed {
         IUniswapV2Pair pair = IUniswapV2Pair(_factory.getPair(tokenA, tokenB));
         if (address(pair) == address(0)) { return (address(0), address(0)); }
         return (pair.token0(), pair.token1());
-    }
-
-    function _isSameOrder(address tokenA, address tokenB) internal view virtual returns (uint) {
-        (address tknA, address tknB) = _metadata(tokenA, tokenB);
-        if (tokenA == tknA) { 
-            return 0; 
-        } else if (tokenA == tknB) { 
-            return 1; 
-        } else {
-            return 2;
-        }
     }
 }
