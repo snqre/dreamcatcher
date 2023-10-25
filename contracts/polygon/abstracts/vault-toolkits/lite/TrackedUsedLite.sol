@@ -8,6 +8,8 @@ abstract contract TrackedUsedLite is StorageLite {
 
     event TokenUntracked(address indexed token);
 
+    event TrackingSizeUpdated(uint indexed previousSize, uint indexed newSize);
+
     function tracked(uint i) public view virtual returns (address) {
         bytes memory emptyBytes;
         if (keccak256(_bytes[____tracked()]) == keccak256(emptyBytes)) {
@@ -32,6 +34,16 @@ abstract contract TrackedUsedLite is StorageLite {
 
     function ____size() internal pure virtual returns (bytes32) {
         return keccak256(abi.encode("SIZE"));
+    }
+
+    function _initialize(uint newSize) internal virtual {
+        _setSize(newSize);
+    }
+
+    function _setSize(uint newSize) internal virtual {
+        uint previousSize = size();
+        _bytes[____size()] = abi.encode(newSize);
+        emit TrackingSizeUpdated(previousSize, newSize);
     }
 
     function _addTracked(address token) internal virtual {
