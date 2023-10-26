@@ -6,6 +6,8 @@
 
     ref: https://getbootstrap.com/docs/5.0/customize/css-variables/
 
+    to disable for mobile: d-none d-md-block
+
 -->
 
 
@@ -36,8 +38,10 @@
 
             body {
                 background-image: url('{{ url_for("static", filename="jpg/bg-gradient-orange-blue.jpg") }}');
+                background-size: cover;
             }
 
+            /** glass texture to container */
             .glass-container {
                 background-color: rgba(0, 0, 0, 0.05);
                 border-radius: 0px;
@@ -47,11 +51,21 @@
             .custom-navbar-container {
                 width: 95vw;
             }
+
+            /**
+                use to give content container fixed height
+
+            .content {
+                height: 3192px;
+            }
+            */
         </style>
     </head>
     <body>
         <header>
-            <div class="container-fluid d-flex justify-content-center m-2"></div>
+
+            <!-- gutter -->
+            <div class="container-fluid d-flex justify-content-center m-2 test"></div>
 
             <!-- navbar
             
@@ -92,7 +106,6 @@
             -->
             <nav class="navbar sticky-top navbar-expand-lg">
 
-                <!-- gutter -->
                 <div class="container-fluid d-flex justify-content-between custom-navbar-container glass-container shadow">
 
                     <!-- logo and name -->
@@ -106,7 +119,7 @@
                         When the screen is smaller the buger bar will appear.
 
                     -->
-                    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
+                    <button class="navbar-toggler bg-light" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
                         <span class="navbar-toggler-icon"></span>
                     </button>
 
@@ -131,8 +144,12 @@
                         </div>
                     </div>
 
-                    <!-- launch dapp button -->
-                    <form class="float-end">
+                    <!-- launch dapp button 
+                    
+                        launch dApp is disabled for mobile and not intended for non-desktop use
+
+                    -->
+                    <form class="float-end d-none d-md-block">
                         <button class="btn btn-sm me-2 text-white m-1 p-3" type="button">Launch dApp</button>
                     </form>
                 </div>
