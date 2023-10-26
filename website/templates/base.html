@@ -30,7 +30,7 @@
             }
             
             html {
-                background-color: var(--bg);
+                background-color: lightsalmon;
                 font-family: 'Courier New', Courier, monospace;
             }
         </style>
@@ -59,13 +59,18 @@
 
             ref: https://getbootstrap.com/docs/5.0/layout/grid/
 
+            TODO =>
+                **center the navbar edges closer to the center
+                **create gutter for content > two vertical containers at the sides
+                to keep everything nice an centered
+
             -->
-            <nav class="navbar sticky-top navbar-expand-lg" style="background-color: var(--bg);">
+            <nav class="navbar sticky-top navbar-expand-lg" style="background-color: lightsalmon;">
                 <div class="container-fluid d-flex justify-content-between">
 
                     <!-- logo and name -->
                     <a class="navbar-brand text-white" href="#"> <!-- TODO: NOT SHOWING LOGO -->
-                        <img src="{{ url_for("static", filename="png/logo.png")}} alt="Logo" width="30" height="24" class="d-inline-block align-text-top">
+                        <img src="{{ url_for("static", filename="png/logo.png")}}" alt="Logo" width="30" height="24" class="d-inline-block align-text-top">
                         Dreamcatcher
                     </a>
                     
@@ -79,7 +84,7 @@
                     </button>
 
                     <!-- options -->
-                    <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
+                    <div class="collapse navbar-collapse justify-content-center" id="navbarNavAltMarkup">
                         <div class="navbar-nav">
 
                             <!-- home -->
@@ -101,7 +106,7 @@
 
                     <!-- launch dapp button -->
                     <form class="float-end">
-                        <button class="btn btn-outline-light me-2 text-white rounded-pill " type="button">Launch dApp</button>
+                        <button class="btn btn-sm btn-outline-secondary me-2 text-white rounded-pill " type="button">Launch dApp</button>
                     </form>
                 </div>
             </nav>
@@ -119,10 +124,9 @@
 
         <!-- .js bootstrap import -->
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
-
-        <!-- .js web3 import -->
-        <script src="https://cdn.jsdelivr.net/npm/web3@3.0.0/dist/web3.min.js"></script>
         <script>
+
+            /// ref: https://www.youtube.com/watch?v=Itenhyh6QUc
 
             /// user address
             let account;
