@@ -52,6 +52,11 @@
                 width: 95vw;
             }
 
+            /** color that pops up when you hover on drop down option */
+            .dropdown-item:hover {
+                background-color: darkorange;
+            }
+
             /**
                 use to give content container fixed height
 
@@ -59,6 +64,11 @@
                 height: 3192px;
             }
             */
+
+            /** size of the containers left and right of the center container */
+            .custom-footer-container-gutter {
+                width: 12.5vw;
+            }
         </style>
     </head>
     <body>
@@ -89,20 +99,6 @@
 
             ref: https://getbootstrap.com/docs/5.0/layout/grid/
 
-            TODO =>
-                **center the navbar edges closer to the center
-                **create gutter for content > two vertical containers at the sides
-                to keep everything nice an centered
-
-            TODO: Fix issue where when the burger bar expands the launch dApp button
-            shows up under it and is a bit too close to the other options
-
-            TODO: Fix issue where burger bar is just honestly clunky af
-
-            TODO: Make border around center options menu less wide?
-
-            TODO: Add drop down functionality to options in navbar
-
             -->
             <nav class="navbar sticky-top navbar-expand-lg">
 
@@ -130,17 +126,75 @@
                             <!-- home -->
                             <a class="nav-link active text-white" aria-current="page" href="#">Home</a>
 
-                            <!-- whitepaper -->
-                            <a class="nav-link text-white">Whitepaper</a>
+                            <!-- about -->
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle text-white" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    About
+                                </a>
+                                
+                                <!-- drop down -->
+                                <ul class="dropdown-menu glass-container">
 
-                            <!-- protocol -->
-                            <a class="nav-link text-white">Protocol</a>
+                                    <!-- whitepaper -->
+                                    <li><a class="dropdown-item text-white" href="#">Whitepaper</a></li>
+
+                                    <!-- team -->
+                                    <li><a class="dropdown-item text-white" href="#">Team</a></li>
+
+                                    <!-- native token -->
+                                    <li><a class="dropdown-item text-white" href="#">Native Token</a></li>
+
+                                    <!-- governance -->
+                                    <li><a class="dropdown-item text-white" href="#">Governance</a></li>
+
+                                    <!-- dreamcatcher foundation -->
+                                    <li><a class="dropdown-item text-white" href="#">Dreamcatcher Foundation</a></li>
+                                </ul>
+                            </li>
+
+                            <!-- metrics -->
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle text-white" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    Metrics
+                                </a>
+
+                                <!-- drop down -->
+                                <ul class="dropdown-menu glass-container">
+
+                                    <!-- header -->
+                                    <h6 class="dropdown-header">Onchain</h6>
+
+                                    <!-- activity -->
+                                    <li><a class="dropdown-item text-white" href="#">Activity</a></li>
+
+                                    <!-- governance -->
+                                    <li><a class="dropdown-item text-white" href="#">Governance</a></li>
+
+                                    <!-- treasury -->
+                                    <li><a class="dropdown-item text-white" href="#">Treasury</a></li>
+
+                                    <!-- separator -->
+                                    <div class="dropdown-divider text-white"></div>
+
+                                    <!-- header -->
+                                    <h6 class="dropdown-header">Offchain</h6>
+
+                                    <!-- community -->
+                                    <li><a class="dropdown-item text-white" href="#">Community</a></li>
+                                </ul>
+                            </li>
+                            
+                            <!-- marketplace -->
+                            <a class="nav-link text-white">Marketplace</a>
 
                             <!-- governance -->
                             <a class="nav-link text-white">Governance</a>
 
-                            <!-- treasury -->
-                            <a class="nav-link text-white">Treasury</a>
+                            <!-- help -->
+                            <a class="nav-link text-white">Help</a>
+
+                            <!-- contact -->
+                            <a class="nav-link text-white">Contact</a>
                         </div>
                     </div>
 
@@ -161,58 +215,46 @@
         </div>
 
         <!-- footer -->
-        <!-- <footer>
-            <p">&copy; 2023 Dreamcatcher Foundation. All rights reserved.</p>
-        </footer>
-        -->
+        <div class="container-fluid d-flex">
+
+            <!-- gutter -->
+            <div class="container-fluid custom-footer-container-gutter"></div>
+
+            <!-- ownership -->
+            <p class="text-white">&copy; 2023 Dreamcatcher Foundation. All rights reserved.</p>
+
+            <!-- gutter -->
+            <div class="container-fluid custom-footer-container-gutter"></div>
+        </div>
 
         <!-- .js bootstrap import -->
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
+
+        <!-- .js socketio import -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA==" crossorigin="anonymous"></script>
+
         <script>
+        
+        /** how to fetch json from python function */
 
-            /// ref: https://www.youtube.com/watch?v=Itenhyh6QUc
+        ///    /** refresh intervals */
+        ///    const refreshRate = 1000;
+        ///
+        ///    /** execute at set intervals */
+        ///    setInterval(function() {
+        ///
+        ///        /** fetch from flask function */
+        ///        fetch('/path').then(
+        ///
+        ///            /** convert to json */
+        ///            response => response.json()
+        ///        ).then(
+        ///
+        ///         /** use retrived data to do something */
+        ///            data => 
+        ///        )
+        ///    }, refreshRate);
 
-            /// user address
-            let account;
-
-            /// area to write supported contract's address and abi
-
-            /**
-             * a contract has two parameters required to connect to it
-             * 
-             * ABI
-             * 
-             * address
-            */
-            let tokenABI;
-            let tokenAddress;
-
-            const connectToContract = async (ABI, address) => {
-
-                /// initialize contract
-                window.web3 = await new Web3(window.ethereum);
-                window.contract = await new window.web3.eth.Contract(ABI, address);
-                
-                /**
-                 * will display if the connection has been successful
-                 * 
-                 * document.getElementById("showContractConnectionStatus").innerHTML = "Contract Connection: Successful";
-                */
-            }
-            
-            const connectToMetamask = async () => {
-                if (window.ethereum !== "undefined") {
-                    const accounts = await ethereum.request({ methods: "eth_requestAccounts"});
-                    account = accounts[0];
-
-                    /**
-                     * will display account address
-                     * 
-                     * document.getElementById("showAccount").innerHTML = account;
-                    */
-                }
-            }
-            
         </script>
     </body>
 </html>

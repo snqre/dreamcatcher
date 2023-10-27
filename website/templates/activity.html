@@ -1,0 +1,13 @@
+<!-- activity.html -->
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid"></div>
+
+<script type="text/javascript" charset="utf-8">
+    var socket = io();
+    socket.on("connect", function() {
+        socket.emit("my event", { data: "Connected!" });
+    });
+</script>
+{% endblock %}

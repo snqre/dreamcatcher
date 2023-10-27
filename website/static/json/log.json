@@ -1,0 +1,180 @@
+{
+    "logs": [
+        {
+            "id": 0,
+            "timestamp": 1698381191,
+            "object": "BETTER_CONSOLE",
+            "text": "no logs found within the specified timestamp range",
+            "color": "\u001b[39m",
+            "style": "\u001b[22m"
+        },
+        {
+            "id": 1,
+            "timestamp": 1698381462,
+            "object": "dik",
+            "text": "jdjf",
+            "color": "\u001b[39m",
+            "style": "\u001b[22m"
+        },
+        {
+            "id": 2,
+            "timestamp": 1698381462,
+            "object": "dik",
+            "text": "jdjf",
+            "color": "\u001b[39m",
+            "style": "\u001b[22m"
+        },
+        {
+            "id": 3,
+            "timestamp": 1698381462,
+            "object": "dik",
+            "text": "jdjf",
+            "color": "\u001b[39m",
+            "style": "\u001b[22m"
+        },
+        {
+            "id": 4,
+            "timestamp": 1698381462,
+            "object": "dik",
+            "text": "jdjf",
+            "color": "\u001b[39m",
+            "style": "\u001b[22m"
+        },
+        {
+            "id": 5,
+            "timestamp": 1698381462,
+            "object": "dik",
+            "text": "jdjf",
+            "color": "\u001b[39m",
+            "style": "\u001b[22m"
+        },
+        {
+            "id": 6,
+            "timestamp": 1698381984,
+            "object": "BETTER_CONSOLE",
+            "text": "\u001b[22m\u001b[39m[3]: [1698381462]: [dik]: jdjf\u001b[0m",
+            "color": "\u001b[35m",
+            "style": "\u001b[22m"
+        },
+        {
+            "id": 7,
+            "timestamp": 1698381984,
+            "object": "BETTER_CONSOLE",
+            "text": "unable to find a matching message with id: 84",
+            "color": "\u001b[35m",
+            "style": "\u001b[22m"
+        },
+        {
+            "id": 8,
+            "timestamp": 1698381989,
+            "object": "BETTER_CONSOLE",
+            "text": "\u001b[22m\u001b[39m[3]: [1698381462]: [dik]: jdjf\u001b[0m",
+            "color": "\u001b[35m",
+            "style": "\u001b[22m"
+        },
+        {
+            "id": 9,
+            "timestamp": 1698381989,
+            "object": "BETTER_CONSOLE",
+            "text": "unable to find a matching message with id: 84",
+            "color": "\u001b[35m",
+            "style": "\u001b[22m"
+        },
+        {
+            "id": 10,
+            "timestamp": 1698381991,
+            "object": "BETTER_CONSOLE",
+            "text": "\u001b[22m\u001b[39m[3]: [1698381462]: [dik]: jdjf\u001b[0m",
+            "color": "\u001b[35m",
+            "style": "\u001b[22m"
+        },
+        {
+            "id": 11,
+            "timestamp": 1698381991,
+            "object": "BETTER_CONSOLE",
+            "text": "unable to find a matching message with id: 84",
+            "color": "\u001b[35m",
+            "style": "\u001b[22m"
+        },
+        {
+            "id": 12,
+            "timestamp": 1698381994,
+            "object": "BETTER_CONSOLE",
+            "text": "\u001b[22m\u001b[39m[3]: [1698381462]: [dik]: jdjf\u001b[0m",
+            "color": "\u001b[35m",
+            "style": "\u001b[22m"
+        },
+        {
+            "id": 13,
+            "timestamp": 1698381994,
+            "object": "BETTER_CONSOLE",
+            "text": "unable to find a matching message with id: 84",
+            "color": "\u001b[35m",
+            "style": "\u001b[22m"
+        },
+        {
+            "id": 14,
+            "timestamp": 1698381995,
+            "object": "BETTER_CONSOLE",
+            "text": "\u001b[22m\u001b[39m[3]: [1698381462]: [dik]: jdjf\u001b[0m",
+            "color": "\u001b[35m",
+            "style": "\u001b[22m"
+        },
+        {
+            "id": 15,
+            "timestamp": 1698381995,
+            "object": "BETTER_CONSOLE",
+            "text": "unable to find a matching message with id: 84",
+            "color": "\u001b[35m",
+            "style": "\u001b[22m"
+        },
+        {
+            "id": 16,
+            "timestamp": 1698381996,
+            "object": "BETTER_CONSOLE",
+            "text": "\u001b[22m\u001b[39m[3]: [1698381462]: [dik]: jdjf\u001b[0m",
+            "color": "\u001b[35m",
+            "style": "\u001b[22m"
+        },
+        {
+            "id": 17,
+            "timestamp": 1698381996,
+            "object": "BETTER_CONSOLE",
+            "text": "unable to find a matching message with id: 84",
+            "color": "\u001b[35m",
+            "style": "\u001b[22m"
+        },
+        {
+            "id": 18,
+            "timestamp": 1698381997,
+            "object": "BETTER_CONSOLE",
+            "text": "\u001b[22m\u001b[39m[3]: [1698381462]: [dik]: jdjf\u001b[0m",
+            "color": "\u001b[35m",
+            "style": "\u001b[22m"
+        },
+        {
+            "id": 19,
+            "timestamp": 1698381997,
+            "object": "BETTER_CONSOLE",
+            "text": "unable to find a matching message with id: 84",
+            "color": "\u001b[35m",
+            "style": "\u001b[22m"
+        },
+        {
+            "id": 20,
+            "timestamp": 1698382003,
+            "object": "BETTER_CONSOLE",
+            "text": "\u001b[22m\u001b[39m[3]: [1698381462]: [dik]: jdjf\u001b[0m",
+            "color": "\u001b[35m",
+            "style": "\u001b[22m"
+        },
+        {
+            "id": 21,
+            "timestamp": 1698382003,
+            "object": "BETTER_CONSOLE",
+            "text": "unable to find a matching message with id: 84",
+            "color": "\u001b[35m",
+            "style": "\u001b[22m"
+        }
+    ]
+}

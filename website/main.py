@@ -1,32 +1,18 @@
 from web3 import Web3
-from flask import Flask, render_template, url_for
+from flask import Flask, render_template, url_for, jsonify
+import random
+import server
 
 # Flask.
-website = Flask(__name__)
+app = Flask(__name__)
 
-@website.route("/")
+@app.route("/")
 def home() -> str:
     return render_template("home.html")
 
-@website.route("/whitepaper")
-def whitepaper() -> str:
-    return render_template("whitepaper.html")
-
-@website.route("/roadmap")
-def roadmap() -> str:
-    return render_template("roadmap.html")
-
-@website.route("/live_events")
-def live_events() -> str:
-    return render_template("live_events.html")
-
-@website.route("/live_proposals")
-def live_proposals() -> str:
-    return render_template("live_proposals")
-
-@website.route("/live_vault")
-def live_vault() -> str:
-    return render_template("live_vault")
+@app.route("/base")
+def base() -> str:
+    return render_template("base.html")
 
 if __name__ == "__main__":
-    website.run(debug=True)
+    app.run(app)
