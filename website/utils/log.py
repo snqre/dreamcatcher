@@ -20,6 +20,32 @@ logging.basicConfig(filename="app.log", level=logging.INFO, format="%(asctime)s 
 SUCCESS:int = 25;
 logging.addLevelName(SUCCESS, "SUCCESS");
 
+def most_recent_details() -> dict | None:
+
+    """
+    Retrieves the most recent log entry from the specified log file.
+
+    Args:
+    - file_path (str): Path to the log file.
+
+    Returns:
+    - str: The most recent log entry.
+    """
+    with open("app.log", "r") as f:
+        lines = f.readlines();
+        if lines:
+            entry = lines[-1].strip()
+            timestamp, level, filename, message = entry.split(" - ", 3);
+            severity = logging.getLevelName(level.strip());
+            log_details = {
+                "timestamp": timestamp.strip(),
+                "severity": severity,
+                "filename": filename.strip(),
+                "message": message.strip()};
+            return log_details;
+        else:
+            return None
+
 # custom wrapper for success log
 def success(msg, *args, **kwargs):
     logging.log(level=SUCCESS, msg=msg, *args, **kwargs);
@@ -38,8 +64,10 @@ def error(msg, *args, **kwargs):
 def warning(msg, *args, **kwargs):
     logging.warning(msg=msg, *args, **kwargs);
 
+# logging.info
 def info(msg, *args, **kwargs):
     logging.info(msg=msg, *args, **kwargs);
 
+# logging.debug
 def debug(msg, *args, **kwargs):
     logging.debug(msg=msg, *args, **kwargs);
