@@ -175,6 +175,64 @@
             "text": "unable to find a matching message with id: 84",
             "color": "\u001b[35m",
             "style": "\u001b[22m"
+        },
+        {
+            "id": 22,
+            "timestamp": 1698426404,
+            "object": "PROBLEM",
+            "text": "this is a problem",
+            "color": "\u001b[31m",
+            "style": "\u001b[22m"
+        },
+        {
+            "id": 23,
+            "timestamp": 1698426538,
+            "object": "PROBLEM",
+            "text": "this is a problem",
+            "color": "\u001b[31m",
+            "style": "\u001b[22m"
+        },
+        {
+            "id": 24,
+            "timestamp": 1698426544,
+            "object": "PROBLEM",
+            "text": "this is a problem",
+            "color": "\u001b[31m",
+            "style": "\u001b[22m"
+        },
+        {
+            "id": 25,
+            "timestamp": 1698426547,
+            "object": "PROBLEM",
+            "text": "this is a problem",
+            "color": "\u001b[31m",
+            "style": "\u001b[22m"
+        },
+        {
+            "id": 26,
+            "timestamp": 1698426585,
+            "object": "PROBLEM",
+            "text": "this is a problem",
+            "color": "\u001b[31m",
+            "style": "\u001b[22m"
+        },
+        {
+            "id": 27,
+            "timestamp": 1698426600,
+            "object": "PROBLEM",
+            "text": "this is a problem",
+            "color": "\u001b[31m",
+            "style": "\u001b[22m"
+        },
+        {
+            "id": 28,
+            "timestamp": 1698426625,
+            "object": "PROBLEM",
+            "text": "this is a problem",
+            "color": "\u001b[31m",
+            "style": "\u001b[22m"
         }
-    ]
+    ],
+    "display": false,
+    "displayHistory": false
 }

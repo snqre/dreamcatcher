@@ -67,6 +67,8 @@ _displayHistory:bool = False
 def _save(msg:Message) -> None:
     global _storage, _logs, _path
     _storage["logs"] = [msg.__json__() for msg in _logs]
+    _storage["display"] = display()
+    _storage["displayHistory"] = displayHistory()
     file_handler.save_json(path=_path, data=_storage)
 
 def _load() -> None:
@@ -75,7 +77,7 @@ def _load() -> None:
         _storage = file_handler.load_json(path=_path)
 
 def _initialize() -> None:
-    global _storage, _logs, _path
+    global _storage, _logs, _path, _display, _displayHistory
     _load()
     for msg_data in _storage.get("logs", []):
         msg = Message(
@@ -88,6 +90,8 @@ def _initialize() -> None:
         _logs.append(msg)
         if (displayHistory()):
             print(f"{msg.style()}{msg.color()}{msg.console_message()}{Style.RESET_ALL}")
+    _display = _storage.get("display")
+    _displayHistory = _storage.get("displayHistory")
 
 def display() -> bool:
     global _display
@@ -120,6 +124,7 @@ def toggle_display_history() -> None:
         _displayHistory = False
     else:
         _displayHistory = True
+    _save()
 
 
 def message(id:int) -> str:
@@ -168,7 +173,9 @@ def search_logs_by_object(object:str) -> list:
     pass
 
 def clear() -> None:
-    pass
+    global _storage, _logs
+    _logs.clear()
+    _save()
 
 def log(object:str, text:str) -> None:
     global _storage, _logs, _path
@@ -241,3 +248,8 @@ def log_response(object:str, text:str) -> None:
     _save(msg)
 
 _initialize()
+
+log_error("PROBLEM", "this is a problem")
+
+toggle_display_history()
+toggle_display()
