@@ -56,7 +56,7 @@ abstract contract Walletlite is StorageLite, Context {
         emit WithdrawERC20(to, tokenOut, amountOut);
     }
 
-    function _depositMATIC() internal payable virtual {
+    function _depositMATIC() internal virtual {
         if (msg.value >= 1) {
             uint balance = balanceMATIC();
             balance += msg.value;
@@ -67,7 +67,7 @@ abstract contract Walletlite is StorageLite, Context {
 
     function _withdrawMATIC(address to, uint amountOut) internal virtual {
         address recipient = payable(to);
-        require(address(this).balance() <= amountOut, "Walletlite: insufficient balance");
+        require(address(this).balance <= amountOut, "Walletlite: insufficient balance");
         recipient.transfer(amountOut);
         uint balance = balanceMATIC();
         balance -= amountOut;
