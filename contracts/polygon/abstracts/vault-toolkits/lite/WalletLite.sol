@@ -69,7 +69,7 @@ abstract contract Walletlite is StorageLite, Context {
         address recipient = payable(to);
         require(address(this).balance() <= amountOut, "Walletlite: insufficient balance");
         recipient.transfer(amountOut);
-        balance = balanceMATIC();
+        uint balance = balanceMATIC();
         balance -= amountOut;
         _bytes[____balanceMATIC()] = abi.encode(balance);
         emit WithdrawMATIC(to, amountOut);

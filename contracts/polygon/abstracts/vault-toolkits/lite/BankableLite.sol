@@ -42,7 +42,7 @@ abstract contract BankableLite is StorageLite, Context {
         IERC20Metadata token = IERC20Metadata(tokenIn);
         uint balanceOf = token.balanceOf(_msgSender());
         require(balanceOf >= amountIn, "BankableLite: insufficient balance");
-        token.transferFrom(_msgSender(), address(this), amount);
+        token.transferFrom(_msgSender(), address(this), amountIn);
         uint balance = balanceOf(_msgSender(), tokenIn);
         balance += amountIn;
         _bytes[____balanceOf(_msgSender(), tokenIn)] = abi.encode(balance);
