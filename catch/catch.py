@@ -59,6 +59,8 @@ __events.trigger()
 jump transfer() listen [] {{
     connect <chain> <address> aContract; # fetch ABI directly online | failed if not verified
     connect # connect to owner wallet
+    
+    connect <chain> <address> contract = [ABI];
 
     wait aContract.doSomething # call like you would onchain;
 
@@ -94,11 +96,14 @@ jump transfer() listen [] {{
     connect polygon <address> contractA;
     connect polygon <address> contractB;
 
-    group contractA contractB;
+    prog polygon contractC = contractA + contractB;
 
     {{ manage multiple contracts as one program, NOTE will check if there are any duplicate functions and throw }}.
 
+    contractC.withdraw();
     
+
+
 
     polygon ERC20 <from> -> <to>; # easy transfer calls
 
