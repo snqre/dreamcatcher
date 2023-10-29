@@ -1,0 +1,7 @@
+
+
+jump x() { $smart/deposit {
+    connect smart;
+    smart.withdraw;
+    disconnect smart;
+}, 6 hours}

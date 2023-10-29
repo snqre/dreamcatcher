@@ -37,19 +37,105 @@ in [ float ] { seconds, hours, days, weeks, months, years }
 buy / sell [ float ]
 
 <chain> <ERC20/ERC712> <address> -> <address>
+in [seconds] buy/sell <amount> $Ticker [ on ] <chain> <dex> @ $Market/$Price;
+auto [ at time ] do x();
+
+
+set {{ fund name }} <.property> -> <value>;
+# combine
+in [ seconds ] set {{ fund name }} <.property> when $Ticker on <chain> <dex> @ $Price;
+swap <amount> $Ticker on <chain> <dex> @ $Market when {{ fund name }} {{ event ie. swap <chain> }}
+when ma above $0.394 in [ seconds ], swap <amount> $TickerIn -> $TickerOut on <chain> <dex> @ $Market : timeout
+when ma is above price after 20 seconds swap 500 $BTC -> $ETH on polygon quickswap @market 
+
+open <window.timelocks>
+
+close <window.proposals>
+delegate <vote>
 
 __events.latest()
 __events.trigger()
 
+jump transfer() listen [] {{
+    connect <chain> <address> aContract; # fetch ABI directly online | failed if not verified
+    connect # connect to owner wallet
 
+    wait aContract.doSomething # call like you would onchain;
+
+    pause function whilst transaction is being confirmed
+    throw error if transaction not done
+
+    time.sleep(2) # keep looping until transaction confirmed if keyward [ wait ] is used
+    
+    [ on ] polygon quickswap {{
+        if ($ticker <> $price == 0.394) {{
+            doSomething();
+        }}
+        [ after ] 3480 seconds [ buy ] 4000 $ticker $priceMin;
+    }}
+
+    # in this case the user acts as if they were the owner | will throw if this is not the case
+    [ with ] aContract {{
+        -> to
+        <address>.deposit();
+        call();
+    }}
+
+    [ on ] aContractWhichIDontOwn {{
+        <!-- call functions -->
+        withdraw();
+
+        [ on ] anotherContract {{
+            withdraw();
+            super.withdraw();
+        }}
+    }}
+    
+    connect polygon <address> contractA;
+    connect polygon <address> contractB;
+
+    group contractA contractB;
+
+    {{ manage multiple contracts as one program, NOTE will check if there are any duplicate functions and throw }}.
+
+    
+
+    polygon ERC20 <from> -> <to>; # easy transfer calls
+
+    price = $ticker <> $price [ on ] ethereum uniswap;
+    if (price != $ticker <> $price [ on ] polygon uniswap) {{
+        doSomethingElse();
+    }}
+}}
 
 jump transfer() listen [] {{
     x = 4;
-    __recent;
-    __lastBlock;
-    __auth(address);
-    __connect;
+    connect <address>
+    pickup
+    disconnect
 }, 2 seconds}
+
+
+
+<!-- this is a function comment -->
+jump x() { $(time,object,message) {
+    connect smart;
+    smart.withdraw;
+    disconnect smart;
+}, 3600 seconds }
+
+<!-- built in console function -->
+listen
+
+<!-- -->
+in [ duration ]
+buy | sell | long | short | 
+
+$Ticker ethereum uniswap;
+$Ticker polygon uniswap;
+
+
+
 """
 
 import itertools;
@@ -104,6 +190,22 @@ class InvalidSyntaxError(Error):
     def __init__(self, posStart, posEnd, details=""):
         super().__init__(posStart, posEnd, "Invalid Syntax", details);
 
+class RTError(Error):
+    def __init__(self, posStart, posEnd, details, context):
+        super().__init__(posStart, posEnd, "Runtime Error", details);
+        self.context = context;
+    def asString(self):
+        result = self.generateTraceback();
+        result += f"{self.errorName}: {self.details}";
+        result += "\n\n" + stringWithArrows(self.posStart.ftxt, self.posStart, self.posEnd);
+        return result;
+    def generateTraceback(self):
+        result = "";
+        pos = self.posStart;
+        ctx = self.context;
+        while ctx:
+
+
 """
 .########...#######...######..####.########.####..#######..##....##
 .##.....##.##.....##.##....##..##.....##.....##..##.....##.###...##
@@ -121,7 +223,7 @@ class Position:
         self.col = col;
         self.fn = fn;
         self.ftxt = ftxt;
-    def advance(self, currentCharacter):
+    def advance(self, currentCharacter=None):
         self.idx += 1;
         self.col += 1;
         if currentCharacter == "\n":
@@ -158,6 +260,7 @@ class Token:
     def __init__(self, style, val=None, posStart=None, posEnd=None):
         self.style = style;
         self.val = val;
+        # TODO
         if posStart:
             self.posStart = posStart.copy();
             self.posEnd = posStart.copy();
@@ -196,44 +299,46 @@ class Lexer:
             elif self.currentCharacter in DIGITS:
                 tkns.append(self.makeNumber());
             elif self.currentCharacter == "+":
-                tkns.append(Token(ADD));
+                tkns.append(Token(ADD, posStart=self.pos));
                 self.advance();
             elif self.currentCharacter == "-":
-                tkns.append(Token(SUB));
+                tkns.append(Token(SUB, posStart=self.pos));
                 self.advance();
             elif self.currentCharacter == "*":
-                tkns.append(Token(MUL));
+                tkns.append(Token(MUL, posStart=self.pos));
                 self.advance();
             elif self.currentCharacter == "/":
-                tkns.append(Token(DIV));
+                tkns.append(Token(DIV, posStart=self.pos));
                 self.advance();
             elif self.currentCharacter == "(":
-                tkns.append(Token(LPA));
+                tkns.append(Token(LPA, posStart=self.pos));
                 self.advance();
             elif self.currentCharacter == ")":
-                tkns.append(Token(RPA));
+                tkns.append(Token(RPA, posStart=self.pos));
                 self.advance();
             elif self.currentCharacter == "{":
-                tkns.append(Token(LCB));
+                tkns.append(Token(LCB, posStart=self.pos));
                 self.advance();
             elif self.currentCharacter == "}":
-                tkns.append(Token(RCB));
+                tkns.append(Token(RCB, posStart=self.pos));
                 self.advance();
             elif self.currentCharacter == ";":
-                tkns.append(Token(EOF));
+                tkns.append(Token(EOF, posStart=self.pos));
                 self.advance();
             elif self.currentCharacter == "jump":
-                tkns.append(Token(JUMP));
+                tkns.append(Token(JUMP, posStart=self.pos));
                 self.advance();
             else:
                 posStart = self.pos.copy();
                 character = self.currentCharacter;
                 self.advance();
                 return [], IllegalCharError(posStart, self.pos, f"'{character}'");
+        tkns.append(Token(EOF));
         return tkns, None;
     def makeNumber(self):
         numString = " ";
         dotCount = 0;
+        posStart = self.pos.copy();
         while self.currentCharacter != None and self.currentCharacter in DIGITS + ".":
             if self.currentCharacter == ".":
                 if dotCount == 1: break;
@@ -243,9 +348,9 @@ class Lexer:
                 numString += self.currentCharacter;
             self.advance();
         if dotCount == 0:
-            return Token(INT, int(numString));
+            return Token(INT, int(numString), posStart, self.pos);
         else:
-            return Token(FLOAT, float(numString));
+            return Token(FLOAT, float(numString), posStart, self.pos);
 
 """
 .##....##..#######..########..########..######.
@@ -270,6 +375,13 @@ class BinOpNode:
         self.rightNode = rightNode;
     def __repr__(self):
         return f"({self.leftNode}, {self.opTkn}, {self.rightNode})";
+
+class UnaryOpNode:
+    def __init__(self, opTkn, node):
+        self.opTkn = opTkn;
+        self.node = node;
+    def __repr__(self):
+        return f"({self.opTkn}, {self.node})";
 
 """
 .########.....###....########...######..########....########..########..######..##.....##.##.......########
@@ -319,25 +431,173 @@ class Parser:
         return self.currentTkn;
     def parse(self):
         res = self.expression();
+        if not res.error and self.currentTkn.style != EOF:
+            return res.failure(InvalidSyntaxError(self.currentTkn.posStart, self.currentTkn.posEnd, "Expected '+', '-', '*' or '/'"));
         return res;
     def factor(self):
         res = ParseResult();
         tkn = self.currentTkn;
-        if tkn.style in (INT, FLOAT):
+        if tkn.style in (ADD, SUB):
             res.register(self.advance());
-            return NumberNode(tkn);
+            factor = res.register(self.factor());
+            if res.error: return res;
+            return res.success(UnaryOpNode(tkn, factor));
+        elif tkn.style in (INT, FLOAT):
+            res.register(self.advance());
+            return res.success(NumberNode(tkn));
+        elif tkn.style == LPA:
+            res.register(self.advance());
+            expression = res.register(self.expression());
+            if res.error: return res;
+            if self.currentTkn.style == RPA:
+                res.register(self.advance());
+                return res.success(expression);
+            else:
+                return res.failure(InvalidSyntaxError(self.currentTkn.posStart, self.currentTkn.posEnd, "Expected ')'"));
+        return res.failure(InvalidSyntaxError(tkn.posStart, tkn.posEnd, "Expected int or float"));
     def term(self):
         return self.binOp(self.factor, (MUL, DIV));
     def expression(self):
         return self.binOp(self.term, (ADD, SUB));
     def binOp(self, func, ops):
-        left = func();
+        res = ParseResult();
+        left = res.register(func());
+        if res.error: return res;
         while self.currentTkn.style in ops:
             opTkn = self.currentTkn;
-            self.advance();
-            right = func();
+            res.register(self.advance());
+            right = res.register(func());
+            if res.error: return res;
             left = BinOpNode(left, opTkn, right);
-        return left;
+        return res.success(left);
+
+"""
+.########..##.....##.##....##.########.####.##.....##.########....########..########..######..##.....##.##.......########
+.##.....##.##.....##.###...##....##.....##..###...###.##..........##.....##.##.......##....##.##.....##.##..........##...
+.##.....##.##.....##.####..##....##.....##..####.####.##..........##.....##.##.......##.......##.....##.##..........##...
+.########..##.....##.##.##.##....##.....##..##.###.##.######......########..######....######..##.....##.##..........##...
+.##...##...##.....##.##..####....##.....##..##.....##.##..........##...##...##.............##.##.....##.##..........##...
+.##....##..##.....##.##...###....##.....##..##.....##.##..........##....##..##.......##....##.##.....##.##..........##...
+.##.....##..#######..##....##....##....####.##.....##.########....##.....##.########..######...#######..########....##...
+"""
+
+class RTResult:
+    def __init__(self):
+        self.val = None;
+        self.error = None;
+    def register(self, res):
+        if res.error: self.error = res.error;
+        return res.val;
+    def success(self, val):
+        self.val = val;
+        return self;
+    def failure(self, error):
+        self.error = error;
+        return self;
+
+"""
+.##.....##....###....##.......##.....##.########..######.
+.##.....##...##.##...##.......##.....##.##.......##....##
+.##.....##..##...##..##.......##.....##.##.......##......
+.##.....##.##.....##.##.......##.....##.######....######.
+..##...##..#########.##.......##.....##.##.............##
+...##.##...##.....##.##.......##.....##.##.......##....##
+....###....##.....##.########..#######..########..######.
+"""
+
+class Number:
+    def __init__(self, val):
+        self.val = val;
+        self.setPos();
+        self.setContext();
+    def setPos(self, posStart=None, posEnd=None):
+        self.posStart = posStart;
+        self.posEnd = posEnd;
+        return self;
+    def setContext(self, context=None):
+        self.context = context;
+        return self;
+    def add(self, other):
+        if isinstance(other, Number):
+            return Number(self.val + other.val).setContext(self.context), None;
+    def sub(self, other):
+        if isinstance(other, Number):
+            return Number(self.val - other.val).setContext(self.context), None;
+    def mul(self, other):
+        if isinstance(other, Number):
+            return Number(self.val * other.val).setContext(self.context), None;
+    def div(self, other):
+        if isinstance(other, Number):
+            if other.val == 0:
+                return None, RTError(other.posStart, other.posEnd, "Division by zero", self.context);
+            return Number(self.val / other.val).setContext(self.context), None;
+    def __repr__(self):
+        return str(self.val);
+
+"""
+..######...#######..##....##.########.########.##.....##.########
+.##....##.##.....##.###...##....##....##........##...##.....##...
+.##.......##.....##.####..##....##....##.........##.##......##...
+.##.......##.....##.##.##.##....##....######......###.......##...
+.##.......##.....##.##..####....##....##.........##.##......##...
+.##....##.##.....##.##...###....##....##........##...##.....##...
+..######...#######..##....##....##....########.##.....##....##...
+"""
+
+class Context:
+    def __init__(self, displayName, parent=None, parentEntryPos=None):
+        self.displayName = displayName;
+        self.parent = parent;
+        self.parentEntryPos = parentEntryPos;
+
+"""
+.####.##....##.########.########.########..########..########..########.########.########.########.
+..##..###...##....##....##.......##.....##.##.....##.##.....##.##..........##....##.......##.....##
+..##..####..##....##....##.......##.....##.##.....##.##.....##.##..........##....##.......##.....##
+..##..##.##.##....##....######...########..########..########..######......##....######...########.
+..##..##..####....##....##.......##...##...##........##...##...##..........##....##.......##...##..
+..##..##...###....##....##.......##....##..##........##....##..##..........##....##.......##....##.
+.####.##....##....##....########.##.....##.##........##.....##.########....##....########.##.....##
+"""
+
+class Interpreter:
+    def visit(self, node):
+        methodName = f"visit_{type(node), __name__}";
+        method = getattr(self, methodName, self.noVisitMethod);
+        return method(node, context);
+    def noVisitMethod(self, node):
+        raise Exception(f"No visit_{type(node).__name__} method defined");
+    def visitNumberNode(self, node, context):
+        return RTResult().success(Number(node.tkn.val).setContext(context).setPos(node.posStart, node.posEnd));
+    def visitBinOPNode(self, node, context):
+        res = RTResult();
+        left = res.register(self.visit(node.leftNode, context));
+        if res.error: return res;
+        right = res.register(self.visit(node.rightNode, context));
+        if res.error: return res;
+        if node.opTkn.style == ADD:
+            result, error = left.add(right);
+        elif node.opTkn.style == SUB:
+            result, error = left.sub(right);
+        elif node.opTkn.style == MUL:
+            result, error = left.mul(right);
+        elif node.opTkn.style == DIV:
+            result, error = left.div(right);
+        if error:
+            return res.failure(error);
+        else:
+            return res.success(result.setPos(node.posStart, node.posEnd));
+    def visitUnaryOpNode(self, node, context):
+        res = RTResult();
+        number = res.register(self.visit(node.node, context));
+        if res.error: return res;
+        error = None;
+        if node.opTkn.style == SUB:
+            number, error = number.mul(Number(-1));
+        if error:
+            return res.failure(error);
+        else:
+            return res.success(number.setPos(node.posStart, node.posEnd));
 
 """
 .########..##.....##.##....##
@@ -350,15 +610,24 @@ class Parser:
 """
 
 def run(fn, text):
+
+    # generate tokens
     lexer = Lexer(fn, text);
     tkns, error = lexer.makeTokens();
     if error: return None, error;
 
-    # AST
+    # generate AST
     parser = Parser(tkns);
     ast = parser.parse();
+    if ast.error: return None, ast.error;
 
-    return ast, None;
+    # run
+    interpreter = Interpreter();
+    context = Context("<program>");
+    result = interpreter.visit(ast.node, context);
+
+    # return
+    return ast.node, ast.error;
 
 """ 
 def getUserInput():
