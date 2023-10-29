@@ -140,6 +140,33 @@ $Ticker ethereum uniswap;
 $Ticker polygon uniswap;
 
 
+UI commands #
+
+--spawn --600 --500 --left --window.timelock;
+--clear window.timelock;
+--dup window.timelock --right;
+
+--setColor
+--setBackground
+--setProfile
+
+--accounting;
+
+--upload
+
+--help
+
+--reset
+    are you sure?
+
+
+--go # some
+
+--gopro # remove all buttons for professionals
+
+--polygon --erc20 --transfer --to --from --
+
+
 
 """
 
