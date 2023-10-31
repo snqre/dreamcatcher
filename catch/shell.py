@@ -1,7 +1,7 @@
-import catch;
+from sys import *
+from interpreter import *
 
-while True:
-    text = input("catch: ");
-    result, error = catch.run("<stdin>", text);
-    if error: print(error.asString());
-    else: print(result);
+if __name__ == "__main__":
+    print(parse(argv[1]))
+
+
