@@ -4,7 +4,7 @@
 x = 5;
 
 <!-- but you can also do this -->
-log x = 8;
+emit x = 8;
 
 <!-- use keyword log to push data to logs -->
 
