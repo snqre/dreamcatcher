@@ -52,6 +52,7 @@ import time
 class Lexer:
 
     style_list = [
+        ("DEL", r"DEL"),                # DEL
         ("TAB", r"\t"),                 #   
         ("WHITESPACE", r"\s+"),         #
         ("NUMBER", r"\d+"),             # 0123456789
@@ -210,8 +211,51 @@ class Stream:
             self.add_last(Tag(tag))
 
     def combine(self, positionA:int, positionB:int, positionC:int, new_tag:Tag):
-        pass
+        self.mark_for_deletion(positionA)
+        self.mark_for_deletion(positionC)
+        self.tags[positionB] = new_tag
+        self.delete()
     
+    def mul(self, position:int):
+        position_of_mul:int = position
+        found_lnumber:bool = False
+        found_rnumber:bool = False
+        current_position:int = position_of_mul
+        current_position -= 1
+        stack = []
+
+        while found_lnumber == False:
+            current_tag = self.tags[current_position]
+
+            self.mark_for_deletion(current_tag.position)
+
+            if current_tag.style == "NUMBER":
+                stack.append(current_tag.instance)
+                found_lnumber = True
+            
+            current_position -= 1
+        
+        current_position = position
+        current_position += 1
+
+        while found_rnumber == False:
+            current_tag = self.tags[current_position]
+
+            self.mark_for_deletion(current_tag.position)
+
+            if current_tag.style == "NUMBER":
+                stack.append(current_tag.instance)
+                found_rnumber = True
+            
+            current_position += 1
+        
+        result = int(stack[0]) * int(stack[1])
+        self.tags[position_of_mul] = Tag(("NUMBER", str(result), self.get_position_line(position_of_mul), position_of_mul))
+        self.delete()
+        self.delete()
+        self.delete()
+        print(result)
+
     def add_last(self, tag:Tag):
         self.tags.append(tag)
         self.recalculate_positions()
@@ -223,6 +267,10 @@ class Stream:
     
     def add_before_position(self, position:int, tag:Tag):
         self.tags.insert(position, tag)
+        self.recalculate_positions()
+
+    def sub(self, position):
+        self.tags.pop(position)
         self.recalculate_positions()
 
     def sub_last(self):
@@ -238,6 +286,16 @@ class Stream:
         position -= 1
         self.tags.pop(position)
         self.recalculate_positions()
+    
+    def delete(self):
+        
+        for tag in self.tags:
+
+            if tag.style == "DEL":
+                self.sub(tag.position)
+
+    def mark_for_deletion(self, position:int):
+        self.tags[position] = Tag(("DEL", "DEL", self.get_position_line(position), position))
 
     def recalculate_positions(self):
         current_position = 0
@@ -325,22 +383,47 @@ class Stream:
         
         return paired_values
 
-    def stream(self, speed:float):
+    def stream(self, speed:float, source:str, on_one_line:bool):
+        string = ""
 
         for tag in self.tags:
-            string = tag.style
 
-            if tag.style == "EOF":
-                print(f"{Fore.RED}{string}{Style.RESET_ALL}")
+            if not on_one_line:
 
+                if source == "style":
+                    string = tag.style
+                
+                elif source == "instance":
+                    string = tag.instance
+
+                if tag.style == "EOF":
+                    print(f"{Fore.RED}{string}{Style.RESET_ALL}")
+
+                else:
+                    print(f"{Fore.CYAN}{string}{Style.RESET_ALL}")
+
+                time.sleep(speed)
+            
             else:
-                print(f"{Fore.CYAN}{string}{Style.RESET_ALL}")
 
-            time.sleep(speed)
+                if source == "style":
+                    string += tag.style
+                
+                elif source == "instance":
+                    string += tag.instance
+                
+        if on_one_line:
+
+            print(string)
+
+
 
 
 stream = Stream()
-stream.import_as_tags("""( ( 2 )(((()))));jump;;;;;;;{ this {Ids} }""")
+stream.import_as_tags("""( ( 2 * 2394 )(((()))));jump;;;;;;;{ this {Ids} }""")
 #print(stream.get_paren_pairs())
-print(stream.get_brace_pairs())
-stream.stream(1)
+#print(stream.get_brace_pairs())
+
+stream.stream(0.05, "instance", True)
+stream.mul(6)
+stream.stream(0.05, "instance", True)
