@@ -133,6 +133,7 @@ class Lexer:
                 if not matched:
                     raise ValueError(f"illegal character at {Fore.RED}line {line}{Style.RESET_ALL}, {Fore.RED}position {position}{Style.RESET_ALL}")
                 
+                # EOF HARD CODE
                 line += match.group().count(";")
 
         except ValueError as e:
@@ -264,67 +265,41 @@ class Stream:
         return None
 
     def get_paren_pairs(self):
-        pairs = []
         stack = []
-        
-        stack_size:int = 0
-        match_size:int = 0
+        pairs = []
 
-        for tag in self.tags:
+        for i, tag in enumerate(self.tags):
 
             if tag.style == "LPAREN":
-                stack.append(tag.position)
-                stack_size += 1
+                stack.append(i)
 
-            if tag.style == "RPAREN":
-                stack.append(tag.position)
-                match_size += 1
+            elif tag.style == "RPAREN":
 
-                if stack_size == match_size:
-                    number_of_LPAREN:int = stack_size / 2
-                    number_of_RPAREN:int = stack_size / 2
-                    
-                    # one set
-                    if number_of_LPAREN == 0.5 and number_of_RPAREN == 0.5:
-                        LPAREN = stack[0]
-                        LPAREN += 1
-                        RPAREN = tag.position
-                        RPAREN += 1
-                        inner_tags:list = []
+                if stack:
+                    open_index = stack.pop()
+                    close_index = i
+                    pairs.append((open_index, close_index))
 
-                        for i in range(LPAREN + 1, RPAREN):
-                            inner_tags.append(i)
-                        
-                        pairs.append((LPAREN, RPAREN, inner_tags))
-                        stack = []
+        return pairs
+    
+    def get_brace_pairs(self):
+        stack = []
+        pairs = []
 
-                    # if it aint broke dont fix it
-                    else:
+        for i, tag in enumerate(self.tags):
 
-                        number_of_paren = 0
-                        number_of_paren += number_of_LPAREN
-                        number_of_paren += number_of_RPAREN
-                        number_of_paren *= 2
-                        lparen:list = []
-                        rparen:list = []
-                        pulse:int = 0
+            if tag.style == "LBRACE":
+                stack.append(i)
+        
+            elif tag.style == "RBRACE":
+            
+                if stack:
+                    open_index = stack.pop()
+                    close_index = i
+                    pairs.append((open_index, close_index))
+        
+        return pairs
 
-                        for i in range(int(number_of_paren)):
-                            
-                            if pulse <= (number_of_LPAREN + number_of_RPAREN) - 1:
-                                lparen.append(stack[i])
-                                pulse += 1
-                            
-                            else:
-                                rparen.append(stack[i])
-
-                        print(self.pair_min_with_max(lparen, rparen))
-
-                    stack_size = 0
-                    match_size = 0
-
-        # TODO fix this mess return should return the pos left paren and pos right paren, pos of all items within it
-        print(pairs)
     
     def pair_min_with_max(self, listA:list, listB:list) -> list:
         tempA:list = []
@@ -365,63 +340,7 @@ class Stream:
 
 
 stream = Stream()
-stream.import_as_tags("""(2 + 5 ** 3);""")
-stream.get_paren_pairs()
-stream.stream(0)
-
-class Op:
-
-    def __init__(self, position, begin, end):
-        self.position = position
-        self.begin = begin
-        self.end = end
-
-class Interpreter:
-
-    def __init__(self, source_code):
-        self.lexer = Lexer(source_code)
-        self.tags = []
-        self.style_stream = []
-
-        for tag in self.lexer.tags:
-            new_tag = Tag(tag)
-            self.tags.append(new_tag)
-            self.style_stream.append(new_tag.style)
-
-    def parse(self):
-        parsed = False
-
-        while not parsed:
-            newly_parsed = []
-            current_tag = ""
-
-            while current_tag != None:
-
-                for tag in self.tags:
-                    current_tag = tag
-            
-                current_tag = None
-            
-
-        current_tag = ""
-
-        while current_tag != None:
-
-            for tag in self.tags:
-
-                pass
-
-            current_tag = None
-
-
-
-
-    def print_style_stream(self):
-        
-        for style in self.style_stream:
-            print(style)
-            time.sleep(0.1)
-
-#interpreter = Interpreter(""");jump; 3 + 4; 89 / 2; ( noise noise);follow a_function; jump start; 2;""")
-
-#interpreter.parse()
+stream.import_as_tags("""( ( 2 )(((()))));jump;;;;;;;{ this {Ids} }""")
+#print(stream.get_paren_pairs())
+print(stream.get_brace_pairs())
+stream.stream(1)
