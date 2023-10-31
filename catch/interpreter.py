@@ -209,14 +209,8 @@ class Stream:
 
         for tag in lexer.tags:
             self.add_last(Tag(tag))
-
-    def combine(self, positionA:int, positionB:int, positionC:int, new_tag:Tag):
-        self.mark_for_deletion(positionA)
-        self.mark_for_deletion(positionC)
-        self.tags[positionB] = new_tag
-        self.delete()
     
-    def mul(self, position:int):
+    def mul_op(self, position:int) -> float:
         position_of_mul:int = position
         found_lnumber:bool = False
         found_rnumber:bool = False
@@ -226,7 +220,6 @@ class Stream:
 
         while found_lnumber == False:
             current_tag = self.tags[current_position]
-
             self.mark_for_deletion(current_tag.position)
 
             if current_tag.style == "NUMBER":
@@ -240,7 +233,6 @@ class Stream:
 
         while found_rnumber == False:
             current_tag = self.tags[current_position]
-
             self.mark_for_deletion(current_tag.position)
 
             if current_tag.style == "NUMBER":
@@ -249,12 +241,134 @@ class Stream:
             
             current_position += 1
         
-        result = int(stack[0]) * int(stack[1])
+        result = float(stack[0]) * float(stack[1])
         self.tags[position_of_mul] = Tag(("NUMBER", str(result), self.get_position_line(position_of_mul), position_of_mul))
         self.delete()
         self.delete()
         self.delete()
-        print(result)
+        self.recalculate_positions()
+
+        return result
+
+    def div_op(self, position:int) -> float:
+        position_of_div:int = position
+        found_lnumber = False
+        found_rnumber = False
+        current_position = position_of_div
+        current_position -= 1
+        stack = []
+        
+        while found_lnumber == False:
+            current_tag = self.tags[current_position]
+            self.mark_for_deletion(current_tag.position)
+
+            if current_tag.style == "NUMBER":
+                stack.append(current_tag.instance)
+                found_lnumber = True
+            
+            current_position -= 1
+
+        current_position = position
+        current_position += 1
+
+        while found_rnumber == False:
+            current_tag = self.tags[current_position]
+            self.mark_for_deletion(current_tag.position)
+
+            if current_tag.style == "NUMBER":
+                stack.append(current_tag.instance)
+                found_rnumber = True
+            
+            current_position += 1
+        
+        result = float(stack[0]) / float(stack[1])
+        self.tags[position_of_div] = Tag(("NUMBER", str(result), self.get_position_line(position_of_div), position_of_div))
+        self.delete()
+        self.delete()
+        self.delete()
+        self.recalculate_positions()
+
+        return result
+
+    def add_op(self, position:int) -> float:
+        position_of_add:int = position
+        found_lnumber = False
+        found_rnumber = False
+        current_position = position_of_add
+        current_position -= 1
+        stack = []
+
+        while found_lnumber == False:
+            current_tag = self.tags[current_position]
+            self.mark_for_deletion(current_tag.position)
+
+            if current_tag.style == "NUMBER":
+                stack.append(current_tag.instance)
+                found_lnumber = True
+            
+            current_position -= 1
+        
+        current_position = position
+        current_position += 1
+
+        while found_rnumber == False:
+            current_tag = self.tags[current_position]
+            self.mark_for_deletion(current_tag.position)
+
+            if current_tag.style == "NUMBER":
+                stack.append(current_tag.instance)
+                found_rnumber = True
+            
+            current_position += 1
+        
+        result = float(stack[0]) + float(stack[1])
+        self.tags[position_of_add] = Tag(("NUMBER", str(result), self.get_position_line(position_of_add), position_of_add))
+        self.delete()
+        self.delete()
+        self.delete()
+        self.recalculate_positions()
+
+        return result
+    
+    def sub_op(self, position:int) -> float:
+        position_of_sub:int = position
+        found_lnumber = False
+        found_rnumber = False
+        current_position = position_of_sub
+        current_position -= 1
+        stack = []
+
+        while found_lnumber == False:
+            current_tag = self.tags[current_position]
+            self.mark_for_deletion(current_tag.position)
+
+            if current_tag.style == "NUMBER":
+                stack.append(current_tag.instance)
+                found_lnumber = True
+            
+            current_position -= 1
+
+        current_position = position
+        current_position += 1
+
+        while found_rnumber == False:
+            current_tag = self.tags[current_position]
+            self.mark_for_deletion(current_tag.position)
+
+            if current_tag.style == "NUMBER":
+                stack.append(current_tag.instance)
+                found_rnumber = True
+            
+            current_position += 1
+        
+        result = float(stack[0]) - float(stack[1])
+        self.tags[position_of_sub] = Tag(("NUMBER", str(result), self.get_position_line(position_of_sub), position_of_sub))
+        self.delete()
+        self.delete()
+        self.delete()
+        self.recalculate_positions()
+
+        return result
 
     def add_last(self, tag:Tag):
         self.tags.append(tag)
@@ -357,7 +471,6 @@ class Stream:
                     pairs.append((open_index, close_index))
         
         return pairs
-
     
     def pair_min_with_max(self, listA:list, listB:list) -> list:
         tempA:list = []
@@ -395,6 +508,12 @@ class Stream:
                 
                 elif source == "instance":
                     string = tag.instance
+                
+                elif source == "position":
+                    string = tag.position
+                
+                elif source == "line":
+                    string = tag.line
 
                 if tag.style == "EOF":
                     print(f"{Fore.RED}{string}{Style.RESET_ALL}")
@@ -407,10 +526,21 @@ class Stream:
             else:
 
                 if source == "style":
-                    string += tag.style
+                    
+                    if tag.style == "EOF":
+                        string += f"{Fore.RED}{tag.style} >{Style.RESET_ALL}"
+
+                    else:
+                        string += f"{tag.style} {Fore.RED}>{Style.RESET_ALL}"
                 
                 elif source == "instance":
                     string += tag.instance
+
+                elif source == "position":
+                    string += f"{tag.position} {Fore.RED}>{Style.RESET_ALL}"
+                
+                elif source == "line":
+                    string += f"{tag.line} {Fore.RED}>{Style.RESET_ALL}"
                 
         if on_one_line:
 
@@ -420,10 +550,10 @@ class Stream:
 
 
 stream = Stream()
-stream.import_as_tags("""( ( 2 * 2394 )(((()))));jump;;;;;;;{ this {Ids} }""")
+stream.import_as_tags("""( ( -24940 - 2293 )(((()))));jump;;;;;;;{ this {Ids} }""")
 #print(stream.get_paren_pairs())
 #print(stream.get_brace_pairs())
 
 stream.stream(0.05, "instance", True)
-stream.mul(6)
+stream.add_op(6)
 stream.stream(0.05, "instance", True)
