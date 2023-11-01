@@ -53,7 +53,7 @@ class Lexer:
         ("DEL", r"DEL"),                # DEL
         ("TAB", r"\t"),                 #   
         ("WHITESPACE", r"\s+"),         #
-        ("NUMBER", r"\d+"),             # 0123456789
+        ("NUMBER", r"-?\d+(\.\d+)?"),             # 0123456789
         ("POW", r"\*\*"),               # **
         ("ADD", r"\+"),                 # +
         ("SUB", r"\-"),                 # -
@@ -210,9 +210,7 @@ class Stream:
     
     def pow_op(self, position:int) -> float:
         pass
-    
-    # TODO if there is op before a number but no number or paren before the op
-    # then it should account for it as [ SUB NUMBER ] -2
+
     def mul_op(self, position:int) -> float:
         position_of_mul:int = position
         found_lnumber:bool = False
@@ -421,10 +419,6 @@ class Stream:
             tag.position = current_position
             tag.line = self.get_position_line(tag.position)
             current_position += 1
-    
-    # TODO cruise the array in the direction until a NUMBER is found then evaluate if the number is negative or positive by checking the context of the '-'
-    def nearest_number(self, position:int, direction:str) -> int | float:
-        pass
 
     def get_position_line(self, position:int) -> int | None:
         current_line_number = 1
@@ -557,10 +551,10 @@ class Stream:
 
 
 stream = Stream()
-stream.import_as_tags("""( ( -24940 - 2293 )(((()))));jump;;;;;;;{ this {Ids} }""")
+stream.import_as_tags("""( ( -24940 * 2293.83 )(((()))));jump;;;;;;;{ this {Ids} }""")
 #print(stream.get_paren_pairs())
 #print(stream.get_brace_pairs())
 
 stream.stream(0.05, "instance", True)
-stream.add_op(6)
+stream.mul_op(6)
 stream.stream(0.05, "instance", True)
