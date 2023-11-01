@@ -1,4 +1,3 @@
-from web3 import Web3
 from flask import Flask, render_template, url_for, jsonify
 
 # Flask.
@@ -13,4 +12,4 @@ def base() -> str:
     return render_template("base.html")
 
 if __name__ == "__main__":
-    app.run(app)
+    app.run(debug=True)

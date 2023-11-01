@@ -1,36 +1,53 @@
-from utils import better_console
-import time
+import time, json
 
-_is_running:bool = False
-_refresh_rate:int = 1
+class Server:
 
-# getters
-def is_running() -> bool:
-    return _is_running
+    def __init__(self):
+        self.is_running = False
+        self.iterations = 0
+        self.timestamp_start = None
+        self.timestamp_end = None
+    
+    def run(self, seconds_interval):
+        
+        while self.is_running:
+            self.hook_before_update()
+            self.update()
+            self.hook_after_update()
+            time.sleep(seconds_interval)
 
-def refresh_rate() -> int:
-    return _refresh_rate
+    def update(self):
+        pass
 
-# toggle server state
-def switch_on() -> None:
-    global _is_running
-    _is_running = True
-    better_console.log_success(object="SERVER", text="switch_on()")
+    def hook_before_update(self):
+        pass
 
-def switch_off() -> None:
-    global _is_running
-    _is_running = False
-    better_console.log_success(object="SERVER", text="switch_off()")
+    def hook_after_update(self):
+        self.iterations += 1
+        self.save()
 
-# do task while running
-def update() -> None:
-    better_console.log_success(object="SERVER", text="update()")
+    def switch_on(self):
+        self.is_running = True
+        self.timestamp_start = time.time()
+    
+    def switch_off(self):
+        self.is_running = False
+        self.timestamp_end = time.time()
 
-better_console.toggle_display()
-switch_on()
+    def save(self, path):
+        new_obj = self.__jsonify__()
+        
+        with open(path, "w") as f:
+            json.dump(new_obj, f, indent=4)
+    
+    def __jsonify__(self):
+        obj = {
+            "is_running": self.is_running,
+            "iterations": self.iterations,
+            "timestamp_start": self.timestamp_start,
+            "timestamp_end": self.timestamp_end
+        }
 
+        new_obj = json.dumps(obj)
 
-# main
-while _is_running:
-    update()
-    time.sleep(refresh_rate())
+        return new_obj
