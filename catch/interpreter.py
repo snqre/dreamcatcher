@@ -41,8 +41,6 @@ C:::::C               a::::aaaa::::::a      t:::::t          c:::::c            
 
     ABSTRACT SYNTAX TREE
 
-
-
 """
 
 import re # definitely not adviced to do it this way
@@ -210,6 +208,11 @@ class Stream:
         for tag in lexer.tags:
             self.add_last(Tag(tag))
     
+    def pow_op(self, position:int) -> float:
+        pass
+    
+    # TODO if there is op before a number but no number or paren before the op
+    # then it should account for it as [ SUB NUMBER ] -2
     def mul_op(self, position:int) -> float:
         position_of_mul:int = position
         found_lnumber:bool = False
@@ -418,6 +421,10 @@ class Stream:
             tag.position = current_position
             tag.line = self.get_position_line(tag.position)
             current_position += 1
+    
+    # TODO cruise the array in the direction until a NUMBER is found then evaluate if the number is negative or positive by checking the context of the '-'
+    def nearest_number(self, position:int, direction:str) -> int | float:
+        pass
 
     def get_position_line(self, position:int) -> int | None:
         current_line_number = 1
