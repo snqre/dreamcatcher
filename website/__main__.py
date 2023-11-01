@@ -1,4 +1,6 @@
 from flask import Flask, render_template, url_for, jsonify
+from asyncc import *
+import asyncio
 
 # Flask.
 app = Flask(__name__)
@@ -12,4 +14,4 @@ def base() -> str:
     return render_template("base.html")
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run()
