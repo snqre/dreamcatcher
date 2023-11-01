@@ -1,5 +1,13 @@
 <!-- this is a comment -->
 
+-5 is not the same as - 5
+
+NUMBER { -5 or 5 }
+
+- NUMBER { - -5 or 5 }
+
+whitespace does matter here
+
 <!-- you can do this -->
 x = 5;
 
