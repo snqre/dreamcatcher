@@ -10,18 +10,56 @@
 body {
     font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
     background-color: var(--color-background);
+    color: #0f0; /* Retro green text */
+    font-family: 'VT323', monospace; /* Retro font */
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+.navbar-nav {
+    border: 6px solid #8e06fe; /* Purple border */
+    border-radius: 25px;
 }
 
 .nav-link {
-    color: rgb(255, 255, 255)
+    color: #ffff;
+}
+
+.nav-link:hover {
+    color: #0f0;
+}
+
+main {
+    flex: 1;
+}
+
+/* Retro-style links */
+a {
+    color: #0f0;
+    text-decoration: none;
+    background-color: transparent; /* Background color for links */
+    padding: 5px 10px;
+    margin: 0 5px;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+/* White image container */
+.image-container {
+    background-color: transparent;
+    padding: 0px;
+    text-align: center;
+    margin-bottom: 0px;
+    height: 3rem;
+    width: fit-content;
+    overflow: hidden;
 }
 
 footer {
     color: #ffff;
-}
-
-.list-unstyled {
-    color: white;
 }
 
 /** effects
