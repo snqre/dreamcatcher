@@ -6,12 +6,15 @@
     <link rel="icon" href="{{ url_for("static", filename="png/token_icon.png") }}" type="image/x-icon">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
     <link href="{{ url_for("static", filename="css/landing.css") }}" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=VT323" rel="stylesheet"> <!-- Retro font link -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous">
     </script>
     <!-- Add Font Awesome CSS link here for social media icons -->
     <title>{% block title %}Dreamcatcher Protocol{% endblock %}</title>
     <style>
         body {
+            color: #00ffa2; /* Retro green text */
+            font-family: 'VT323', monospace; /* Retro font */
             display: flex;
             flex-direction: column;
             min-height: 100vh;
@@ -19,6 +22,16 @@
 
         main {
             flex: 1;
+        }
+
+        /* Retro-style links */
+        a {
+            color: #00ffa2;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
         }
     </style>
 </head>
@@ -28,17 +41,14 @@
             <nav class="navbar sticky-top navbar-expand-lg">
                 <a class="navbar-brand text-white" href="#">
                     <img src="{{ url_for("static", filename="png/logo.png") }}" alt="Logo" width="60" height="40" class="d-inline-block align-text-top">
-                    DREAMCATCHER PROTOCOL
+                    DREAMCATCHER
                 </a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
                 <div class="collapse navbar-collapse justify-content-center" id="navbarNavAltMarkup">
                     <div class="navbar-nav">
-                        <a class="nav-link" href="#section1">What We Offer</a>
-                        <a class="nav-link" href="#section2">Why Choose Us</a>
                         <a class="nav-link" href="#section3">How It Works</a>
-                        <a class="nav-link" href="#section4">Why We Solve This</a>
                         <a class="nav-link" href="#section5">Roadmap</a>
                         <a class="nav-link" href="#section6">DAO & Governance</a>
                         <a class="nav-link" href="#section7">The Team</a>
@@ -53,22 +63,22 @@
     <main>
         <section id="section1" class="py-5">
             <div class="container">
-                <h2 class="text-white">What We Offer</h2>
-                <p class="text-white">Create and Manage Trustless Vaults in Seconds.</p>
-                <p class="text-white">Join Web3. Access globally accessible liquidity, over 40,000 trading pairs, fully customizable interfaces, and log in with your Metamask.</p>
-                <p class="text-white">Use P2P trading and our OTC market for institutional size transactions.</p>
+                <h2>What We Offer</h2>
+                <p>Create and Manage Trustless Vaults in Seconds.</p>
+                <p>Join Web3. Access globally accessible liquidity, over 40,000 trading pairs, fully customizable interfaces, and log in with your Metamask.</p>
+                <p>Use P2P trading and our OTC market for institutional size transactions.</p>
             </div>
         </section>
 
         <section id="section2" class="py-5">
             <div class="container">
-                <h2 class="text-white">Why Choose Us</h2>
-                <p class="text-white">Funds are everywhere, pensions funds, indexes, and more and more automated.</p>
-                <p class="text-white">We believe that to fully beat Web2, Web3 must tackle key issues and leverage the key advantages of the technology to attract institutional capital. These include 24 hr access to services, software as a service models (SaaS), trustless and decentralized. And fully autonomous and customizable platforms and services.</p>
-                <p class="text-white">The vision for Dreamcatcher is to operate as a DAO, functioning 100% on blockchains. We want to introduce .catch as a new programming language to leverage automated trading and DeFi, making building plugins within our ecosystem accessible to everyone.</p>
-                <p class="text-white">We believe the future of DeFi is going to belong to people, and our goal is to attract top talent from the Web2 space and leverage their abilities for asset management, and more. With our products, we design SaaS modeled products which anyone can operate and use. As well as offer a marketplace for our customers.</p>
-                <p class="text-white">Together with the above, we want to pave the way for more DAOs set up within the space. Designing a robust governance system to allow DAOs to independently move from single-protocol models to allow the next Google's and organizations to operate on a more transparent and autonomous manner.</p>
-                <p class="text-white">Through this, we believe new DAOs will emerge which are able to acquire, manage votes, and interact with multiple protocols as services. Managing talent and capital at this level will be the next big Web3 challenge after interoperability, and by helping to set standards and pushing the efforts for research and development within the space, we believe we will be able to scale, and pave the way for a completely transparent and decentralized business style.</p>
+                <h2>Why Choose Us</h2>
+                <p>Funds are everywhere, pensions funds, indexes, and more and more automated.</p>
+                <p>We believe that to fully beat Web2, Web3 must tackle key issues and leverage the key advantages of the technology to attract institutional capital. These include 24 hr access to services, software as a service models (SaaS), trustless and decentralized. And fully autonomous and customizable platforms and services.</p>
+                <p>The vision for Dreamcatcher is to operate as a DAO, functioning 100% on blockchains. We want to introduce .catch as a new programming language to leverage automated trading and DeFi, making building plugins within our ecosystem accessible to everyone.</p>
+                <p>We believe the future of DeFi is going to belong to people, and our goal is to attract top talent from the Web2 space and leverage their abilities for asset management, and more. With our products, we design SaaS modeled products which anyone can operate and use. As well as offer a marketplace for our customers.</p>
+                <p>Together with the above, we want to pave the way for more DAOs set up within the space. Designing a robust governance system to allow DAOs to independently move from single-protocol models to allow the next Google's and organizations to operate on a more transparent and autonomous manner.</p>
+                <p>Through this, we believe new DAOs will emerge which are able to acquire, manage votes, and interact with multiple protocols as services. Managing talent and capital at this level will be the next big Web3 challenge after interoperability, and by helping to set standards and pushing the efforts for research and development within the space, we believe we will be able to scale, and pave the way for a completely transparent and decentralized business style.</p>
             </div>
         </section>
 
@@ -80,27 +90,18 @@
         <div class="container">
             <div class="row">
                 <div class="col-md-4">
-                    <h5 class="text-white">Quick Links</h5>
-                    <ul class="list-unstyled">
-                        <li><a class="text-white" href="#section1">What We Offer</a></li>
-                        <li><a class="text-white" href="#section2">Why Choose Us</a></li>
-                        <!-- Add more links to other sections as needed -->
-                    </ul>
-                </div>
-                <div class="col-md-4">
-                    <h5 class="text-white">Contact Us</h5>
-                    <address class="text-white">
+                    <h5>Contact Us</h5>
+                    <address>
                         <p>Email: contact@dreamcatcher.com</p>
-                        <p>Phone: +1 (123) 456-7890</p>
                     </address>
                 </div>
                 <div class="col-md-4">
-                    <h5 class="text-white">Follow Us</h5>
+                    <h5>Follow Us</h5>
                     <div>
-                        <a href="#" class="text-white me-3"><i class="fab fa-facebook-f"></i></a>
-                        <a href="#" class="text-white me-3"><i class="fab fa-twitter"></i></a>
-                        <a href="#" class="text-white me-3"><i class="fab fa-linkedin-in"></i></a>
-                        <a href="#" class="text-white"><i class="fab fa-instagram"></i></a>
+                        <a href="#" class="me-3"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" class="me-3"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="me-3"><i class="fab fa-linkedin-in"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
                     </div>
                 </div>
             </div>

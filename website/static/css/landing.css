@@ -12,7 +12,19 @@ body {
     background-color: var(--color-background);
 }
 
-/** effects */
+.nav-link {
+    color: rgb(255, 255, 255)
+}
+
+footer {
+    color: #ffff;
+}
+
+.list-unstyled {
+    color: white;
+}
+
+/** effects
 .crt::before {
     content: " ";
     display: block;
@@ -249,3 +261,4 @@ body {
            0 0 3px;
     }
 }
+*/
