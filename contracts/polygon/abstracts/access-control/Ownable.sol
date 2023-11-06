@@ -11,6 +11,24 @@ abstract contract Ownable is StorageLite {
         return _owner;
     }
 
+    function transferOwnership(address newOwner) external virtual {
+        _onlyOwner();
+        _transferOwnership(newOwner);
+    }
+
+    function renounceOwnership() external virtual {
+        _onlyOwner();
+        _transferOwnership(address(0));
+    }
+
+    function _onlyOwner() internal view virtual {
+        require(_isOwner(msg.sender));
+    }
+
+    function _isOwner(address account) internal view virtual returns (bool) {
+        return account == _owner;
+    }
+
     function _transferOwnership(address newOwner) internal virtual {
         address oldOwner = _owner;
         _owner = newOwner;
