@@ -1,16 +1,14 @@
 import hashlib
-from Content import Content
 
 class Block:
-    def __init__(self, timestamp: int, lastHash: str = ''):
-        self.timestamp: int  = timestamp
+    def __init__(self, timestamp: int, lastHash: str = '', addressTo: str = '', message: str = '', sourceCode: str = ''):
+        self.timestamp: int = timestamp
         self.lastHash: str = lastHash
-        self.data: list = []
+        self.addressTo: str = ''
+        self.message: str = ''
+        self.sourceCode: str = ''
         self.hash: str = None
-        
-    def stack(self, content: Content):
-        self.data.append(content)
 
     def generateHash(self):
-        stringData = (str(self.timestamp) + ' >>> '.join(self.data) + ' <<< ' + self.lastHash)
+        stringData = f'{self.timestamp} | {self.addressTo} | {self.message} | {self.sourceCode} | {self.lastHash}'
         self.hash = hashlib.sha256(stringData.encode()).hexdigest()
