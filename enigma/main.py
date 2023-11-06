@@ -7,6 +7,18 @@ telegram.set_api_key_for_telegram("")
 telegram.set_username_for_telegram("enigma")
 enigma = telegram.generate_interface()
 
+"""
+1. connect the bot to our blockchain
+2. connect the bot to polygon blockchain
+3. respond to commands
+4. retrive data from polygon
+5. contract [address] [abi]
+6. polygon-scan
+7. tokenize user input within group
+[ messages => understand context ]
+8. automate response
+"""
+
 @enigma.message_handler(commands=["start"])
 def start(message):
     enigma.reply_to(message=message, text="Hello World")

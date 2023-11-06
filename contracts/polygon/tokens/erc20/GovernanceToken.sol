@@ -16,8 +16,7 @@ contract GovernanceToken is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit {
     }
 
     function snapshot() external returns (uint256) {
-        _snapshot();
-        return _getCurrentSnapshotId();
+        return _snapshot();
     }
 
     function _beforeTokenTransfer(address from, address to, uint256 amount) internal override(ERC20, ERC20Snapshot) {
