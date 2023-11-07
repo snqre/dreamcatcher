@@ -5,7 +5,7 @@ import "contracts/polygon/external/openzeppelin/token/ERC20/extensions/ERC20Burn
 import "contracts/polygon/external/openzeppelin/token/ERC20/extensions/ERC20Snapshot.sol";
 import "contracts/polygon/external/openzeppelin/token/ERC20/extensions/ERC20Permit.sol";
 
-contract GovernanceToken is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit {
+contract StGovToken is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit {
 
     constructor(string memory name, string memory symbol) ERC20(name, symbol) ERC20Permit(name) {
         _mint(msg.sender, 200000000 * (10**18));
