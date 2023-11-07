@@ -1,89 +1,203 @@
-<!-- landing.html -->
 <!DOCTYPE html>
-<html land="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <link rel="icon" href="{{ url_for("static", filename="png/token_icon.png") }}" type="image/x-icon">
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
-        <link href="{{ url_for("static", filename="css/landing.css") }}" rel="stylesheet">
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
-        <title>{% block title %}Dreamcatcher Protocol{% endblock %}</title>
-    </head>
-    <body class="crt">
-        <header>
-            <!-- gutter -->
-            <div class="container-fluid d-flex justify-content-center m-2"></div>
-            <!-- navbar
-                prefers-decuded-motion media query inbuilt
-                use =>
-                    .navbar-brand
-                    .navbar-nav
-                    .navbar-toggler
-                    .navbar-text
-                    .collapse
-                    .navbar-scroll
-                ref: https://getbootstrap.com/docs/5.3/components/navbar/
-                ref: https://getbootstrap.com/docs/5.0/layout/grid/
-            -->
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="{{ url_for("static", filename="png/token_icon.png") }}" type="image/x-icon">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    <link href="{{ url_for("static", filename="css/landing.css") }}" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=VT323" rel="stylesheet"> <!-- Retro font link -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous">
+    </script>
+    <!-- Add Font Awesome CSS link here for social media icons -->
+    <title>{% block title %}Dreamcatcher Protocol{% endblock %}</title>
+    
+</head>
+<body class="crt">
+    <header>
+        <div class="container">
             <nav class="navbar sticky-top navbar-expand-lg">
-                <!-- logo and name -->
-                <a class="navbar-brand text-white m-1 p-3" href="#">
-                    <img src="{{ url_for("static", filename="png/logo.png")}}" alt="Logo" width="60" height="40" class="d-inline-block align-text-top">
-                    DREAMCATCHER PROTOCOL
-                </a>
-                <!-- burger bar -->
-                <button class="navbar-togler bg-light" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
-                <!-- options -->
                 <div class="collapse navbar-collapse justify-content-center" id="navbarNavAltMarkup">
                     <div class="navbar-nav">
-                        <!-- what are we offering -->
-                        <!-- why would i want it otc b2b marketplace -->
-                        <!-- what do i do next siphon -->
-                        <!-- why are we solving this problem -->
-                        <!-- when is this happening and roadmap -->
-                        <!-- the dao and governance -->
-                        <!-- the team -->
-                        <!-- faq -->
-                        <!-- contacts -->
+                        <a class="navbar-brand text-white" href="#">
+                            <img src="{{ url_for("static", filename="png/logo.png") }}" alt="Logo" width="60" height="40" class="d-inline-block align-text-top">
+                            DREAMCATCHER PROTOCOL
+                        </a>
+                        <a class="nav-link" href="#section1">What We Offer</a>
+                        <a class="nav-link" href="#section2">Why Choose Us</a>
+                        <a class="nav-link" href="#section3">How It Works</a>
+                        <a class="nav-link" href="#section4">Why We Solve This</a>
+                        <a class="nav-link" href="#section5">Roadmap</a>
+                        <a class="nav-link" href="#section6">DAO & Governance</a>
+                        <a class="nav-link" href="#section7">The Team</a>
+                        <a class="nav-link" href="#section8">FAQ</a>
+                        <a class="nav-link" href="#section9">Contact</a>
                     </div>
                 </div>
             </nav>
-        </header>
-        <section>
-            <p class="text-white">Create and Manage Trustless Vaults in Seconds.</p>
-            <p class="text-white">Join Web3. Access globally accessible liquidity, over 40,000 trading pairs, fully customizable interfaces, and log in with your metamask</p>
-            <p class="text-white">Use p2p trading and our otc market for institutional size transactions</p>
-        </section>
-        <section>
-            <p class="text-white">Funds are everywhere, pensions funds, indexes, and more and more automated.</p>
-            <p class="text-white">We believe that to fully beat Web2, Web3 must tackle key issues and leverage the key advantages of the technology to attrack
-                institutional capital. These include 24 hr access to services, software as a service models (sass), trustless and decentralized. And fully autonomous
-                and customizable platforms and services.
-            </p>
-            <P class="text-white">The vision for dreamcatcher is to operate as DAO, functioning 100% on blockchains. We want to introduce .catch as a new programming language to leverage
-                automated trading and defi, making building plugins within our ecosystem accessible to everyone. We believe the future of DeFi is going to belong to
-                people, and our goal is to attract top tallent from the Web2 space and leverage their abilities for asset management, and more. With our products, we design
-                sass modelled products which anyone can operate and use. As well as offer a marketplace for our customers.
+        </div>
+    </header>
 
-                Together with the above, we want to pave the way for more DAOs set up within the space. Designing a robust governance system to allow DAO's to independently move
-                from single-protocol models to allow the next Google's and organizations to operate on a more transparent and autonomous manner. Through this
-                we belive new DAOs will emerge which are able to aquire, manage votes, and interfact with multiple protocols as services.
-                Managing talent and capital at this level will be the next big web3 challenge after interoperabilitty, and by helping to set standards and
-                pushing the efforts for research and development within the space, we believe we will be able to scale, and pave the way for a 
-                completely transparent and decentralized business style.
-            </P>
+    <main>
+        <!-- Image container below the nav bar -->
+        <div class="container py-5 image-container">
+            <img src="https://images.pexels.com/photos/1089438/pexels-photo-1089438.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1" alt="Your Image" class="img-fluid">
+        </div>
+
+        <section id="section1" class="py-5">
+            <div class="container">
+                <h2>What We Offer</h2>
+                <div class="image-container">
+                    <img src="" alt="Crypto" srcset="img-fluid">
+                </div>
+                <p>Placeholder text for What We Offer section...
+                    Lorem ipsum dolor sit amet, consectetur adipisicing elit. Iste odio voluptas inventore ex ipsam eum, aspernatur laborum laudantium est, itaque veritatis quas, minima accusantium expedita repellendus deserunt alias provident sunt.
+                    Lorem ipsum dolor sit amet consectetur adipisicing elit. Ad vitae explicabo repellat unde labore. Reprehenderit at, voluptatibus sunt magni quas, excepturi dignissimos harum corrupti possimus ratione odit, quia dolores nam.
+                    Lorem ipsum dolor sit amet consectetur adipisicing elit. Omnis facilis quos molestias suscipit incidunt praesentium eveniet fuga tempore voluptatibus sint vero accusamus odit consequatur corrupti, magnam nostrum nobis ad quaerat.
+                </p>
+            </div>
         </section>
-        <section></section>
-        <section></section>
-        <section></section>
-        <section></section>
-        <section></section>
-        <section></section>
-        <section></section>
-        <!-- footer -->
-        <footer class="container-fluid d-flex"></footer>
-    </body>
+
+        <section id="section2" class="py-5">
+            <div class="container">
+                <h2>Why Choose Us</h2>
+                <div class="image-container">
+                    <img src="" alt="Crypto" srcset="img-fluid">
+                </div>
+                <p>Placeholder text for Why Choose Us section...
+                    Lorem ipsum dolor sit amet consectetur adipisicing elit. Quae quam aliquam, similique quasi dolor ipsum atque mollitia delectus fugiat minus amet dolorem officia tempora vel perferendis sapiente libero magni corrupti?
+                    Lorem ipsum dolor sit amet consectetur adipisicing elit. Eius repellat, suscipit ab nam, dolorum alias id enim molestias, consequatur impedit quis in at placeat. Odio explicabo nisi autem libero suscipit.
+                    Lorem ipsum dolor, sit amet consectetur adipisicing elit. Saepe, delectus, quos nesciunt nisi, magnam eligendi ab modi ut quibusdam dolore itaque veritatis eos dicta ex! Sed eveniet dolores eligendi. Veritatis.
+                    Lorem ipsum dolor sit amet consectetur, adipisicing elit. Ipsa ullam illum exercitationem mollitia sequi beatae magnam vitae omnis ex, maiores nam eum, earum, facilis harum dolorem nostrum ipsam nihil aperiam!
+                </p>
+            </div>
+        </section>
+
+        <section id="section3" class="py-5">
+            <div class="container">
+                <h2>How It Works</h2>
+                <div class="image-container">
+                    <img src="" alt="Crypto" srcset="img-fluid">
+                </div>
+                <p>Placeholder text for How It Works section...
+                    Lorem ipsum dolor sit, amet consectetur adipisicing elit. Amet at exercitationem id, eos ullam sunt dolores ad expedita a porro eaque accusantium? Velit et est consectetur dolorem, aut officiis reprehenderit.
+                    Lorem ipsum dolor sit amet consectetur adipisicing elit. Praesentium quas dolore itaque nemo dicta ipsum, eum repellat veritatis, magni laudantium vel soluta numquam asperiores consectetur molestiae aliquam, voluptatum quibusdam voluptatem.
+                    Lorem ipsum dolor sit amet consectetur adipisicing elit. Illo laboriosam sunt distinctio odit praesentium, harum voluptatem illum? Labore eligendi at quo beatae quod reiciendis mollitia delectus illum odio, eum perferendis.
+                </p>
+            </div>
+        </section>
+
+        <section id="section4" class="py-5">
+            <div class="container">
+                <h2>Why We Solve This</h2>
+                <div class="image-container">
+                    <img src="" alt="Crypto" srcset="img-fluid">
+                </div>
+                <p>Placeholder text for Why We Solve This section...
+                    Lorem ipsum dolor sit amet consectetur adipisicing elit. Totam dolore unde nemo mollitia, accusantium eum debitis vero, ipsum eveniet odit fuga! Molestiae eaque aut, quod sunt officia at aliquam dolorem!
+                    Lorem ipsum dolor sit, amet consectetur adipisicing elit. Aperiam saepe sapiente optio obcaecati maiores similique adipisci ea voluptate doloribus expedita, culpa quibusdam, atque quisquam neque, quo ab dolore quidem facilis.
+                </p>
+            </div>
+        </section>
+
+        <section id="section5" class="py-5">
+            <div class="container">
+                <h2>Roadmap</h2>
+                <div class="image-container">
+                    <img src="" alt="Crypto" srcset="img-fluid">
+                </div>
+                <p>Placeholder text for Roadmap section...
+                    Lorem ipsum dolor sit amet consectetur adipisicing elit. Hic explicabo assumenda consectetur commodi aliquid, quibusdam iste, necessitatibus non quae est sunt natus harum vitae earum maxime labore, soluta expedita voluptatem!
+                    Lorem ipsum, dolor sit amet consectetur adipisicing elit. Nulla eaque consequatur illum quam, possimus omnis suscipit ipsum dicta et voluptatum similique ut sapiente totam asperiores ullam fugit temporibus? Explicabo, modi.
+                </p>
+            </div>
+        </section>
+
+        <section id="section6" class="py-5">
+            <div class="container">
+                <h2>DAO & Governance</h2>
+                <div class="image-container">
+                    <img src="" alt="Crypto" srcset="img-fluid">
+                </div>
+                <p>Placeholder text for DAO & Governance section... Lorem ipsum dolor sit amet consectetur adipisicing elit. Nesciunt quia, perspiciatis officia fuga voluptatum repellat quaerat deleniti sit laudantium, maxime enim excepturi quis? Ad asperiores reprehenderit deleniti? Fugit, similique illo? Lorem, ipsum dolor sit amet consectetur adipisicing elit. Nobis hic aut quas, in id sit, accusantium, animi optio quaerat quos necessitatibus earum illo facere architecto. Maxime nemo cumque vel voluptas.
+                    Lorem ipsum dolor sit amet consectetur adipisicing elit. Reprehenderit tempore sint quaerat mollitia eaque consectetur odit ex dolorum culpa eum dignissimos temporibus aliquid laborum pariatur, eos necessitatibus omnis sit nemo!
+                    Lorem ipsum, dolor sit amet consectetur adipisicing elit. Voluptates distinctio quis facilis expedita veritatis alias repellat! Quam minus explicabo tempore minima, repudiandae alias ipsa odio dolores perspiciatis, nam numquam enim.
+                    Lorem ipsum dolor sit amet consectetur adipisicing elit. Tempora modi amet impedit, quos hic est, minima excepturi voluptatem, laboriosam magni praesentium perferendis tenetur aliquam? Ad quasi dignissimos deleniti dolorem nulla.
+                </p>
+            </div>
+        </section>
+
+        <section id="section7" class="py-5">
+            <div class="container">
+                <h2>The Team</h2>
+                <div class="image-container">
+                    <img src="" alt="Crypto" srcset="img-fluid">
+                </div>
+                <p>Placeholder text for The Team section...
+                    Lorem ipsum dolor sit amet consectetur adipisicing elit. Corporis cum quas pariatur, sequi odit voluptatum fugit accusantium fuga voluptas itaque id fugiat voluptate minus ipsam aspernatur consectetur quos. Eaque, saepe.
+                    Lorem ipsum dolor sit amet consectetur adipisicing elit. Rerum, debitis? Debitis et eum vero iste illo libero dolorem dolor eaque, quod praesentium magnam placeat voluptatem distinctio architecto magni optio consectetur.
+                </p>
+            </div>
+        </section>
+
+        <section id="section8" class="py-5">
+            <div class="container">
+                <h2>FAQ</h2>
+                <div class="image-container">
+                    <img src="" alt="Crypto" srcset="img-fluid">
+                </div>
+                <p>Placeholder text for FAQ section...
+                    Lorem ipsum dolor sit amet consectetur adipisicing elit. Consequuntur, accusamus! Sit modi, maxime porro culpa consectetur delectus ipsam quas beatae distinctio fugiat vitae ipsa voluptas fuga, labore sapiente harum illum.
+                    Lorem ipsum dolor sit amet consectetur adipisicing elit. Qui reprehenderit officia quidem animi assumenda provident eum in eveniet libero, sed inventore ut? Maiores, fuga. Nemo consequuntur dolorum accusantium officia veritatis.
+                    Lorem ipsum dolor sit amet consectetur adipisicing elit. Est magnam quae dolorum sequi beatae reprehenderit in nesciunt enim cupiditate eveniet corporis repudiandae, quidem, ullam tempora non ducimus voluptas? Quaerat, amet?
+                </p>
+            </div>
+        </section>
+
+        <section id="section9" class="py-5">
+            <div class="container">
+                <h2>Contact</h2>
+                <div class="image-container">
+                    <img src="" alt="Crypto" srcset="img-fluid">
+                </div>
+                <p>Placeholder text for Contact section... Lorem ipsum dolor sit amet consectetur adipisicing elit. Accusamus rem inventore ut fugit, nisi nostrum pariatur explicabo voluptatem molestias illo, vel tenetur natus earum similique exercitationem quasi tempora, commodi dolorem.</p>
+            </div>
+        </section>
+    </main>
+
+    < <!-- Footer section -->
+    <footer class="container-fluid bg-dark py-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4">
+                    <h5>Quick Links</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="#section1">What We Offer</a></li>
+                        <li><a href="#section2">Why Choose Us</a></li>
+                        <!-- Add more links to other sections as needed -->
+                    </ul>
+                </div>
+                <div class="col-md-4">
+                    <h5>Contact Us</h5>
+                    <address>
+                        <p>Email: contact@dreamcatcher.com</p>
+                        <p>Phone: +1 (123) 456-7890</p>
+                    </address>
+                </div>
+                <div class="col-md-4">
+                    <h5>Follow Us</h5>
+                    <div>
+                        <a href="#" class="me-3"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" class="me-3"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="me-3"><i class="fab fa-linkedin-in"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+</body>
 </html>
