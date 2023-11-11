@@ -469,34 +469,38 @@ contract nTreasury is Context {
     }
 
     /**
-    * @notice Executes a signed withdrawal request in the nTreasury contract.
+    * @notice Executes a signed and non-executed withdrawal request in the nTreasury contract.
     *
-    * @dev The `execute` function allows a trustee to execute a previously signed withdrawal request in the nTreasury
-    * contract. Execution involves transferring the requested funds or tokens to the specified destination address,
-    * marking the completion of the withdrawal process.
+    * @dev The `execute` external function allows a trustee to execute a previously signed and non-executed withdrawal
+    *      request in the nTreasury contract. Execution involves transferring the requested funds or tokens to the
+    *      specified destination address, marking the completion of the withdrawal process.
     *
-    * @param i The index of the signed withdrawal request to be executed.
+    * @param i The index of the signed and non-executed withdrawal request to be executed.
     *
-    * @dev The `i` parameter represents the index of the withdrawal request that the trustee intends to execute. It is
-    * an identifier that allows the contract to locate and track the specific request within the array of requests
-    * stored in the nTreasury contract.
+    * @dev The `i` parameter represents the index of the withdrawal request that the trustee intends to execute. It is an
+    *      identifier that allows the contract to locate and track the specific request within the array of requests stored
+    *      in the nTreasury contract.
     *
-    * @dev The function internally calls the `_onlyTrustee` modifier to ensure that only trustees can execute signed
-    * withdrawal requests. This access control mechanism prevents unauthorized entities from triggering the execution
-    * of withdrawal requests and contributes to the security of the multi-signature withdrawal process.
+    * @dev The function first checks whether the specified withdrawal request has not been executed. If the request has
+    *      already been executed, the function reverts with the error message 'nTreasury: request already executed.'
     *
-    * @dev The actual logic for executing the withdrawal request is implemented in the `_execute` internal function.
-    * The execution involves transferring the requested funds or tokens to the specified destination address, based on
-    * the details provided in the withdrawal request.
+    * @dev The function then checks whether the caller is a trustee. If the caller is not a trustee, the function reverts
+    *      with the error message 'nTreasury: only trustee,' ensuring that only authorized trustees can execute withdrawal
+    *      requests.
     *
-    * @dev Emits the `TreasuryWithdrawalExecuted` event to signal the successful execution of the withdrawal request.
-    * This event provides transparency into the completion of the withdrawal process, allowing observers to monitor
-    * when a request has been fulfilled and funds or tokens have been transferred as per the trustee's instructions.
+    * @dev If both checks pass, the function calls the internal `_execute` function to perform the execution of the withdrawal
+    *      request. The `_execute` function handles the validation of the signature threshold and the actual transfer of
+    *      funds or tokens.
     *
-    * @dev This function is a crucial step in the multi-signature withdrawal process, where trustees collaboratively
-    * sign and execute requests to securely withdraw funds or tokens from the nTreasury contract.
+    * @dev This function is a crucial step in the multi-signature withdrawal process, where trustees collaboratively sign and
+    *      execute requests to securely withdraw funds or tokens from the nTreasury contract. The additional check ensures that
+    *      a request cannot be executed more than once, preventing unintended or malicious double executions.
+    *
+    * @dev This function is meant to be called by trustees externally, providing a user-friendly interface for executing
+    *      signed withdrawal requests.
     */
     function execute(uint i) external virtual {
+        _onlyNotExecuted(i);
         _onlyTrustee();
         _execute(i);
     }
@@ -613,6 +617,33 @@ contract nTreasury is Context {
     */
     function _onlyNotSigned(uint i) internal view virtual {
         require(!_treasury().requests[i].hasSigned[_msgSender()], 'nTreasury: already signed');
+    }
+
+    /**
+    * @notice Ensures that a specified withdrawal request has not been executed.
+    *
+    * @dev The `_onlyNotExecuted` internal function is a modifier that ensures a specified withdrawal request has not
+    *      been executed before proceeding with further actions. This prevents unintended or malicious double executions
+    *      of the same withdrawal request.
+    *
+    * @param i The index of the withdrawal request to check for execution status.
+    *
+    * @dev The `i` parameter represents the index of the withdrawal request that is being checked. It is an identifier
+    *      that allows the contract to locate and track the specific request within the array of requests stored in the
+    *      nTreasury contract.
+    *
+    * @dev The function checks the `executed` flag in the specified withdrawal request. If the flag is true (indicating
+    *      that the request has already been executed), the function reverts with the error message 'nTreasury: already executed.'
+    *
+    * @dev This internal function is used as a modifier in other functions, ensuring that only non-executed withdrawal
+    *      requests can proceed with additional actions, such as signing or execution. It enhances the security and integrity
+    *      of the multi-signature withdrawal process by preventing duplicate executions of the same request.
+    *
+    * @dev This function is marked as `internal` and should not be called directly by external contracts or users. It is meant
+    *      to be used internally within the nTreasury contract to enforce the non-executed condition for specific withdrawal requests.
+    */
+    function _onlyNotExecuted(uint i) internal view virtual {
+        require(!_treasury().requests[i].executed, 'nTreasury: already executed');
     }
 
     /**
@@ -756,35 +787,39 @@ contract nTreasury is Context {
     /**
     * @notice Executes a signed withdrawal request in the nTreasury contract.
     *
-    * @dev The `_execute` internal function allows a trustee to execute a previously signed withdrawal request in the nTreasury
-    * contract. Execution involves transferring the requested funds or tokens to the specified destination address, marking
-    * the completion of the withdrawal process.
+    * @dev The `_execute` internal function allows a trustee to execute a previously signed withdrawal request in the
+    *      nTreasury contract. Execution involves transferring the requested funds or tokens to the specified destination
+    *      address, marking the completion of the withdrawal process.
     *
     * @param i The index of the signed withdrawal request to be executed.
     *
     * @dev The `i` parameter represents the index of the withdrawal request that the trustee intends to execute. It is an
-    * identifier that allows the contract to locate and track the specific request within the array of requests stored in
-    * the nTreasury contract.
+    *      identifier that allows the contract to locate and track the specific request within the array of requests stored
+    *      in the nTreasury contract.
+    *
+    * @dev The function first retrieves information about the specified withdrawal request, including the destination
+    *      address (`to`), the ERC-20 token address (`tokenOut`), the amount to be transferred (`amountOut`), and the
+    *      number of signatures obtained (`numSignatures`).
     *
     * @dev The function calculates the current signature threshold based on the number of signatures obtained compared to the
-    * total number of trustees. If the current threshold is equal to or exceeds the required threshold, the function proceeds
-    * with the execution of the withdrawal request.
+    *      total number of trustees. If the current threshold is equal to or exceeds the required threshold, the function
+    *      proceeds with the execution of the withdrawal request.
     *
-    * @dev If the request involves a specific ERC-20 token (`tokenOut` is not `address(0)`), the function calls the
-    * `_transferTokens` internal function to transfer the requested amount of tokens to the specified destination address.
-    * Otherwise, if the request involves Ether withdrawal, the function calls the `_transfer` internal function to transfer
-    * the requested amount of Ether.
+    * @dev The function then marks the request as executed, preventing further executions of the same request. If the request
+    *      involves a specific ERC-20 token (`tokenOut` is not `address(0)`), the function calls the `_transferTokens`
+    *      internal function to transfer the requested amount of tokens to the specified destination address. Otherwise, if
+    *      the request involves Ether withdrawal, the function calls the `_transfer` internal function to transfer the
+    *      requested amount of Ether.
     *
-    * @dev The function marks the request as executed, preventing further executions of the same request. It also emits the
-    * `TreasuryWithdrawalExecuted` event to signal the successful execution of the withdrawal request. This event provides
-    * transparency into the completion of the withdrawal process, allowing observers to monitor when a request has been
-    * fulfilled and funds or tokens have been transferred as per the trustee's instructions.
+    * @dev The function emits the `TreasuryWithdrawalExecuted` event to signal the successful execution of the withdrawal
+    *      request. This event provides transparency into the completion of the withdrawal process, allowing observers to
+    *      monitor when a request has been fulfilled and funds or tokens have been transferred as per the trustee's instructions.
     *
     * @dev This function is a crucial step in the multi-signature withdrawal process, where trustees collaboratively sign and
-    * execute requests to securely withdraw funds or tokens from the nTreasury contract.
+    *      execute requests to securely withdraw funds or tokens from the nTreasury contract.
     *
     * @dev This function is marked as `internal` and should not be called directly by external contracts or users. It is meant
-    * to be used internally within the nTreasury contract to facilitate the execution of signed withdrawal requests.
+    *      to be used internally within the nTreasury contract to facilitate the execution of signed withdrawal requests.
     */
     function _execute(uint i) internal virtual {
         Request storage request = _treasury().requests[i];
