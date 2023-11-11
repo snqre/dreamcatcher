@@ -1,8 +1,5 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
-import 'contracts/polygon/Shell.sol';
-import 'contracts/polygon/deps/uniswap/interfaces/IUniswapV2Factory.sol';
-import 'contracts/polygon/deps/uniswap/interfaces/IUniswapV2Pair.sol';
 
 interface IEACAggregatorProxy {
     function latestAnswer() external view returns (uint);
@@ -16,7 +13,7 @@ interface IEACAggregatorProxy {
 * @dev The sl oracle implementation makes use of both api3 and chainlink
 *      oracles to get the price of supported tokens.
  */
-contract slOracle is Shell {
+contract slOracle {
     
     function _assignTokenToFeed(address token, address feed) internal virtual {
 
