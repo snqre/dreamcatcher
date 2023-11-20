@@ -5,6 +5,7 @@ import "contracts/polygon/libraries/CommandCentre.sol";
 import "contracts/polygon/deps/openzeppelin/utils/structs/EnumerableSet.sol";
 import "contracts/polygon/interfaces/units/20/IToken.sol";
 
+/// enabled the diamond to make target calls based on a polled command
 contract ConsoleFacet01 {
     using Command for Command.Command_;
     using CommandCentre for CommandCentre.CommandCentre_;
