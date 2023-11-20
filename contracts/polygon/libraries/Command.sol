@@ -188,6 +188,12 @@ library Command {
         command.multiSig.timer.duration = newDuration;
     }
 
+    function addMultiSigSigner(Command_ storage command, address newSigner) internal {
+        require(conductIsMultiSigFirstAndReferendumSecond(command) || conductIsMultiSigOnly(command), "Unable to add multi sig signer because the conduct does not require it");
+        command.multiSig.isSigner[newSigner] = true;
+        command.multiSig.numSigners ++;
+    }
+
     function setUpReferendum(Command_ storage command, address newToken, uint newRequiredSupportInBasisPoints, uint newDuration) internal {
         require(conductIsReferendumFirstAndMultiSigSecond(command) || conductIsReferendumOnly(command), "Unable to set up referendum because the conduct does not require it");
         require(newToken != address(0), "Unable to set up referendum because token is zero");

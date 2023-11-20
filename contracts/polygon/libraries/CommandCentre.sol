@@ -15,11 +15,13 @@ library CommandCentre {
     }
 
     struct CommandCentre_ {
+        address admin;
         Context context;
         WrappedCommand[] commands;
         mapping(uint => address) commandsCreatorMapping;
         Operator[] operators;
         Settings settings;
+        bool switchedOn;
     }
     /// wrapping command to add caption message and creator properties
     struct WrappedCommand {
@@ -48,21 +50,23 @@ library CommandCentre {
         uint minRequiredActiveOperatorsInBasisPoints;
         bool paused;
         InactiveOperatorsTriggeredPayload inactiveOperatorsTriggeredPayload;
-        
     }
-
+    /// in the future this method could be used to trigger commands such as elections
     struct InactiveOperatorsTriggeredPayload {
+        uint lastTriggeredTimestamp;
         address target;
         bytes data;
     }
 
+    /// checks and triggers
     function update(CommandCentre_ storage commandCentre) internal {
-        if (!operatorsConditionsMet(commandCentre)) {
+        if (!operatorsConditionsMet(commandCentre) && block.timestamp > commandCentre.settings.inactiveOperatorsTriggeredPayload.lastTriggeredTimestamp + commandCentre.settings.multiSigDuration + commandCentre.settings.lockDuration) {
             /// not enough operators
+            commandCentre.settings.inactiveOperatorsTriggeredPayload.lastTriggeredTimestamp = block.timestamp;
             triggerCommandToSearchForNewOperators(commandCentre);
         }
     }
-
+    /// TODO change signer assignment
     function triggerCommandToSearchForNewOperators(CommandCentre_ storage commandCentre) internal {
         address[] memory targets;
         bytes[] memory data;
@@ -91,8 +95,11 @@ library CommandCentre {
             command.native.forward();
         }
     }
-
+    /// TODO change signer assignment
     function sendCommand(CommandCentre_ storage commandCentre, address[] memory targets, bytes[] memory data, string memory caption, string memory message, address creator, bool requireAllCallsSuccessful) internal returns (uint) {
+        checkPaused(commandCentre);
+        /// state machine checks
+        update(commandCentre);
         require(targets.length == data.length, "Unable to set command because targets length do not match data length");
         commandCentre.commands.push();
         WrappedCommand storage command = commandCentre.commands[commandCentre.commands.length - 1];
@@ -105,8 +112,13 @@ library CommandCentre {
         if (command.native.conductIsMultiSigOnly() || command.native.conductIsMultiSigFirstAndReferendumSecond() || command.native.conductIsReferendumFirstAndMultiSigSecond()) {
             /// operators are chosen signers
             address[] memory operators;
+            uint offset;
             for (uint i = 0; i < commandCentre.operators.length; i++) {
-                operators[i] = commandCentre.operators[i].account;
+                if (commandCentre.operators[i].account != address(0)) {
+                    operators[i - offset] = commandCentre.operators[i].account;
+                } else {
+                    offset ++;
+                }
             }
             command.native.setUpMultiSig(operators, commandCentre.settings.requiredSignaturesInBasisPoints, commandCentre.settings.multiSigDuration);
         }
@@ -125,6 +137,128 @@ library CommandCentre {
         return commandCentre.commands.length - 1;
     }
 
+    /// unchecked with no multi sig or referendum or timelock
+    function sendDirectCommand(CommandCentre_ storage commandCentre) internal {
+        require(msg.sender == commandCentre.admin, "Unable to send direct command because you are not the admin");
+        /// by pass all checks
+    }
+
+    /// progress the command
+    function forwardCommand(CommandCentre_ storage commandCentre, uint identifier) internal {
+        commandCentre.commands[identifier].native.forward();
+    }
+
+    function claim(CommandCentre_ storage commandCentre) internal {
+        require(commandCentre.admin == address(0), "Unable to claim because admin role has already been claimed");
+        commandCentre.admin = msg.sender;
+    }
+
+    function transferAdmin(CommandCentre_ storage commandCentre, address newAdmin) internal {
+        require(commandCentre.admin == msg.sender, "Unable to transfer admin because you are not the admin");
+        commandCentre.admin = newAdmin;
+    }
+
+    function signInAsOperator(CommandCentre_ storage commandCentre) internal {
+        /// check that caller is an operator and sign in
+    }
+
+    function setContext(CommandCentre_ storage commandCentre, Context newContext) internal {
+        commandCentre.context = newContext;
+    }
+
+    function addOperator(CommandCentre_ storage commandCentre, address account) internal {
+        require(account != address(0), "Unable to add operator because given address is zero");
+        bool success;
+        for (uint i = 0; i < commandCentre.operators.length; i++) {
+            if (commandCentre.operators[i].account == address(0)) {
+                commandCentre.operators[i].account = account;
+                commandCentre.operators[i].lastSignedInTimestamp = block.timestamp;
+                success = true;
+            }
+        }
+        if (!success) {
+            commandCentre.operators.push(Operator(account, block.timestamp));
+            success = true;
+        }
+        require(success, "Unable to add operator because there may have been an error during execution");
+    }
+
+    function removeOperator(CommandCentre_ storage commandCentre, address account) internal {
+        require(account != address(0), "Unable to remove operator because given address is zero");
+        for (uint i = 0; i < commandCentre.operators.length; i++) {
+            if (commandCentre.operators[i].account == account) {
+                commandCentre.operators[i].account = address(0);
+            }
+        }
+    }
+
+    function setMultiSigDuration(CommandCentre_ storage commandCentre, uint newDuration) internal {
+        require(newDuration != 0, "Unable to set multi sig duration because given value is zero");
+        commandCentre.settings.multiSigDuration = newDuration;
+    }
+
+    function setReferendumDuration(CommandCentre_ storage commandCentre, uint newDuration) internal {
+        require(newDuration != 0, "Unable to set referendum duration because given value is zero");
+        commandCentre.settings.referendumDuration = newDuration;
+    }
+
+    function setTimelockDuration(CommandCentre_ storage commandCentre, uint newDuration) internal {
+        require(newDuration != 0, "Unable to set timelock duration because given value is zero");
+        commandCentre.settings.lockDuration = newDuration;
+    }
+
+    function setToken(CommandCentre_ storage commandCentre, address newToken) internal {
+        require(newToken != address(0), "Unable to set token because given address is zero");
+        require(newToken.code.length > 1, "Unable to set token because token is not a contract");
+        commandCentre.settings.token = newToken;
+    }
+
+    function setRequiredSignaturesInBasisPoints(CommandCentre_ storage commandCentre, uint newValue) internal {
+        require(newValue <= 10000, "Unable to set required signatures in basis points because value is greater than 10000");
+        commandCentre.settings.requiredSignaturesInBasisPoints = newValue;
+    }
+
+    function setRequiredSupportInBasisPoints(CommandCentre_ storage commandCentre, uint newValue) internal {
+        require(newValue <= 10000, "Unable to set required support in basis points because value is greater than 10000");
+        commandCentre.settings.requiredSupportInBasisPoints = newValue;
+    }
+
+    function setMinBalanceToVote(CommandCentre_ storage commandCentre, uint newAmount) internal {
+        commandCentre.settings.minBalanceToVote = newAmount;
+    }
+
+    function setConduct(CommandCentre_ storage commandCentre, Command.Conduct newConduct) internal {
+        commandCentre.settings.conduct = newConduct;
+    }
+
+    function setSignInDuration(CommandCentre_ storage commandCentre, uint newDuration) internal {
+        commandCentre.settings.signInDuration = newDuration;
+    }
+
+    function setMinRequiredActiveOperatorsInBasisPoints(CommandCentre_ storage commandCentre, uint newValue) internal {
+        require(newValue <= 10000, "Unable to set min required active operators in basis points because value is greater than 10000");
+        commandCentre.settings.minRequiredActiveOperatorsInBasisPoints = newValue;
+    }
+
+    function setInactiveOperatorsTriggeredPayload(CommandCentre_ storage commandCentre, address target, bytes memory data) internal {
+        bytes memory emptyBytes;
+        require(target != address(0) && keccak256(data) != keccak256(emptyBytes), "Unable to set inactive operators triggered payload because one or both given args are empty");
+        commandCentre.settings.inactiveOperatorsTriggeredPayload = InactiveOperatorsTriggeredPayload(0, target, data);
+    }
+
+    function pause(CommandCentre_ storage commandCentre) internal {
+        commandCentre.settings.paused = true;
+    }
+
+    function unpause(CommandCentre_ storage commandCentre) internal {
+        commandCentre.settings.paused = false;
+    }
+
+    function checkPaused(CommandCentre_ storage commandCentre) internal view {
+        require(commandCentre.settings.paused == false, "Unable to proceed because command centre is paused");
+    }
+
+    /// checks that there are enough active operators
     function operatorsConditionsMet(CommandCentre_ storage commandCentre) internal view returns (bool) {
         (uint active, , uint numOperators) = checkOperatorsState(commandCentre);
         if (((active * 10000) / numOperators) >= commandCentre.settings.minRequiredActiveOperatorsInBasisPoints) {
