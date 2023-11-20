@@ -18,10 +18,10 @@ library CommandCentre {
         address admin;
         Context context;
         WrappedCommand[] commands;
-        mapping(uint => address) commandsCreatorMapping;
+        mapping(uint => address) commandsCreatorMapping; /// unused??
         Operator[] operators;
         Settings settings;
-        bool switchedOn;
+        bool switchedOn; /// unused spaghetti code
     }
     /// wrapping command to add caption message and creator properties
     struct WrappedCommand {
