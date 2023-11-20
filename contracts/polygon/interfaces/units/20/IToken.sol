@@ -9,6 +9,8 @@ interface IToken is IERC20, IERC20Metadata, IERC20Permit {
 
     ///
 
+    function cap() external view returns (uint);
+    function enableCap() external view returns (bool);
     function getCurrentSnapshotId() external view returns (uint);
     function balanceOfAt(address account, uint snapshotId) external returns (uint);
     function totalSupplyAt(uint snapshotId) external returns (uint);

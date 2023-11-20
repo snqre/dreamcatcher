@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.0;
+pragma solidity ^0.8.0;
 import "contracts/polygon/interfaces/units/20/IToken.sol";
 
 library Command {
@@ -71,7 +71,7 @@ library Command {
             checkValidity(command);
             checkMultiSigHasBeenSetProperly(command);
             checkReferendumHasBeenSetProperly(command);
-            checkTimelockHasBeenSetProperty(command);
+            checkTimelockHasBeenSetProperly(command);
             if (phaseIsNone(command)) {
                 require(!lifeCycleIsComplete(command), "Command life cycle is complete");
                 startMultiSigPhase(command, false);
@@ -97,7 +97,7 @@ library Command {
             checkValidity(command);
             checkMultiSigHasBeenSetProperly(command);
             checkReferendumHasBeenSetProperly(command);
-            checkTimelockHasBeenSetProperty(command);
+            checkTimelockHasBeenSetProperly(command);
             if (phaseIsNone(command)) {
                 require(!lifeCycleIsComplete(command), "Command life cycle is complete");
                 startReferendumPhase(command, false);
@@ -119,10 +119,10 @@ library Command {
                 endTimelockPhase(command, true, true);
                 executeCommand(command, true, true, true);
             }
-        } else if (conductIsReferendumOnly(executeCommand)) {
+        } else if (conductIsReferendumOnly(command)) {
             checkValidity(command);
             checkReferendumHasBeenSetProperly(command);
-            checkTimelockHasBeenSetProperty(command);
+            checkTimelockHasBeenSetProperly(command);
             if (phaseIsNone(command)) {
                 require(!lifeCycleIsComplete(command), "Command life cycle is complete");
                 startReferendumPhase(command, false);
@@ -137,10 +137,10 @@ library Command {
                 endTimelockPhase(command, true, false);
                 executeCommand(command, true, false, true);
             }
-        } else if (conductIsMultiSigOnly(executeCommand)) {
+        } else if (conductIsMultiSigOnly(command)) {
             checkValidity(command);
             checkMultiSigHasBeenSetProperly(command);
-            checkTimelockHasBeenSetProperty(command);
+            checkTimelockHasBeenSetProperly(command);
             if (phaseIsNone(command)) {
                 require(!lifeCycleIsComplete(command), "Command life cycle is complete");
                 startMultiSigPhase(command, false);
@@ -157,13 +157,13 @@ library Command {
             }
         } else if (conductIsNone(command)) {
             checkValidity(command);
-            checkTimelockHasBeenSetProperty(command);
+            checkTimelockHasBeenSetProperly(command);
             if (phaseIsNone(command)) {
                 require(!lifeCycleIsComplete(command), "Command life cycle is complete");
                 startTimelockPhase(command, false, false);
             } else if (phaseIsTimelock(command)) {
                 endTimelockPhase(command, false, false);
-                execute(Command, false, false, true);
+                executeCommand(command, false, false, true);
             }
         } else {
             revert("Unrecognized conduct");
@@ -171,6 +171,7 @@ library Command {
     }
 
     function chooseConduct(Command_ storage command, Conduct newConduct) internal {
+        require(conductIsNotSet(command), "Unable to proceed because conduct has already been set");
         command.conduct = newConduct;
     }
 
@@ -180,7 +181,8 @@ library Command {
         require(newRequiredSignaturesInBasisPoints <= 10000, "Unable to set up multi sig because required signatures must be in basis points but value is above 10000");
         require(newDuration != 0, "Unable to set up multi sig because duration is zero");
         for (uint i = 0; i < newSigners.length; i++) {
-            command.multiSig.isSigner[newSigners[i]] = true; 
+            command.multiSig.isSigner[newSigners[i]] = true;
+            command.multiSig.numSigners ++;
         }
         command.multiSig.requiredSignaturesInBasisPoints = newRequiredSignaturesInBasisPoints;
         command.multiSig.timer.duration = newDuration;
@@ -190,7 +192,7 @@ library Command {
         require(conductIsReferendumFirstAndMultiSigSecond(command) || conductIsReferendumOnly(command), "Unable to set up referendum because the conduct does not require it");
         require(newToken != address(0), "Unable to set up referendum because token is zero");
         require(newToken.code.length >= 1, "Unable to set up referendum because token is not a contract");
-        require(newRequiredSupportInBasisPoints, "Unable to set up referendum because required support must be in basis points but value is above 10000");
+        require(newRequiredSupportInBasisPoints <= 10000, "Unable to set up referendum because required support must be in basis points but value is above 10000");
         require(newDuration != 0, "Unable to set up referendum because duration is zero");
         command.referendum.token = newToken;
         command.referendum.requiredSupportInBasisPoints = newRequiredSupportInBasisPoints;
@@ -202,6 +204,13 @@ library Command {
         command.lock.timer.duration = newDuration;
     }
 
+    function addPayload(Command_ storage command, address target, bytes memory data) internal {
+        Payload memory newPayload;
+        newPayload.target = target;
+        newPayload.data = data;
+        command.payloads.push(newPayload);
+    }
+
     function castVoteOnCommand(Command_ storage command) internal {
         IToken token = IToken(command.referendum.token);
         require(command.referendum.hasStarted, "Unable to cast vote because referendum phase has not begun");
@@ -210,7 +219,7 @@ library Command {
         require(token.balanceOfAt(msg.sender, command.referendum.snapshotId) >= 1, "Unable to cast vote because you did not have a sufficient balance when the referendum phase begun");
         command.referendum.hasVoted[msg.sender] = true;
         command.referendum.weight[msg.sender] = token.balanceOfAt(msg.sender, command.referendum.snapshotId);
-        command.referendum.support += command.referendum.weigth[msg.sender];
+        command.referendum.support += command.referendum.weight[msg.sender];
     }
 
     function signCommand(Command_ storage command) internal {
@@ -219,6 +228,19 @@ library Command {
         require(command.multiSig.isSigner[msg.sender], "Unable to sign multi sig because you are not allowed to sign");
         require(!command.multiSig.hasSigned[msg.sender], "Unable to sign multi sig because you have already signed");
         command.multiSig.numSigned ++;
+    }
+
+    function setSufficientTimelockDuration(Command_ storage command, uint newSufficientTimelockDuration) internal {
+        require(newSufficientTimelockDuration != 0, "Unable to set sufficient timelock duration because value is zero");
+        command.sufficientTimelockDuration = newSufficientTimelockDuration;
+    }
+
+    function enableRequireAllCallsSuccessful(Command_ storage command) internal {
+        command.requireAllCallsSuccessful = true;
+    }
+
+    function disableRequireAllCallsSuccessful(Command_ storage command) internal {
+        command.requireAllCallsSuccessful = false;
     }
 
     function startMultiSigPhase(Command_ storage command, bool requireReferendumBefore) internal {
@@ -303,7 +325,7 @@ library Command {
         command.isDone = true;
         for (uint i = 0; i < command.payloads.length; i++) {
             (bool success, bytes memory response) = address(command.payloads[i].target).call(command.payloads[i].data);
-            if (command.requireAllCallSuccessful) {
+            if (command.requireAllCallsSuccessful) {
                 require(success, "Unable to executte command because this required all calls to be successful but at least 1 has failed");
             }
             command.payloads[i].response = response;
@@ -311,19 +333,20 @@ library Command {
         }
     }
 
-    function checkMultiSigHasBeenSetProperly(Command_ storage command) internal {
+    function checkMultiSigHasBeenSetProperly(Command_ storage command) internal view {
         require(command.multiSig.numSigners != 0, "Unable to proceed because the conduct requires a multi sig phase but no signers were given");
         require(command.multiSig.timer.duration != 0, "Unable to proceed because the conduct requires a multi sig phase but no duration was given");
+        require(command.multiSig.requiredSignaturesInBasisPoints != 0, "Unable to proceed because the conduct requires a multi sig phase but no required signature benchmark was given");
         require(!command.multiSig.hasStarted, "Unable to proceed because the conduct requires a multi sig phase but it may have been compromised leading to an unfair result");
         require(!command.multiSig.isDone, "Unable to proceed because the conduct requires a multi sig phase but it may have been compromised leading to an unfair result");
         require(command.multiSig.timer.startTimestamp == 0, "Unable to proceed because the conduct requires a multi sig phase but it may have been compromised leading to an unfair result");
         require(command.multiSig.numSigned == 0, "Unable to proceed because the conduct requires a mulit sig phase but it may have been compromised leading to an unfair result");
     }
 
-    function checkReferendumHasBeenSetProperly(Command_ storage command) internal {
+    function checkReferendumHasBeenSetProperly(Command_ storage command) internal view {
         require(command.referendum.token != address(0), "Unable to proceed because the conduct requires a referendum phase but no governance token was given");
         require(command.referendum.timer.duration != 0, "Unable to proceed because the conduct requires a referendum phase but no duration was given");
-        require(command.referendum.maximumPossibleSupport, "Unable to proceed because the conduct requires a referendum phase but no maximum possible support was given");
+        require(command.referendum.requiredSupportInBasisPoints != 0, "Unable to proceed because the conduct requires a referendum phase but no required support benchmark was given");
         require(!command.referendum.hasStarted, "Unable to proceed because the conduct requires a referendum phase but it may have been compromised leading to an unfair result");
         require(!command.referendum.isDone, "Unable to proceed because the conduct requires a referendum phase but it may have been compromised leading to an unfair result");
         require(command.referendum.timer.startTimestamp == 0, "Unable to proceed because the conduct requires a referendum phase but it may have been compromised leading to an unfair result");
@@ -331,43 +354,43 @@ library Command {
         require(command.referendum.snapshotId == 0, "Unable to proceed because the conduct requires a referendum phase but it may have been compromised leading to an unfair result");
     }
 
-    function checkTimelockHasBeenSetProperly(Command_ storage command) internal {
+    function checkTimelockHasBeenSetProperly(Command_ storage command) internal view {
         require(command.lock.timer.duration >= command.sufficientTimelockDuration, "Unable to proceed because the command may carry protocol changing behaviour but no timelock duration is an insufficient notice period leading to user threat");
         require(!command.lock.hasStarted, "Unable to proceed because every command requires a timelock but it may have been compromised leading to user threat");
         require(!command.lock.isDone, "Unable to proceed because every command requires a timelock but it may have been compromised leading to user threat");
-        require(command.lock.timer.startTimestamp == 0. "Unable to proceed because every command requires a timelock but it may have been compromised leading to user threat");
+        require(command.lock.timer.startTimestamp == 0, "Unable to proceed because every command requires a timelock but it may have been compromised leading to user threat");
     }
 
-    function checkValidity(Command_ storage command) internal {
+    function checkValidity(Command_ storage command) internal view {
         require(command.conduct != Conduct.NOT_SET, "Unable to proceed because conduct has not been set");
         require(!command.isDone, "Unable to proceed because the command may have been compromised");
     }
 
-    function conductIsNotSet(Command_ storage command) internal returns (bool) {
+    function conductIsNotSet(Command_ storage command) internal view returns (bool) {
         return command.conduct == Conduct.NOT_SET;
     }
 
-    function conductIsMultiSigFirstAndReferendumSecond(Command_ storage command) internal returns (bool) {
+    function conductIsMultiSigFirstAndReferendumSecond(Command_ storage command) internal view returns (bool) {
         return command.conduct == Conduct.MULTI_SIG_AND_REFERENDUM;
     }
 
-    function conductIsReferendumFirstAndMultiSigSecond(Command_ storage command) internal returns (bool) {
+    function conductIsReferendumFirstAndMultiSigSecond(Command_ storage command) internal view returns (bool) {
         return command.conduct == Conduct.REFERENDUM_AND_MULTI_SIG;
     }
 
-    function conductIsReferendumOnly(Command_ storage command) internal returns (bool) {
+    function conductIsReferendumOnly(Command_ storage command) internal view returns (bool) {
         return command.conduct == Conduct.REFERENDUM;
     }
 
-    function conductIsMultiSigOnly(Command_ storage command) internal returns (bool) {
+    function conductIsMultiSigOnly(Command_ storage command) internal view returns (bool) {
         return command.conduct == Conduct.MULTI_SIG;
     }
 
-    function conductIsNone(Command_ storage command) internal returns (bool) {
+    function conductIsNone(Command_ storage command) internal view returns (bool) {
         return command.conduct == Conduct.NONE;
     }
 
-    function phaseIsNone(Command_ storage command) internal returns (bool) {
+    function phaseIsNone(Command_ storage command) internal view returns (bool) {
         bool noMultiSigSessionIsRunning;
         bool noReferendumSessionIsRunning;
         bool noTimelockIsRunning;
@@ -398,17 +421,17 @@ library Command {
         return !noMultiSigSessionIsRunning && !noReferendumSessionIsRunning && !noTimelockIsRunning;
     }
 
-    function phaseIsMultiSig(Command_ storage command) internal returns (bool) {
+    function phaseIsMultiSig(Command_ storage command) internal view returns (bool) {
         if (command.multiSig.hasStarted) {
             if (command.multiSig.isDone) {
-                return false
+                return false;
             }
             return true;
         }
         return false;
     }
 
-    function phaseIsReferendum(Command_ storage command) internal returns (bool) {
+    function phaseIsReferendum(Command_ storage command) internal view returns (bool) {
         if (command.referendum.hasStarted) {
             if (command.referendum.isDone) {
                 return false;
@@ -418,7 +441,7 @@ library Command {
         return false;
     }
 
-    function phaseIsTimelock(Command_ storage command) internal returns (bool) {
+    function phaseIsTimelock(Command_ storage command) internal view returns (bool) {
         if (command.lock.hasStarted) {
             if (command.lock.isDone) {
                 return false;
@@ -428,20 +451,20 @@ library Command {
         return false;
     }
 
-    function multiSigConditionsMet(Command_ storage command) internal returns (bool) {
+    function multiSigConditionsMet(Command_ storage command) internal view returns (bool) {
         return block.timestamp < command.multiSig.timer.startTimestamp + command.multiSig.timer.duration && command.multiSig.numSigned >= (command.multiSig.numSigners * command.multiSig.requiredSignaturesInBasisPoints) / 10000;
     }
 
-    function referendumConditionsMet(Command_ storage command) internal returns (bool) {
+    function referendumConditionsMet(Command_ storage command) internal view returns (bool) {
         IToken token = IToken(command.referendum.token);
         return block.timestamp < command.referendum.timer.startTimestamp + command.referendum.timer.duration && command.referendum.support >= (token.totalSupply() * command.referendum.requiredSupportInBasisPoints) / 10000;
     }
 
-    function timelockConditionsMet(Command_ storage command) internal returns (bool) {
+    function timelockConditionsMet(Command_ storage command) internal view returns (bool) {
         return block.timestamp >= command.lock.timer.startTimestamp + command.lock.timer.duration;
     }
 
-    function lifeCycleIsComplete(Command_ storage command) internal returns (bool) {
+    function lifeCycleIsComplete(Command_ storage command) internal view returns (bool) {
         return command.isDone;
     }
 }
