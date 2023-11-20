@@ -36,6 +36,10 @@ contract ConsoleFacet01 {
         }
     }
 
+    function admin() public view virtual returns (address) {
+        return console01().commandCentre.admin;
+    }
+
     function getCommandSummary(uint identifier) public view virtual returns (string memory caption, string memory message, address creator, Command.Conduct conduct, Phase phase) {
         caption = console01().commandCentre.commands[identifier].caption;
         message = console01().commandCentre.commands[identifier].message;
