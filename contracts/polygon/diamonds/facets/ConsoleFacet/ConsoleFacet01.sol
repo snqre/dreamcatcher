@@ -1,181 +1,121 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 import "contracts/polygon/libraries/Command.sol";
-import "contracts/polygon/libraries/Utils.sol";
-import "contracts/polygon/diamonds/slots/ConsoleFacetSlot/ConsoleFacetSlot01.sol";
+import "contracts/polygon/libraries/CommandCentre.sol";
 import "contracts/polygon/deps/openzeppelin/utils/structs/EnumerableSet.sol";
 import "contracts/polygon/interfaces/units/20/IToken.sol";
 
-contract ConsoleFacet01 is ConsoleFacetSlot01 {
+contract ConsoleFacet01 {
     using Command for Command.Command_;
+    using CommandCentre for CommandCentre.CommandCentre_;
     using EnumerableSet for EnumerableSet.AddressSet;
 
-    event OperatorAdded(address operator);
-    event OperatorRemoved(address operator);
-    event MultiSigDurationChanged(uint oldDuration, uint newDuration);
-    event ReferendumDurationChanged(uint oldDuration, uint newDuration);
-    event TimelockDurationChanged(uint oldDuration, uint newDuration);
-    event NativeTokenChanged(address oldToken, address newToken);
-    event RequiredSignaturesInBasisPointsChanged(uint oldValue, uint newValue);
-    event RequiredSupportInBasisPointsChanged(uint oldValue, uint newValue);
-    event RequiredBalanceToSendCommand(uint oldAmount, uint newAmount);
-    event CommandConductChanged(Command.Conduct oldConduct, Command.Conduct newConduct);
+    bytes32 internal constant _CONSOLE_01 = keccak256("slot.console.01");
+
+    enum Phase {
+        NONE,
+        MULTI_SIG,
+        REFERENDUM,
+        TIMELOCK,
+        COMPLETE,
+        FAILED
+    }
+
+    struct ConsoleFacetStorage01 {
+        CommandCentre.CommandCentre_ commandCentre;
+    }
+
     event CommandReceived(uint identifier);
-    event CommandSigned(uint identifier, address signer);
-    event CommandVoteCasted(uint identifier, address voter, uint weight);
+    event AdminChanged(address oldAdmin, address newAdmin);
+    event CommandForwarded(uint identifier);
 
-    function ____addOperator(address operator) external virtual {
-        Utils.onlySelf();
-        console01().operators.add(operator);
-        emit OperatorAdded(operator);
-    }
-
-    function ____removeOperator(address operator) external virtual {
-        Utils.onlySelf();
-        console01().operators.remove(operator);
-        emit OperatorRemoved(operator);
-    }
-
-    function ____setMultiSigDuration(uint newDuration) external virtual {
-        Utils.onlySelf();
-        uint oldDuration = console01().multiSigDuration;
-        console01().multiSigDuration = newDuration;
-        emit MultiSigDurationChanged(oldDuration, newDuration);
-    }
-
-    function ____setReferendumDuration(uint newDuration) external virtual {
-        Utils.onlySelf();
-        uint oldDuration = console01().referendumDuration;
-        console01().referendumDuration = newDuration;
-        emit ReferendumDurationChanged(oldDuration, newDuration);
-    }
-
-    function ____setTimelockDuration(uint newDuration) external virtual {
-        Utils.onlySelf();
-        uint oldDuration = console01().lockDuration;
-        console01().lockDuration = newDuration;
-        emit TimelockDurationChanged(oldDuration, newDuration);
-    }
-
-    function ____setNativeToken(address newToken) external virtual {
-        Utils.onlySelf();
-        address oldToken = console01().nativeToken;
-        console01().nativeToken = newToken;
-        emit NativeTokenChanged(oldToken, newToken);
-    }
-
-    function ____setRequiredSignaturesInBasisPoints(uint newValue) external virtual {
-        Utils.onlySelf();
-        uint oldValue = console01().requiredSignaturesInBasisPoints;
-        console01().requiredSignaturesInBasisPoints = newValue;
-        emit RequiredSignaturesInBasisPointsChanged(oldValue, newValue);
-    }
-
-    function ____setRequiredSupportInBasisPoints(uint newValue) external virtual {
-        Utils.onlySelf();
-        uint oldValue = console01().requiredSupportInBasisPoints;
-        console01().requiredSupportInBasisPoints = newValue;
-        emit RequiredSupportInBasisPointsChanged(oldValue, newValue);
-    }
-
-    function ____setRequiredBalanceToSendCommand(uint newAmount) external virtual {
-        Utils.onlySelf();
-        uint oldAmount = console01().requiredBalanceToSendCommand;
-        console01().requiredBalanceToSendCommand = newAmount;
-        emit RequiredBalanceToSendCommand(oldAmount, newAmount);
-    }
-
-    function ____setCommandConduct(Command.Conduct newConduct) external virtual {
-        Utils.onlySelf();
-        Command.Conduct oldConduct = console01().conduct;
-        console01().conduct = newConduct;
-        emit CommandConductChanged(oldConduct, newConduct);
-    }
-
-    function sendCommand(address[] memory targets, bytes[] memory data, bool requireAllCallsSuccessful) public virtual returns (uint) {
-        if (!isOperator(Utils.caller())) {
-            IToken nativeToken = IToken(getNativeToken());
-            require(nativeToken.balanceOf(Utils.caller()) >= getRequiredBalanceToSendCommand(), "Unable to send command because you have insufficient tokens");
+    function console01() internal pure virtual returns (ConsoleFacetStorage01 storage s) {
+        bytes32 location = _CONSOLE_01;
+        assembly {
+            s.slot := location
         }
-        require(targets.length == data.length, "Unable to send command because targets length do not match data length");
-        console01().commands.push();
-        Command.Command_ storage newCommand = console01().commands[console01().commands.length - 1];
-        console01().identifierToCreatorMapping[console01().commands.length - 1] = Utils.caller();
-        if (newCommand.conductIsNotSet()) {
-            newCommand.chooseConduct(getConsoleConduct());
+    }
+
+    function getCommandSummary(uint identifier) public view virtual returns (string memory caption, string memory message, address creator, Command.Conduct conduct, Phase phase) {
+        caption = console01().commandCentre.commands[identifier].caption;
+        message = console01().commandCentre.commands[identifier].message;
+        creator = console01().commandCentre.commands[identifier].creator;
+        conduct = console01().commandCentre.commands[identifier].native.conduct;
+        if (console01().commandCentre.commands[identifier].native.phaseIsNone()) {
+            phase = Phase.NONE;
+        } else if (console01().commandCentre.commands[identifier].native.phaseIsMultiSig()) {
+            phase = Phase.MULTI_SIG;
+            /// if the time is out and conditions have not been met then it has failed
+            if (!console01().commandCentre.commands[identifier].native.multiSigConditionsMet() && block.timestamp >= console01().commandCentre.commands[identifier].native.multiSig.timer.startTimestamp + console01().commandCentre.commands[identifier].native.multiSig.timer.duration) {
+                phase = Phase.FAILED;
+            }
+        } else if (console01().commandCentre.commands[identifier].native.phaseIsReferendum()) {
+            phase = Phase.REFERENDUM;
+            /// if the time is out and conditions have not been met then it has failed
+            if (!console01().commandCentre.commands[identifier].native.referendumConditionsMet() && block.timestamp >= console01().commandCentre.commands[identifier].native.referendum.timer.startTimestamp + console01().commandCentre.commands[identifier].native.referendum.timer.duration) {
+                phase = Phase.FAILED;
+            }
+        } else if (console01().commandCentre.commands[identifier].native.phaseIsTimelock()) {
+            phase = Phase.TIMELOCK;
+            /// if the time is out and conditions have not been met then it has failed
+            if (!console01().commandCentre.commands[identifier].native.timelockConditionsMet() && block.timestamp >= console01().commandCentre.commands[identifier].native.lock.timer.startTimestamp + console01().commandCentre.commands[identifier].native.lock.timer.duration) {
+                phase = Phase.FAILED;
+            }
+        } else if (console01().commandCentre.commands[identifier].native.lifeCycleIsComplete()) {
+            phase = Phase.COMPLETE;
         }
-        if (newCommand.conductIsMultiSigOnly() || newCommand.conductIsMultiSigFirstAndReferendumSecond() || newCommand.conductIsReferendumFirstAndMultiSigSecond()) {
-            /// operators are chosen signers
-            newCommand.setUpMultiSig(getOperators(), getRequiredSignaturesInBasisPoints(), getMultiSigDuration());
+        return (caption, message, creator, conduct, phase);
+    }
+
+    function getCommandPayload(uint identifier, uint payloadId) public view virtual returns (address target, bytes memory data) {
+        return (console01().commandCentre.commands[identifier].native.payloads[payloadId].target, console01().commandCentre.commands[identifier].native.payloads[payloadId].data);
+    }
+
+    /// to be used immidietly after deployment
+    function claimCommandCentre() public virtual {
+        /// grants the first caller admin permission
+        console01().commandCentre.claimCommandCentre();
+        emit AdminChanged(address(0), msg.sender);
+    }
+
+    function transferCommandCentreAdmin(address newAdmin) public virtual {
+        console01().commandCentre.transferCommandCentreAdmin(newAdmin);
+        /// only admin can call this function
+        emit AdminChanged(msg.sender, newAdmin);
+    }
+
+    function sendCommand(address[] memory targets, bytes[] memory data, string memory caption, string memory message, bool requireAllCallsSuccessful) public virtual returns (uint) {
+        bool isOperator = console01().commandCentre.isOperator(msg.sender);
+        if (!isOperator) {
+            if (msg.sender == console01().commandCentre.admin) {
+                uint identifier = console01().commandCentre.sendDirectCommand(targets, data, caption, message, msg.sender, requireAllCallsSuccessful);
+                emit CommandReceived(identifier);
+                return identifier;
+            }
+            IToken token = IToken(console01().commandCentre.settings.token);
+            require(token.balanceOf(msg.sender) >= console01().commandCentre.settings.minBalanceToVote, "Unable to send command because you have insufficient balance");
+        } else {
+            /// sending a command counts as being an active operator
+            console01().commandCentre.signInAsOperator();
         }
-        if (newCommand.conductIsReferendumOnly() || newCommand.conductIsMultiSigFirstAndReferendumSecond() || newCommand.conductIsReferendumFirstAndMultiSigSecond()) {
-            newCommand.setUpReferendum(getNativeToken(), getRequiredSupportInBasisPoints(), getReferendumDuration());
+        uint identifier = console01().commandCentre.sendCommand(targets, data, caption, message, msg.sender, requireAllCallsSuccessful);
+        emit CommandReceived(identifier);
+        return identifier;
+    }
+
+    /// when command is polling it should be forwarded to the next stages through its life cycle
+    function forwardCommand(uint identifier) public virtual {
+        bool isOperator = console01().commandCentre.isOperator(msg.sender);
+        if (isOperator) {
+            /// forwarding a command counts as being an active operator
+            console01().commandCentre.signInAsOperator();
         }
-        newCommand.setUpTimelock(getTimelockDuration());
-        for (uint i = 0; i < targets.length; i ++) {
-            newCommand.addPayload(targets[i], data[i]);
-        }
-        newCommand.setSufficientTimelockDuration(86400 seconds);
-        emit CommandReceived(console01().commands.length - 1);
-        if (requireAllCallsSuccessful) {
-            newCommand.enableRequireAllCallsSuccessful();
-        }
-        return console01().commands.length - 1;
+        console01().commandCentre.forwardCommand(identifier);
+        emit CommandForwarded(identifier);
     }
 
-    function isOperator(address account) public view virtual returns (bool) {
-        return console01().operators.contains(account);
-    }
-
-    function getOperator(uint identifier) public view virtual returns (address) {
-        return console01().operators.at(identifier);
-    }
-
-    function getOperators() public view virtual returns (address[] memory) {
-        return console01().operators.values();
-    }
-
-    function getMultiSigDuration() public view virtual returns (uint) {
-        return console01().multiSigDuration;
-    }
-
-    function getReferendumDuration() public view virtual returns (uint) {
-        return console01().referendumDuration;
-    }
-
-    function getTimelockDuration() public view virtual returns (uint) {
-        return console01().lockDuration;
-    }
-
-    function getNativeToken() public view virtual returns (address) {
-        return console01().nativeToken;
-    }
-
-    function getRequiredSignaturesInBasisPoints() public view virtual returns (uint) {
-        return console01().requiredSignaturesInBasisPoints;
-    }
-
-    function getRequiredSupportInBasisPoints() public view virtual returns (uint) {
-        return console01().requiredSupportInBasisPoints;
-    }
-
-    function getRequiredBalanceToSendCommand() public view virtual returns (uint) {
-        return console01().requiredBalanceToSendCommand;
-    }
-
-    function getConsoleConduct() public view virtual returns (Command.Conduct) {
-        return console01().conduct;
-    }
-
-    function getCommandConduct(uint identifier) public view virtual returns (Command.Conduct) {
-        return console01().commands[identifier].conduct;
-    }
-
-    function getCommandMultiSigNumSigned(uint identifier) public view virtual returns (uint) {
-        return console01().commands[identifier].multiSig.numSigned;
-    }
-
-    function getCommandMultiSigNumSigners(uint identifier) public view virtual returns (uint) {
-        return console01().commands[identifier].multiSig.numSigners;
+    function signInAsOperator() public virtual {
+        /// sign it to retain active state
+        console01().commandCentre.signInAsOperator();
     }
 }

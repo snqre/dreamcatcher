@@ -66,14 +66,10 @@ library CommandCentre {
             triggerCommandToSearchForNewOperators(commandCentre);
         }
     }
-    /// TODO change signer assignment
+
     function triggerCommandToSearchForNewOperators(CommandCentre_ storage commandCentre) internal {
-        address[] memory targets;
-        bytes[] memory data;
-        targets[0] = commandCentre.settings.inactiveOperatorsTriggeredPayload.target;
-        data[0] = commandCentre.settings.inactiveOperatorsTriggeredPayload.data;
         bytes memory emptyBytes;
-        if (targets[0] != address(0) && keccak256(data[0]) != keccak256(emptyBytes)) {
+        if (commandCentre.settings.inactiveOperatorsTriggeredPayload.target != address(0) && keccak256(commandCentre.settings.inactiveOperatorsTriggeredPayload.data) != keccak256(emptyBytes)) {
             commandCentre.commands.push();
             WrappedCommand storage command = commandCentre.commands[commandCentre.commands.length - 1];
             command.caption = "InactiveOperatorsTriggeredPayload";
@@ -81,26 +77,27 @@ library CommandCentre {
             command.creator = address(this);
             command.native.chooseConduct(Command.Conduct.MULTI_SIG);
             /// only active operators will become signers for this command
-            address[] memory signers;
             for (uint i = 0; i < commandCentre.operators.length; i++) {
                 /// operator is active
                 if (block.timestamp < commandCentre.operators[i].lastSignedInTimestamp + commandCentre.settings.signInDuration) {
-                    signers[i] = commandCentre.operators[i].account;
+                    command.native.addMultiSigSigner(commandCentre.operators[i].account);
                 }
             }
-            command.native.setUpMultiSig(signers, commandCentre.settings.requiredSignaturesInBasisPoints, commandCentre.settings.multiSigDuration);
+            command.native.multiSig.requiredSignaturesInBasisPoints = commandCentre.settings.requiredSignaturesInBasisPoints;
+            command.native.multiSig.timer.duration = commandCentre.settings.multiSigDuration;
             command.native.setUpTimelock(commandCentre.settings.lockDuration);
-            command.native.addPayload(targets[0], data[0]);
+            command.native.addPayload(commandCentre.settings.inactiveOperatorsTriggeredPayload.target, commandCentre.settings.inactiveOperatorsTriggeredPayload.data);
             command.native.enableRequireAllCallsSuccessful();
+            /// begin command lifecycle
             command.native.forward();
         }
     }
-    /// TODO change signer assignment
+
     function sendCommand(CommandCentre_ storage commandCentre, address[] memory targets, bytes[] memory data, string memory caption, string memory message, address creator, bool requireAllCallsSuccessful) internal returns (uint) {
         checkPaused(commandCentre);
         /// state machine checks
         update(commandCentre);
-        require(targets.length == data.length, "Unable to set command because targets length do not match data length");
+        require(targets.length == data.length, "Unable to send command because targets length do not match data length");
         commandCentre.commands.push();
         WrappedCommand storage command = commandCentre.commands[commandCentre.commands.length - 1];
         command.caption = caption;
@@ -109,18 +106,17 @@ library CommandCentre {
         if (command.native.conductIsNotSet()) {
             command.native.chooseConduct(commandCentre.settings.conduct);
         }
+        /// bypassing "setUpMultiSig" w custom method to add active signers
         if (command.native.conductIsMultiSigOnly() || command.native.conductIsMultiSigFirstAndReferendumSecond() || command.native.conductIsReferendumFirstAndMultiSigSecond()) {
-            /// operators are chosen signers
-            address[] memory operators;
-            uint offset;
+            /// only active operators will become signers for this command
             for (uint i = 0; i < commandCentre.operators.length; i++) {
-                if (commandCentre.operators[i].account != address(0)) {
-                    operators[i - offset] = commandCentre.operators[i].account;
-                } else {
-                    offset ++;
+                /// operator is active
+                if (block.timestamp < commandCentre.operators[i].lastSignedInTimestamp + commandCentre.settings.signInDuration) {
+                    command.native.addMultiSigSigner(commandCentre.operators[i].account);
                 }
             }
-            command.native.setUpMultiSig(operators, commandCentre.settings.requiredSignaturesInBasisPoints, commandCentre.settings.multiSigDuration);
+            command.native.multiSig.requiredSignaturesInBasisPoints = commandCentre.settings.requiredSignaturesInBasisPoints;
+            command.native.multiSig.timer.duration = commandCentre.settings.multiSigDuration;
         }
         if (command.native.conductIsReferendumOnly() || command.native.conductIsMultiSigFirstAndReferendumSecond() || command.native.conductIsReferendumFirstAndMultiSigSecond()) {
             command.native.setUpReferendum(commandCentre.settings.token, commandCentre.settings.requiredSupportInBasisPoints, commandCentre.settings.referendumDuration);
@@ -137,10 +133,28 @@ library CommandCentre {
         return commandCentre.commands.length - 1;
     }
 
-    /// unchecked with no multi sig or referendum or timelock
-    function sendDirectCommand(CommandCentre_ storage commandCentre) internal {
+    /// unchecked with no multi sig or referendum
+    function sendDirectCommand(CommandCentre_ storage commandCentre, address[] memory targets, bytes[] memory data, string memory caption, string memory message, address creator, bool requireAllCallsSuccessful) internal returns (uint) {
+        /// state machine checks
+        update(commandCentre);
         require(msg.sender == commandCentre.admin, "Unable to send direct command because you are not the admin");
-        /// by pass all checks
+        require(targets.length == data.length, "Unable to send command because targets length do not match data length");
+        commandCentre.commands.push();
+        WrappedCommand storage command = commandCentre.commands[commandCentre.commands.length - 1];
+        command.caption = caption;
+        command.message = message;
+        command.creator = creator;
+        command.native.chooseConduct(Command.Conduct.NONE);
+        command.native.setUpTimelock(commandCentre.settings.lockDuration);
+        for (uint i = 0; i < targets.length; i++) {
+            command.native.addPayload(targets[i], data[i]);
+        }
+        if (requireAllCallsSuccessful) {
+            command.native.enableRequireAllCallsSuccessful();
+        }
+        /// begin comand life cycle
+        command.native.forward();
+        return commandCentre.commands.length - 1;
     }
 
     /// progress the command
@@ -148,18 +162,25 @@ library CommandCentre {
         commandCentre.commands[identifier].native.forward();
     }
 
-    function claim(CommandCentre_ storage commandCentre) internal {
+    function claimCommandCentre(CommandCentre_ storage commandCentre) internal {
         require(commandCentre.admin == address(0), "Unable to claim because admin role has already been claimed");
         commandCentre.admin = msg.sender;
     }
 
-    function transferAdmin(CommandCentre_ storage commandCentre, address newAdmin) internal {
+    function transferCommandCentreAdmin(CommandCentre_ storage commandCentre, address newAdmin) internal {
         require(commandCentre.admin == msg.sender, "Unable to transfer admin because you are not the admin");
         commandCentre.admin = newAdmin;
     }
 
     function signInAsOperator(CommandCentre_ storage commandCentre) internal {
-        /// check that caller is an operator and sign in
+        bool success;
+        for (uint i = 0; i < commandCentre.operators.length; i++) {
+            if (msg.sender == commandCentre.operators[i].account) {
+                commandCentre.operators[i].lastSignedInTimestamp = block.timestamp;
+                success = true;
+            }
+        }
+        require(success, "Unable to sign in as operator because you are not an operator");
     }
 
     function setContext(CommandCentre_ storage commandCentre, Context newContext) internal {
@@ -190,6 +211,15 @@ library CommandCentre {
                 commandCentre.operators[i].account = address(0);
             }
         }
+    }
+
+    function isOperator(CommandCentre_ storage commandCentre, address account) internal view returns (bool) {
+        for (uint i = 0; i < commandCentre.operators.length; i++) {
+            if (commandCentre.operators[i].account == account) {
+                return true;
+            }
+        }
+        return false;
     }
 
     function setMultiSigDuration(CommandCentre_ storage commandCentre, uint newDuration) internal {
