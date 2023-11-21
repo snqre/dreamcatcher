@@ -291,9 +291,16 @@ library CommandCentre {
     /// checks that there are enough active operators
     function operatorsConditionsMet(CommandCentre_ storage commandCentre) internal view returns (bool) {
         (uint active, , uint numOperators) = checkOperatorsState(commandCentre);
-        if (((active * 10000) / numOperators) >= commandCentre.settings.minRequiredActiveOperatorsInBasisPoints) {
+        /// **div by zero
+        if (numOperators >= 2) {
+            if (((active * 10000) / numOperators) >= commandCentre.settings.minRequiredActiveOperatorsInBasisPoints) {
+                return true;
+            }
+        } else {
+            /// if there ar eno more than two operators then will return true regardless
             return true;
         }
+
         return false;
     }
 

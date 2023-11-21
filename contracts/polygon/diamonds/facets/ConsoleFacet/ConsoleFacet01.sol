@@ -208,7 +208,7 @@ contract ConsoleFacet01 {
     function sendCommand(address[] memory targets, bytes[] memory data, string memory caption, string memory message, bool requireAllCallsSuccessful) public virtual returns (uint) {
         bool isOperator = console01().commandCentre.isOperator(msg.sender);
         if (!isOperator) {
-            if (msg.sender == console01().commandCentre.admin) {
+            if (msg.sender == getAdmin()) {
                 uint identifier = console01().commandCentre.sendDirectCommand(targets, data, caption, message, msg.sender, requireAllCallsSuccessful);
                 emit CommandReceived(identifier);
                 return identifier;
