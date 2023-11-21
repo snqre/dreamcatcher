@@ -1,0 +1,14 @@
+{
+    "contracts": {
+        "Finance": {
+            "Finance": {
+                "metadata": "{\"compiler\":{\"version\":\"0.8.19+commit.7dd6d404\"},\"language\":\"Solidity\",\"output\":{\"abi\":[],\"devdoc\":{\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"Finance\":\"Finance\"},\"evmVersion\":\"paris\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":false,\"runs\":200},\"remappings\":[]},\"sources\":{\"Finance\":{\"keccak256\":\"0x540df1de304f0215a9029ac62efff30d09545df25e50c7532a269add931064d4\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://4723e5d4016bc253cb61ae3e8f45c31ed5abea8cbb219a9d235ae4c6d1beda8b\",\"dweb:/ipfs/QmT2M9UH7rh4zFoTTDgNidv6rZKNPYgWz8t9jc5v2NCBds\"]}},\"version\":1}"
+            }
+        }
+    },
+    "sources": {
+        "Finance": {
+            "id": 0
+        }
+    }
+}

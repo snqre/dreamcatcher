@@ -1,0 +1,51 @@
+{
+    "errors": [
+        {
+            "component": "general",
+            "errorCode": "2519",
+            "formattedMessage": "Warning: This declaration shadows an existing declaration.\n   --> ConsoleFacet01:212:17:\n    |\n212 |                 uint identifier = console01().commandCentre.sendDirectCommand(targets, data, caption, message, msg.sender, requireAllCallsSuccessful);\n    |                 ^^^^^^^^^^^^^^^\nNote: The shadowed declaration is here:\n   --> ConsoleFacet01:222:9:\n    |\n222 |         uint identifier = console01().commandCentre.sendCommand(targets, data, caption, message, msg.sender, requireAllCallsSuccessful);\n    |         ^^^^^^^^^^^^^^^\n\n",
+            "message": "This declaration shadows an existing declaration.",
+            "secondarySourceLocations": [
+                {
+                    "end": 12112,
+                    "file": "ConsoleFacet01",
+                    "message": "The shadowed declaration is here:",
+                    "start": 12097
+                }
+            ],
+            "severity": "warning",
+            "sourceLocation": {
+                "end": 11470,
+                "file": "ConsoleFacet01",
+                "start": 11455
+            },
+            "type": "Warning"
+        }
+    ],
+    "sources": {
+        "ConsoleFacet01": {
+            "id": 0
+        },
+        "contracts/polygon/deps/openzeppelin/token/ERC20/IERC20.sol": {
+            "id": 1
+        },
+        "contracts/polygon/deps/openzeppelin/token/ERC20/extensions/IERC20Metadata.sol": {
+            "id": 2
+        },
+        "contracts/polygon/deps/openzeppelin/token/ERC20/extensions/IERC20Permit.sol": {
+            "id": 3
+        },
+        "contracts/polygon/deps/openzeppelin/utils/structs/EnumerableSet.sol": {
+            "id": 4
+        },
+        "contracts/polygon/interfaces/units/20/IToken.sol": {
+            "id": 5
+        },
+        "contracts/polygon/libraries/Command.sol": {
+            "id": 6
+        },
+        "contracts/polygon/libraries/CommandCentre.sol": {
+            "id": 7
+        }
+    }
+}
