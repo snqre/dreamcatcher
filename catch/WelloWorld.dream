@@ -70,3 +70,6 @@ log x:800 += 500;
 jump doSomething() -> somethingThatHappened() {
 
 }
+
+<!-- easy syntax -->
+buy $BTC when price == 28;
