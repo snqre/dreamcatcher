@@ -1,5 +1,9 @@
 from web3 import Web3
 
+class Polygon:
+    def __init__(self):
+        pass
+
 polygon_rpc_url = "https://polygon-rpc.com"
 
 interface = Web3(Web3.HTTPProvider(polygon_rpc_url))

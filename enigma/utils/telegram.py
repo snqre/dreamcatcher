@@ -1,22 +1,25 @@
 import telebot
 
-api_key_for_telegram:str
-username_for_telegram:str
-interface:str
+class Telegram:
+    def __init__(self, apiKey:str, username:str="", interface:str=""):
+        self.apiKey = apiKey
+        self.username = username
+        self.interface = interface
 
-def set_api_key_for_telegram(api:str):
-    global api_key_for_telegram
-    api_key_for_telegram = api
+    def apiKey(self) -> str:
+        return self.apiKey
+    
+    def username(self) -> str:
+        return self.username
+    
+    def interface(self) -> str:
+        return self.interface
 
-def get_api_key_for_telegram() -> str:
-    return str(api_key_for_telegram)
+    def setApiKey(self, apiKey:str):
+        self.apiKey = apiKey
 
-def set_username_for_telegram(username:str):
-    global username_for_telegram
-    username_for_telegram = username
+    def setUsername(self, username:str):
+        self.username = username
 
-def get_username_for_telegram() -> str:
-    return str(username_for_telegram)
-
-def generate_interface() -> str:
-    return telebot.TeleBot(token=api_key_for_telegram)
+    def generateInterface() -> str:
+        return telebot.TeleBot(token=self.apiKey)
