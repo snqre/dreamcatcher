@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
-import "contracts/polygon/deps/openzeppelin/utils/structs/EnumerableSet.sol";
 import "contracts/polygon/diamonds/facets/Console.sol";
-import "contracts/polygon/solidstate/Api3Adaptor.sol";
-import "contracts/polygon/solidstate/ERC20/Token.sol";
+import "contracts/polygon/diamonds/facets/Oracle.sol";
 
-interface IOracle {
-    event AdaptorDeployed(address token, address denominatorToken, uint8 decimals_, address api3Address);
+interface IOracleReader {
+    event OracleChanged(address oldOracle, address newOracle);
 
-    function ____deployAdaptor(address token, address denominatorToken, uint8 decimals_, address api3Address) external;
+    function ____setOracle(address newOracle) external;
+
+    function oracle() external view returns (address);
 
     function adaptor(address token) external view returns (address);
     function hasAdaptor(address token) external view returns (bool);
@@ -26,19 +26,17 @@ interface IOracle {
     function isWithinTheLastMonth(address token) external view returns (bool);
 }
 
-contract Oracle {
-    using EnumerableSet for EnumerableSet.AddressSet;
+contract OracleReader {
+    bytes32 internal constant _ORACLE_READER = keccak256("slot.oracle-reader");
 
-    bytes32 internal constant _ORACLE = keccak256("slot.oracle");
+    event OracleChanged(address oldOracle, address newOracle);
 
-    event AdaptorDeployed(address token, address denominatorToken, uint8 decimals_, address api3Address);
-
-    struct OracleStorage {
-        mapping(address => address) adaptor;
+    struct OracleReaderStorage {
+        address oracle;
     }
 
-    function oracle() internal pure virtual returns (OracleStorage storage s) {
-        bytes32 location = _ORACLE;
+    function oracleReader() internal pure virtual returns (OracleReaderStorage storage s) {
+        bytes32 location = _ORACLE_READER;
         assembly {
             s.slot := location
         }
@@ -46,71 +44,79 @@ contract Oracle {
 
     ///
 
-    function ____deployAdaptor(address token, address denominatorToken, uint8 decimals_, address api3Address) external virtual {
+    function ____setOracle(address newOracle) external virtual {
         require(_isSelfOrAdmin(), "!_isSelfOrAdmin");
-        IApi3Adaptor newAdaptor = IApi3Adaptor(new Api3Adaptor());
-        IToken token_ = IToken(token);
-        IToken denominatorToken_ = IToken(denominatorToken);
-        newAdaptor.setSymbolA = token_.symbol();
-        newAdaptor.setSymbolB = denominatorToken_.symbol();
-        newAdaptor.setDecimals(decimals_);
-        newAdaptor.setApi3Server(api3Address);
-        newAdaptor.start();
-        oracle().adaptor[token] = address(newAdaptor);
-        emit AdaptorDeployed(token, denominatorToken, decimals_, api3Address);
+        address oldOracle = oracle();
+        oracleReader().oracle = newOracle;
+        emit OracleChanged(oldOracle, newOracle);
     }
 
     ///
 
+    /// this does not conflict with oracle because this is public and the other is internal on another facet
+    function oracle() public view virtual returns (address) {
+        return oracleReader().oracle;
+    }
+
+    ///
+
+    /// the following will conflict with the oracle facet
+
     function adaptor(address token) public view virtual returns (address) {
-        return oracle().api3Adaptor[feedId];
+        return IOracle(oracle()).adaptor(token);
     }
 
     function hasAdaptor(address token) public view virtual returns (bool) {
-        return adaptor(token) != address(0);
+        return IOracle(oracle()).hasAdaptor(token);
     }
 
     ///
 
+    /// the following will conflict with the oracle facet
+
     function symbolA(address token) public view virtual returns (string memory) {
-        return IApi3Adaptor(adaptor(token)).symbolA();
+        return IOracle(oracle()).symbolA(token);
     }
 
     function symbolB(address token) public view virtual returns (string memory) {
-        return IApi3Adaptor(adaptor(token)).symbolB();
+        return IOracle(oracle()).symbolB(token);
     }
 
     /// divide the price by this to get the human readable price
     function decimals(address token) public view virtual returns (uint8) {
-        return IApi3Adaptor(adaptor(token)).decimals();
+        return IOracle(oracle()).decimals(token);
     }
 
     ///
 
+    /// the following will conflict with the oracle facet
+
     function price(address token) public view virtual returns (uint) {
-        return IApi3Adaptor(adaptor(token)).price();
+        return IOracle(oracle()).price(token);
     }
 
     function timestamp(address token) public view virtual returns (uint) {
-        return IApi3Adaptor(adaptor(token)).timestamp();
+        return IOracle(oracle()).timestamp(token);
     }
 
     ///
 
+    /// the following will conflict with the oracle facet
+
     function isWithinTheLastHour(address token) public view virtual returns (bool) {
-        return IApi3Adaptor(adaptor(token)).isWithinTheLastHour();
+        return IOracle(oracle()).isWithinTheLastHour(token);
     }
 
     function isWithinTheLastDay(address token) public view virtual returns (bool) {
-        return IApi3Adaptor(adaptor(token)).isWithinTheLastDay();
+        return IOracle(oracle()).isWithinTheLastDay(token);
     }
 
     function isWithinTheLastWeek(address token) public view virtual returns (bool) {
-        return IApi3Adaptor(adaptor(token)).isWithinTheLastWeek();
+        return IOracle(oracle()).isWithinTheLastWeek(token);
     }
 
     function isWithinTheLastMonth(address token) public view virtual returns (bool) {
-        return IApi3Adaptor(adaptor(token)).isWithinTheLastMonth();
+        return IOracle(oracle()).isWithinTheLastMonth(token);
     }
 
     ///
