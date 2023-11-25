@@ -19,7 +19,7 @@ interface IToken is IERC20, IERC20Metadata, IERC20Permit {
 }
 
 contract Token is ERC20, ERC20Burnable, ERC20Snapshot, ERC20Permit {
-    constructor(string memory name, string memory symbol, uint mint_) ERC20(name, symbol) ERC20Permit(name) Ownable(msg.sender) {
+    constructor(string memory name, string memory symbol, uint mint_) ERC20(name, symbol) ERC20Permit(name) {
         _mint(msg.sender, mint_ * (10**18));
     }
 
