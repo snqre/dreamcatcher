@@ -5,7 +5,4 @@ import "contracts/polygon/abstracts/ERC2535.sol";
 /**
 * ref https://eips.ethereum.org/EIPS/eip-2535#abstract
  */
-contract Diamond is ERC2535 {
-
-
-}
+contract Diamond is ERC2535 {}

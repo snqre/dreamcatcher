@@ -19,3 +19,8 @@ As for design standards, any calls that involve external calls or recursive call
 NOTE Library structs can be directly used as storage for the Diamond and can be written with internal functions that can be shared accross the Diamond.
 
 As of today, we will restructure the diamonds layout to ensure that these new findings are taken into account.
+
+26.11.2023
+Component > Slot [ must not clash ] > Contract
+
+Chance of storage clash nearly impossible but not zero.
