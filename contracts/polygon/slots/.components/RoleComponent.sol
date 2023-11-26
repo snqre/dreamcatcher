@@ -2,12 +2,20 @@
 pragma solidity ^0.8.0;
 import "contracts/polygon/deps/openzeppelin/utils/structs/EnumerableSet.sol";
 
+/// reusable for multiple roles
 library RoleComponent {
     using EnumerableSet for EnumerableSet.AddressSet;
 
-    event RoleNameAssigned(string oldName, string newName);
+    /// name of the role should be set on deployment to help identify them
+    event RoleNameSet(string oldName, string newName);
     event RoleMemberAdded(string name, address account);
     event RoleMemberRemoved(string name, address account);
+    event RoleMinLengthEnabled(string name);
+    event RoleMinLengthDisabled(string name);
+    event RoleMinLengthSet(string name, uint oldMinLength, uint newMinLength);
+    event RoleMaxLengthEnabled(string name);
+    event RoleMaxLengthDisabled(string name);
+    event RoleMaxLengthSet(string name, uint oldMaxLength, uint newMaxLength);
 
     struct Role {
         string _name;
@@ -68,26 +76,109 @@ library RoleComponent {
 
     function setName(Role storage role, string memory name) internal returns (bool) {
         string memory oldName = name(role);
-        role._name = name;
-        emit RoleNameAssigned(oldName, name);
+        _setName(role, name);
+        emit RoleNameSet(oldName, name);
         return true;
     }
 
     function addMember(Role storage role, address account) internal returns (bool) {
-        role._members.add(account);
-        if (hasMaxLength(role)) {
-            require(membersLength(role) <= maxLength(role), "RoleComponent: max length exceeded");
-        }
+        _addMember(role, account);
         emit RoleMemberAdded(name(role), account);
         return true;
     }
 
     function removeMember(Role storage role, address account) internal returns (bool) {
+        _removeMember(role, account);
+        emit RoleMemberRemoved(name(role), account);
+        return true;
+    }
+
+    function enableMinLength(Role storage role) internal returns (bool) {
+        _enableMinLength(role, account);
+        emit RoleMinLengthEnabled(name(role));
+        return true;
+    }
+
+    function disableMinLength(Role storage role) internal returns (bool) {
+        _disableMinLength(role, account);
+        emit RoleMinLengthDisabled(name(role));
+        return true;
+    }
+
+    function setMinLength(Role storage role, uint minLength) internal returns (bool) {
+        uint oldMinLength = minLength(role);
+        _setMinLength(role, minLength);
+        emit RoleMinLengthSet(name(role), oldMinLength, minLength);
+        return true;
+    }
+
+    function enableMaxLength(Role storage role) internal returns (bool) {
+        _enableMaxLength(role, account);
+        emit RoleMaxLengthEnabled(name(role));
+        return true;
+    }
+
+    function disableMaxLength(Role storage role) internal returns (bool) {
+        _disableMaxLength(role, account);
+        emit RoleMaxLengthDisabled(name(role));
+        return true;
+    }
+
+    function setMaxLength(Role storage role, uint maxLength) internal returns (bool) {
+        uint oldMaxLength = maxLength(role);
+        _setMaxLength(role, maxLength);
+        emit RoleMaxLengthSet(name(role), oldMaxLength, maxLength);
+        return true;
+    }
+
+    function _setName(Role storage role, string memory name) private returns (bool) {
+        role._name = name;
+        return true;
+    }
+
+    function _addMember(Role storage role, address account) private returns (bool) {
+        role._members.add(account);
+        if (hasMaxLength(role)) {
+            require(membersLength(role) <= maxLength(role), "RoleComponent: max length exceeded");
+        }
+        return true;
+    }
+
+    function _removeMember(Role storage role, address account) private returns (bool) {
         role._members.remove(account);
         if (hasMinLength(role)) {
-            require(membersLength(role) >= minLength(role), "RoleComponent: min length exceeded");
+            require(membersLength(role) <= minLength(role), "RoleComponent: min length exceeded");
         }
-        emit RoleMemberRemoved(name(role), account);
+        return true;
+    }
+
+    function _enableMinLength(Role storage role) private returns (bool) {
+        role._hasMinLength = true;
+        return true;
+    }
+
+    function _disableMinLength(Role storage role) private returns (bool) {
+        role._hasMinLength = false;
+        return true;
+    }
+
+    function _setMinLength(Role storage role, uint minLength) private returns (bool) {
+        role._minLength = minLength;
+        return true;
+    }
+
+    function _enableMaxLength(Role storage role) private returns (bool) {
+        role._hasMaxLength = true;
+        return true;
+    }
+    
+    function _disableMaxLength(Role storage role) private returns (bool) {
+        role._hasMaxLength = false;
+        return true;
+    }
+
+    function _setMaxLength(Role storage role, uint maxLength) private returns (bool) {
+        role._maxLength = maxLength;
         return true;
     }
 }

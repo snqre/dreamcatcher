@@ -24,14 +24,22 @@ library PausableComponent {
     }
 
     function pause(Pausable storage pausable) internal returns (bool) {
-        pausable._paused = true;
-        emit Paused();
+        _pause(pausable);
         return true;
     }
 
     function unpause(Pausable storage pausable) internal returns (bool) {
+        _unpause(pausable);
+        return true;
+    }
+
+    function _pause(Pausable storage pausable) private returns (bool) {
+        pausable._paused = true;
+        return true;
+    }
+
+    function _unpause(Pausable storage pausable) private returns (bool) {
         pausable._paused = false;
-        emit Unpaused();
         return true;
     }   
 }

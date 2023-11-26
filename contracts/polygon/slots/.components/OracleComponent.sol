@@ -14,7 +14,7 @@ library OracleComponent {
     using EnumerableSet for EnumerableSet.bytes32Set;
 
     event OracleSourceMapped(bytes32 source, address oldFactory, address oldRouter, address newFactory, address newRouter);
-    event OracleDenominatorAssigned(address oldDenominator, address newDenominator);
+    event OracleDenominatorSet(address oldDenominator, address newDenominator);
 
     struct Oracle {
         mapping(bytes32 => address) _factories;
@@ -196,32 +196,51 @@ library OracleComponent {
         return amountOut;
     }
 
-    function assignDenominator(Oracle storage oracle, address denominator) internal returns (bool) {
+    function setDenominator(Oracle storage oracle, address denominator) internal returns (bool) {
         address oldDenominator = denominator(oracle);
-        oracle._denominator = denominator;
-        emit OracleDenominatorAssigned(oldDenominator, denominator);
+        _setDenominator(oracle, denominator);
+        emit OracleDenominatorSet(oldDenominator, denominator);
         return true;
     }
 
     function addSource(Oracle storage oracle, bytes32 source, address factory, address router) internal returns (bool) {
-        /// duplicate entries are ignored in enumerable sets
+        address oldFactory = factories(oracle, source);
+        address oldRouter = routers(oracle, source);
+        _addSource(oracle, source, factory, router);
+        emit OracleSourceMapped(source, oldFactory, oldRouter, factory, router);
+        return true;
+    }
+
+    function removeSource(Oracle storage oracle, bytes32 source) internal returns (bool) {
+        address oldFactory = factories(oracle, source);
+        address oldRouter = routers(oracle, source);
+        _removeSource(oracle, source);
+        emit OracleSourceMapped(source, oldFactory, oldRouter, address(0), address(0));
+        return true;
+    }
+
+    function _setDenominator(Oracle storage oracle, address denominator) private returns (bool) {
+        oracle._denominator = denominator;
+        return true;
+    }
+
+    function _addSource(Oracle storage oracle, bytes32 source, address factory, address router) private returns (bool) {
+        /// duplicate is ignored
         oracle._sources.add(source);
         _mapSource(oracle, source, factory, router);
         return true;
     }
 
-    function removeSource(Oracle storage oracle, bytes32 source) internal returns (bool) {
+    function _removeSource(Oracle storage oracle, bytes32 source) private returns (bool) {
         oracle._sources.remove(source);
         _mapSource(oracle, source, address(0), address(0));
         return true;
     }
 
+    /// not built to be called directly use addSource and removeSource
     function _mapSource(Oracle storage oracle, bytes32 source, address factory, address router) private returns (bool) {
-        address oldFactory = factories(oracle, source);
-        address oldRouter = routers(oracle, source);
         oracle._factories[source] = factory;
         oracle._routers[source] = router;
-        emit OracleSourceMapped(source, oldFactory, oldRouter, factory, router);
         return true;
     }
 }

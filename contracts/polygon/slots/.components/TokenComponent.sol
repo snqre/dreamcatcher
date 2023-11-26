@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+/// sepcial case ! im not separting the private and internal (event) functions here
+/// maybe in a future version
 library TokenComponent {
     event Transfer(address from, address to, uint amount);
     event Approval(address owner, address spender, uint amount);
@@ -43,19 +45,21 @@ library TokenComponent {
         return true;
     }
 
-    function mint(Token storage token, address account, uint amount) internal {
+    function mint(Token storage token, address account, uint amount) internal returns (bool) {
         _mint(token, account, amount);
+        return true;
     }
 
-    function burn(Token storage token, uint amount) internal {
+    function burn(Token storage token, uint amount) internal returns (bool) {
         address owner = msg.sender;
         _burn(token, owner, amount);
+        return true;
     }
 
-    function burnFrom(Token storage token, address account, uint amount) internal {
+    function burnFrom(Token storage token, address account, uint amount) internal returns (bool) {
         _spendAllowance(token, account, msg.sender, amount);
         _burn(account, amount);
-
+        return true;
     }
 
     function approve(Token storage token, address spender, uint amount) internal returns (bool) {
@@ -87,7 +91,7 @@ library TokenComponent {
         return true;
     }
 
-    function _transfer(Token storage token, address from, address to, uint amount) private {
+    function _transfer(Token storage token, address from, address to, uint amount) private returns (bool) {
         require(from != address(0), "TokenComponent: transfer from the zero address");
         require(to != address(0), "TokenComponent: transfer to the zero address");
         _beforeTokenTransfer(token, from, to, amount);
@@ -99,9 +103,10 @@ library TokenComponent {
         }
         emit Transfer(from, to, amount);
         _afterTokenTransfer(from, to, amount);
+        return true;
     }
 
-    function _mint(Token storage token, address account, uint amount) private {
+    function _mint(Token storage token, address account, uint amount) private returns (bool) {
         require(account != address(0), "TokenComponent: mint to the zero address");
         _beforeTokenTransfer(token, address(0), account, amount);
         token._totalSupply += amount;
@@ -110,9 +115,10 @@ library TokenComponent {
         }
         emit Transfer(address(0), account, amount);
         _afterTokenTransfer(token, address(0), account, amount);
+        return true;
     }
 
-    function _burn(Token storage token, address account, uint amount) private {
+    function _burn(Token storage token, address account, uint amount) private returns (bool) {
         require(account != address(0), "TokenComponent: burn from the zero address");
         _beforeTokenTransfer(account, address(0), amount);
         uint accountBalance = token._balances[account];
@@ -123,16 +129,18 @@ library TokenComponent {
         }
         emit Tranfer(account, address(0), amount);
         _afterTokenTransfer(token, account, address(0), amount);
+        return true;
     }
 
-    function _approve(Token storage token, address spender, uint amount) private {
+    function _approve(Token storage token, address spender, uint amount) private returns (bool) {
         require(owner != address(0), "TokenComponent: approve from the zero address");
         require(spender != address(0), "TokenComponent: approve to the zero address");
         token._allowances[owner][spender] = amount;
         emit Approval(owner, spender, amount);
+        return true;
     }
 
-    function _spendAllowance(Token storage token, address owner, address spender, uint amount) private {
+    function _spendAllowance(Token storage token, address owner, address spender, uint amount) private returns (bool) {
         uint currentAllowance = allowance(owner, spender);
         if (currentAllowance != type(uint).max) {
             require(currentAllowance >= amount, "TokenComponent: insufficient allowance");
@@ -140,9 +148,14 @@ library TokenComponent {
                 _approve(token, spender, currentAllowance - amount);
             }
         }
+        return true;
     }
 
-    function _beforeTokenTransfer(Token storage token, address from, address to, uint amount) private {}
+    function _beforeTokenTransfer(Token storage token, address from, address to, uint amount) private returns (bool) {
+        return true;
+    }
 
-    function _afterTokenTransfer(Token storage token, address from, address to, uint amount) private {}
+    function _afterTokenTransfer(Token storage token, address from, address to, uint amount) private returns (bool) {
+        return true;
+    }
 }

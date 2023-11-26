@@ -11,11 +11,21 @@ library NonReentrantComponent {
     }
 
     function lock(NonReentrant storage nonReentrant) internal returns (bool) {
-        nonReentrant._locked = true;
+        _lock(nonReentrant);
         return true;
     }
 
     function unlock(NonReentrant storage nonReentrant) internal returns (bool) {
+        _unlock(nonReentrant);
+        return true;
+    }
+
+    function _lock(NonReentrant storage nonReentrant) private returns (bool) {
+        nonReentrant._locked = true;
+        return true;
+    }
+
+    function _unlock(NonReentrant storage nonReentrant) private returns (bool) {
         nonReentrant._locked = false;
         return true;
     }
