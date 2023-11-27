@@ -15,15 +15,15 @@ contract UniswapV3OracleAdaptor is UniswapV3OracleAdaptorSlot {
         uniswapV3OracleAdaptor().setSecondsAgo(secondsAgo seconds);
     }
 
-    function factory() external view returns (address) {
+    function factory() external view virtual returns (address) {
         return uniswapV3OracleAdaptor().factory();
     }
 
-    function secondsAgo() external view returns (uint) {
+    function secondsAgo() external view virtual returns (uint) {
         return uint(uniswapV3OracleAdaptor().secondsAgo());
     }
 
-    function quote(address token0, address token1) external view returns (uint) {
+    function quote(address token0, address token1) external view virtual returns (uint) {
         return uniswapV3OracleAdaptor().quote(token0, token1);
     }
 }

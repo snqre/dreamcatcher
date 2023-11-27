@@ -1,252 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
-import "contracts/polygon/deps/uniswap/interfaces/IUniswapV2Factory.sol";
-import "contracts/polygon/deps/uniswap/interfaces/IUniswapV2Pair.sol";
-import "contracts/polygon/deps/uniswap/interfaces/IUniswapV2Router02.sol";
-import "contracts/polygon/solidstate/ERC20/Token.sol";
-import "contracts/polygon/libraries/OurMathLib.sol";
-import "contracts/polygon/diamonds/facets/components/RoleComponent.sol";
+import "contracts/polygon/solidstate/UniswapV2OracleAdaptor.sol";
+import "contracts/polygon/solidstate/UniswapV3OracleAdaptor.sol";
 import "contracts/polygon/deps/openzeppelin/utils/structs/EnumerableSet.sol";
-import "contracts/polygon/deps/uniswap/interfaces/IUniswapV3Factory.sol";
-import "contracts/polygon/deps/uniswap/v3-periphery/libraries/OracleLibrary.sol";
-import "contracts/polygon/deps/uniswap/interfaces/IUniswapV3Pool.sol";
-import "contracts/polygon/libraries/OurAddressLib.sol";
 
-library OldOracleComponent {
-    using OurMathLib for uint;
-    using RoleComponent for RoleComponent.Role;
-    using EnumerableSet for EnumerableSet.bytes32Set;
-
-    event OracleSourceMapped(bytes32 source, address oldFactory, address oldRouter, address newFactory, address newRouter);
-    event OracleDenominatorSet(address oldDenominator, address newDenominator);
-
-    struct Oracle {
-        mapping(bytes32 => address) _factories;
-        mapping(bytes32 => address) _routers;
-        EnumerableSet.bytes32Set _sources;
-        address _denominator;
-    }
-
-    function factories(Oracle storage oracle, bytes32 source) internal view returns (address) {
-        return oracle._factories[source];
-    }
-
-    function routers(Oracle storage oracle, bytes32 source) internal view returns (address) {
-        return oracle._routers[source];
-    }
-
-    function sources(Oracle storage oracle, uint i) internal view returns (bytes32) {
-        return oracle._sources.at(i);
-    }
-
-    function sources(Oracle storage oracle) internal view returns (bytes32[] memory) {
-        return oracle._sources.values();
-    }
-
-    function sourcesLength(Oracle storage oracle) internal view returns (uint) {
-        return oracle._sources.length();
-    }
-
-    function sourcesContains(Oracle storage oracle, bytes32 source) internal view returns (bool) {
-        return oracle._sources.contains(source);
-    }
-
-    function denominator(Oracle storage oracle) internal view returns (address) {
-        return oracle._denominator;
-    }
-
-    function sumAverageValue(Oracle storage oracle, address[] memory tokens, uint[] memory amounts) internal view returns (uint) {
-        uint sumAverageValue;
-        for (uint i = 0; i < tokens.length; i++) {
-            uint averageValue = averageValue(oracle, tokens[i], denominator(oracle), amounts[i]);
-            if (averageValue != 0) {
-                sumAverageValue += averageValue;
-            }
-        }
-        return sumAverageValue;
-    }
-
-    function sumQuoteAverageValue(Oracle storage oracle, address[] memory tokens, uint[] memory amounts) internal view returns (uint) {
-        uint sumQuoteAverageValue;
-        for (uint i = 0; i < tokens.length; i++) {
-            uint quoteAverageValue = quoteAverageValue(oracle, tokens[i], denominator(oracle), amounts[i]);
-            if (quoteAverageValue != 0) {
-                sumQuoteAverageValue += quoteAverageValue;
-            }
-        }
-        return sumQuoteAverageValue;
-    }
-
-    function sumValue(Oracle storage oracle, uint sourceId, address[] memory tokens, uint[] memory amounts) internal view returns (uint) {
-        uint sumValue;
-        for (uint i = 0; i < tokens.length; i++) {
-            uint value = value(oracle, sourceId, tokens[i], denominator(oracle), amounts[i]);
-            if (value != 0) {
-                sumValue += value;
-            }
-        }
-        return sumValue;
-    }
-
-    function sumQuoteValue(Oracle storage oracle, uint sourceId, address[] memory tokens, uint[] memory amounts) internal view returns (uint) {
-        uint sumQuoteValue;
-        for (uint i = 0; i < tokens.length; i++) {
-            uint quoteValue = quoteValue(oracle, sourceId, tokens[i], denominator(oracle), amounts[i]);
-            if (quoteValue != 0) {
-                sumQuoteValue += quoteValue;
-            }
-        }
-        return sumQuoteValue;
-    }
-
-    function averageValue(Oracle storage oracle, address token0, address token1, uint amount) internal view returns (uint) {
-        uint averageValue;
-        uint success;
-        for (uint i = 0; i < sourcesLength(oracle); i++) {
-            uint value = value(oracle, i, token0, token1, amount);
-            if (value != 0) {
-                averageValue += value;
-                success += 1;
-            }
-        }
-        return averageValue / success;
-    }
-
-    function quoteAverageValue(Oracle storage oracle, address token0, address token1, uint amount) internal view returns (uint) {
-        uint quoteAverageValue;
-        uint success;
-        for (uint i = 0; i < sourcesLength(oracle); i++) {
-            uint quoteValue = quoteValue(oracle, i, token0, token1, amount);
-            if (quoteValue != 0) {
-                quoteAverageValue += quoteValue;
-                success += 1;
-            }
-        }
-        return quoteAverageValue / success;
-    }
-
-    function value(Oracle storage oracle, uint sourceId, address token0, address token1, uint amount) internal view returns (uint) {
-        return (amount * amountOut(oracle, sourceId, token0, token1)) / 10**18;
-    }
-
-    function quoteValue(Oracle storage oracle, uint sourceId, address token0, address token1, uint amount) internal view returns (uint) {
-        return (amount * quote(oracle, sourceId, token0, token1)) / 10**18;
-    }
-
-    function quote(Oracle storage oracle, uint sourceId, address token0, address token1) internal view returns (uint) {
-        IToken tkn0 = IToken(token0);
-        IToken tkn1 = IToken(token1);
-        uint8 decimals0 = tkn0.decimals();
-        uint8 decimals1 = tkn1.decimals();
-        IUniswapV2Factory fctr = IUniswapV2Factory(factories(oracle, sources(oracle, sourceId)));
-        address pair = fctr.getPair(token0, token1);
-        if (pair == address(0)) {
-            return 0; 
-        }
-        IUniswapV2Pair pr = IUniswapV2Pair(pair);
-        (uint res0, uint res1,) = pr.getReserves();
-        if (token0 == pr.token0()) {
-            uint amount = 10**decimals0;
-            IUniswapV2Router02 rtr = IUniswapV2Router02(routers(oracle, sources(oracle, sourceId)));
-            uint quote = rtr.quote(amount, res0, res1);
-            quote = quote.computeAsEtherValue(decimals1);
-            return quote;
-        } else {
-            uint amount = 10**decimals1;
-            IUniswapV2Router02 rtr = IUniswapV2Router02(routers(oracle, sources(oracle, sourceId)));
-            uint quote = rtr.quote(amount, res0, res1);
-            quote = quote.computeAsEtherValue(decimals1);
-            return quote;
-        }
-    }
-
-    function amountOut(Oracle storage oracle, uint sourceId, address token0, address token1) internal view returns (uint) {
-        IToken tkn0 = IToken(token0);
-        IToken tkn1 = IToken(token1);
-        uint8 decimals0 = tkn0.decimals();
-        uint8 decimals1 = tkn1.decimals();
-        IUniswapV2Factory fctr = IUniswapV2Factory(factories(oracle, sources(oracle, sourceId)));
-        address pair = fctr.getPair(token0, token1);
-        if (pair == address(0)) {
-            return 0;
-        }
-        IUniswapV2Pair pr = IUniswapV2Pair(pair);
-        (uint res0, uint res1,) = pr.getReserves();
-        if (token0 == pr.token0()) {
-            uint amount = 10**decimals0;
-            IUniswapV2Router02 rtr = IUniswapV2Router02(routers(oracle, sources(oracle, sourceId)));
-            uint amountOut = rtr.getAmountOut(amount, res0, res1);
-            amountOut = amountOut.computeAsEtherValue(decimals1);
-            return amountOut;
-        } else {
-            uint amount = 10**decimals1;
-            IUniswapV2Router02 rtr = IUniswapV2Router02(routers(oracle, sources(oracle, sourceId)));
-            uint amountOut = rtr.getAmountOut(amount, res0, res1);
-            amountOut = amountOut.computeAsEtherValue(decimals1);
-            return amountOut;
-        }
-    }
-
-    function amountsOut(Oracle storage oracle, uint sourceId, address[] memory path) internal view returns (uint) {
-        IToken tkn0 = IToken(path[0]);
-        IToken tkn1 = IToken(path[path.length - 1]);
-        uint8 decimals0 = tkn0.decimals();
-        uint8 decimals1 = tkn1.decimals();
-        uint amount = 10**decimals0;
-        IUniswapV2Router02 rtr = IUniswapV2Router02(routers(oracle, sources(oracle, sourceId)));
-        uint[] memory amountsOut = rtr.getAmountsOut(amount, path);
-        uint amountOut = amountsOut[amountsOut.length - 1];
-        amountOut = amountOut.computeAsEtherValue(decimals1);
-        return amountOut;
-    }
-
-    function setDenominator(Oracle storage oracle, address denominator) internal returns (bool) {
-        address oldDenominator = denominator(oracle);
-        _setDenominator(oracle, denominator);
-        emit OracleDenominatorSet(oldDenominator, denominator);
-        return true;
-    }
-
-    function addSource(Oracle storage oracle, bytes32 source, address factory, address router) internal returns (bool) {
-        address oldFactory = factories(oracle, source);
-        address oldRouter = routers(oracle, source);
-        _addSource(oracle, source, factory, router);
-        emit OracleSourceMapped(source, oldFactory, oldRouter, factory, router);
-        return true;
-    }
-
-    function removeSource(Oracle storage oracle, bytes32 source) internal returns (bool) {
-        address oldFactory = factories(oracle, source);
-        address oldRouter = routers(oracle, source);
-        _removeSource(oracle, source);
-        emit OracleSourceMapped(source, oldFactory, oldRouter, address(0), address(0));
-        return true;
-    }
-
-    function _setDenominator(Oracle storage oracle, address denominator) private returns (bool) {
-        oracle._denominator = denominator;
-        return true;
-    }
-
-    function _addSource(Oracle storage oracle, bytes32 source, address factory, address router) private returns (bool) {
-        /// duplicate is ignored
-        oracle._sources.add(source);
-        _mapSource(oracle, source, factory, router);
-        return true;
-    }
-
-    function _removeSource(Oracle storage oracle, bytes32 source) private returns (bool) {
-        oracle._sources.remove(source);
-        _mapSource(oracle, source, address(0), address(0));
-        return true;
-    }
-
-    /// not built to be called directly use addSource and removeSource
-    function _mapSource(Oracle storage oracle, bytes32 source, address factory, address router) private returns (bool) {
-        oracle._factories[source] = factory;
-        oracle._routers[source] = router;
-        return true;
-    }
+/// this has to be declared here because UniswapV3OracleAdaptor uses an outdated solidity version
+interface IUniswapV3OracleAdaptor {
+    function factory() external view returns (address);
+    function secondsAgo() external view returns (uint);
+    function quote(address token0, address token1) external view returns (uint);
 }
 
 /// improvement
@@ -257,53 +19,39 @@ library OldOracleComponent {
 /// . liquidity checks
 ///
 /// note in 0.7.6 overflow is not checked
+///
+/// when modifying weight or adding new sources ensure the oracle is paused
+///
+/// if the oracle cannt find a value for an asset it will always assume the asset is worthless
+/// the deposit mechanic returns asset as a portion of ownership of the pool token
+/// therefore the unique attack vector is when minting the shares to the account
+/// in this case its best to not mint anything and consider the amount in as worthless if forced
+/// and allow the vault or safe to remain solvent
 library OracleComponent {
-    using OurMathLib for uint;
-    using OurAddressLib for address;
-    using RoleComponent for RoleComponent.Role;
-    using EnumerableSet for EnumerableSet.Bytes32Set;
+    using EnumerableSet for EnumerableSet.AddressSet;
 
-    error InvalidPool();
-    error InvalidPair();
+    event OracleV2AdaptorDeployed(address source, address factory, address router, uint16 weight);
+    event OracleV3AdaptorDeployed(address source, address factory, uint32 secondsAgo, uint16 weight);
+    event OracleAdaptorWeightSet(address source, uint16 oldWeight, uint16 newWeight);
+    event OracleDenominatorSet(address oldDenominator, address newDenominator);
 
-    enum Version {
-        NONE,
-        V2,
-        V3
-    }
+    /// weightings must always sum up to 10000
+    /// use set weighting before deploying a new source to make space for a new source
+    /// use require weithint integrity to check that weighting is equal to 10000 after changes
+    error OracleWeightingIntegrityIsBroken();
 
     struct Oracle {
-        mapping(bytes32 => address) _factories;
-        mapping(bytes32 => address) _routers;
-        mapping(bytes32 => uint16) _weight;
-        mapping(bytes32 => Version) _version;
-        EnumerableSet.Bytes32Set _sources;
+        EnumerableSet.AddressSet _sources;
+        mapping(address => uint8) _version;
+        mapping(address => uint16) _weight;
         address _denominator;
-        uint _twapSeconds;
     }
 
-    function factories(Oracle storage oracle, bytes32 source) internal view returns (address) {
-        return oracle._factories[source];
-    }
-
-    function routers(Oracle storage oracle, bytes32 source) internal view returns (address) {
-        return oracle._routers[source];
-    }
-
-    function weight(Oracle storage oracle, bytes32 source) internal view returns (uint16) {
-        return oracle._weight[source];
-    }
-
-    /// version of uniswap being use
-    function version(Oracle storage oracle, bytes32 source) internal view returns (Version) {
-        return oracle._version[source];
-    }
-
-    function sources(Oracle storage oracle, uint i) internal view returns (bytes32) {
+    function sources(Oracle storage oracle, uint i) internal view returns (address) {
         return oracle._sources.at(i);
     }
 
-    function sources(Oracle storage oracle) internal view returns (bytes32[] memory) {
+    function sources(Oracle storage oracle) internal view returns (address[] memory) {
         return oracle._sources.values();
     }
 
@@ -311,84 +59,177 @@ library OracleComponent {
         return oracle._sources.length();
     }
 
-    function sourcesContains(Oracle storage oracle, bytes32 source) internal view returns (bool) {
+    function sourcesContains(Oracle storage oracle, address source) internal view returns (bool) {
         return oracle._sources.contains(source);
     }
 
-    /// ie. USD a common asset to use as a base unit of value
+    function version(Oracle storage oracle, address source) internal view returns (uint) {
+        return oracle._version[source];
+    }
+
+    function weight(Oracle storage oracle, address source) internal view returns (uint) {
+        return oracle._weight[source];
+    }
+
     function denominator(Oracle storage oracle) internal view returns (address) {
         return oracle._denominator;
     }
 
-    function twapSeconds(Oracle storage oracle) internal view returns (uint) {
-        return oracle._twapSeconds;
+    /// always check weighting integrity after changing or deploying any sources!
+    function requireWeightingIntegrity(Oracle storage oracle) internal view returns (bool) {
+        uint sumWeight;
+        for (uint i = 0; i < sourcesLength(oracle); i++) {
+            sumWeight += weight(oracle, sources(oracle, i));
+        }
+        if (sumWeight != 10000) {
+            revert OracleWeightingIntegrityIsBroken();
+        }
+        return true;
     }
 
-    function amountOut(Oracle storage oracle, uint sourceId, address token0, address token1) internal view returns (uint) {
-        Version version = version(oracle, sources(oracle, sourceId));
-        if (version == Version.NONE) { return 0; }
-        if (version == Version.V2) {
+    /// will use denominator as default base currency
+    /// use a single source to determine sum of value against base currency
+    function sumQuoteValue(Oracle storage oracle, uint sourceId, address[] memory tokens, uint[] memory amounts) internal view returns (uint) {
+        uint sumQuoteValue;
+        uint success;
+        for (uint i = 0; i < tokens.length; i++) {
+            uint value = value(oracle, sourceId, tokens[i], denominator(oracle), amounts[i]);
+            if (value != 0) {
+                sumQuoteValue += value;
+                success += 1;
+            }
+        }
+        if (success == 0) { return 0; }
+        return sumQuoteValue / success;
+    }
 
-        } else {
-            IUniswapV3Factory fctr = IUniswapV3Factory(factories(oracle, sources(oracle, sourceId)));
-            uint[] fees = new uint[](2);
-            fees[0] = 0100;
-            fees[1] = 0500;
-            fees[2] = 1000;
-            uint sum;
-            uint success;
-            for (uint i = 0; i < fees.length; i++) {
-                address pool = fctr.getPool(token0, token1, fees[i]);
-                if (pool != address(0)) {
-                    IUniswapV3Pool pl = IUniswapV3Pool(pool);
-                    (int24 tick,) = OracleLibrary.consult(pool, twapSeconds(oracle));
-                    uint amountIn = 10**token0.decimals();
-                    uint amountOut = OracleLibrary.getQuoteAtTick(tick, amountIn, token0, token1);
-                    amountOut = amountOut.computeAsEtherValue(token1.decimals());
-                    sum += amountOut;
-                    success += 1;
+    /// will use denominator as default base currency
+    /// use a all sources to determine sum of value against base currency
+    /// non weighted just average
+    function sumQuoteAverageValue(Oracle storage oracle, address[] memory tokens, uint[] memory amounts) internal view returns (uint) {
+        uint sumQuoteAverageValue;
+        uint success;
+        for (uint i = 0; i < tokens.length; i++) {
+            uint sumValue;
+            uint successValue;
+            for (uint x = 0; x < sourcesLength(oracle); x++) {
+                uint value = value(oracle, x, tokens[i], denominator(oracle), amounts[i]);
+                if (value != 0) {
+                    sumValue += value;
+                    successValue += 1;
                 }
             }
-            if (success == 0) { return 0; }
-            return sum / success;
+            if (successValue != 0) {
+                /// average of each exchange for this one asset
+                sumQuoteAverageValue += sumValue / successValue;
+                success += 1;
+            }
+        }
+        if (success == 0) { return 0; }
+        return sumQuoteAverageValue / success;
+    }
+
+    /// will use denominator as default base currency
+    /// use weighted sources to determine sum of value against base currency
+    function sumQuoteWeightedValue(Oracle storage oracle, address[] memory tokens, uint[] memory amounts) internal view returns (uint) {
+        uint sumQuoteWeightedValue;
+        uint success;
+        for (uint i = 0; i < tokens.length; i++) {
+            uint value = quoteWeightedValue(oracle, tokens[i], denominator(oracle), amounts[i]);
+            if (value != 0) {
+                sumQuoteWeightedValue += value;
+                success += 1;
+            }
+        }
+        if (success == 0) { return 0; }
+        return sumQuoteAverageValue / success;
+    }
+
+    /// this is where weighting gets involved and this should be the most used function
+    function quoteWeightedValue(Oracle storage oracle, address token0, address token1, uint amount) internal view returns (uint) {
+        uint quoteWeightedValue;
+        uint success;
+        uint[] memory values = new uint[](sourcesLength(oracle));
+        uint16[] memory weighting = new uint16[](sourcesLength(oracle));
+        for (uint i = 0; i < sourcesLength(oracle); i++) {
+            uint value = value(oracle, i, token0, token1, amount);
+            /// weighting will be zero if value is zero and therefore zero values will not be included in the final value
+            if (value != 0) {
+                values[i] = value;
+                weighting[i] = weight(oracle, sources(oracle, i));
+            }
+        }
+        uint quoteWeightedValue = values.computeValueWithWeighting(weighting);
+        return quoteWeightedValue;
+    }
+
+    function value(Oracle storage oracle, uint sourceId, address token0, address token1, uint amount) internal view returns (uint) {
+        return (amount * quote(oracle, sourceId, token0, token1)) / 10**18;
+    }
+
+    function quote(Oracle storage oracle, uint sourceId, address token0, address token1) internal view returns (uint) {
+        address source = sources(oracle, sourceId);
+        uint8 version = version(oracle, source);
+        if (version == 2) {
+            IUniswapV2OracleAdaptor adaptor = IUniswapV2OracleAdaptor(source);
+            return adaptor.quote(token0, token1);
+        } else if (version == 3) {
+            IUniswapV3OracleAdaptor adaptor = IUniswapV3OracleAdaptor(source);
+            return adaptor.quote(token0, token1);
+        } else {
+            return 0;
         }
     }
 
-    function _addSource(Oracle storage oracle, bytes32 source, address factory, address router, uint16 weigth, Version version) private returns (bool) {
-        /// duplicate is ignored
-        oracle._sources.add(source);
-        _mapSource(oracle, source, factory, router, weigth, version);
+    function setDenominator(Oracle storage oracle, address denominator_) internal returns (bool) {
+        address oldDenominator = denominator(oracle);
+        oracle._denominator = denominator_;
+        emit OracleDenominatorSet(oldDenominator, denominator_);
         return true;
     }
 
-    function _removeSource(Oracle storage oracle, bytes32 source) private returns (bool) {
-        oracle._sources.remove(source);
-        _mapSource(oracle, source, address(0), address(0), 0, Version.NONE);
-        return true;
-    }
-
-    function _mapSource(Oracle storage oracle, bytes32 source, address factory, address router, uint16 weigth, Version version) private returns (bool) {
-        oracle._factories[source] = factory;
-        oracle._routers[source] = router;
+    function setWeight(Oracle storage oracle, address source, uint16 weight) internal returns (bool) {
+        uint16 oldWeight = weight(oracle, source);
         oracle._weight[source] = weight;
-        oracle._version[source] = version;
+        emit OracleAdaptorWeightSet(source, oldWeight, weight);
         return true;
     }
-}
 
-contract Test {
-    bytes32 internal constant _ORACLE = keccak256("slot.oracle");
-
-    function oracle() internal pure returns (OracleComponent.Oracle storage s) {
-        bytes32 location = _ORACLE;
-        assembly {
-            s.slot := location
-        }
+    function deployV2Adaptor(Oracle storage oracle, address factory, address router, uint16 weight) internal returns (address) {
+        address adaptor = _deployV2Adaptor(oracle, factory, router, weight);
+        emit OracleV2AdaptorDeployed(adaptor, factory, router, weight);
+        return adaptor;
     }
 
-    function test(address token0, address token1) external returns (uint) {
-        bytes32 someRandomExchange = keccak256(abi.encode("helloWorld"));
-        oracle()._addSource(someRandomExchange, 0x1F98431c8aD98523631AE4a59f267346ea31F984, address(0), 0, Version.V3);
-        return oracle().amountOut(0, token0, token1);
+    function deployV3Adaptor(Oracle storage oracle, address factory, uint32 secondsAgo, uint16 weight) internal returns (address) {
+        address adaptor = _deployV3Adaptor(oracle, factory, secondsAgo, weight);
+        emit OracleV3AdaptorDeployed(adaptor, factory, secondsAgo, weight);
+        return adaptor;
+    }
+
+    function _setDenominator(Oracle storage oracle, address denominator) private returns (bool) {
+        oracle._denominator = denominator;
+        return true;
+    }
+
+    function _setWeight(Oracle storage oracle, address source, uint16 weight) private returns (bool) {
+        oracle._weight[source] = weight;
+        return true;
+    }
+
+    function _deployV2Adaptor(Oracle storage oracle, address factory, address router, uint16 weight) private returns (address) {
+        address adaptor = address(new UniswapV2OracleAdaptor(factory, router));
+        oracle._sources.add(adaptor);
+        oracle._version[adaptor] = 2;
+        oracle._weight[adaptor] = weight;
+        return adaptor;
+    }
+
+    function _deployV3Adaptor(Oracle storage oracle, address factory, uint32 secondsAgo, uint16 weight) private returns (address) {
+        address adaptor = address(new UniswapV3OracleAdaptor(factory, secondsAgo));
+        oracle._sources.add(adaptor);
+        oracle._version[adaptor] = 3;
+        oracle._weight[adaptor] = weight;
+        return adaptor;
     }
 }

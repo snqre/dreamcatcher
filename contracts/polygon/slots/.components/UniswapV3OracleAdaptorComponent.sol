@@ -83,6 +83,7 @@ library UniswapV3OracleAdaptorComponent {
         }
         if (success == 0) { return 0; }
         uint quote = sum.div(success);
+        /// returns as 10**18
         return quote;
     }
 
