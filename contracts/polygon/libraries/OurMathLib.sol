@@ -1,4 +1,4 @@
-3// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
 error IsZero(string variable);
@@ -40,7 +40,7 @@ library OurMathLib {
     }
 
     /// ensure 100% => 10000 for accurate compute
-    function computeValueWithWeighting(uint[] memory values, uint[] weighting) internal pure returns (uint) {
+    function computeValueWithWeighting(uint[] memory values, uint[] memory weighting) internal pure returns (uint) {
         uint value;
         uint length = values.length;
         for (uint i = 0; i < length; i++) {
