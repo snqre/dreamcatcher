@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 error IsZero(string variable);
 error Infinite();
 
-library OurMath {
+library OurMathLib {
 
     /// 100% => 10000
     function computePercentageChange(int valueBefore, int valueAfter) internal pure returns (int percentage) {
@@ -37,5 +37,15 @@ library OurMath {
 
     function computeValueToSend(uint sharesIn, uint balance, uint sumShares) internal pure returns (uint valueToSend) {
         return (sharesIn * balance) / sumShares;
+    }
+
+    /// ensure 100% => 10000 for accurate compute
+    function computeValueWithWeighting(uint[] memory values, uint[] memory weighting) internal pure returns (uint) {
+        uint value;
+        uint length = values.length;
+        for (uint i = 0; i < length; i++) {
+            value += (values[i] * weighting[i]) / 10000;
+        }
+        return value;
     }
 }

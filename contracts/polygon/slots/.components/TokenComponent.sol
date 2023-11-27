@@ -75,7 +75,7 @@ library TokenComponent {
         return true;
     }
 
-    function increaseAllowance(Token storage token, uint addedValue) internal returns (bool) {
+    function increaseAllowance(Token storage token, address spender, uint addedValue) internal returns (bool) {
         address owner = msg.sender;
         _approve(token, owner, spender, allowance(token, owner, spender) + addedValue);
         return true;
