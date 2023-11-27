@@ -1,0 +1,1 @@
+As the name suggests wrappers wrap around ERC standards to ensure that they are compliant. These are held in storage and should be reset after use. These can manage external tokens as if they were native to the protocol. The conversions are done automatically.
