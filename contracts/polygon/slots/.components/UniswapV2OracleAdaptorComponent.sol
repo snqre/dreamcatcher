@@ -30,20 +30,20 @@ library UniswapV2OracleAdaptorComponent {
         IToken tkn1 = IToken(token1);
         uint8 decimals0 = tkn0.decimals();
         uint8 decimals1 = tkn1.decimals();
-        address pair = uniswapV2OracleAdaptor._factories.getPair(token0, token1);
+        address pair = uniswapV2OracleAdaptor._factory.getPair(token0, token1);
         if (pair == address(0)) { return 0; }
         IUniswapV2Pair pair_ = IUniswapV2Pair(pair);
         (uint res0, uint res1,) = pair_.getReserves();
         if (token0 == pair_.token0()) {
             uint amount = 10**decimals0;
-            uint quote = uniswapV2OracleAdaptor._router.quote(amount, res0, res1);
-            quote = quote.computeAsEtherValue(decimals1);
-            return quote;
+            uint quote_ = uniswapV2OracleAdaptor._router.quote(amount, res0, res1);
+            quote_ = quote_.computeAsEtherValue(decimals1);
+            return quote_;
         } else {
             uint amount = 10**decimals1;
-            uint quote = uniswapV2OracleAdaptor._router.quote(amount, res1, res0);
-            quote = quote.computeAsEtherValue(decimals1);
-            return quote;
+            uint quote_ = uniswapV2OracleAdaptor._router.quote(amount, res1, res0);
+            quote_ = quote_.computeAsEtherValue(decimals1);
+            return quote_;
         }
     }
 
@@ -58,14 +58,14 @@ library UniswapV2OracleAdaptorComponent {
         (uint res0, uint res1,) = pair_.getReserves();
         if (token0 == pair_.token0()) {
             uint amount = 10**decimals0;
-            uint amountOut = uniswapV2OracleAdaptor._router.getAmountOut(amount, res0, res1);
-            amountOut = amountOut.computeAsEtherValue(decimals1);
-            return amountOut;
+            uint amountOut_ = uniswapV2OracleAdaptor._router.getAmountOut(amount, res0, res1);
+            amountOut_ = amountOut_.computeAsEtherValue(decimals1);
+            return amountOut_;
         } else {
             uint amount = 10**decimals0;
-            uint amountOut = uniswapV2OracleAdaptor._router.getAmountOut(amount, res1, res0);
-            amountOut = amountOut.computeAsEtherValue(decimals1);
-            return amountOut;
+            uint amountOut_ = uniswapV2OracleAdaptor._router.getAmountOut(amount, res1, res0);
+            amountOut_ = amountOut_.computeAsEtherValue(decimals1);
+            return amountOut_;
         }
     }
 
@@ -75,32 +75,33 @@ library UniswapV2OracleAdaptorComponent {
         uint8 decimals0 = tkn0.decimals();
         uint8 decimals1 = tkn1.decimals();
         uint amount = 10**decimals0;
-        uint[] memory amountsOut = uniswapV2OracleAdaptor._router.getAmountsOut(amount, path);
-        uint amountOut = amountsOut.computeAsEtherValue(decimals1);
-        return amountOut;
+        uint[] memory amountsOut_ = uniswapV2OracleAdaptor._router.getAmountsOut(amount, path);
+        uint amountOut_ = amountsOut_[amountsOut_.length - 1];
+        amountOut_ = amountOut_.computeAsEtherValue(decimals1);
+        return amountOut_;
     }
 
-    function setFactory(UniswapV2OracleAdaptor storage uniswapV2OracleAdaptor, address factory) internal returns (bool) {
+    function setFactory(UniswapV2OracleAdaptor storage uniswapV2OracleAdaptor, address factory_) internal returns (bool) {
         address oldFactory = factory(uniswapV2OracleAdaptor);
-        uniswapV2OracleAdaptor._factory = factory;
-        emit UniswapV2OracleAdaptorFactorySet(oldFactory, factory);
+        uniswapV2OracleAdaptor._factory = IUniswapV2Factory(factory_);
+        emit UniswapV2OracleAdaptorFactorySet(oldFactory, factory_);
         return true;
     }
 
-    function setRouter(UniswapV2OracleAdaptor storage uniswapV2OracleAdaptor, address router) internal returns (bool) {
+    function setRouter(UniswapV2OracleAdaptor storage uniswapV2OracleAdaptor, address router_) internal returns (bool) {
         address oldRouter = router(uniswapV2OracleAdaptor);
-        uniswapV2OracleAdaptor._router = router;
-        emit UniswapV2OracleAdaptorRouterSet(oldRouter, router);
+        uniswapV2OracleAdaptor._router = IUniswapV2Router02(router_);
+        emit UniswapV2OracleAdaptorRouterSet(oldRouter, router_);
         return true;
     }
 
-    function _setFactory(UniswapV2OracleAdaptor storage uniswapV2OracleAdaptor, address factory) private returns (bool) {
-        uniswapV2OracleAdaptor._factory = IUniswapV2Factory(factory);
+    function _setFactory(UniswapV2OracleAdaptor storage uniswapV2OracleAdaptor, address factory_) private returns (bool) {
+        uniswapV2OracleAdaptor._factory = IUniswapV2Factory(factory_);
         return true;
     }
 
-    function _setRouter(UniswapV2OracleAdaptor storage uniswapV2OracleAdaptor, address router) private returns (bool) {
-        uniswapV2OracleAdaptor._router = IUniswapV2Router02(router);
+    function _setRouter(UniswapV2OracleAdaptor storage uniswapV2OracleAdaptor, address router_) private returns (bool) {
+        uniswapV2OracleAdaptor._router = IUniswapV2Router02(router_);
         return true;
     }
 }

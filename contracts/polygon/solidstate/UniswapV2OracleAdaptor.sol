@@ -12,9 +12,11 @@ interface IUniswapV2OracleAdaptor {
 }
 
 contract UniswapV2OracleAdaptor is UniswapV2OracleAdaptorSlot {
-    constructor(address factory, address router) {
-        uniswapV2OracleAdaptor().setFactory(factory);
-        uniswapV2OracleAdaptor().setRouter(router);
+    using UniswapV2OracleAdaptorComponent for UniswapV2OracleAdaptorComponent.UniswapV2OracleAdaptor;
+
+    constructor(address factory_, address router_) {
+        uniswapV2OracleAdaptor().setFactory(factory_);
+        uniswapV2OracleAdaptor().setRouter(router_);
     }
 
     function factory() external view virtual returns (address) {
@@ -33,7 +35,7 @@ contract UniswapV2OracleAdaptor is UniswapV2OracleAdaptorSlot {
         return uniswapV2OracleAdaptor().amountOut(token0, token1);
     }
 
-    function amountsOut(address token0, address token1) external view virtual returns (uint) {
-        return uniswapV2OracleAdaptor().amountsOut(token0, token1);
+    function amountsOut(address[] memory path) external view virtual returns (uint) {
+        return uniswapV2OracleAdaptor().amountsOut(path);
     }
 }

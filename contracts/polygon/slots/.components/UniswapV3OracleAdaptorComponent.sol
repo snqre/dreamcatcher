@@ -73,7 +73,7 @@ library UniswapV3OracleAdaptorComponent {
         fees[2] = 1000;
         for (uint i = 0; i < fees.length; i++) {
             address pool = uniswapV3OracleAdaptor._factory.getPool(token0, token1, fees[i]);
-            (int24 tick,) = OracleLibrary.consult(pool, secondsAgo());
+            (int24 tick,) = OracleLibrary.consult(pool, secondsAgo(uniswapV3OracleAdaptor));
             uint amountOut = OracleLibrary.getQuoteAtTick(tick, uint128(10**tkn0.decimals()), token0, token1);
             if (amountOut != 0) {
                 amountOut = computeAsEtherValue(amountOut, tkn1.decimals());
@@ -82,27 +82,27 @@ library UniswapV3OracleAdaptorComponent {
             }
         }
         if (success == 0) { return 0; }
-        uint quote = sum.div(success);
+        uint quote_ = sum.div(success);
         /// returns as 10**18
-        return quote;
+        return quote_;
     }
 
-    function setFactory(UniswapV3OracleAdaptor storage uniswapV3OracleAdaptor, address factory) internal returns (bool) {
+    function setFactory(UniswapV3OracleAdaptor storage uniswapV3OracleAdaptor, address factory_) internal returns (bool) {
         address oldFactory = factory(uniswapV3OracleAdaptor);
-        uniswapV3OracleAdaptor._factory = factory;
-        emit UniswapV3OracleAdaptorFactorySet(oldFactory, factory);
+        uniswapV3OracleAdaptor._factory = IUniswapV3Factory(factory_);
+        emit UniswapV3OracleAdaptorFactorySet(oldFactory, factory_);
         return true;
     }
 
-    function setSecondsAgo(UniswapV3OracleAdaptor storage uniswapV3OracleAdaptor, uint32 seconds_) internal view (bool) {
+    function setSecondsAgo(UniswapV3OracleAdaptor storage uniswapV3OracleAdaptor, uint32 seconds_) internal returns (bool) {
         uint32 oldSecondsAgo = secondsAgo(uniswapV3OracleAdaptor);
         uniswapV3OracleAdaptor._secondsAgo = seconds_;
         emit UniswapV3OracleAdaptorSecondsAgoSet(oldSecondsAgo, seconds_);
         return true;
     }
 
-    function _setFactory(UniswapV3OracleAdaptor storage uniswapV3OracleAdaptor, address factory) private returns (bool) {
-        uniswapV3OracleAdaptor._factory = IUniswapV3Factory(factory);
+    function _setFactory(UniswapV3OracleAdaptor storage uniswapV3OracleAdaptor, address factory_) private returns (bool) {
+        uniswapV3OracleAdaptor._factory = IUniswapV3Factory(factory_);
         return true;
     }
 
