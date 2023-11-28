@@ -27,6 +27,11 @@ interface IUniswapV3OracleAdaptor {
 /// therefore the unique attack vector is when minting the shares to the account
 /// in this case its best to not mint anything and consider the amount in as worthless if forced
 /// and allow the vault or safe to remain solvent
+///
+/// initially the idea was to deploy the adaptors directly from the component but
+/// because v3 and our core contracts are based on different compiler versions
+/// the v3 adaptor is not compatible with our contracts so v3 must be deployed
+/// alone.
 library OracleComponent {
     using EnumerableSet for EnumerableSet.AddressSet;
 
