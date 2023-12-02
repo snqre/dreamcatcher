@@ -3,7 +3,7 @@ import reflex as _
 class State(_.State):
     pass
 
-def navbar():
+def navbarComponent():
     return _.box(
         _.hstack(
             _.spacer(),
@@ -27,15 +27,19 @@ def navbar():
         z_index="5",
     )
 
-def landing() -> _.Component:
+def overlayComponent():
     return _.box(
-        navbar(),
-        _.container(
-            width="100%",
-            heigth="25%",
-            background_image=("url('engine/assets/image.png')"),
-            background_size="cover",
+        _.vstack(
+            navbarComponent()
         )
+    )
+
+def heroSectionImageComponent():
+    pass
+
+def landing() -> _.Component:
+    return _.wrap(
+        overlayComponent(),
     )
 
 engine = _.App()
