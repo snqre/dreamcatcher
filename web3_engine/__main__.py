@@ -36,6 +36,9 @@ class Web3Engine:
         bytecode_path = f"web3_engine/compiled/bytecode/{contract_name}.json"
         return self.deploy_contract(node_url, chain_id, address, private_key, abi_path, bytecode_path, constructor_args)
 
+    def deployContract(self, node_url:str):
+        pass
+
     def deploy_contract(self, node_url:str, chain_id:int, address:str, private_key:str, abi_path:str, bytecode_path:str, constructor_args:list = [], timeout:int=300):
         node = Web3(Web3.HTTPProvider(f"{node_url}"))
         node.middleware_onion.inject(geth_poa_middleware, layer=0)
