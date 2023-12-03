@@ -4,7 +4,7 @@ import { Event, getAllLocalStorageItems, getRefValue, getRefValues, isTrue, prev
 import { ColorModeContext, EventLoopContext, initialEvents, StateContext } from "/utils/context.js"
 import range from "/utils/helpers/range.js"
 import "focus-visible/dist/focus-visible"
-import { Box, Heading, HStack, Image, Menu, MenuButton, Modal, ModalBody, ModalContent, ModalHeader, ModalOverlay, Spacer, Text, VStack, Wrap } from "@chakra-ui/react"
+import { Box, Heading, HStack, Image, Menu, MenuButton, Modal, ModalBody, ModalContent, ModalHeader, ModalOverlay, Spacer, Text, VStack } from "@chakra-ui/react"
 import { getEventURL } from "/utils/state.js"
 import NextHead from "next/head"
 
@@ -63,21 +63,18 @@ export default function Component() {
   <Fragment/>
 )}
 </Fragment>
-  <Wrap>
-  <Box>
   <VStack>
-  <Box sx={{"position": "fixed", "width": "100%", "top": "10px", "zIndex": "5"}}>
-  <HStack spacing={`50px`}>
-  <Spacer/>
+  <Box>
   <HStack>
+  <Spacer/>
+  <HStack alignItems={`center`} justifyContent={`center`} sx={{"position": "fixed", "width": "100%", "height": "5%", "zIndex": "100"}}>
   <Image src={`/favicon.ico`}/>
-  <Heading>
+  <Heading sx={{"fontSize": "32px"}}>
   {`Dreamcatcher`}
 </Heading>
-</HStack>
   <Spacer/>
-  <Menu>
-  <MenuButton>
+  <Menu sx={{"spacing": "1%"}}>
+  <MenuButton sx={{"textColor": "#000000"}}>
   {`Home`}
 </MenuButton>
   <MenuButton>
@@ -89,13 +86,12 @@ export default function Component() {
   <MenuButton>
   {`Whitepaper`}
 </MenuButton>
-</Menu>
   <Spacer/>
+</Menu>
+</HStack>
 </HStack>
 </Box>
 </VStack>
-</Box>
-</Wrap>
   <NextHead>
   <title>
   {`Reflex App`}
