@@ -1,27 +1,13 @@
-import flet
+from flet import *
+from components.fonts.Fonts import *
+from components.NavbarHeaderComponent import *
+from components.PlaceholderContentComponent import *
 
-def main(page: flet.Page,) -> None:
-    page.title = "Dreamcatcher"
-    page.theme_mode = flet.ThemeMode.DARK
-    page.padding = 50
-    page.update()
+def main(page:Page) -> None:
+    page.fonts = FONTS
+    page.title="Dreamcatcher"
+    page.theme = Theme(font_family="JetBrainsMonoNerdFont-Regular")
+    page.padding = 0
+    page.add(Text("HelloWorld"))
 
-    # why image no display :(
-    image = flet.Image(
-        src="components/png/heroSectionImage.png",
-        width=50,
-        height=50,
-        fit=flet.ImageFit.CONTAIN,
-        repeat=flet.ImageRepeat.REPEAT
-    )
-
-    page.add(
-        flet.Row(
-            [
-                image,
-                flet.Text("HelloWorld")
-            ],
-        ),
-    )
-
-flet.app(target=main, view=flet.AppView.WEB_BROWSER)
+app(target=main, view=AppView.WEB_BROWSER)
