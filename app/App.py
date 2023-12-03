@@ -1,11 +1,12 @@
 from flet import *
-from components.fonts.Fonts import *
+from components.settings.Settings import *
+from components.fonts.FONTS import *
 from components.NavbarHeaderComponent import *
 from components.PlaceholderContentComponent import *
 
-def main(page:Page) -> None:
+def main(page):
     page.fonts = FONTS
-    page.title="Dreamcatcher"
+    page.title = "Dreamcatcher"
     page.theme = Theme(font_family="JetBrainsMonoNerdFont-Regular")
     page.padding = 0
     page.add(Text("HelloWorld"))

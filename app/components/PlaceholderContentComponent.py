@@ -1,7 +1,5 @@
 from flet import *
 
-class PlaceholderContentComponent():
-    def __init__(
-        self,
-    ) -> None:
-        pass
+class PlaceholderContentComponent(Container):
+    def __init__(self):
+        super().__init__()

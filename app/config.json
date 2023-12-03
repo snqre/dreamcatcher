@@ -1,0 +1,17 @@
+{
+    "fontSize": {
+        "veryAtomic": 1,
+        "atomic": 2,
+        "tiny": 4,
+        "small": 8,
+        "regular": 16,
+        "big": 32,
+        "large": 64,
+        "veryLarge": 128,
+        "massive": 256
+    },
+    "app": {
+        "pageTitle": "Dreamcatcher",
+        "pageTheme": ""
+    }
+}
