@@ -1,7 +1,5 @@
 from flet import *
 from components.fonts.Fonts import *
-from components.NavbarHeaderComponent import *
-from components.PlaceholderContentComponent import *
 
 def main(page):
     page.fonts = FONTS
