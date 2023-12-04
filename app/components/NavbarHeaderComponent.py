@@ -1,5 +1,5 @@
 from flet import *
-from .settings.Settings import *
+from .config.Config import *
 
 class NavbarHeaderComponent(UserControl):
     def __init__(self):
@@ -7,7 +7,7 @@ class NavbarHeaderComponent(UserControl):
     
     def build(self):
         navOptions = []
-        for option in NAVBAR_HEADER_COMPONENT.NAV_OPTIONS:
+        for option in config["navbar-header-component"]["nav-menu-options"]:
             navOptions.append(Text(option, FONT_SIZE.SMALL))
         return Container(
             height=NAVBAR_HEADER_COMPONENT.HEADER_HEIGHT,

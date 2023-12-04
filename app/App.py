@@ -1,6 +1,5 @@
 from flet import *
-from components.settings.Settings import *
-from components.fonts.FONTS import *
+from components.fonts.Fonts import *
 from components.NavbarHeaderComponent import *
 from components.PlaceholderContentComponent import *
 
