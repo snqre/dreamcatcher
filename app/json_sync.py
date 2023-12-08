@@ -1,7 +1,7 @@
 from json import *
 from typing import *
 
-class JsonSync:
+class Sync:
     def __init__(self, jsonPath:str):
         self.jsonPath = jsonPath
         self.data = {}

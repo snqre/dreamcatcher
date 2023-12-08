@@ -1,0 +1,15 @@
+:root {
+    --REVEAL-ANIMATION-DURATION: 1s;
+    --BLUR-STRENGTH: 5px;
+}
+
+.hidden {
+    opacity: 0;
+    filter: blur(var(--BLUR-STRENGTH));
+    transition: all var(--REVEAL-ANIMATION-DURATION);
+}
+
+.show {
+    opacity: 1;
+    filter: blur(0);
+}
