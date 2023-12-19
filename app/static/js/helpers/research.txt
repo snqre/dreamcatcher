@@ -1,0 +1,23 @@
+/**
+ *  $.ajax({
+ *      type: 'POST' or 'GET',
+ *      url: '/' ie. '/helloWorld',
+ *      success: (response) => {
+ *          /// doSomething
+ *          $('h1').text(JSON.stringify(response));
+ *      }
+ *  });
+ * 
+ *  $.ajax({
+ *      type: 'GET',
+ *      url: '/',
+ *      success: (response) => {
+ *          resolve();
+ *      },
+ *      error: (error) => {
+ *          reject(error);
+ *      }
+ *  });
+ */
+
+/** */

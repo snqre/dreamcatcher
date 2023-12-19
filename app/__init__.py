@@ -14,10 +14,5 @@ def index():
         pageName=settings.pageName
     )
 
-@app.route("/navbar")
-def navbar():
-    with open("app/templates/components/navbar.html", "r") as file:
-        return file.read()
-
 if __name__ == "__main__":
     app.run(debug=True)
