@@ -9,6 +9,14 @@ import button from "../layouts/button.js";
 
 export default function headlineSection() {
     const section = column("100%", "100vh", {}, [
+        gutter(10),
+        row("100%", "20vh", {}, []),
+        gutter(10)
+    ]);
+}
+
+export default function headlineSection() {
+    const section = column("100%", "100vh", {}, [
         gutter(5, {}, []),
         leftContentRightImage(80, "/static/png/undraw/undraw_relaunch_day_902d.png", {}, {}, [
             captionSubCallToAction(100, [
@@ -25,7 +33,7 @@ export default function headlineSection() {
                 }, [
 
                 ]),
-            ], [button("Learn More", {width: "100%"}, ["button-flux-animation"])])
+            ], [button("Learn More", {width: "100%", fontSize: "1.25rem"}, ["button-flux-animation"])])
         ]),
         gutter(10, {}, []),
         gutter(5, {}, [])

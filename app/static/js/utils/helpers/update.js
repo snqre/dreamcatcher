@@ -25,5 +25,7 @@ export default function update(route) {
                 ])
             ]);
             break
+        case 1:
+            break
     }
 }

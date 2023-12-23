@@ -7,7 +7,7 @@ export default function captionSubCallToAction(slice=0, headingComponents=[], su
     function heading() {
         const heading = row("100%", "auto", {}, headingComponents);
         heading.updateStyle({
-            fontSize: "2rem",
+            fontSize: "4rem",
             fontWeight: "bold"
         });
         return heading;
@@ -16,7 +16,7 @@ export default function captionSubCallToAction(slice=0, headingComponents=[], su
     function subHeading() {
         const subHeading = row("100%", "auto", {}, subHeadingComponents);
         subHeading.updateStyle({
-            fontSize: "1rem"
+            fontSize: "1.25rem"
         });
         return subHeading;
     }

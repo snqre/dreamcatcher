@@ -6,7 +6,7 @@ export default function leftContentRightImage(slice=0, url="", style={}, imageSt
     const component = row("100%", `${slice}%`);
 
     function left() {
-        const left = column("50%", "100%");
+        const left = column("75%", "100%");
         left.updateStyle({
             padding: "2%"
         });
@@ -21,7 +21,7 @@ export default function leftContentRightImage(slice=0, url="", style={}, imageSt
     }
 
     function right() {
-        const right = column("50%", "100%", {}, [
+        const right = column("25%", "100%", {}, [
             image("100%", "100%", url, imageStyle)
         ]);
         right.updateStyle({
