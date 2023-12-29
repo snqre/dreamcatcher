@@ -1,4 +1,4 @@
-export function fetch(url) {
+export default function fetch(url) {
     return new Promise((resolve, reject) => {
         $.ajax({
             type: 'GET',

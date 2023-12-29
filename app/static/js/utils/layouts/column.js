@@ -1,4 +1,4 @@
-import Component from "../Component.js";
+import Component from "../../Component.js";
 
 export default function column(width, height, style={}, components=[]) {
     const component = new Component();

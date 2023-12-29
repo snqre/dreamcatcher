@@ -1,4 +1,4 @@
-import Component from "../Component.js";
+import Component from "../../Component.js";
 
 export default function image(width, height, url, style={}, components=[]) {
     const component = new Component()
@@ -6,11 +6,11 @@ export default function image(width, height, url, style={}, components=[]) {
     component.updateStyle({
         width: width,
         height: height,
-        backgroundImage: `url(${url})`,
         backgroundSize: "contain",
         backgroundPosition: "center",
         backgroundRepeat: "no-repeat"
     });
+    component.element.src = url;
     component.updateStyle(style);
     component.attach(components);
     return component;

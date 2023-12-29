@@ -1,3 +1,3 @@
-export const Route = {
+export const route = {
     HOME: "HOME"
 }
