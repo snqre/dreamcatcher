@@ -3,6 +3,8 @@ import Component from "../../Component.js";
 export default function flickerPattern1KeyframesStyle() {
     const component = new Component();
     component.syncToNewElement('style');
+
+    
     component.updateInnerHTML(
     `
         @keyframes flicker-pattern-1 {

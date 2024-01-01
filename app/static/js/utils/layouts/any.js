@@ -1,4 +1,4 @@
-import Component from "../../Component.js";
+import Component from "../../../../templates/js/toolkits/block.js";
 
 export default function any(content="", style={}, components=[]) {
     const component = new Component();
