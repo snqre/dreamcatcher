@@ -1,6 +1,5 @@
 from json import *
 from typing import *
-
 class Sync:
     def __init__(self, jsonPath:str):
         self.jsonPath = jsonPath
@@ -14,7 +13,6 @@ class Sync:
         except FileNotFoundError:
             with open(self.jsonPath, "w") as jsonFile:
                 self.data = load(jsonFile)
-
     def __setattr__(self, _name:str, _value:Any):
         self.__dict__[_name] = _value
         _temp = {}
@@ -28,7 +26,6 @@ class Sync:
             pass
         finally:
             pass
-    
     def __getattr__(self, _name:str):
         try:
             return self.__getattribute__(_name)
