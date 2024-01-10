@@ -1,0 +1,77 @@
+.flickerIn0msDelay {
+    animation: flickerInAnimation 2s 0.00s linear both;
+}
+
+.flickerIn10msDelay {
+    animation: flickerInAnimation 2s 0.10s linear both;
+}
+
+.flickerIn20msDelay {
+    animation: flickerInAnimation 2s 0.20s linear both;
+}
+
+@keyframes flickerInAnimation {
+    0.00% {
+        opacity: 0;
+    } 10.00% {
+        opacity: 0;
+    } 10.10% {
+        opacity: 1;
+    } 10.20% {
+        opacity: 0;
+    } 20.00% {
+        opacity: 0;
+    } 20.10% {
+        opacity: 1;
+    } 20.60% {
+        opacity: 0;
+    } 30.00% {
+        opacity: 0;
+    } 30.10% {
+        opacity: 1;
+    } 30.50% {
+        opacity: 1;
+    } 30.60% {
+        opacity: 0;
+    } 45.00% {
+        opacity: 0;
+    } 45.10% {
+        opacity: 1;
+    } 50.00% {
+        opacity: 1;
+    } 55.00% {
+        opacity: 1;
+    } 55.10% {
+        opacity: 0;
+    } 57.00% {
+        opacity: 0;
+    } 57.10% {
+        opacity: 0;
+    } 60.00% {
+        opacity: 1;
+    } 60.10% {
+        opacity: 0;
+    } 65.00% {
+        opacity: 0;
+    } 65.10% {
+        opacity: 1;
+    } 75.00% {
+        opacity: 1;
+    } 75.10% {
+        opacity: 1;
+    } 77.00% {
+        opacity: 0;
+    } 77.10% {
+        opacity: 0;
+    } 85.00% {
+        opacity: 1;
+    } 85.10% {
+        opacity: 0;
+    } 86.00% {
+        opacity: 0;
+    } 86.10% {
+        opacity: 1;
+    } 100.00% {
+        opacity: 1;
+    }
+}

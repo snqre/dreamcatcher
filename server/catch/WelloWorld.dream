@@ -1,0 +1,75 @@
+<!-- this is a comment -->
+
+-5 is not the same as - 5
+
+NUMBER { -5 or 5 }
+
+- NUMBER { - -5 or 5 }
+
+whitespace does matter here
+
+<!-- you can do this -->
+x = 5;
+
+<!-- but you can also do this -->
+emit x = 8;
+
+<!-- use keyword log to push data to logs -->
+
+[ 0, 1, 2, 3, 4, 5, 6 ]
+        ^
+        you logged x = 8 here
+
+<!-- so when you try to call x the next time -->
+
+[ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 ]
+        ^                                           ^
+         <------------------------------------------
+            |
+            catch will look through the logs to find the most recent value
+
+<!-- 
+    
+    a file will be created once a .catch file is run the first time or if there is not file 
+
+    you can manurally set the path of this file or you can import an existing one
+
+-->
+
+use <filepath>
+
+__setPath(path:str);
+
+<!-- you can also set how far back you would like to look for x -->
+
+x:3950; <!-- this should return default value if nothing is found -->
+
+<!-- you can also use time -->
+
+x:290:ms <!-- if it isnt done looking through the logs then this will stop after 290 ms -->
+
+<!-- remember if x was last stored as a string for example -->
+
+log x = "myName";
+x:8000 += 829;
+
+<!-- it will return as a string so this should throw an error -->
+
+<!-- also note that this will not save the new value by default in log -->
+
+log x = 7000;
+x:800 += 500;
+
+<!-- use log -->
+
+log x = 6000;
+log x:800 += 500;
+
+<!-- every function emits an event too -->
+
+jump doSomething() -> somethingThatHappened() {
+
+}
+
+<!-- easy syntax -->
+buy $BTC when price == 28;

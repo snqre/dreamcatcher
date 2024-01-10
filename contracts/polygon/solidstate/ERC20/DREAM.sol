@@ -5,5 +5,5 @@ import "contracts/polygon/solidstate/ERC20/Token.sol";
 interface IDREAM is IToken {}
 
 function DREAM is Token {
-    constructor() IToken("Dream", "DREAM", 1) {}
+    constructor() IToken("Dream", "DREAM", 200000000) {}
 }
