@@ -1,0 +1,12 @@
+C:\Users\snqre\Documents\GitHub\dreamcatcher\interface\target\debug\deps\libspki-473221b75ff875d0.rmeta: C:\Users\snqre\.cargo\registry\src\index.crates.io-6f17d22bba15001f\spki-0.6.0\src\lib.rs C:\Users\snqre\.cargo\registry\src\index.crates.io-6f17d22bba15001f\spki-0.6.0\src\algorithm.rs C:\Users\snqre\.cargo\registry\src\index.crates.io-6f17d22bba15001f\spki-0.6.0\src\error.rs C:\Users\snqre\.cargo\registry\src\index.crates.io-6f17d22bba15001f\spki-0.6.0\src\spki.rs C:\Users\snqre\.cargo\registry\src\index.crates.io-6f17d22bba15001f\spki-0.6.0\src\traits.rs C:\Users\snqre\.cargo\registry\src\index.crates.io-6f17d22bba15001f\spki-0.6.0\src\../README.md
+
+C:\Users\snqre\Documents\GitHub\dreamcatcher\interface\target\debug\deps\libspki-473221b75ff875d0.rlib: C:\Users\snqre\.cargo\registry\src\index.crates.io-6f17d22bba15001f\spki-0.6.0\src\lib.rs C:\Users\snqre\.cargo\registry\src\index.crates.io-6f17d22bba15001f\spki-0.6.0\src\algorithm.rs C:\Users\snqre\.cargo\registry\src\index.crates.io-6f17d22bba15001f\spki-0.6.0\src\error.rs C:\Users\snqre\.cargo\registry\src\index.crates.io-6f17d22bba15001f\spki-0.6.0\src\spki.rs C:\Users\snqre\.cargo\registry\src\index.crates.io-6f17d22bba15001f\spki-0.6.0\src\traits.rs C:\Users\snqre\.cargo\registry\src\index.crates.io-6f17d22bba15001f\spki-0.6.0\src\../README.md
+
+C:\Users\snqre\Documents\GitHub\dreamcatcher\interface\target\debug\deps\spki-473221b75ff875d0.d: C:\Users\snqre\.cargo\registry\src\index.crates.io-6f17d22bba15001f\spki-0.6.0\src\lib.rs C:\Users\snqre\.cargo\registry\src\index.crates.io-6f17d22bba15001f\spki-0.6.0\src\algorithm.rs C:\Users\snqre\.cargo\registry\src\index.crates.io-6f17d22bba15001f\spki-0.6.0\src\error.rs C:\Users\snqre\.cargo\registry\src\index.crates.io-6f17d22bba15001f\spki-0.6.0\src\spki.rs C:\Users\snqre\.cargo\registry\src\index.crates.io-6f17d22bba15001f\spki-0.6.0\src\traits.rs C:\Users\snqre\.cargo\registry\src\index.crates.io-6f17d22bba15001f\spki-0.6.0\src\../README.md
+
+C:\Users\snqre\.cargo\registry\src\index.crates.io-6f17d22bba15001f\spki-0.6.0\src\lib.rs:
+C:\Users\snqre\.cargo\registry\src\index.crates.io-6f17d22bba15001f\spki-0.6.0\src\algorithm.rs:
+C:\Users\snqre\.cargo\registry\src\index.crates.io-6f17d22bba15001f\spki-0.6.0\src\error.rs:
+C:\Users\snqre\.cargo\registry\src\index.crates.io-6f17d22bba15001f\spki-0.6.0\src\spki.rs:
+C:\Users\snqre\.cargo\registry\src\index.crates.io-6f17d22bba15001f\spki-0.6.0\src\traits.rs:
+C:\Users\snqre\.cargo\registry\src\index.crates.io-6f17d22bba15001f\spki-0.6.0\src\../README.md:
