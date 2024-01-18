@@ -1,25 +1,20 @@
-import telebot
+#[allow(non_snake_case)]
+#[allow(unused_imports)]
+use ethers::prelude::*;
+use async_std::task;
+use tokio::task::spawn_blocking;
 
-class Telegram:
-    def __init__(self, apiKey:str, username:str="", interface:str=""):
-        self.apiKey = apiKey
-        self.username = username
-        self.interface = interface
+fn main() {
+    task::block_on(async {
+        // Wrap the Tokio-specific code in spawn_blocking
+        let provider = spawn_blocking(|| {
+            Provider::<Http>::connect("https://polygon-rpc.com")
+        })
+        .await
+        .unwrap()
+        .unwrap();
 
-    def apiKey(self) -> str:
-        return self.apiKey
-    
-    def username(self) -> str:
-        return self.username
-    
-    def interface(self) -> str:
-        return self.interface
-
-    def setApiKey(self, apiKey:str):
-        self.apiKey = apiKey
-
-    def setUsername(self, username:str):
-        self.username = username
-
-    def generateInterface() -> str:
-        return telebot.TeleBot(token=self.apiKey)
+        let block_number = provider.get_block_number().await.unwrap();
+        println!("Latest block number on Polygon: {:?}", block_number);
+    });
+}
