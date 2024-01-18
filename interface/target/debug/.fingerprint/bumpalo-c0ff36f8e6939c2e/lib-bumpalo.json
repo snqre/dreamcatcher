@@ -1,1 +1,0 @@
-{"rustc":10493413842677104517,"features":"[\"boxed\", \"collections\", \"default\"]","target":1151118578467687688,"profile":10243973527296709326,"path":642319279339051533,"deps":[],"local":[{"CheckDepInfo":{"dep_info":"debug\\.fingerprint\\bumpalo-c0ff36f8e6939c2e\\dep-lib-bumpalo"}}],"rustflags":[],"metadata":10871386354195723922,"config":2202906307356721367,"compile_kind":0}

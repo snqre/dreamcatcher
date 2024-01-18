@@ -1,9 +1,0 @@
-C:\Users\snqre\Documents\GitHub\dreamcatcher\interface\target\debug\deps\libcargo_metadata-d790336abb98885f.rmeta: C:\Users\snqre\.cargo\registry\src\index.crates.io-6f17d22bba15001f\cargo_metadata-0.15.4\src\lib.rs C:\Users\snqre\.cargo\registry\src\index.crates.io-6f17d22bba15001f\cargo_metadata-0.15.4\src\dependency.rs C:\Users\snqre\.cargo\registry\src\index.crates.io-6f17d22bba15001f\cargo_metadata-0.15.4\src\diagnostic.rs C:\Users\snqre\.cargo\registry\src\index.crates.io-6f17d22bba15001f\cargo_metadata-0.15.4\src\errors.rs C:\Users\snqre\.cargo\registry\src\index.crates.io-6f17d22bba15001f\cargo_metadata-0.15.4\src\messages.rs
-
-C:\Users\snqre\Documents\GitHub\dreamcatcher\interface\target\debug\deps\cargo_metadata-d790336abb98885f.d: C:\Users\snqre\.cargo\registry\src\index.crates.io-6f17d22bba15001f\cargo_metadata-0.15.4\src\lib.rs C:\Users\snqre\.cargo\registry\src\index.crates.io-6f17d22bba15001f\cargo_metadata-0.15.4\src\dependency.rs C:\Users\snqre\.cargo\registry\src\index.crates.io-6f17d22bba15001f\cargo_metadata-0.15.4\src\diagnostic.rs C:\Users\snqre\.cargo\registry\src\index.crates.io-6f17d22bba15001f\cargo_metadata-0.15.4\src\errors.rs C:\Users\snqre\.cargo\registry\src\index.crates.io-6f17d22bba15001f\cargo_metadata-0.15.4\src\messages.rs
-
-C:\Users\snqre\.cargo\registry\src\index.crates.io-6f17d22bba15001f\cargo_metadata-0.15.4\src\lib.rs:
-C:\Users\snqre\.cargo\registry\src\index.crates.io-6f17d22bba15001f\cargo_metadata-0.15.4\src\dependency.rs:
-C:\Users\snqre\.cargo\registry\src\index.crates.io-6f17d22bba15001f\cargo_metadata-0.15.4\src\diagnostic.rs:
-C:\Users\snqre\.cargo\registry\src\index.crates.io-6f17d22bba15001f\cargo_metadata-0.15.4\src\errors.rs:
-C:\Users\snqre\.cargo\registry\src\index.crates.io-6f17d22bba15001f\cargo_metadata-0.15.4\src\messages.rs:

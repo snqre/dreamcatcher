@@ -1,9 +1,0 @@
-C:\Users\snqre\Documents\GitHub\dreamcatcher\interface\target\debug\deps\libcoins_bip39-c615e5a7a0b5b4e5.rmeta: C:\Users\snqre\.cargo\registry\src\index.crates.io-6f17d22bba15001f\coins-bip39-0.7.0\src\lib.rs C:\Users\snqre\.cargo\registry\src\index.crates.io-6f17d22bba15001f\coins-bip39-0.7.0\src\mnemonic.rs C:\Users\snqre\.cargo\registry\src\index.crates.io-6f17d22bba15001f\coins-bip39-0.7.0\src\wordlist\mod.rs C:\Users\snqre\.cargo\registry\src\index.crates.io-6f17d22bba15001f\coins-bip39-0.7.0\src\wordlist\english.rs C:\Users\snqre\.cargo\registry\src\index.crates.io-6f17d22bba15001f\coins-bip39-0.7.0\src\wordlist\./words/english.txt
-
-C:\Users\snqre\Documents\GitHub\dreamcatcher\interface\target\debug\deps\coins_bip39-c615e5a7a0b5b4e5.d: C:\Users\snqre\.cargo\registry\src\index.crates.io-6f17d22bba15001f\coins-bip39-0.7.0\src\lib.rs C:\Users\snqre\.cargo\registry\src\index.crates.io-6f17d22bba15001f\coins-bip39-0.7.0\src\mnemonic.rs C:\Users\snqre\.cargo\registry\src\index.crates.io-6f17d22bba15001f\coins-bip39-0.7.0\src\wordlist\mod.rs C:\Users\snqre\.cargo\registry\src\index.crates.io-6f17d22bba15001f\coins-bip39-0.7.0\src\wordlist\english.rs C:\Users\snqre\.cargo\registry\src\index.crates.io-6f17d22bba15001f\coins-bip39-0.7.0\src\wordlist\./words/english.txt
-
-C:\Users\snqre\.cargo\registry\src\index.crates.io-6f17d22bba15001f\coins-bip39-0.7.0\src\lib.rs:
-C:\Users\snqre\.cargo\registry\src\index.crates.io-6f17d22bba15001f\coins-bip39-0.7.0\src\mnemonic.rs:
-C:\Users\snqre\.cargo\registry\src\index.crates.io-6f17d22bba15001f\coins-bip39-0.7.0\src\wordlist\mod.rs:
-C:\Users\snqre\.cargo\registry\src\index.crates.io-6f17d22bba15001f\coins-bip39-0.7.0\src\wordlist\english.rs:
-C:\Users\snqre\.cargo\registry\src\index.crates.io-6f17d22bba15001f\coins-bip39-0.7.0\src\wordlist\./words/english.txt:
