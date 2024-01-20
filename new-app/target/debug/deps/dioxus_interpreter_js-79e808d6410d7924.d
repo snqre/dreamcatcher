@@ -1,0 +1,9 @@
+C:\Users\snqre\Documents\GitHub\dreamcatcher\new-app\target\debug\deps\libdioxus_interpreter_js-79e808d6410d7924.rmeta: C:\Users\snqre\.cargo\registry\src\index.crates.io-6f17d22bba15001f\dioxus-interpreter-js-0.4.3\src\lib.rs C:\Users\snqre\.cargo\registry\src\index.crates.io-6f17d22bba15001f\dioxus-interpreter-js-0.4.3\src\sledgehammer_bindings.rs C:\Users\snqre\.cargo\registry\src\index.crates.io-6f17d22bba15001f\dioxus-interpreter-js-0.4.3\src\../README.md C:\Users\snqre\.cargo\registry\src\index.crates.io-6f17d22bba15001f\dioxus-interpreter-js-0.4.3\src\./interpreter.js C:\Users\snqre\.cargo\registry\src\index.crates.io-6f17d22bba15001f\dioxus-interpreter-js-0.4.3\src\./common.js
+
+C:\Users\snqre\Documents\GitHub\dreamcatcher\new-app\target\debug\deps\dioxus_interpreter_js-79e808d6410d7924.d: C:\Users\snqre\.cargo\registry\src\index.crates.io-6f17d22bba15001f\dioxus-interpreter-js-0.4.3\src\lib.rs C:\Users\snqre\.cargo\registry\src\index.crates.io-6f17d22bba15001f\dioxus-interpreter-js-0.4.3\src\sledgehammer_bindings.rs C:\Users\snqre\.cargo\registry\src\index.crates.io-6f17d22bba15001f\dioxus-interpreter-js-0.4.3\src\../README.md C:\Users\snqre\.cargo\registry\src\index.crates.io-6f17d22bba15001f\dioxus-interpreter-js-0.4.3\src\./interpreter.js C:\Users\snqre\.cargo\registry\src\index.crates.io-6f17d22bba15001f\dioxus-interpreter-js-0.4.3\src\./common.js
+
+C:\Users\snqre\.cargo\registry\src\index.crates.io-6f17d22bba15001f\dioxus-interpreter-js-0.4.3\src\lib.rs:
+C:\Users\snqre\.cargo\registry\src\index.crates.io-6f17d22bba15001f\dioxus-interpreter-js-0.4.3\src\sledgehammer_bindings.rs:
+C:\Users\snqre\.cargo\registry\src\index.crates.io-6f17d22bba15001f\dioxus-interpreter-js-0.4.3\src\../README.md:
+C:\Users\snqre\.cargo\registry\src\index.crates.io-6f17d22bba15001f\dioxus-interpreter-js-0.4.3\src\./interpreter.js:
+C:\Users\snqre\.cargo\registry\src\index.crates.io-6f17d22bba15001f\dioxus-interpreter-js-0.4.3\src\./common.js:
