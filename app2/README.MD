@@ -1,0 +1,1 @@
+For the base build I think we will stick to js, but I think looking at rust is not a bad idea, its just js but better. Maybe in future releases we can convert the offchain protocol to rust.
