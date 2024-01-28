@@ -1,6 +1,13 @@
 import * as chalk from "chalk";
 import * as readline from "readline";
-import * as queue from "../structure/queue.js";
+import * as queue from "../../structure/queue.js";
+import * as event from "events";
+
+export const emit = new event.EventEmitter();
+emit.emit("starting");
+emit.on("starting", () => {
+  
+});
 
 interface Shell {
   ask: (question: string, callback: (response: string) => void) => void;
@@ -34,6 +41,10 @@ const shell: () => Shell = ((): () => Shell => {
       return myState === MyState.IS_PROCESSING_QUEUE;
     }
 
+    const run = () => {
+
+    }
+
     const post = async (question: string, callback: (response: string) => void): Promise<any> => {
       if (isIdle()) {
         myState = MyState.IS_PROCESSING_QUEUE;
@@ -41,7 +52,7 @@ const shell: () => Shell = ((): () => Shell => {
         prompt.question(question, (answer) => {
           callback(answer);
           prompt.close();
-          return answer;
+          
         });
       }
       myQueue.put({

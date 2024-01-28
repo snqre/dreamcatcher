@@ -1,0 +1,30 @@
+[
+  {
+    "event": "INTERNAL_NETWORK::DEPLOYED",
+    "args": []
+  },
+  {
+    "event": "NETWORK_MIDDLEWARE::DEPLOYED",
+    "args": []
+  },
+  {
+    "event": "NETWORK_MIDDLEWARE::CONNECTING",
+    "args": []
+  },
+  {
+    "event": "NETWORK_MIDDLEWARE::CONNECTING_VIA_UNSAFE",
+    "args": []
+  },
+  {
+    "event": "NETWORK_MIDDLEWARE::CONNECTED",
+    "args": []
+  },
+  {
+    "event": "NETWORK_MIDDLEWARE::CONNECTED_VIA_UNSAFE",
+    "args": [
+      {
+        "url": "http://localhost:2000"
+      }
+    ]
+  }
+]

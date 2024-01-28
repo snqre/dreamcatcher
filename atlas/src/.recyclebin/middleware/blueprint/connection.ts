@@ -1,5 +1,7 @@
 import * as express from "express";
 import * as http from "http";
+import {message, Message} from "../../structure/message-structure.js";
+import {stream, Stream} from "../stream.js";
 
 export interface Connection {
   socket: () => express.Application;
@@ -70,13 +72,43 @@ export const connection: () => Connection = ((): () => Connection => {
 
     const openPathOut = (path: string, callback: (request: express.Request, response: express.Response) => void): typeof instance => {
       socket()["get"](path, callback);
+      stream()
+        .post(
+          connection,
+          message()
+            .CONNECTION_MIDDLEWARE_OPENED_PATH_OUT()
+            .pack({
+              path,
+              callback
+            })
+        )
       return instance;
     }
 
     const openPathIn = (path: string, callback: (request: express.Request, response: express.Response) => void): typeof instance => {
       socket()["post"](path, callback);
+      stream()
+        .post(
+          connection,
+          message()
+            .CONNECTION_MIDDLEWARE_OPENED_PATH_IN()
+            .pack({
+              path,
+              callback
+            })
+        )
       return instance;
     }
+
+    stream()
+      .subscribe(
+        connection,
+        message()
+          .CONNECTION_MIDDLEWARE_OPENED_PATH_OUT()
+          .pack(() => {
+
+          })
+      )
 
     const closePathOut = (path: string): typeof instance => {
       return _closePath("get", path);
@@ -154,9 +186,9 @@ export const connection: () => Connection = ((): () => Connection => {
       });
     }
 
-    const post = <T>(url: string, data: any): Promise<T> => {
+    const post = <T>(url: string, content: any): Promise<T> => {
       return new Promise<T>((resolve: (value: T | PromiseLike<T>) => void, reject: (reason?: any) => void) => {
-        fetch(url)
+        fetch(url, content)
           .then(response => {
             if (!response.ok) {
               throw new Error(`post failed with status => ${response.status}`);
@@ -221,3 +253,40 @@ export const connection: () => Connection = ((): () => Connection => {
   };
 })();
 
+stream()
+  .post(
+    connection,
+    message()
+      .CONNECTION()
+      .pack({})
+  )
+  .subscribe(
+    connection,
+    message()
+      .CONNECTION()
+      .pack(() => {
+
+      })
+  )
+  .subscribe(
+    connection,
+    message()
+      .PULSE()
+      .pack(() => {
+        connection().connect().cache()
+        
+      })
+  )
+  .unsubscribe(
+    connection,
+    message()
+  )
+
+
+/**
+ * 
+ * 
+ * 
+ * questioner => [ question ] => responder => [ response ]
+ * 
+ */
