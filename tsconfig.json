@@ -1,0 +1,61 @@
+{
+	"compilerOptions": {
+		// Enable latest features
+		"lib": ["ESNext", "DOM"],
+		"target": "ESNext",
+		"module": "ESNext",
+		"moduleDetection": "force",
+		"jsx": "react-jsx",
+		"allowJs": true,
+		
+		// Bundler mode
+		"moduleResolution": "bundler",
+		"allowImportingTsExtensions": true,
+		"verbatimModuleSyntax": true,
+		"noEmit": true,
+		
+		// Best practices
+		"strict": true,
+		"skipLibCheck": true,
+		"noFallthroughCasesInSwitch": true,
+		
+		// Some stricter flags (disabled by default)
+		"noUnusedLocals": false,
+		"noUnusedParameters": false,
+		"noPropertyAccessFromIndexSignature": false,
+
+		"noImplicitAny": true,
+		"sourceMap": true,
+		"declaration": true,
+		"declarationMap": true,
+		"maxNodeModuleJsDepth": 10,
+
+		"paths": {
+			"@components/*": ["./src/components/*"],
+			"@layout/*": ["./src/components/layout/*"],
+			"@pages/*": ["./src/components/pages/*"],
+			"@decorations/*": ["./src/components/decorations/*"],
+			"@containers/*": ["./src/components/layout/containers/*"],
+			"@frames/*": ["./src/components/layout/containers/frames/*"],
+			"@input": ["./src/components/input/*"],
+			"@text/*": ["./src/components/text/*"],
+			"@buttons/*": ["./src/components/buttons/*"],
+			"@animations/*": ["./src/components/animations/*"],
+			"@window/*": ["./src/components/window/*"],
+			"@slides/*": ["./src/components/window/slides/*"],
+			"@cargo": ["./src/module/cargo/Cargo.ts"],
+			"@axios": ["./src/module/axios/Axios.ts"],
+			"@built/*": ["./src/components/built/*"],
+			"@evm": ["./src/module/evm/Evm.ts"],
+			"@evm-client": ["./src/module/evm/Evm.tsx"],
+			"@result": ["./src/module/result/Result.ts"],
+			"@sol": ["./src/module/sol/Sol.ts"],
+			"@container/*": ["./src/components/layout/containers/*"],
+			"@ui/*": ["./src/components/ui/*"],
+			"@state/*": ["./src/components/state/*"],
+			"@requirement": ["./src/module/requirement/Require.ts"],
+			"@color/*": ["./src/module/color/*"],
+			"@value": ["./src/module/value/Value.ts"],
+		}
+	},
+}

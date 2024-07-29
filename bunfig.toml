@@ -1,0 +1,2 @@
+[plugins]
+preload = ["./ts/ts-doka-loader.ts"]
